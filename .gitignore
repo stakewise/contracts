@@ -1,0 +1,34 @@
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+allFiredEvents
+scTopics
+
+# Coverage
+coverage
+coverage.json
+coverageEnv
+
+# Dependency directory
+node_modules
+
+# truffle build directory
+build
+
+# Zeppelin SDK
+.openzeppelin/.session
+.openzeppelin/dev-*.json
+
+# macOS
+.DS_Store
+
+# IntelliJ IDE
+.idea
