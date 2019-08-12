@@ -1,6 +1,10 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
+  "contracts": {
+    "Admins": "Admins",
+    "Operators": "Operators",
+    "Settings": "Settings"
+  },
   "dependencies": {},
   "name": "ethstakes",
   "version": "0.1.0",

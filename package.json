@@ -1,0 +1,63 @@
+{
+  "name": "ethstakes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ethereum 2.0 decentralised validator",
+  "scripts": {
+    "compile": "openzeppelin compile",
+    "deploy": "npm run compile && node scripts/deploy.js",
+    "coverage": "SOLIDITY_COVERAGE=true ./scripts/test.sh",
+    "test": "./scripts/test.sh",
+    "lint": "npm run lint:js && npm run lint:sol && prettier '*.{json,md}'",
+    "lint:sol": "solhint --max-warnings 0 'contracts/**/*.sol'",
+    "lint:js": "eslint '*.js' && prettier '*.js'"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{json,md}": [
+      "prettier --write",
+      "git add -f"
+    ],
+    "*.sol": [
+      "solhint --max-warnings 0 'contracts/**/*.sol'"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsudmi/ethstakes"
+  },
+  "author": "Dmitri Tsumak <tsumak.dmitri@gmail.com>",
+  "license": "GNU GPLv3",
+  "bugs": {
+    "url": "https://github.com/tsudmi/ethstakes/issues"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.3.0",
+    "eslint-plugin-prettier": "^3.1.0",
+    "eth-gas-reporter": "^0.2.10",
+    "ganache-cli": "^6.5.1",
+    "husky": "^3.0.3",
+    "lint-staged": "^9.2.1",
+    "openzeppelin-test-helpers": "^0.4.2",
+    "prettier": "^1.18.2",
+    "solhint": "^2.1.2",
+    "solidity-coverage": "^0.6.4",
+    "truffle": "^5.0.31"
+  },
+  "dependencies": {
+    "@openzeppelin/cli": "^2.5.2",
+    "@openzeppelin/contracts": "^2.3.0",
+    "@openzeppelin/upgrades": "^2.5.2"
+  }
+}
