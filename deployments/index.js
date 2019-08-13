@@ -97,4 +97,6 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   };
 }
 
-module.exports.deployAllProxies = deployAllProxies;
+module.exports = {
+  deployAllProxies
+};

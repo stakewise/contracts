@@ -25,5 +25,7 @@ async function deployOperatorsProxy({ networkConfig, adminsProxy }) {
   return proxy.address;
 }
 
-module.exports.deployAdminsProxy = deployAdminsProxy;
-module.exports.deployOperatorsProxy = deployOperatorsProxy;
+module.exports = {
+  deployAdminsProxy,
+  deployOperatorsProxy
+};

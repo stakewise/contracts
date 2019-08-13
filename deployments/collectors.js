@@ -28,4 +28,4 @@ async function deployPoolsProxy({
   return proxy.address;
 }
 
-module.exports.deployPoolsProxy = deployPoolsProxy;
+module.exports = { deployPoolsProxy };

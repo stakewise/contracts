@@ -30,5 +30,7 @@ async function deploySettingsProxy({ networkConfig, adminsProxy }) {
   return proxy.address;
 }
 
-module.exports.deploySettingsProxy = deploySettingsProxy;
-module.exports.initialSettings = initialSettings;
+module.exports = {
+  deploySettingsProxy,
+  initialSettings
+};

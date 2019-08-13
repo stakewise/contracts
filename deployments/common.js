@@ -30,8 +30,9 @@ function getSalt({ excluded = [] } = {}) {
   return salt;
 }
 
-module.exports.getSalt = getSalt;
-module.exports.getNetworkConfig = getNetworkConfig;
-module.exports.getNetworkConfig = getNetworkConfig;
-module.exports.deployLogicContracts = deployLogicContracts;
-module.exports.log = log;
+module.exports = {
+  log,
+  getSalt,
+  getNetworkConfig,
+  deployLogicContracts
+};

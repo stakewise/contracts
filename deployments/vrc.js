@@ -80,5 +80,7 @@ async function deployVRC(sender) {
   return vrc.new({ from: sender });
 }
 
-module.exports.deployVRC = deployVRC;
-module.exports.getVRC = getVRC;
+module.exports = {
+  deployVRC,
+  getVRC
+};

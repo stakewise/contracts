@@ -14,4 +14,6 @@ async function deployDepositsProxy({ poolsProxy, salt, networkConfig }) {
   return proxy.address;
 }
 
-module.exports.deployDepositsProxy = deployDepositsProxy;
+module.exports = {
+  deployDepositsProxy
+};

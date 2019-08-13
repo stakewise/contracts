@@ -19,7 +19,7 @@ contract BaseCollector is Initializable {
     // The counter of the last entity which hasn't accumulated validator deposit amount.
     uint256 public entityCounter;
 
-    // List of entity IDs (prefix + entityCounter) which are ready to be sent for staking.
+    // List of entity IDs (prefix + entityCounter) which are ready to be regsitered as Validators.
     bytes32[] internal readyEntities;
 
     // Address of the Deposits contract.

@@ -19,4 +19,6 @@ async function deployValidatorsRegistry({
   return proxy.address;
 }
 
-module.exports.deployValidatorsRegistry = deployValidatorsRegistry;
+module.exports = {
+  deployValidatorsRegistry
+};
