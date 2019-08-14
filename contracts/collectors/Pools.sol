@@ -1,11 +1,11 @@
 pragma solidity 0.5.10;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../IValidatorRegistration.sol";
 import "../access/Operators.sol";
+import "../validators/IValidatorRegistration.sol";
+import "../validators/ValidatorsRegistry.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
-import "../ValidatorsRegistry.sol";
 import "./BaseCollector.sol";
 
 /**

@@ -14,6 +14,7 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
+  POOLS_ENTITY_PREFIX,
   getDepositAmount,
   getUserId,
   getEntityId,
@@ -21,7 +22,6 @@ const {
   checkCollectorBalance
 } = require('../utils');
 
-const ENTITY_PREFIX = 'pools';
 const Deposits = artifacts.require('Deposits');
 const Pools = artifacts.require('Pools');
 
@@ -83,7 +83,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     const depositAmount = getDepositAmount({
       max: validatorDepositAmount
     });
-    const poolId = getEntityId(ENTITY_PREFIX, 1);
+    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
     const userId = getUserId(poolId, sender1, withdrawer1);
 
     // Send a deposit
@@ -118,7 +118,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     });
 
     // Check added to the pool 1
-    let poolId = getEntityId(ENTITY_PREFIX, 1);
+    let poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
     let userId = getUserId(poolId, sender1, withdrawer1);
     expectEvent.inLogs(logs, 'DepositAdded', {
       poolId: poolId,
@@ -131,7 +131,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     );
 
     // Check added to the pool 2
-    poolId = getEntityId(ENTITY_PREFIX, 2);
+    poolId = getEntityId(POOLS_ENTITY_PREFIX, 2);
     userId = getUserId(poolId, sender1, withdrawer1);
     expectEvent.inLogs(logs, 'DepositAdded', {
       poolId: poolId,
@@ -148,7 +148,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   });
 
   it('adds deposits for different users', async () => {
-    let poolId = getEntityId(ENTITY_PREFIX, 1);
+    let poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
 
     // User 1 creates a deposit
     let userId1 = getUserId(poolId, sender1, withdrawer1);
@@ -198,7 +198,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   it('increases deposit amount in pool', async () => {
     let userBalance = new BN(0);
-    let poolId = getEntityId(ENTITY_PREFIX, 1);
+    let poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
     let userId = getUserId(poolId, sender1, withdrawer1);
     for (let i = 0; i < 16; i++) {
       // User creates a deposit
@@ -228,8 +228,8 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   it('splits deposit amount if it goes to different pools', async () => {
     let balance1 = new BN(0);
     let balance2 = new BN(0);
-    let poolId1 = getEntityId(ENTITY_PREFIX, 1);
-    let poolId2 = getEntityId(ENTITY_PREFIX, 2);
+    let poolId1 = getEntityId(POOLS_ENTITY_PREFIX, 1);
+    let poolId2 = getEntityId(POOLS_ENTITY_PREFIX, 2);
     let userId1 = getUserId(poolId1, sender1, withdrawer1);
     let userId2 = getUserId(poolId2, sender1, withdrawer1);
 

@@ -1,8 +1,8 @@
 pragma solidity 0.5.10;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./collectors/Pools.sol";
-import "./Settings.sol";
+import "../collectors/Pools.sol";
+import "../Settings.sol";
 
 
 /**

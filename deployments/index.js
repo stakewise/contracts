@@ -8,6 +8,10 @@ const { deployDepositsProxy } = require('../deployments/deposits');
 const { deployPoolsProxy } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
+  deployWalletsManagerProxy,
+  deployWithdrawalsProxy
+} = require('../deployments/withdrawals');
+const {
   deployValidatorsRegistry
 } = require('../deployments/validatorsRegistry');
 
@@ -87,13 +91,68 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     );
   }
 
+  // Calculate Wallets Manager proxy addresses via create2
+  let walletsManagerSalt = getSalt({
+    excluded: [depositsSalt, validatorsRegistrySalt, poolsSalt]
+  });
+  let walletsManagerCalcProxy = await scripts.queryDeployment({
+    salt: walletsManagerSalt,
+    ...networkConfig
+  });
+
+  // Calculate Withdrawals proxy addresses via create2
+  let withdrawalsSalt = getSalt({
+    excluded: [
+      depositsSalt,
+      validatorsRegistrySalt,
+      poolsSalt,
+      walletsManagerSalt
+    ]
+  });
+  let withdrawalsCalcProxy = await scripts.queryDeployment({
+    salt: withdrawalsSalt,
+    ...networkConfig
+  });
+
+  // Deploy Wallets Manager proxy
+  let walletsManagerProxy = await deployWalletsManagerProxy({
+    withdrawalsProxy: withdrawalsCalcProxy,
+    salt: walletsManagerSalt,
+    validatorsRegistryProxy,
+    networkConfig,
+    adminsProxy
+  });
+  if (walletsManagerProxy !== walletsManagerCalcProxy) {
+    throw new Error(
+      `Wallets Manager contract actual address "${walletsManagerProxy}" does not match expected "${walletsManagerCalcProxy}"`
+    );
+  }
+
+  // Deploy Withdrawals proxy
+  let withdrawalsProxy = await deployWithdrawalsProxy({
+    salt: withdrawalsSalt,
+    adminsProxy,
+    depositsProxy,
+    settingsProxy,
+    networkConfig,
+    walletsManagerProxy,
+    validatorsRegistryProxy
+  });
+  if (withdrawalsProxy !== withdrawalsCalcProxy) {
+    throw new Error(
+      `Withdrawals contract actual address "${withdrawalsProxy}" does not match expected "${withdrawalsCalcProxy}"`
+    );
+  }
+
   return {
     admins: adminsProxy,
     operators: operatorsProxy,
     settings: settingsProxy,
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,
-    pools: poolsProxy
+    pools: poolsProxy,
+    walletsManager: walletsManagerProxy,
+    withdrawals: withdrawalsProxy
   };
 }
 

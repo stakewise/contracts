@@ -6,7 +6,10 @@
     "Settings": "Settings",
     "Pools": "Pools",
     "Deposits": "Deposits",
-    "ValidatorsRegistry": "ValidatorsRegistry"
+    "ValidatorsRegistry": "ValidatorsRegistry",
+    "Wallet": "Wallet",
+    "WalletsManager": "WalletsManager",
+    "Withdrawals": "Withdrawals"
   },
   "dependencies": {},
   "name": "ethstakes",
