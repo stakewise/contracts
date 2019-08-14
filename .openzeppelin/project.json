@@ -3,7 +3,10 @@
   "contracts": {
     "Admins": "Admins",
     "Operators": "Operators",
-    "Settings": "Settings"
+    "Settings": "Settings",
+    "Pools": "Pools",
+    "Deposits": "Deposits",
+    "ValidatorsRegistry": "ValidatorsRegistry"
   },
   "dependencies": {},
   "name": "ethstakes",

@@ -5,7 +5,15 @@ const {
   expectEvent,
   expectRevert
 } = require('openzeppelin-test-helpers');
-const { EthStakes, initialSettings } = require('../scripts/deploy');
+const { deployAdminsProxy } = require('../deployments/access');
+const {
+  deploySettingsProxy,
+  initialSettings
+} = require('../deployments/settings');
+const {
+  getNetworkConfig,
+  deployLogicContracts
+} = require('../deployments/common');
 const { removeNetworkFile } = require('./utils');
 
 const newValues = [
@@ -31,16 +39,23 @@ function assertEqual(value1, value2) {
 const Settings = artifacts.require('Settings');
 
 contract('Settings', ([_, admin, anyone]) => {
-  let ethstakes;
+  let networkConfig;
   let settings;
 
   beforeEach(async () => {
-    ethstakes = new EthStakes({ admin });
-    settings = await Settings.at(await ethstakes.deploySettingsContract());
+    networkConfig = await getNetworkConfig();
+    await deployLogicContracts({ networkConfig });
+    let adminsProxy = await deployAdminsProxy({
+      networkConfig,
+      initialAdmin: admin
+    });
+    settings = await Settings.at(
+      await deploySettingsProxy({ networkConfig, adminsProxy })
+    );
   });
 
   after(() => {
-    removeNetworkFile(ethstakes.networkConfig.network);
+    removeNetworkFile(networkConfig.network);
   });
 
   it('sets parameters on initialization', async () => {

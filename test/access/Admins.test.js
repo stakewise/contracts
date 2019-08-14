@@ -4,22 +4,29 @@ const {
   expectEvent,
   expectRevert
 } = require('openzeppelin-test-helpers');
-const { EthStakes } = require('../../scripts/deploy');
+const { deployAdminsProxy } = require('../../deployments/access');
+const {
+  getNetworkConfig,
+  deployLogicContracts
+} = require('../../deployments/common');
 const { removeNetworkFile } = require('../utils');
 
 const Admins = artifacts.require('Admins');
 
 contract('Admins', ([_, admin, otherAdmin, anyone]) => {
-  let ethstakes;
+  let networkConfig;
   let admins;
 
   beforeEach(async () => {
-    ethstakes = new EthStakes({ admin });
-    admins = await Admins.at(await ethstakes.deployAdminsContract());
+    networkConfig = await getNetworkConfig();
+    await deployLogicContracts({ networkConfig });
+    admins = await Admins.at(
+      await deployAdminsProxy({ networkConfig, initialAdmin: admin })
+    );
   });
 
   after(() => {
-    removeNetworkFile(ethstakes.networkConfig.network);
+    removeNetworkFile(networkConfig.network);
   });
 
   it('assigns admin on initialization', async () => {
