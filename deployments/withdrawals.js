@@ -78,7 +78,6 @@ async function deployWithdrawalsProxy({
 }
 
 module.exports = {
-  getWalletCreationParameters,
   deployWalletsManagerProxy,
   deployWithdrawalsProxy
 };

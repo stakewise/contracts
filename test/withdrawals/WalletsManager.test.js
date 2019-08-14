@@ -10,9 +10,6 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
-const {
-  getWalletCreationParameters
-} = require('../../deployments/withdrawals');
 const { removeNetworkFile } = require('../utils');
 
 const Pools = artifacts.require('Pools');
@@ -114,23 +111,10 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
       const { logs } = await walletsManager.assignWallet(validatorId, {
         from: admin
       });
-      const [
-        proxyAdmin,
-        walletImplementation,
-        walletCreationData
-      ] = getWalletCreationParameters({
-        networkConfig,
-        withdrawalsProxy: proxies.withdrawals
-      });
       const wallet = logs[0].args.wallet;
 
       // Wallet created
-      expectEvent.inLogs(logs, 'WalletCreated', {
-        wallet,
-        proxyAdmin,
-        walletImplementation,
-        walletCreationData
-      });
+      expectEvent.inLogs(logs, 'WalletCreated', { wallet });
 
       // Wallet assigned to validator
       expectEvent.inLogs(logs, 'WalletAssigned', {
