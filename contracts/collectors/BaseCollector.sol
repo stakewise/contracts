@@ -53,7 +53,7 @@ contract BaseCollector is Initializable {
         IValidatorRegistration _validatorRegistration,
         ValidatorsRegistry _validatorsRegistry
     )
-    public initializer
+        public initializer
     {
         deposits = _deposits;
         settings = _settings;

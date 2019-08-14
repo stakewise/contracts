@@ -30,7 +30,7 @@ contract Pools is BaseCollector {
     );
 
     /**
-    * Event for tracking users' deposits removed from the current not filled pool.
+    * Event for tracking users' deposits removed from the current unfilled pool.
     * @param poolId - ID of the pool deposit was removed from.
     * @param sender - an account which has sent the deposit.
     * @param withdrawer - an account where deposit + rewards had to be sent after withdrawal.
@@ -72,7 +72,7 @@ contract Pools is BaseCollector {
     /**
     * Function for adding deposits to pools.
     * User must transfer ether amount together with calling the function.
-    * The amount will be added to the active group.
+    * The amount will be added to the unfilled pool.
     * If the transferred amount makes the current pool exceed `settings.validatorDepositAmount`,
     * it will be split between the current pool and the next one.
     * @param _withdrawer - an account where deposit + rewards will be sent after withdrawal.
