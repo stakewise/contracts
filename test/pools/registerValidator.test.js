@@ -7,6 +7,7 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
+  POOLS_ENTITY_PREFIX,
   removeNetworkFile,
   checkCollectorBalance,
   checkValidatorRegistered,
@@ -17,7 +18,6 @@ const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
-const ENTITY_PREFIX = 'pools';
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 // Validator Registration Contract arguments
@@ -127,7 +127,7 @@ contract(
 
         await checkValidatorRegistered({
           transaction: tx,
-          entityId: getEntityId(ENTITY_PREFIX, 4 - i),
+          entityId: getEntityId(POOLS_ENTITY_PREFIX, 4 - i),
           pubKey: pubKeys[i],
           validatorsRegistry: validatorsRegistry,
           signature

@@ -7,6 +7,8 @@ const { getVRC } = require('../deployments/vrc');
 
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
+const POOLS_ENTITY_PREFIX = 'pools';
+
 function getDepositAmount({
   min = new BN(initialSettings.userDepositMinUnit),
   max = ether('320')
@@ -92,6 +94,7 @@ async function checkValidatorRegistered({
 }
 
 module.exports = {
+  POOLS_ENTITY_PREFIX,
   checkCollectorBalance,
   checkValidatorRegistered,
   removeNetworkFile,

@@ -15,6 +15,7 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
+  POOLS_ENTITY_PREFIX,
   getDepositAmount,
   getUserId,
   getEntityId,
@@ -25,7 +26,6 @@ const {
 const Deposits = artifacts.require('Deposits');
 const Pools = artifacts.require('Pools');
 
-const ENTITY_PREFIX = 'pools';
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
@@ -142,7 +142,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   it('cancels deposit in full amount', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
-    const poolId = getEntityId(ENTITY_PREFIX, 1);
+    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
     const { logs } = await pools.cancelDeposit(withdrawer1, amount1, {
       from: sender1
     });
@@ -167,7 +167,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   it('cancels deposit in partial amount', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
     const cancelAmount = amount1.sub(userDepositMinUnit);
-    const poolId = getEntityId(ENTITY_PREFIX, 1);
+    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
     const { logs } = await pools.cancelDeposit(withdrawer1, cancelAmount, {
       from: sender1
     });
@@ -193,7 +193,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   it('cancels deposit partially moved to the next pool', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
-    const poolId = getEntityId(ENTITY_PREFIX, 2);
+    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 2);
     await pools.addDeposit(withdrawer1, {
       from: sender1,
       value: validatorDepositAmount

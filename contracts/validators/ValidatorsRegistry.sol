@@ -1,8 +1,8 @@
 pragma solidity 0.5.10;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./collectors/Pools.sol";
-import "./Settings.sol";
+import "../collectors/Pools.sol";
+import "../Settings.sol";
 
 
 /**
@@ -13,8 +13,11 @@ import "./Settings.sol";
 contract ValidatorsRegistry is Initializable {
     // Stores information about the validator.
     struct Validator {
+        // Validator deposit amount.
         uint256 depositAmount;
+        // Fee to pay to the maintainer after withdrawal.
         uint16 maintainerFee;
+        // ID of the collector's entity where the deposit was collected.
         bytes32 entityId;
     }
 
