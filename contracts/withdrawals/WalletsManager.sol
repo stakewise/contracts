@@ -16,7 +16,9 @@ import "./Withdrawals.sol";
 contract WalletsManager is Initializable {
     // Stores information about the wallet.
     struct Wallet {
+        // Indicates whether users can withdraw from the wallet.
         bool unlocked;
+        // The validator wallet is attached to.
         bytes32 validator;
     }
 
@@ -107,7 +109,7 @@ contract WalletsManager is Initializable {
     * @param _validator - ID (public key hash) of the validator wallet should be assigned to.
     */
     function assignWallet(bytes32 _validator) external {
-        require(!assignedValidators[_validator], "Wallet for the validator was already assigned.");
+        require(!assignedValidators[_validator], "Validator has already wallet assigned.");
 
         (uint256 validatorAmount, ,) = validatorsRegistry.validators(_validator);
         require(validatorAmount != 0, "Validator does not have deposit amount.");
@@ -145,7 +147,7 @@ contract WalletsManager is Initializable {
     /**
     * Function for resetting wallets.
     * Can only be called by users with an admin role.
-    * Must be called only when all the users have been withdrawn their shares.
+    * Must be called only when all the users have withdrawn their shares.
     * @param _wallet - Address of the wallet to reset.
     */
     function resetWallet(address _wallet) external {
@@ -160,7 +162,7 @@ contract WalletsManager is Initializable {
     /**
     * Function for unlocking wallets.
     * Can only be called by Withdrawals contract.
-    * By enabling withdrawals, users would be able to start withdrawing their shares.
+    * By enabling withdrawals, users will be able to start withdrawing their shares.
     * @param _wallet - Address of the wallet to reset.
     */
     function unlockWallet(address _wallet) external {
