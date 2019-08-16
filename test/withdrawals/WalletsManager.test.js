@@ -64,7 +64,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
         walletsManager.assignWallet(validatorId, {
           from: admin
         }),
-        'Wallet for the validator was already assigned.'
+        'Validator has already wallet assigned.'
       );
     });
 

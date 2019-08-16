@@ -2,6 +2,8 @@ const {
   BN,
   send,
   expectRevert,
+  ether,
+  expectEvent,
   constants
 } = require('openzeppelin-test-helpers');
 const { deployAllProxies } = require('../../deployments');
@@ -81,6 +83,7 @@ contract('Withdrawals', ([_, admin, operator, other]) => {
         'Wallet has no ether in it.'
       );
     });
+
     it('cannot enable withdrawals for already unlocked wallet', async () => {
       await send.ether(
         other,
@@ -98,23 +101,67 @@ contract('Withdrawals', ([_, admin, operator, other]) => {
       );
     });
 
-    it('does not apply penalty if there is a profit', async () => {
+    it("does not apply penalty if balance is not less that validator's deposit", async () => {
       await send.ether(
         other,
         wallet,
         new BN(initialSettings.validatorDepositAmount)
       );
-      await withdrawals.enableWithdrawals(wallet, {
+      const { logs } = await withdrawals.enableWithdrawals(wallet, {
         from: admin
       });
-      await expectRevert(
-        withdrawals.enableWithdrawals(wallet, {
-          from: admin
-        }),
-        'Wallet is already unlocked.'
-      );
+      expectEvent.inLogs(logs, 'WithdrawalsEnabled', {
+        penalty: new BN(0),
+        wallet
+      });
     });
-    it('calculates penalties correctly', async () => {});
+
+    it('calculates penalties correctly', async () => {
+      let tests = [
+        // withdrawal return, correct penalty
+        [ether('16'), ether('0.5')], // biggest slash possible
+        [ether('31.999999999999999999'), ether('0.999999999999999999')], // smallest slash possible
+        [ether('31.470154444639959214'), ether('0.983442326394998725')],
+        [ether('22.400020050000300803'), ether('0.7000006265625094')],
+        [ether('26.037398137005555372'), ether('0.813668691781423605')],
+        [ether('18.345'), ether('0.57328125')],
+        [ether('16.00145'), ether('0.5000453125')],
+        [ether('31.987654321'), ether('0.999614197531250048')]
+      ];
+
+      let logs;
+      for (let i = 0; i < tests.length; i++) {
+        // Collect deposits, create validator
+        let validatorId = await createValidator({
+          pubKey: `0x${i.toString() * 48}`,
+          poolsProxy: proxies.pools,
+          operator,
+          sender: other,
+          withdrawer: other
+        });
+
+        // Time for withdrawal, assign wallet
+        ({ logs } = await walletsManager.assignWallet(validatorId, {
+          from: admin
+        }));
+        wallet = logs[0].args.wallet;
+
+        const [withdrawalReturn, expectedPenalty] = tests[i];
+
+        // Withdrawal performed, penalized deposit returned
+        await send.ether(other, wallet, withdrawalReturn);
+
+        // Enable withdrawals, check whether penalty calculated properly
+        ({ logs } = await withdrawals.enableWithdrawals(wallet, {
+          from: admin
+        }));
+        expectEvent.inLogs(logs, 'WithdrawalsEnabled', {
+          penalty: expectedPenalty,
+          wallet
+        });
+      }
+    });
+
     it("calculates maintainer's reward correctly", async () => {});
   });
 });

@@ -21,7 +21,8 @@ contract Withdrawals is Initializable {
     WalletsManager private walletsManager;
 
     event WithdrawalsEnabled(
-        bytes32 indexed validator
+        address indexed wallet,
+        uint256 penalty
     );
 
     event MaintainerWithdrawn(
@@ -66,11 +67,12 @@ contract Withdrawals is Initializable {
         if (_wallet.balance < depositAmount) {
             // validator was penalized
             // calculate penalty with 4 decimals precision
-            penalty = (_wallet.balance).mul(1000000).div(depositAmount);
+            penalty = (_wallet.balance).mul(1 ether).div(depositAmount);
             validatorPenalties[validator] = penalty;
         }
 
         walletsManager.unlockWallet(_wallet);
+        emit WithdrawalsEnabled(_wallet, penalty);
 
         // Maintainer gets a fee only in case there is a profit.
         if (_wallet.balance > depositAmount) {
@@ -98,7 +100,7 @@ contract Withdrawals is Initializable {
         uint256 penalty = validatorPenalties[validator];
         uint256 userReward;
         if (penalty > 0) {
-            userDeposit = (userDeposit.mul(penalty)).div(1000000);
+            userDeposit = (userDeposit.mul(penalty)).div(1 ether);
         } else {
             uint256 totalReward = (_wallet.balance).sub(validatorDeposit);
             userReward = totalReward.mul(userDeposit).div(validatorDeposit);
