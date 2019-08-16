@@ -8,39 +8,12 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
-const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile } = require('../utils');
+const { createValidator } = require('./common');
 
-const Pools = artifacts.require('Pools');
 const WalletsManager = artifacts.require('WalletsManager');
 const Operators = artifacts.require('Operators');
-
-// Validator Registration Contract arguments
-const publicKey = web3.utils.fromAscii('\x11'.repeat(48));
-const signature = web3.utils.fromAscii('\x33'.repeat(96));
-
-async function createValidator({
-  pubKey = publicKey,
-  poolsProxy,
-  operator,
-  sender,
-  withdrawer
-}) {
-  let pools = await Pools.at(poolsProxy);
-  // Create new ready pool
-  await pools.addDeposit(withdrawer, {
-    from: sender,
-    value: initialSettings.validatorDepositAmount
-  });
-
-  // Register validator for the ready pool
-  await pools.registerValidator(pubKey, signature, {
-    from: operator
-  });
-
-  return web3.utils.soliditySha3(pubKey);
-}
 
 contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
   let walletsManager;
@@ -82,7 +55,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
       );
     });
 
-    it('cannot assign wallet to the same validator twice', async () => {
+    it('cannot assign wallet to the same validator more than once', async () => {
       await walletsManager.assignWallet(validatorId, {
         from: admin
       });
@@ -186,7 +159,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
       );
     });
 
-    it('cannot reset the same wallet twice', async () => {
+    it('cannot reset the same wallet more than once', async () => {
       await walletsManager.resetWallet(wallet, {
         from: admin
       });
