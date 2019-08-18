@@ -39,23 +39,27 @@ function assertEqual(value1, value2) {
 const Settings = artifacts.require('Settings');
 
 contract('Settings', ([_, admin, anyone]) => {
+  let adminsProxy;
   let networkConfig;
   let settings;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let adminsProxy = await deployAdminsProxy({
+    adminsProxy = await deployAdminsProxy({
       networkConfig,
       initialAdmin: admin
     });
-    settings = await Settings.at(
-      await deploySettingsProxy({ networkConfig, adminsProxy })
-    );
   });
 
   after(() => {
     removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
+    settings = await Settings.at(
+      await deploySettingsProxy({ networkConfig, adminsProxy })
+    );
   });
 
   it('sets parameters on initialization', async () => {

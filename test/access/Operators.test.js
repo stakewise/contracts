@@ -18,22 +18,26 @@ const Operators = artifacts.require('Operators');
 
 contract('Operators', ([_, admin, operator, anotherOperator, anyone]) => {
   let networkConfig;
+  let adminsProxy;
   let operators;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let adminsProxy = await deployAdminsProxy({
+    adminsProxy = await deployAdminsProxy({
       networkConfig,
       initialAdmin: admin
     });
-    operators = await Operators.at(
-      await deployOperatorsProxy({ networkConfig, adminsProxy })
-    );
   });
 
   after(() => {
     removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
+    operators = await Operators.at(
+      await deployOperatorsProxy({ networkConfig, adminsProxy })
+    );
   });
 
   describe('assigning', () => {

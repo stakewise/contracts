@@ -30,21 +30,25 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   let networkConfig;
   let deposits;
+  let vrc;
   let pools;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    vrc = await deployVRC(admin);
+  });
+
+  after(() => {
+    removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
       { initialAdmin: admin, networkConfig, vrc: vrc.address }
     );
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
   });
 
   it('fails to add a deposit with zero withdraw address', async () => {

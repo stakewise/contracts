@@ -3,22 +3,26 @@ const { initialSettings } = require('../../deployments/settings');
 const Pools = artifacts.require('Pools');
 
 // Validator Registration Contract arguments
-const publicKey = web3.utils.fromAscii('\x11'.repeat(48));
 const signature = web3.utils.fromAscii('\x33'.repeat(96));
 
 async function createValidator({
-  pubKey = publicKey,
+  hasReadyPool = false,
   poolsProxy,
   operator,
   sender,
   withdrawer
 }) {
+  // Genrate random public key
+  let pubKey = '0x'.padEnd(98, Math.round(Math.random() * 100000));
   let pools = await Pools.at(poolsProxy);
-  // Create new ready pool
-  await pools.addDeposit(withdrawer, {
-    from: sender,
-    value: initialSettings.validatorDepositAmount
-  });
+
+  if (!hasReadyPool) {
+    // Create new ready pool
+    await pools.addDeposit(withdrawer, {
+      from: sender,
+      value: initialSettings.validatorDepositAmount
+    });
+  }
 
   // Register validator for the ready pool
   await pools.registerValidator(pubKey, signature, {

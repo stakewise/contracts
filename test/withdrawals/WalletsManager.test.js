@@ -21,7 +21,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
   let proxies;
   let networkConfig;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     let vrc = await deployVRC(admin);
@@ -33,16 +33,19 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
     walletsManager = await WalletsManager.at(proxies.walletsManager);
+  });
+
+  after(() => {
+    removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
     validatorId = await createValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,
       withdrawer
     });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
   });
 
   describe('assigning wallet', () => {
@@ -116,7 +119,6 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
 
       // Deploy next validator
       let newValidatorId = await createValidator({
-        pubKey: web3.utils.fromAscii('\x12'.repeat(48)),
         poolsProxy: proxies.pools,
         operator,
         sender,

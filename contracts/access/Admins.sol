@@ -69,6 +69,10 @@ contract Admins is Initializable {
         emit AdminRemoved(msg.sender);
     }
 
+    /**
+    * Private function for assigning an admin role to the account.
+    * @param account - the account to assign an admin role to.
+    */
     function _addAdmin(address account) private {
         admins.add(account);
         emit AdminAdded(account);

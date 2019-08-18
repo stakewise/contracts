@@ -15,7 +15,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
   let deposits;
   let users = [admin, operator, anyone];
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     let vrc = await deployVRC(admin);

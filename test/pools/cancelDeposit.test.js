@@ -32,14 +32,22 @@ const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   let networkConfig;
   let deposits;
+  let vrc;
   let pools;
   let amount1, amount2;
   let poolsBalance;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    vrc = await deployVRC(admin);
+  });
+
+  after(() => {
+    removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
       { initialAdmin: admin, networkConfig, vrc: vrc.address }
     );
@@ -62,10 +70,6 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       value: amount2
     });
     poolsBalance = amount1.add(amount2);
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
   });
 
   it('fails to cancel a deposit with invalid cancel amount', async () => {
@@ -155,7 +159,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
     // Check deposit was removed from the active pool
     const userId = getUserId(poolId, sender1, withdrawer1);
-    expect(await deposits.amounts(userId)).to.be.bignumber.equal(new BN(0));
+    expect(await deposits.amounts(userId)).to.be.bignumber.equal('0');
 
     // Check withdrawer balance changed
     expect(await withdrawerBalance.delta()).to.be.bignumber.equal(amount1);
@@ -214,7 +218,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
     // Check deposit size was reduced in the second pool
     const userId = getUserId(poolId, sender1, withdrawer1);
-    expect(await deposits.amounts(userId)).to.be.bignumber.equal(new BN(0));
+    expect(await deposits.amounts(userId)).to.be.bignumber.equal('0');
 
     // Check withdrawer balance changed
     expect(await withdrawerBalance.delta()).to.be.bignumber.equal(cancelAmount);
