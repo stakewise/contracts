@@ -1,8 +1,8 @@
 # EthStakes &middot; [![GitHub license](https://img.shields.io/badge/license-GNU%20GPLv3-blue)](https://github.com/tsudmi/ethstakes/blob/master/LICENSE.md)
 
-EthStakes is a set of smart contracts, used for becoming a shared Ethereum 2.0 validator.
+EthStakes is a set of smart contracts, used for sharing an Ethereum 2.0 validator.
 
-- **Extensible:** EthStakes abstracts away the logic of collecting and sending deposits to Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract), and withdrawing them afterward. By extending the [Base Collector]() contract, it's possible to create your own contract with logic for accumulating validator's deposit amount.
+- **Extensible:** EthStakes abstracts away the logic of sending deposits to Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract), and withdrawing them afterward. By extending the [Base Collector](./contracts/collectors/BaseCollector.sol) contract, it's possible to create your own contract with logic for accumulating validator's deposit amount.
 - **Upgradable:** By using [OpenZeppelin SDK](https://github.com/OpenZeppelin/openzeppelin-sdk), it's possible to fix bugs and issues even when the contracts are deployed to the production network.
 - **Role-based access:** By having [Operators](./contracts/access/Operators.sol) and [Admins](./contracts/access/Admins.sol) contracts, it is possible to define a set of users capable of registering validators, assigning wallets to finished validators, changing settings, etc.
 - **Application friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
