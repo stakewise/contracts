@@ -14,16 +14,18 @@ import "./Withdrawals.sol";
  * role can reset the wallet when all the users have withdrawn their shares.
  */
 contract WalletsManager is Initializable {
-    // Stores information about the wallet.
+    /**
+    * Structure to store information about the wallet.
+    * @param unlocked - indicates whether users can withdraw from the wallet.
+    * @param validator - the validator wallet is attached to.
+    */
     struct Wallet {
-        // Indicates whether users can withdraw from the wallet.
         bool unlocked;
-        // The validator wallet is attached to.
         bytes32 validator;
     }
 
     // Determines whether validator ID (public key hash) has been assigned any wallet.
-    // Needed to prevent assigning multiple wallets to the same validator.
+    // Required to prevent assigning multiple wallets to the same validator.
     mapping(bytes32 => bool) public assignedValidators;
 
     // Maps wallet address to the information about it.

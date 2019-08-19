@@ -17,16 +17,19 @@ contract('Admins', ([_, admin, otherAdmin, anyone]) => {
   let networkConfig;
   let admins;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    admins = await Admins.at(
-      await deployAdminsProxy({ networkConfig, initialAdmin: admin })
-    );
   });
 
   after(() => {
     removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
+    admins = await Admins.at(
+      await deployAdminsProxy({ networkConfig, initialAdmin: admin })
+    );
   });
 
   it('assigns admin on initialization', async () => {

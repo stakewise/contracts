@@ -32,10 +32,17 @@ contract(
     let validatorsRegistry;
     let pools;
 
-    beforeEach(async () => {
+    before(async () => {
       networkConfig = await getNetworkConfig();
       await deployLogicContracts({ networkConfig });
       vrc = await deployVRC(admin);
+    });
+
+    after(() => {
+      removeNetworkFile(networkConfig.network);
+    });
+
+    beforeEach(async () => {
       let {
         pools: poolsProxy,
         operators: operatorsProxy,
@@ -49,10 +56,6 @@ contract(
       validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
       let operators = await Operators.at(operatorsProxy);
       await operators.addOperator(operator, { from: admin });
-    });
-
-    after(() => {
-      removeNetworkFile(networkConfig.network);
     });
 
     it('fails to register Validator if there are no ready pools', async () => {

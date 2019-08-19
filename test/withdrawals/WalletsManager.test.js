@@ -8,39 +8,12 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
-const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile } = require('../utils');
+const { createValidator } = require('./common');
 
-const Pools = artifacts.require('Pools');
 const WalletsManager = artifacts.require('WalletsManager');
 const Operators = artifacts.require('Operators');
-
-// Validator Registration Contract arguments
-const publicKey = web3.utils.fromAscii('\x11'.repeat(48));
-const signature = web3.utils.fromAscii('\x33'.repeat(96));
-
-async function createValidator({
-  pubKey = publicKey,
-  poolsProxy,
-  operator,
-  sender,
-  withdrawer
-}) {
-  let pools = await Pools.at(poolsProxy);
-  // Create new ready pool
-  await pools.addDeposit(withdrawer, {
-    from: sender,
-    value: initialSettings.validatorDepositAmount
-  });
-
-  // Register validator for the ready pool
-  await pools.registerValidator(pubKey, signature, {
-    from: operator
-  });
-
-  return web3.utils.soliditySha3(pubKey);
-}
 
 contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
   let walletsManager;
@@ -48,7 +21,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
   let proxies;
   let networkConfig;
 
-  beforeEach(async () => {
+  before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     let vrc = await deployVRC(admin);
@@ -60,16 +33,19 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
     walletsManager = await WalletsManager.at(proxies.walletsManager);
+  });
+
+  after(() => {
+    removeNetworkFile(networkConfig.network);
+  });
+
+  beforeEach(async () => {
     validatorId = await createValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,
       withdrawer
     });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
   });
 
   describe('assigning wallet', () => {
@@ -82,7 +58,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
       );
     });
 
-    it('cannot assign wallet to the same validator twice', async () => {
+    it('cannot assign wallet to the same validator more than once', async () => {
       await walletsManager.assignWallet(validatorId, {
         from: admin
       });
@@ -91,7 +67,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
         walletsManager.assignWallet(validatorId, {
           from: admin
         }),
-        'Wallet for the validator was already assigned.'
+        'Validator has already wallet assigned.'
       );
     });
 
@@ -143,7 +119,6 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
 
       // Deploy next validator
       let newValidatorId = await createValidator({
-        pubKey: web3.utils.fromAscii('\x12'.repeat(48)),
         poolsProxy: proxies.pools,
         operator,
         sender,
@@ -186,7 +161,7 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
       );
     });
 
-    it('cannot reset the same wallet twice', async () => {
+    it('cannot reset the same wallet more than once', async () => {
       await walletsManager.resetWallet(wallet, {
         from: admin
       });

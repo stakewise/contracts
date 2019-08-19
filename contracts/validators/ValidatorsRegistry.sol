@@ -11,13 +11,15 @@ import "../Settings.sol";
  * Only collectors can register validators.
  */
 contract ValidatorsRegistry is Initializable {
-    // Stores information about the validator.
+    /**
+    * Structure to store information about the validator.
+    * @param depositAmount - validator deposit amount.
+    * @param maintainerFee - fee to pay to the maintainer after withdrawal.
+    * @param entityId - ID of the collector's entity where the deposit was collected.
+    */
     struct Validator {
-        // Validator deposit amount.
         uint256 depositAmount;
-        // Fee to pay to the maintainer after withdrawal.
         uint16 maintainerFee;
-        // ID of the collector's entity where the deposit was collected.
         bytes32 entityId;
     }
 
