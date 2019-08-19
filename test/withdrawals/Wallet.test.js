@@ -62,10 +62,11 @@ contract('Wallet', ([_, admin, operator, sender, withdrawer, anyone]) => {
   });
 
   it('emits event when ether transferred', async () => {
-    const { logs } = await wallet.send(ether('5'), { from: anyone });
+    let amount = ether('5');
+    const { logs } = await wallet.send(amount, { from: anyone });
     expectEvent.inLogs(logs, 'EtherAdded', {
-      sender: anyone,
-      amount: ether('5')
+      amount,
+      sender: anyone
     });
   });
 });

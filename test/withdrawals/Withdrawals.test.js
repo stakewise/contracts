@@ -106,7 +106,7 @@ contract('Withdrawals', ([_, admin, operator, other, sender, ...accounts]) => {
       );
     });
 
-    it("does not apply penalty if balance is not less that validator's deposit", async () => {
+    it("penalty is not applied if balance is not less than validator's deposit", async () => {
       await send.ether(other, wallet, initialSettings.validatorDepositAmount);
       const { logs } = await withdrawals.enableWithdrawals(wallet, {
         from: admin
@@ -382,7 +382,7 @@ contract('Withdrawals', ([_, admin, operator, other, sender, ...accounts]) => {
         ether('6.09')
       ];
 
-      // correct return amounts for every user in each penalized validator
+      // correct return amounts for every user in every penalized validator
       let userPenalizedDeposits = [
         [
           ether('0.0005'),
