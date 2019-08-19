@@ -1,4 +1,4 @@
-pragma solidity 0.5.10;
+pragma solidity 0.5.11;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -109,8 +109,7 @@ contract Pools is BaseCollector {
                 emit DepositAdded(poolId, msg.sender, _withdrawer, toProcess);
                 break;
             }
-        }
-        while (toProcess != 0);
+        } while (toProcess != 0);
     }
 
     /**
