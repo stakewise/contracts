@@ -71,6 +71,10 @@ jobs:
       - run:
           name: Run coverage tests
           command: npm run coverage
+      - run:
+          name: Upload coverage
+          command: |
+            bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
