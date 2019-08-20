@@ -12,7 +12,7 @@
     "Withdrawals": "Withdrawals"
   },
   "dependencies": {},
-  "name": "ethstakes",
+  "name": "shared-validator",
   "version": "0.1.0",
   "compiler": {
     "manager": "openzeppelin",

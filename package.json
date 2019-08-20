@@ -1,8 +1,8 @@
 {
-  "name": "ethstakes",
+  "name": "shared-validator",
   "version": "0.1.0",
   "private": true,
-  "description": "Ethereum 2.0 decentralised validator",
+  "description": "Ethereum 2.0 shared validator",
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
@@ -35,12 +35,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tsudmi/ethstakes"
+    "url": "https://github.com/tsudmi/shared-validator"
   },
   "author": "Dmitri Tsumak <tsumak.dmitri@gmail.com>",
   "license": "GNU GPLv3",
   "bugs": {
-    "url": "https://github.com/tsudmi/ethstakes/issues"
+    "url": "https://github.com/tsudmi/shared-validator/issues"
   },
   "devDependencies": {
     "chai": "^4.2.0",
