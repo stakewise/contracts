@@ -1,0 +1,91 @@
+version: 2.1
+
+executors:
+  default:
+    docker:
+      - image: circleci/node:10.5
+    working_directory: /tmp/workspace
+
+jobs:
+  dependencies:
+    executor: default
+    steps:
+      - checkout
+      - restore_cache:
+          key: npm-deps-{{ checksum "package-lock.json" }}
+      - run:
+          name: Install npm dependencies
+          command: |
+            if [ ! -d /tmp/workspace/node_modules ]; then
+              npm ci
+            fi
+      - save_cache:
+          paths:
+            - /tmp/workspace/node_modules
+          key: npm-deps-{{ checksum "package-lock.json" }}
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - node_modules
+
+  compile:
+    executor: default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Compile
+          command: npm run compile
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - build
+
+  lint:
+    executor: default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Lint
+          command: npm run lint
+
+  test:
+    executor: default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Run tests
+          command: npm run test
+
+  coverage:
+    executor: default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Run coverage tests
+          command: npm run coverage
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - dependencies
+      - compile:
+          requires:
+            - dependencies
+      - lint:
+          requires:
+            - compile
+      - test:
+          requires:
+            - compile
+      - coverage:
+          requires:
+            - compile

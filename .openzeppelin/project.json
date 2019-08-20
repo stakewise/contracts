@@ -12,13 +12,13 @@
     "Withdrawals": "Withdrawals"
   },
   "dependencies": {},
-  "name": "ethstakes",
+  "name": "shared-validator",
   "version": "0.1.0",
   "compiler": {
     "manager": "openzeppelin",
     "compilerSettings": {
       "optimizer": {}
     },
-    "solcVersion": "0.5.10"
+    "solcVersion": "0.5.11"
   }
 }

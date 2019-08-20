@@ -1,8 +1,8 @@
 {
-  "name": "ethstakes",
+  "name": "shared-validator",
   "version": "0.1.0",
   "private": true,
-  "description": "Ethereum 2.0 decentralised validator",
+  "description": "Ethereum 2.0 shared validator",
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
@@ -35,31 +35,31 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/tsudmi/ethstakes"
+    "url": "https://github.com/stakewise/shared-validator"
   },
   "author": "Dmitri Tsumak <tsumak.dmitri@gmail.com>",
   "license": "GNU GPLv3",
   "bugs": {
-    "url": "https://github.com/tsudmi/ethstakes/issues"
+    "url": "https://github.com/stakewise/shared-validator/issues"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^4.3.0",
+    "eslint": "^6.2.0",
+    "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-prettier": "^3.1.0",
     "eth-gas-reporter": "^0.2.10",
-    "ganache-cli": "^6.5.1",
-    "husky": "^3.0.3",
-    "lint-staged": "^9.2.1",
+    "ganache-cli": "^6.6.0",
+    "husky": "^3.0.4",
+    "lint-staged": "^9.2.3",
     "openzeppelin-test-helpers": "^0.4.2",
     "prettier": "^1.18.2",
-    "solhint": "^2.1.2",
+    "solhint": "^2.2.0",
     "solidity-coverage": "^0.6.4",
-    "truffle": "^5.0.31"
+    "truffle": "^5.0.32"
   },
   "dependencies": {
-    "@openzeppelin/cli": "^2.5.2",
+    "@openzeppelin/cli": "^2.5.3",
     "@openzeppelin/contracts": "^2.3.0",
-    "@openzeppelin/upgrades": "^2.5.2"
+    "@openzeppelin/upgrades": "^2.5.3"
   }
 }

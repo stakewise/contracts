@@ -2,7 +2,7 @@
   "extends": "solhint:recommended",
   "rules": {
     "indent": ["error", 4],
-    "two-lines-top-level-separator": false,
+    "two-lines-top-level-separator": "off",
     "mark-callable-contracts": "off"
   }
 }
