@@ -1,4 +1,7 @@
-# Shared Validator &middot; [![GitHub license](https://img.shields.io/badge/license-GNU%20GPLv3-blue)](./LICENSE.md)
+# Shared Validator
+
+[![Gitter](https://badges.gitter.im/stakewise/community.svg)](https://gitter.im/stakewise/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Discord](https://user-images.githubusercontent.com/7288322/34471967-1df7808a-efbb-11e7-9088-ed0b04151291.png)](https://discord.gg/2BSdr2g)
 
 Shared Validator is a set of smart contracts, used for sharing an Ethereum 2.0 validator.
 
