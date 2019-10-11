@@ -6,8 +6,6 @@
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
-    "deploy-vrc": "truffle exec ./scripts/deployVRC.js",
-    "fund": "truffle exec ./scripts/fund.js",
     "coverage": "SOLIDITY_COVERAGE=true ./scripts/test.sh",
     "test": "./scripts/test.sh",
     "lint": "npm run lint:js && npm run lint:sol && prettier '*.{json,md}'",
@@ -43,23 +41,24 @@
     "url": "https://github.com/stakewise/shared-validator/issues"
   },
   "devDependencies": {
+    "@openzeppelin/test-helpers": "^0.5.1",
     "chai": "^4.2.0",
-    "eslint": "^6.2.0",
-    "eslint-config-prettier": "^6.0.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "eth-gas-reporter": "^0.2.10",
-    "ganache-cli": "^6.6.0",
-    "husky": "^3.0.4",
-    "lint-staged": "^9.2.3",
-    "openzeppelin-test-helpers": "^0.4.2",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eth-gas-reporter": "^0.2.12",
+    "ganache-cli": "^6.7.0",
+    "husky": "^3.0.8",
+    "lint-staged": "^9.4.2",
     "prettier": "^1.18.2",
-    "solhint": "^2.2.0",
-    "solidity-coverage": "^0.6.4",
-    "truffle": "^5.0.32"
+    "solhint": "^2.3.0",
+    "solidity-coverage": "^0.6.7",
+    "truffle": "^5.0.39"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.5.3",
     "@openzeppelin/contracts": "^2.3.0",
-    "@openzeppelin/upgrades": "^2.5.3"
+    "@openzeppelin/upgrades": "^2.5.3",
+    "truffle-hdwallet-provider": "^1.0.17"
   }
 }

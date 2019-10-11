@@ -2,7 +2,7 @@ const {
   expectRevert,
   ether,
   expectEvent
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -24,11 +24,11 @@ contract('Wallet', ([_, admin, operator, sender, withdrawer, anyone]) => {
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    let vrc = await deployVRC({ from: admin });
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.address
+      vrc: vrc.options.address
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -63,8 +63,8 @@ contract('Wallet', ([_, admin, operator, sender, withdrawer, anyone]) => {
 
   it('emits event when ether transferred', async () => {
     let amount = ether('5');
-    const { logs } = await wallet.send(amount, { from: anyone });
-    expectEvent.inLogs(logs, 'EtherAdded', {
+    const receipt = await wallet.send(amount, { from: anyone });
+    expectEvent(receipt, 'EtherAdded', {
       amount,
       sender: anyone
     });

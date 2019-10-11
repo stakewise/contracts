@@ -3,7 +3,7 @@ const {
   constants,
   expectEvent,
   expectRevert
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const { deployAdminsProxy } = require('../../deployments/access');
 const {
   getNetworkConfig,
@@ -34,17 +34,17 @@ contract('Admins', ([_, admin, otherAdmin, anyone]) => {
 
   it('assigns admin on initialization', async () => {
     let admins = await Admins.new();
-    const { logs } = await admins.initialize(admin);
+    const receipt = await admins.initialize(admin);
     expect(await admins.isAdmin(admin)).equal(true);
-    expectEvent.inLogs(logs, 'AdminAdded', {
+    expectEvent(receipt, 'AdminAdded', {
       account: admin
     });
   });
 
   describe('assigning', () => {
     it('admins can assign admin role to another account', async () => {
-      const { logs } = await admins.addAdmin(otherAdmin, { from: admin });
-      expectEvent.inLogs(logs, 'AdminAdded', {
+      const receipt = await admins.addAdmin(otherAdmin, { from: admin });
+      expectEvent(receipt, 'AdminAdded', {
         account: otherAdmin
       });
       expect(await admins.isAdmin(otherAdmin)).equal(true);
@@ -81,8 +81,8 @@ contract('Admins', ([_, admin, otherAdmin, anyone]) => {
 
   describe('renouncing', () => {
     it('admin can renounce himself', async () => {
-      const { logs } = await admins.renounceAdmin({ from: admin });
-      expectEvent.inLogs(logs, 'AdminRemoved', {
+      const receipt = await admins.renounceAdmin({ from: admin });
+      expectEvent(receipt, 'AdminRemoved', {
         account: admin
       });
       expect(await admins.isAdmin(admin)).equal(false);

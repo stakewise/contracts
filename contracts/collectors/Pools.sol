@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity 0.5.12;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -15,34 +15,6 @@ import "./BaseCollector.sol";
  * All the deposits of the pool which hasn't accumulated validator deposit amount are cancelable.
  */
 contract Pools is BaseCollector {
-    /**
-    * Event for tracking users' deposits added to the current pool.
-    * @param poolId - ID of the pool deposit was added to.
-    * @param sender - an account which has sent the deposit.
-    * @param withdrawer - an account where deposit + rewards will be sent after withdrawal.
-    * @param amount - amount deposited (in Wei).
-    */
-    event DepositAdded(
-        bytes32 indexed poolId,
-        address indexed sender,
-        address indexed withdrawer,
-        uint256 amount
-    );
-
-    /**
-    * Event for tracking users' deposits removed from the current unfilled pool.
-    * @param poolId - ID of the pool deposit was removed from.
-    * @param sender - an account which has sent the deposit.
-    * @param withdrawer - an account where deposit + rewards had to be sent after withdrawal.
-    * @param amount - amount canceled (in Wei).
-    */
-    event DepositCanceled(
-        bytes32 indexed poolId,
-        address indexed sender,
-        address indexed withdrawer,
-        uint256 amount
-    );
-
     /**
     * Constructor for initializing the Pools contract.
     * @param _deposits - Address of the Deposits contract.
@@ -82,31 +54,25 @@ contract Pools is BaseCollector {
         require(msg.value > 0, "Deposit amount cannot be zero.");
         require(msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount unit.");
 
-        bytes32 userId;
-        bytes32 poolId;
         uint256 toCollect;
         uint256 toProcess = msg.value;
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         do {
-            poolId = keccak256(abi.encodePacked("pools", entityCounter));
-            userId = keccak256(abi.encodePacked(poolId, msg.sender, _withdrawer));
             toCollect = validatorTargetAmount - (totalSupply % validatorTargetAmount);
             if (toProcess >= toCollect) {
                 // Deposit has filled up current pool
-                deposits.increaseAmount(userId, toCollect);
+                deposits.addDeposit(nextEntityId, msg.sender, _withdrawer, toCollect);
                 totalSupply += toCollect;
                 toProcess -= toCollect;
-                emit DepositAdded(poolId, msg.sender, _withdrawer, toCollect);
 
-                // It was the last deposit for the current pool, increase the counter
-                // XXX: Causes additional gas usage
-                readyEntities.push(poolId);
-                entityCounter++;
+                // It was the last deposit for the current pool, increase the ID
+                // XXX: Unfair for the last deposit as it causes additional gas usage
+                readyEntities.push(nextEntityId);
+                nextEntityId++;
             } else {
                 // Deposit fits in current pool
-                deposits.increaseAmount(userId, toProcess);
+                deposits.addDeposit(nextEntityId, msg.sender, _withdrawer, toProcess);
                 totalSupply += toProcess;
-                emit DepositAdded(poolId, msg.sender, _withdrawer, toProcess);
                 break;
             }
         } while (toProcess != 0);
@@ -115,20 +81,21 @@ contract Pools is BaseCollector {
     /**
     * Function for canceling deposits in current pool.
     * The deposits can only be canceled from the pool which has less than `settings.validatorDepositAmount`.
-    * @param _withdrawer - an account where the canceled amount will be transferred (must be the same as when the deposit was made).
+    * @param _withdrawer - an account where the canceled amount will
+      be transferred (must be the same as when the deposit was made).
     * @param _amount - the amount of ether to cancel from the active pool.
     */
     function cancelDeposit(address payable _withdrawer, uint256 _amount) external {
         require(_amount > 0, "Cancel amount cannot be zero.");
         require(_amount % settings.userDepositMinUnit() == 0, "Invalid cancel amount unit.");
+        require(deposits.amounts(keccak256(abi.encodePacked(
+            keccak256(abi.encodePacked(address(this), nextEntityId)),
+            msg.sender,
+            _withdrawer
+        ))) >= _amount, "User does not have specified cancel amount.");
 
-        bytes32 poolId = keccak256(abi.encodePacked("pools", entityCounter));
-        bytes32 userId = keccak256(abi.encodePacked(poolId, msg.sender, _withdrawer));
-        require(deposits.amounts(userId) >= _amount, "User does not have specified cancel amount.");
-
-        deposits.decreaseAmount(userId, _amount);
+        deposits.cancelDeposit(nextEntityId, msg.sender, _withdrawer, _amount);
         totalSupply -= _amount;
-        emit DepositCanceled(poolId, msg.sender, _withdrawer, _amount);
 
         _withdrawer.transfer(_amount);
     }

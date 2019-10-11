@@ -1,4 +1,4 @@
-const { BN, expectRevert } = require('openzeppelin-test-helpers');
+const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -7,11 +7,9 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
-  POOLS_ENTITY_PREFIX,
   removeNetworkFile,
   checkCollectorBalance,
-  checkValidatorRegistered,
-  getEntityId
+  checkValidatorRegistered
 } = require('../utils');
 
 const Pools = artifacts.require('Pools');
@@ -35,7 +33,7 @@ contract(
     before(async () => {
       networkConfig = await getNetworkConfig();
       await deployLogicContracts({ networkConfig });
-      vrc = await deployVRC(admin);
+      vrc = await deployVRC({ from: admin });
     });
 
     after(() => {
@@ -50,7 +48,7 @@ contract(
       } = await deployAllProxies({
         initialAdmin: admin,
         networkConfig,
-        vrc: vrc.address
+        vrc: vrc.options.address
       });
       pools = await Pools.at(poolsProxy);
       validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
@@ -129,9 +127,11 @@ contract(
         totalAmount.isub(validatorDepositAmount);
 
         await checkValidatorRegistered({
+          vrc,
           transaction: tx,
-          entityId: getEntityId(POOLS_ENTITY_PREFIX, 4 - i),
+          entityId: new BN(4 - i),
           pubKey: pubKeys[i],
+          collectorAddress: pools.address,
           validatorsRegistry: validatorsRegistry,
           signature
         });

@@ -2,7 +2,7 @@ const {
   expectRevert,
   expectEvent,
   constants
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -24,11 +24,11 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    let vrc = await deployVRC({ from: admin });
     proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.address
+      vrc: vrc.options.address
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -84,16 +84,16 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
     });
 
     it('creates a new wallet', async () => {
-      const { logs } = await walletsManager.assignWallet(validatorId, {
+      const receipt = await walletsManager.assignWallet(validatorId, {
         from: admin
       });
-      const wallet = logs[0].args.wallet;
+      const wallet = receipt.logs[0].args.wallet;
 
       // Wallet created
-      expectEvent.inLogs(logs, 'WalletCreated', { wallet });
+      expectEvent(receipt, 'WalletCreated', { wallet });
 
       // Wallet assigned to validator
-      expectEvent.inLogs(logs, 'WalletAssigned', {
+      expectEvent(receipt, 'WalletAssigned', {
         wallet,
         validator: validatorId
       });
@@ -105,11 +105,9 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
     });
 
     it('re-uses existing available wallet', async () => {
-      let logs;
-
-      ({ logs } = await walletsManager.assignWallet(validatorId, {
+      const { logs } = await walletsManager.assignWallet(validatorId, {
         from: admin
-      }));
+      });
 
       // reset wallet
       const wallet = logs[0].args.wallet;
@@ -125,12 +123,12 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
         withdrawer
       });
 
-      ({ logs } = await walletsManager.assignWallet(newValidatorId, {
+      let receipt = await walletsManager.assignWallet(newValidatorId, {
         from: admin
-      }));
+      });
 
       // must assign the same wallet to the next validator
-      expectEvent.inLogs(logs, 'WalletAssigned', {
+      expectEvent(receipt, 'WalletAssigned', {
         wallet,
         validator: newValidatorId
       });
@@ -175,11 +173,11 @@ contract('WalletsManager', ([_, admin, operator, sender, withdrawer]) => {
     });
 
     it('admin user can reset wallet', async () => {
-      const { logs } = await walletsManager.resetWallet(wallet, {
+      let receipt = await walletsManager.resetWallet(wallet, {
         from: admin
       });
 
-      expectEvent.inLogs(logs, 'WalletReset', {
+      expectEvent(receipt, 'WalletReset', {
         wallet
       });
       let { unlocked, validator } = await walletsManager.wallets(wallet);

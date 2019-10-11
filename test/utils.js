@@ -1,13 +1,10 @@
 const fs = require('fs');
-const { expectEvent } = require('openzeppelin-test-helpers');
+const { expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
-const { BN, ether, balance } = require('openzeppelin-test-helpers');
+const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../deployments/settings');
-const { getVRC } = require('../deployments/vrc');
 
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
-
-const POOLS_ENTITY_PREFIX = 'pools';
 
 function getDepositAmount({
   min = new BN(initialSettings.userDepositMinUnit),
@@ -23,12 +20,16 @@ function getDepositAmount({
   );
 }
 
-function getEntityId(entityPrefix, entityCounter) {
-  return web3.utils.soliditySha3(entityPrefix, entityCounter);
+function getCollectorEntityId(collectorAddress, entityId) {
+  return web3.utils.soliditySha3(collectorAddress, entityId);
 }
 
-function getUserId(entityId, sender, withdrawer) {
-  return web3.utils.soliditySha3(entityId, sender, withdrawer);
+function getUserId(collectorAddress, entityId, sender, withdrawer) {
+  return web3.utils.soliditySha3(
+    getCollectorEntityId(collectorAddress, entityId),
+    sender,
+    withdrawer
+  );
 }
 
 function removeNetworkFile(network) {
@@ -46,18 +47,104 @@ async function checkCollectorBalance(collectorContract, correctBalance) {
   ).to.be.bignumber.equal(correctBalance);
 }
 
+async function checkUserTotalAmount({
+  depositsContract,
+  collectorAddress,
+  entityId,
+  senderAddress,
+  withdrawalAddress,
+  expectedAmount
+}) {
+  expect(
+    await depositsContract.amounts(
+      getUserId(collectorAddress, entityId, senderAddress, withdrawalAddress)
+    )
+  ).to.be.bignumber.equal(expectedAmount);
+}
+
+async function checkDepositAdded({
+  transaction,
+  depositsContract,
+  collectorAddress,
+  entityId,
+  senderAddress,
+  withdrawalAddress,
+  addedAmount,
+  totalAmount
+}) {
+  // Check event log
+  await expectEvent.inTransaction(
+    transaction,
+    depositsContract,
+    'DepositAdded',
+    {
+      collector: collectorAddress,
+      entityId,
+      sender: senderAddress,
+      withdrawer: withdrawalAddress,
+      amount: addedAmount
+    }
+  );
+
+  // Check user's total amount
+  await checkUserTotalAmount({
+    depositsContract,
+    collectorAddress,
+    entityId,
+    senderAddress,
+    withdrawalAddress,
+    expectedAmount: totalAmount
+  });
+}
+
+async function checkDepositCanceled({
+  transaction,
+  depositsContract,
+  collectorAddress,
+  entityId,
+  senderAddress,
+  withdrawalAddress,
+  canceledAmount,
+  totalAmount
+}) {
+  // Check event log
+  await expectEvent.inTransaction(
+    transaction,
+    depositsContract,
+    'DepositCanceled',
+    {
+      collector: collectorAddress,
+      entityId,
+      sender: senderAddress,
+      withdrawer: withdrawalAddress,
+      amount: canceledAmount
+    }
+  );
+
+  // Check user's total amount
+  await checkUserTotalAmount({
+    depositsContract,
+    collectorAddress,
+    entityId,
+    senderAddress,
+    withdrawalAddress,
+    expectedAmount: totalAmount
+  });
+}
+
 async function checkValidatorRegistered({
+  vrc,
   transaction,
   pubKey,
   entityId,
   signature,
+  collectorAddress,
   validatorsRegistry,
   maintainerFee = new BN(initialSettings.maintainerFee),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount)
 }) {
   // Check VRC record created
-  let vrc = await getVRC();
   await expectEvent.inTransaction(transaction, vrc, 'DepositEvent', {
     pubkey: pubKey,
     withdrawal_credentials: withdrawalCredentials,
@@ -70,6 +157,10 @@ async function checkValidatorRegistered({
     signature: signature
   });
 
+  let collectorEntityId = await getCollectorEntityId(
+    collectorAddress,
+    entityId
+  );
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
     transaction,
@@ -77,7 +168,7 @@ async function checkValidatorRegistered({
     'ValidatorRegistered',
     {
       pubKey: pubKey,
-      entityId: entityId,
+      collectorEntityId,
       withdrawalCredentials,
       depositAmount: validatorDepositAmount,
       maintainerFee
@@ -90,15 +181,17 @@ async function checkValidatorRegistered({
   );
   expect(validator.depositAmount).to.be.bignumber.equal(validatorDepositAmount);
   expect(validator.maintainerFee).to.be.bignumber.equal(maintainerFee);
-  expect(validator.entityId).to.be.equal(entityId);
+  expect(validator.collectorEntityId).to.be.equal(collectorEntityId);
 }
 
 module.exports = {
-  POOLS_ENTITY_PREFIX,
   checkCollectorBalance,
   checkValidatorRegistered,
   removeNetworkFile,
   getDepositAmount,
   getUserId,
-  getEntityId
+  getCollectorEntityId,
+  checkUserTotalAmount,
+  checkDepositAdded,
+  checkDepositCanceled
 };

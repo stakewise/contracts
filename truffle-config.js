@@ -15,7 +15,7 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: '0.5.11'
+      version: '0.5.12'
     }
   },
   mocha: {

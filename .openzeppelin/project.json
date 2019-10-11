@@ -19,6 +19,6 @@
     "compilerSettings": {
       "optimizer": {}
     },
-    "solcVersion": "0.5.11"
+    "solcVersion": "0.5.12"
   }
 }
