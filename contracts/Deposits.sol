@@ -18,8 +18,8 @@ contract Deposits is Initializable {
 
     /**
     * Event for tracking added deposits.
-    * @param collector - an address of the collector deposit was received from.
-    * @param entityId - an ID of the entity the deposit was collected in.
+    * @param collector - an address of the collector, the deposit was received from.
+    * @param entityId - an ID of the entity, the deposit was collected in.
     * @param sender - an account which has sent the deposit.
     * @param withdrawer - an account where deposit + rewards will be sent after withdrawal.
     * @param amount - amount deposited (in Wei).
@@ -34,8 +34,8 @@ contract Deposits is Initializable {
 
     /**
     * Event for tracking canceled deposits.
-    * @param collector - an address of the collector deposit cancel was received from.
-    * @param entityId - an ID of the entity the deposit was collected in.
+    * @param collector - an address of the collector, the deposit cancel was received from.
+    * @param entityId - an ID of the entity, the deposit was collected in.
     * @param sender - an account which has sent the deposit.
     * @param withdrawer - an account where canceled deposit will be sent.
     * @param amount - amount canceled (in Wei).
@@ -58,7 +58,7 @@ contract Deposits is Initializable {
 
     /**
     * Function for adding deposit.
-    * @param _entityId - the ID of the collector's entity deposit belongs to.
+    * @param _entityId - the ID of the collector's entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount deposited.
@@ -82,7 +82,7 @@ contract Deposits is Initializable {
 
     /**
     * Function for canceling deposit.
-    * @param _entityId - the ID of the collector's entity deposit belongs to.
+    * @param _entityId - the ID of the collector's entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount canceled.
