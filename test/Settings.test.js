@@ -4,7 +4,7 @@ const {
   ether,
   expectEvent,
   expectRevert
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const { deployAdminsProxy } = require('../deployments/access');
 const {
   deploySettingsProxy,
@@ -72,10 +72,10 @@ contract('Settings', ([_, admin, anyone]) => {
     for (const [setting, newValue] of newValues) {
       await assertEqual(await settings[setting](), initialSettings[setting]);
       const setMethod = getSetMethod(setting);
-      const { logs } = await settings[setMethod](newValue, {
+      const receipt = await settings[setMethod](newValue, {
         from: admin
       });
-      expectEvent.inLogs(logs, 'SettingChanged', {
+      expectEvent(receipt, 'SettingChanged', {
         settingName: web3.utils.fromAscii(setting).padEnd(66, '0')
       });
       assertEqual(await settings[setting](), newValue);

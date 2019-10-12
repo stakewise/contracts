@@ -3,7 +3,7 @@ const {
   constants,
   expectEvent,
   expectRevert
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
   deployOperatorsProxy
@@ -42,8 +42,8 @@ contract('Operators', ([_, admin, operator, anotherOperator, anyone]) => {
 
   describe('assigning', () => {
     it('admin can assign operator role to another account', async () => {
-      const { logs } = await operators.addOperator(operator, { from: admin });
-      expectEvent.inLogs(logs, 'OperatorAdded', {
+      const receipt = await operators.addOperator(operator, { from: admin });
+      expectEvent(receipt, 'OperatorAdded', {
         account: operator,
         issuer: admin
       });
@@ -122,10 +122,10 @@ contract('Operators', ([_, admin, operator, anotherOperator, anyone]) => {
     });
 
     it('admins can remove operators', async () => {
-      const { logs } = await operators.removeOperator(operator, {
+      const receipt = await operators.removeOperator(operator, {
         from: admin
       });
-      expectEvent.inLogs(logs, 'OperatorRemoved', {
+      expectEvent(receipt, 'OperatorRemoved', {
         account: operator,
         issuer: admin
       });

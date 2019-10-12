@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity 0.5.12;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -16,11 +16,11 @@ contract BaseCollector is Initializable {
     // Tracks accumulated contract ether.
     uint256 public totalSupply;
 
-    // The counter of the last entity which hasn't accumulated validator deposit amount.
-    uint256 public entityCounter;
+    // The ID of the next entity which has to accumulate validator deposit amount.
+    uint256 public nextEntityId;
 
-    // List of entity IDs (prefix + entityCounter) which are ready to be regsitered as Validators.
-    bytes32[] internal readyEntities;
+    // List of entity IDs which are ready to be registered as validators.
+    uint256[] internal readyEntities;
 
     // Address of the Deposits contract.
     Deposits internal deposits;
@@ -60,7 +60,7 @@ contract BaseCollector is Initializable {
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validatorsRegistry = _validatorsRegistry;
-        entityCounter = 1;
+        nextEntityId = 1;
     }
 
     /**
@@ -72,7 +72,7 @@ contract BaseCollector is Initializable {
         require(readyEntities.length > 0, "There are no ready entities.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        bytes32 entityId = readyEntities[readyEntities.length - 1];
+        uint256 entityId = readyEntities[readyEntities.length - 1];
         readyEntities.pop();
 
         validatorsRegistry.register(_pubKey, entityId);

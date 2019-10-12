@@ -1,4 +1,4 @@
-const { expectRevert, ether } = require('openzeppelin-test-helpers');
+const { expectRevert, ether } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../deployments');
 const {
   getNetworkConfig,
@@ -18,14 +18,14 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    let vrc = await deployVRC({ from: admin });
     let {
       deposits: depositsProxy,
       operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.address
+      vrc: vrc.options.address
     });
     deposits = await Deposits.at(depositsProxy);
     let operators = await Operators.at(operatorsProxy);
@@ -36,16 +36,12 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
     removeNetworkFile(networkConfig.network);
   });
 
-  it('only collectors can increase deposit amounts', async () => {
+  it('only collectors can add deposits', async () => {
     for (let i = 0; i < users.length; i++) {
       await expectRevert(
-        deposits.increaseAmount(
-          web3.utils.soliditySha3('randomUserId'),
-          ether('3'),
-          {
-            from: users[i]
-          }
-        ),
+        deposits.addDeposit(1, users[i], users[i], ether('3'), {
+          from: users[i]
+        }),
         'Permission denied.'
       );
     }
@@ -54,13 +50,9 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
   it('only collectors can decrease deposit amounts', async () => {
     for (let i = 0; i < users.length; i++) {
       await expectRevert(
-        deposits.decreaseAmount(
-          web3.utils.soliditySha3('randomUserId'),
-          ether('3'),
-          {
-            from: users[i]
-          }
-        ),
+        deposits.cancelDeposit(1, users[i], users[i], ether('3'), {
+          from: users[i]
+        }),
         'Permission denied.'
       );
     }

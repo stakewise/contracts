@@ -1,4 +1,4 @@
-const { expectRevert } = require('openzeppelin-test-helpers');
+const { expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../deployments');
 const {
   getNetworkConfig,
@@ -18,14 +18,14 @@ contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    let vrc = await deployVRC(admin);
+    let vrc = await deployVRC({ from: admin });
     let {
       validatorsRegistry: validatorsRegistryProxy,
       operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.address
+      vrc: vrc.options.address
     });
     validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
     let operators = await Operators.at(operatorsProxy);

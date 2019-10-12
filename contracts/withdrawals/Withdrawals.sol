@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity 0.5.12;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -157,8 +157,8 @@ contract Withdrawals is Initializable {
         bytes32 userId = keccak256(abi.encodePacked(validator, msg.sender, _withdrawer));
         require(!withdrawnUsers[userId], "The withdrawal has already been performed.");
 
-        (, , bytes32 entityId) = validatorsRegistry.validators(validator);
-        uint256 userDeposit = deposits.amounts(keccak256(abi.encodePacked(entityId, msg.sender, _withdrawer)));
+        (, , bytes32 collectorEntityId) = validatorsRegistry.validators(validator);
+        uint256 userDeposit = deposits.amounts(keccak256(abi.encodePacked(collectorEntityId, msg.sender, _withdrawer)));
         require(userDeposit > 0, "User does not have a share in this wallet.");
 
         uint256 penalty = validatorPenalties[validator];

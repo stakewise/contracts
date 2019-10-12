@@ -2,11 +2,10 @@ const { expect } = require('chai');
 const {
   BN,
   ether,
-  expectEvent,
   expectRevert,
   constants,
   balance
-} = require('openzeppelin-test-helpers');
+} = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -15,12 +14,11 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
-  POOLS_ENTITY_PREFIX,
   getDepositAmount,
-  getUserId,
-  getEntityId,
   removeNetworkFile,
-  checkCollectorBalance
+  checkUserTotalAmount,
+  checkCollectorBalance,
+  checkDepositCanceled
 } = require('../utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -40,7 +38,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC(admin);
+    vrc = await deployVRC({ from: admin });
   });
 
   after(() => {
@@ -49,7 +47,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   beforeEach(async () => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
-      { initialAdmin: admin, networkConfig, vrc: vrc.address }
+      { initialAdmin: admin, networkConfig, vrc: vrc.options.address }
     );
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
@@ -77,6 +75,14 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       pools.cancelDeposit(withdrawer1, ether('0'), { from: sender1 }),
       'Cancel amount cannot be zero.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: amount1,
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1
+    });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
@@ -87,6 +93,14 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       }),
       'User does not have specified cancel amount.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: amount1,
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1
+    });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
@@ -97,6 +111,14 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       }),
       'Invalid cancel amount unit.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: amount1,
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1
+    });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
@@ -105,6 +127,14 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       pools.cancelDeposit(withdrawer2, ether('1'), { from: sender1 }),
       'User does not have specified cancel amount.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: amount2,
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender2,
+      withdrawalAddress: withdrawer2
+    });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
@@ -130,6 +160,14 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       }),
       'User does not have specified cancel amount.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: validatorDepositAmount.sub(amount2),
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1
+    });
     await checkCollectorBalance(pools, poolsBalance.add(cancelAmount));
   });
 
@@ -141,25 +179,32 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       }),
       'Invalid cancel amount unit.'
     );
+    await checkUserTotalAmount({
+      depositsContract: deposits,
+      expectedAmount: amount1,
+      entityId: new BN(1),
+      collectorAddress: pools.address,
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1
+    });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
   it('cancels deposit in full amount', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
-    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
-    const { logs } = await pools.cancelDeposit(withdrawer1, amount1, {
+    const { tx } = await pools.cancelDeposit(withdrawer1, amount1, {
       from: sender1
     });
-    expectEvent.inLogs(logs, 'DepositCanceled', {
-      poolId: poolId,
-      sender: sender1,
-      withdrawer: withdrawer1,
-      amount: amount1
+    await checkDepositCanceled({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(1),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      canceledAmount: amount1,
+      totalAmount: ether('0')
     });
-
-    // Check deposit was removed from the active pool
-    const userId = getUserId(poolId, sender1, withdrawer1);
-    expect(await deposits.amounts(userId)).to.be.bignumber.equal('0');
 
     // Check withdrawer balance changed
     expect(await withdrawerBalance.delta()).to.be.bignumber.equal(amount1);
@@ -171,22 +216,19 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   it('cancels deposit in partial amount', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
     const cancelAmount = amount1.sub(userDepositMinUnit);
-    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 1);
-    const { logs } = await pools.cancelDeposit(withdrawer1, cancelAmount, {
+    const { tx } = await pools.cancelDeposit(withdrawer1, cancelAmount, {
       from: sender1
     });
-    expectEvent.inLogs(logs, 'DepositCanceled', {
-      poolId: poolId,
-      sender: sender1,
-      withdrawer: withdrawer1,
-      amount: cancelAmount
+    await checkDepositCanceled({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(1),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      canceledAmount: cancelAmount,
+      totalAmount: amount1.sub(cancelAmount)
     });
-
-    // Check deposit size was reduced in the active pool
-    const userId = getUserId(poolId, sender1, withdrawer1);
-    expect(await deposits.amounts(userId)).to.be.bignumber.equal(
-      amount1.sub(cancelAmount)
-    );
 
     // Check withdrawer balance changed
     expect(await withdrawerBalance.delta()).to.be.bignumber.equal(cancelAmount);
@@ -197,7 +239,6 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   it('cancels deposit partially moved to the next pool', async () => {
     const withdrawerBalance = await balance.tracker(withdrawer1);
-    const poolId = getEntityId(POOLS_ENTITY_PREFIX, 2);
     await pools.addDeposit(withdrawer1, {
       from: sender1,
       value: validatorDepositAmount
@@ -206,19 +247,19 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     const cancelAmount = validatorDepositAmount.sub(
       validatorDepositAmount.sub(poolsBalance)
     );
-    const { logs } = await pools.cancelDeposit(withdrawer1, cancelAmount, {
+    const { tx } = await pools.cancelDeposit(withdrawer1, cancelAmount, {
       from: sender1
     });
-    expectEvent.inLogs(logs, 'DepositCanceled', {
-      poolId: poolId,
-      sender: sender1,
-      withdrawer: withdrawer1,
-      amount: cancelAmount
+    await checkDepositCanceled({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(2),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      canceledAmount: cancelAmount,
+      totalAmount: new BN(0)
     });
-
-    // Check deposit size was reduced in the second pool
-    const userId = getUserId(poolId, sender1, withdrawer1);
-    expect(await deposits.amounts(userId)).to.be.bignumber.equal('0');
 
     // Check withdrawer balance changed
     expect(await withdrawerBalance.delta()).to.be.bignumber.equal(cancelAmount);
