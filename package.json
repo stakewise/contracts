@@ -41,6 +41,7 @@
     "url": "https://github.com/stakewise/shared-validator/issues"
   },
   "devDependencies": {
+    "@codechecks/client": "^0.1.10",
     "@openzeppelin/test-helpers": "^0.5.1",
     "chai": "^4.2.0",
     "eslint": "^6.5.1",
