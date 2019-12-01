@@ -21,7 +21,9 @@ const newValues = [
   ['validatorDepositAmount', ether('30')],
   ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
-  ['maintainerFee', new BN(100)]
+  ['maintainerFee', new BN(100)],
+  ['poolStakingDuration', '31556952'],
+  ['poolDepositsPaused', true]
 ];
 
 function getSetMethod(setting) {

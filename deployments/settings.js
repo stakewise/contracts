@@ -8,7 +8,9 @@ const initialSettings = {
   maintainerFee: '523', // 5.23%,
   maintainer: '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439',
   withdrawalCredentials:
-    '0x2222222222222222222222222222222222222222222222222222222222222222'
+    '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4',
+  poolStakingDuration: '86400',
+  poolDepositsPaused: false
 };
 
 async function deploySettingsProxy({ networkConfig, adminsProxy }) {
@@ -17,7 +19,9 @@ async function deploySettingsProxy({ networkConfig, adminsProxy }) {
     methodName: 'initialize',
     methodArgs: [
       initialSettings.maintainer,
+      initialSettings.poolDepositsPaused,
       initialSettings.maintainerFee,
+      initialSettings.poolStakingDuration,
       initialSettings.userDepositMinUnit,
       initialSettings.validatorDepositAmount,
       initialSettings.withdrawalCredentials,
