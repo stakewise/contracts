@@ -1,61 +1,37 @@
-const { scripts, files } = require('@openzeppelin/cli');
-const { encodeCall } = require('@openzeppelin/upgrades');
+const { scripts } = require('@openzeppelin/cli');
 const { log } = require('./common');
 
-function getWalletCreationParameters({ withdrawalsProxy, networkConfig }) {
-  const networkFile = new files.NetworkFile(
-    new files.ProjectFile(),
-    networkConfig.network
-  );
-
-  const proxyAdmin = networkFile.proxyAdminAddress;
-  const creationData = encodeCall(
-    'initialize',
-    ['address'],
-    [withdrawalsProxy]
-  );
-  const implementation = networkFile.contracts.Wallet.address;
-
-  return [proxyAdmin, implementation, creationData];
-}
-
-async function deployWalletsManagerProxy({
+async function deployWalletsRegistryProxy({
   adminsProxy,
+  walletsManagersProxy,
   validatorsRegistryProxy,
   withdrawalsProxy,
   salt,
   networkConfig
 }) {
-  const [
-    proxyAdmin,
-    walletImplementation,
-    walletCreationData
-  ] = getWalletCreationParameters({ withdrawalsProxy, networkConfig });
   const proxy = await scripts.create({
-    contractAlias: 'WalletsManager',
+    contractAlias: 'WalletsRegistry',
     methodName: 'initialize',
     methodArgs: [
       adminsProxy,
+      walletsManagersProxy,
       validatorsRegistryProxy,
-      withdrawalsProxy,
-      proxyAdmin,
-      walletImplementation,
-      walletCreationData
+      withdrawalsProxy
     ],
     salt,
     ...networkConfig
   });
 
-  log(`Wallets Manager contract: ${proxy.address}`);
+  log(`Wallets Registry contract: ${proxy.address}`);
   return proxy.address;
 }
 
 async function deployWithdrawalsProxy({
-  adminsProxy,
+  walletsManagersProxy,
   depositsProxy,
   settingsProxy,
   validatorsRegistryProxy,
-  walletsManagerProxy,
+  walletsRegistryProxy,
   salt,
   networkConfig
 }) {
@@ -63,11 +39,11 @@ async function deployWithdrawalsProxy({
     contractAlias: 'Withdrawals',
     methodName: 'initialize',
     methodArgs: [
-      adminsProxy,
+      walletsManagersProxy,
       depositsProxy,
       settingsProxy,
       validatorsRegistryProxy,
-      walletsManagerProxy
+      walletsRegistryProxy
     ],
     salt,
     ...networkConfig
@@ -78,6 +54,6 @@ async function deployWithdrawalsProxy({
 }
 
 module.exports = {
-  deployWalletsManagerProxy,
+  deployWalletsRegistryProxy,
   deployWithdrawalsProxy
 };

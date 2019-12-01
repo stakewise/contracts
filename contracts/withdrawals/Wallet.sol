@@ -1,6 +1,5 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Withdrawals.sol";
 
 /**
@@ -8,7 +7,7 @@ import "./Withdrawals.sol";
  * Wallet contract is used by Ethereum network to send deposits and rewards to.
  * The withdrawals can only be performed from the Withdrawals contract.
  */
-contract Wallet is Initializable {
+contract Wallet {
     // Address of the Withdrawals contract.
     Withdrawals private withdrawals;
 
@@ -17,16 +16,13 @@ contract Wallet is Initializable {
     * @param sender - an address of the transfer sender.
     * @param amount - an amount transferred.
     */
-    event EtherAdded(
-        address indexed sender,
-        uint256 amount
-    );
+    event EtherAdded(address indexed sender, uint256 amount);
 
     /**
     * Constructor for initializing the Wallet contract.
     * @param _withdrawals - Address of the Withdrawals contract.
     */
-    function initialize(Withdrawals _withdrawals) public initializer {
+    constructor(Withdrawals _withdrawals) public {
         withdrawals = _withdrawals;
     }
 
