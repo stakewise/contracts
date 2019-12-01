@@ -1,4 +1,4 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -46,7 +46,8 @@ contract Pools is BaseCollector {
     * User must transfer ether amount together with calling the function.
     * The amount will be added to the unfilled pool.
     * If the transferred amount makes the current pool exceed `settings.validatorDepositAmount`,
-    * it will be split between the current pool and the next one.
+    * it will be split between the current pool and the next one. If `settings.poolDepositsPaused`
+    * is set to `true`, the maximum deposit size is the amount required to send current pool for staking.
     * @param _withdrawer - an account where deposit + rewards will be sent after withdrawal.
     */
     function addDeposit(address _withdrawer) external payable {
@@ -54,9 +55,17 @@ contract Pools is BaseCollector {
         require(msg.value > 0, "Deposit amount cannot be zero.");
         require(msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount unit.");
 
+        uint256 validatorTargetAmount = settings.validatorDepositAmount();
+        require(
+            !settings.poolDepositsPaused() ||
+            (
+                totalSupply % validatorTargetAmount != 0 &&
+                msg.value <= validatorTargetAmount - (totalSupply % validatorTargetAmount)
+            ),
+            "Deposit amount cannot be larger than required to finish current pool."
+        );
         uint256 toCollect;
         uint256 toProcess = msg.value;
-        uint256 validatorTargetAmount = settings.validatorDepositAmount();
         do {
             toCollect = validatorTargetAmount - (totalSupply % validatorTargetAmount);
             if (toProcess >= toCollect) {

@@ -20,6 +20,7 @@ const {
 
 const Deposits = artifacts.require('Deposits');
 const Pools = artifacts.require('Pools');
+const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
@@ -40,14 +41,21 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   });
 
   beforeEach(async () => {
-    let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
-      { initialAdmin: admin, networkConfig, vrc: vrc.options.address }
-    );
+    let {
+      deposits: depositsProxy,
+      pools: poolsProxy,
+      settings: settingsProxy
+    } = await deployAllProxies({
+      initialAdmin: admin,
+      networkConfig,
+      vrc: vrc.options.address
+    });
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
+    settings = await Settings.at(settingsProxy);
   });
 
-  it('fails to add a deposit with zero withdraw address', async () => {
+  it('fails to add a deposit with zero withdrawal address', async () => {
     await expectRevert(
       pools.addDeposit(constants.ZERO_ADDRESS, {
         from: sender1
@@ -72,7 +80,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     await expectRevert(
       pools.addDeposit(withdrawer1, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
+        value: new BN(initialSettings.userDepositMinUnit).sub(new BN(1))
       }),
       'Invalid deposit amount unit.'
     );
@@ -291,5 +299,118 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       // Check contract balance
       await checkCollectorBalance(pools, balance1.add(balance2));
     }
+  });
+
+  it('fails to add paused empty pool deposit', async () => {
+    await settings.setPoolDepositsPaused(true, {
+      from: admin
+    });
+    expect(await settings.poolDepositsPaused()).equal(true);
+
+    await expectRevert(
+      pools.addDeposit(withdrawer1, {
+        from: sender1,
+        value: ether('1')
+      }),
+      'Deposit amount cannot be larger than required to finish current pool.'
+    );
+    await checkCollectorBalance(pools, new BN(0));
+  });
+
+  it('fails to add paused pool deposit with amount bigger than required to finish round', async () => {
+    const depositAmount = getDepositAmount({
+      max: validatorDepositAmount
+    });
+    // Send a deposit
+    const { tx } = await pools.addDeposit(withdrawer1, {
+      from: sender1,
+      value: depositAmount
+    });
+
+    // Check deposit added to Deposits contract
+    await checkDepositAdded({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(1),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      addedAmount: depositAmount,
+      totalAmount: depositAmount
+    });
+
+    // Check pools balance
+    await checkCollectorBalance(pools, depositAmount);
+
+    // Pause pool deposits
+    await settings.setPoolDepositsPaused(true, {
+      from: admin
+    });
+    expect(await settings.poolDepositsPaused()).equal(true);
+
+    // Add deposit bigger than required to finish current round
+    await expectRevert(
+      pools.addDeposit(withdrawer1, {
+        from: sender1,
+        value: initialSettings.validatorDepositAmount
+      }),
+      'Deposit amount cannot be larger than required to finish current pool.'
+    );
+    await checkCollectorBalance(pools, depositAmount);
+  });
+
+  it('adds paused pool deposit with amount required to finish current round', async () => {
+    let tx;
+    let depositAmount = getDepositAmount({
+      max: validatorDepositAmount.div(new BN(2))
+    });
+    // Send a deposit
+    ({ tx } = await pools.addDeposit(withdrawer1, {
+      from: sender1,
+      value: depositAmount
+    }));
+
+    // Check deposit added to Deposits contract
+    await checkDepositAdded({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(1),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      addedAmount: depositAmount,
+      totalAmount: depositAmount
+    });
+
+    // Check pools balance
+    await checkCollectorBalance(pools, depositAmount);
+
+    // Pause pool deposits
+    await settings.setPoolDepositsPaused(true, {
+      from: admin
+    });
+    expect(await settings.poolDepositsPaused()).equal(true);
+
+    // Add deposit with amount required to finish current round
+    depositAmount = new BN(initialSettings.validatorDepositAmount).sub(
+      depositAmount
+    );
+    ({ tx } = await pools.addDeposit(withdrawer1, {
+      from: sender1,
+      value: depositAmount
+    }));
+
+    // Check deposit added to Deposits contract
+    await checkDepositAdded({
+      transaction: tx,
+      depositsContract: deposits,
+      collectorAddress: pools.address,
+      entityId: new BN(1),
+      senderAddress: sender1,
+      withdrawalAddress: withdrawer1,
+      addedAmount: depositAmount,
+      totalAmount: initialSettings.validatorDepositAmount
+    });
+    await checkCollectorBalance(pools, initialSettings.validatorDepositAmount);
   });
 });
