@@ -42,24 +42,24 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.10",
-    "@openzeppelin/test-helpers": "^0.5.1",
+    "@openzeppelin/test-helpers": "^0.5.4",
     "chai": "^4.2.0",
-    "eslint": "^6.5.1",
-    "eslint-config-prettier": "^6.4.0",
+    "eslint": "^6.7.2",
+    "eslint-config-prettier": "^6.7.0",
     "eslint-plugin-prettier": "^3.1.1",
     "eth-gas-reporter": "^0.2.12",
     "ganache-cli": "^6.7.0",
-    "husky": "^3.0.8",
-    "lint-staged": "^9.4.2",
-    "prettier": "^1.18.2",
+    "husky": "^3.1.0",
+    "lint-staged": "^9.5.0",
+    "prettier": "^1.19.1",
     "solhint": "^2.3.0",
     "solidity-coverage": "^0.6.7",
-    "truffle": "^5.0.39"
+    "truffle": "^5.1.2"
   },
   "dependencies": {
-    "@openzeppelin/cli": "^2.5.3",
-    "@openzeppelin/contracts": "^2.3.0",
-    "@openzeppelin/upgrades": "^2.5.3",
+    "@openzeppelin/cli": "^2.6.0",
+    "@openzeppelin/contracts": "^2.4.0",
+    "@openzeppelin/upgrades": "^2.6.0",
     "truffle-hdwallet-provider": "^1.0.17"
   }
 }
