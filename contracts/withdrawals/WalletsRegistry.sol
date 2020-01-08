@@ -15,7 +15,7 @@ import "./Withdrawals.sol";
  */
 contract WalletsRegistry is Initializable {
     /**
-    * Structure to store information about the wallet.
+    * Structure to store information about the wallet assignment.
     * @param unlocked - indicates whether users can withdraw from the wallet.
     * @param validator - the validator wallet is attached to.
     */

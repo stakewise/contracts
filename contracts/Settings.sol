@@ -42,7 +42,7 @@ contract Settings is Initializable {
     /**
     * Constructor for initializing the Settings contract.
     * @param _maintainer - An address of the maintainer, where the fee is paid.
-    * @param _poolDepositsPaused - Defines whether to reject new pool deposits.
+    * @param _poolDepositsPaused - Defines whether to reject new round deposits.
     * @param _maintainerFee - A percentage fee for using the service.
     * @param _poolStakingDuration - The Pools collector staking duration (in seconds).
     * @param _userDepositMinUnit - The minimal unit (wei, gwei, etc.) deposit can have.

@@ -80,7 +80,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     await expectRevert(
       pools.addDeposit(withdrawer1, {
         from: sender1,
-        value: new BN(initialSettings.userDepositMinUnit).sub(new BN(1))
+        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
       }),
       'Invalid deposit amount unit.'
     );
@@ -301,7 +301,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     }
   });
 
-  it('fails to add paused empty pool deposit', async () => {
+  it('fails to add a deposit to paused empty pool', async () => {
     await settings.setPoolDepositsPaused(true, {
       from: admin
     });
@@ -317,7 +317,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     await checkCollectorBalance(pools, new BN(0));
   });
 
-  it('fails to add paused pool deposit with amount bigger than required to finish round', async () => {
+  it('fails to add a deposit to paused pool with amount bigger than required to finish round', async () => {
     const depositAmount = getDepositAmount({
       max: validatorDepositAmount
     });
@@ -359,7 +359,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     await checkCollectorBalance(pools, depositAmount);
   });
 
-  it('adds paused pool deposit with amount required to finish current round', async () => {
+  it('adds a deposit to paused pool with amount required to finish current round', async () => {
     let tx;
     let depositAmount = getDepositAmount({
       max: validatorDepositAmount.div(new BN(2))
