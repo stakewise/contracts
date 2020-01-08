@@ -45,7 +45,14 @@ A decentralized application which allows multiple accounts to share the same Eth
    };
    ```
 
-4. Deploy contracts to the selected network:
+4. If you are deploying to the network without `VRC`, run the following commands:
+
+   ```shell script
+   npm install
+   node_modules/.bin/truffle exec scripts/deployVRC.js --network ropsten
+   ```
+
+5. Deploy contracts to the selected network:
 
    ```shell script
    NETWORK=ropsten INITIAL_ADMIN=<address> VRC=<address> npm run deploy
@@ -54,7 +61,6 @@ A decentralized application which allows multiple accounts to share the same Eth
    where `NETWORK` is the name of the network from `truffle-config.js`,
    `INITIAL_ADMIN` is the first account capable of calling functions restricted only to admins (see [Admins contract](./contracts/access/Admins.sol)),
    `VRC` is the address of Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract).
-   If you are deploying to the test network without `VRC`, you can first call `npm install && npm run deploy-vrc`.
 
    The network file will be created at `.openzeppelin` directory.
 
