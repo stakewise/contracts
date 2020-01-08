@@ -1,4 +1,4 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -23,14 +23,14 @@ contract Operators is Initializable {
     * @param account - An address of the account which was assigned an operator role.
     * @param issuer - An address of the account which assigned an operator role.
     */
-    event OperatorAdded(address indexed account, address indexed issuer);
+    event OperatorAdded(address account, address indexed issuer);
 
     /**
     * Event for tracking removed operators.
     * @param account - An address of the account which was removed an operator role.
     * @param issuer - An address of the account which removed an operator role.
     */
-    event OperatorRemoved(address indexed account, address indexed issuer);
+    event OperatorRemoved(address account, address indexed issuer);
 
     /**
     * Constructor for initializing the Operators contract.
@@ -50,7 +50,7 @@ contract Operators is Initializable {
 
     /**
     * Function for adding an operator role to the account.
-    * Can only be called by an admin account.
+    * Can only be called by an account with an admin role.
     * @param account - the account to assign an operator role to.
     */
     function addOperator(address account) external {
@@ -61,7 +61,7 @@ contract Operators is Initializable {
 
     /**
     * Function for removing an operator role from the account.
-    * Can only be called by an admin account.
+    * Can only be called by an account with an admin role.
     * @param account - the account to remove an operator role from.
     */
     function removeOperator(address account) external {

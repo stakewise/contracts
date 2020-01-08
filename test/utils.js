@@ -3,7 +3,9 @@ const { expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../deployments/settings');
+const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
+const Pools = artifacts.require('Pools');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 function getDepositAmount({
@@ -184,7 +186,41 @@ async function checkValidatorRegistered({
   expect(validator.collectorEntityId).to.be.equal(collectorEntityId);
 }
 
+async function createValidator({
+  args = validatorRegistrationArgs[0],
+  hasReadyPool = false,
+  poolsProxy,
+  operator,
+  sender,
+  withdrawer
+}) {
+  // Genrate random public key
+  let pools = await Pools.at(poolsProxy);
+
+  if (!hasReadyPool) {
+    // Create new ready pool
+    await pools.addDeposit(withdrawer, {
+      from: sender,
+      value: initialSettings.validatorDepositAmount
+    });
+  }
+
+  // Register validator for the ready pool
+  await pools.registerValidator(
+    args.pubKey,
+    args.signature,
+    args.hashTreeRoot,
+    {
+      from: operator
+    }
+  );
+
+  return web3.utils.soliditySha3(args.pubKey);
+}
+
 module.exports = {
+  validatorRegistrationArgs,
+  createValidator,
   checkCollectorBalance,
   checkValidatorRegistered,
   removeNetworkFile,

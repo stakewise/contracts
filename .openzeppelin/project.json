@@ -3,12 +3,12 @@
   "contracts": {
     "Admins": "Admins",
     "Operators": "Operators",
+    "WalletsManagers": "WalletsManagers",
     "Settings": "Settings",
     "Pools": "Pools",
     "Deposits": "Deposits",
     "ValidatorsRegistry": "ValidatorsRegistry",
-    "Wallet": "Wallet",
-    "WalletsManager": "WalletsManager",
+    "WalletsRegistry": "WalletsRegistry",
     "Withdrawals": "Withdrawals"
   },
   "dependencies": {},
@@ -17,8 +17,12 @@
   "compiler": {
     "manager": "openzeppelin",
     "compilerSettings": {
-      "optimizer": {}
+      "optimizer": {
+        "enabled": true,
+        "runs": "10000"
+      }
     },
-    "solcVersion": "0.5.12"
-  }
+    "solcVersion": "0.5.13"
+  },
+  "telemetryOptIn": false
 }

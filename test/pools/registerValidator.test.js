@@ -9,7 +9,8 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
-  checkValidatorRegistered
+  checkValidatorRegistered,
+  validatorRegistrationArgs
 } = require('../utils');
 
 const Pools = artifacts.require('Pools');
@@ -17,10 +18,7 @@ const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-
-// Validator Registration Contract arguments
-const pubKey = web3.utils.fromAscii('\x11'.repeat(48));
-const signature = web3.utils.fromAscii('\x33'.repeat(96));
+const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 
 contract(
   'Pools',
@@ -58,7 +56,7 @@ contract(
 
     it('fails to register Validator if there are no ready pools', async () => {
       await expectRevert(
-        pools.registerValidator(pubKey, signature, {
+        pools.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'There are no ready entities.'
@@ -71,7 +69,7 @@ contract(
         value: validatorDepositAmount
       });
       await expectRevert(
-        pools.registerValidator(pubKey, signature, {
+        pools.registerValidator(pubKey, signature, hashTreeRoot, {
           from: other
         }),
         'Permission denied.'
@@ -85,7 +83,7 @@ contract(
         value: validatorDepositAmount
       });
 
-      await pools.registerValidator(pubKey, signature, {
+      await pools.registerValidator(pubKey, signature, hashTreeRoot, {
         from: operator
       });
 
@@ -95,7 +93,7 @@ contract(
         value: validatorDepositAmount
       });
       await expectRevert(
-        pools.registerValidator(pubKey, signature, {
+        pools.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'Public key has been already used.'
@@ -104,8 +102,8 @@ contract(
 
     it('succeeds to register Validators for ready pools', async () => {
       const totalAmount = new BN(0);
-      // Create 4 ready pools
-      for (let i = 0; i < 4; i++) {
+      // Create ready pools
+      for (let i = 0; i < validatorRegistrationArgs.length; i++) {
         await pools.addDeposit(withdrawer, {
           from: accounts[i],
           value: validatorDepositAmount
@@ -113,33 +111,32 @@ contract(
         totalAmount.iadd(validatorDepositAmount);
       }
 
-      // Register 4 validators
-      const pubKeys = [
-        web3.utils.fromAscii('\x12'.repeat(48)),
-        web3.utils.fromAscii('\x13'.repeat(48)),
-        web3.utils.fromAscii('\x14'.repeat(48)),
-        web3.utils.fromAscii('\x15'.repeat(48))
-      ];
-      for (let i = 0; i < 4; i++) {
-        const { tx } = await pools.registerValidator(pubKeys[i], signature, {
-          from: operator
-        });
+      // Register validators
+      for (let i = 0; i < validatorRegistrationArgs.length; i++) {
+        const { tx } = await pools.registerValidator(
+          validatorRegistrationArgs[i].pubKey,
+          validatorRegistrationArgs[i].signature,
+          validatorRegistrationArgs[i].hashTreeRoot,
+          {
+            from: operator
+          }
+        );
         totalAmount.isub(validatorDepositAmount);
 
         await checkValidatorRegistered({
           vrc,
           transaction: tx,
-          entityId: new BN(4 - i),
-          pubKey: pubKeys[i],
+          entityId: new BN(validatorRegistrationArgs.length - i),
+          pubKey: validatorRegistrationArgs[i].pubKey,
           collectorAddress: pools.address,
           validatorsRegistry: validatorsRegistry,
-          signature
+          signature: validatorRegistrationArgs[i].signature
         });
       }
 
       // Registrations are not possible anymore
       await expectRevert(
-        pools.registerValidator(pubKey, signature, {
+        pools.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'There are no ready entities.'

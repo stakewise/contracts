@@ -1,4 +1,4 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../collectors/Pools.sol";
@@ -41,7 +41,7 @@ contract ValidatorsRegistry is Initializable {
     * @param maintainerFee - Fee to pay to the maintainer after withdrawal.
     */
     event ValidatorRegistered(
-        bytes32 indexed collectorEntityId,
+        bytes32 collectorEntityId,
         uint256 depositAmount,
         uint16 maintainerFee,
         bytes pubKey,

@@ -1,18 +1,18 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../access/Admins.sol";
+import "../access/WalletsManagers.sol";
 import "../Deposits.sol";
 import "../validators/ValidatorsRegistry.sol";
 import "./Wallet.sol";
-import "./WalletsManager.sol";
+import "./WalletsRegistry.sol";
 
 /**
  * @title Withdrawals
  * Withdrawals contract is used by users to withdraw their deposits and rewards.
- * Before users will be able to withdraw, an admin user must unlock the wallet and send a fee to the maintainer.
- * This is done by calling `enableWithdrawals` function.
+ * Before users will be able to withdraw, a user with wallets manager role must unlock the wallet and
+ * send a fee to the maintainer. This is done by calling `enableWithdrawals` function.
  */
 contract Withdrawals is Initializable {
     using SafeMath for uint256;
@@ -27,8 +27,8 @@ contract Withdrawals is Initializable {
     // Tracks penalties (if there are such) for validators.
     mapping(bytes32 => uint256) public validatorPenalties;
 
-    // Address of the Admins contract.
-    Admins private admins;
+    // Address of the WalletsManagers contract.
+    WalletsManagers private walletsManagers;
 
     // Address of the Deposits contract.
     Deposits private deposits;
@@ -39,28 +39,18 @@ contract Withdrawals is Initializable {
     // Address of the ValidatorsRegistry contract.
     ValidatorsRegistry private validatorsRegistry;
 
-    // Address of the WalletsManager contract.
-    WalletsManager private walletsManager;
-
-    /**
-    * Event for indicating whether users can start withdrawing from the wallet.
-    * @param wallet - an address of the Wallet contract.
-    * @param penalty - shows the penalty (if there is such) received by the validator.
-    */
-    event WithdrawalsEnabled(
-        address indexed wallet,
-        uint256 penalty
-    );
+    // Address of the WalletsRegistry contract.
+    WalletsRegistry private walletsRegistry;
 
     /**
     * Event for tracking fees paid to the maintainer.
     * @param maintainer - an address of the maintainer.
-    * @param validator - an ID of the validator the fee is paid for.
+    * @param wallet - an address of the wallet the fee was payed from.
     * @param amount - fee transferred to the maintainer's address.
     */
     event MaintainerWithdrawn(
-        address indexed maintainer,
-        bytes32 indexed validator,
+        address maintainer,
+        address wallet,
         uint256 amount
     );
 
@@ -68,55 +58,57 @@ contract Withdrawals is Initializable {
     * Event for tracking user withdrawals.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
+    * @param wallet - an address of the wallet contract.
     * @param deposit - an amount deposited.
     * @param reward - a reward generated.
     */
     event UserWithdrawn(
-        address indexed sender,
-        address indexed withdrawer,
+        address sender,
+        address withdrawer,
+        address wallet,
         uint256 deposit,
         uint256 reward
     );
 
     /**
     * Constructor for initializing the Withdrawals contract.
-    * @param _admins - Address of the Admins contract.
+    * @param _walletsManagers - Address of the WalletsManagers contract.
     * @param _deposits - Address of the Deposits contract.
     * @param _settings - Address of the Settings contract.
     * @param _validatorsRegistry - Address of the Validators Registry contract.
-    * @param _walletsManager - Address of the Wallets Manager contract.
+    * @param _walletsRegistry - Address of the Wallets Registry contract.
     */
     function initialize(
-        Admins _admins,
+        WalletsManagers _walletsManagers,
         Deposits _deposits,
         Settings _settings,
         ValidatorsRegistry _validatorsRegistry,
-        WalletsManager _walletsManager
+        WalletsRegistry _walletsRegistry
     )
         public initializer
     {
-        admins = _admins;
+        walletsManagers = _walletsManagers;
         deposits = _deposits;
         settings = _settings;
         validatorsRegistry = _validatorsRegistry;
-        walletsManager = _walletsManager;
+        walletsRegistry = _walletsRegistry;
     }
 
     /**
     * Function for enabling withdrawals.
     * Calculates validator's penalty, sends a fee to the maintainer (if no penalty),
     * unlocks the wallet for withdrawals.
-    * Can only be called by users with an admin role.
+    * Can only be called by users with a wallets manager role.
     * @param _wallet - An address of the wallet to enable withdrawals for.
     */
     function enableWithdrawals(address payable _wallet) external {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-
-        (, bytes32 validator) = walletsManager.wallets(_wallet);
+        (, bytes32 validator) = walletsRegistry.wallets(_wallet);
         require(validator[0] != 0, "Wallet is not assigned to any validator.");
 
         (uint256 depositAmount, uint256 maintainerFee,) = validatorsRegistry.validators(validator);
         require(_wallet.balance > 0, "Wallet has no ether in it.");
+
+        require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
         uint256 penalty;
         if (_wallet.balance < depositAmount) {
@@ -127,8 +119,7 @@ contract Withdrawals is Initializable {
             validatorLeftDeposits[validator] = depositAmount;
         }
 
-        walletsManager.unlockWallet(_wallet);
-        emit WithdrawalsEnabled(_wallet, penalty);
+        walletsRegistry.unlockWallet(_wallet);
 
         // Maintainer gets a fee only in case there is a profit.
         if (_wallet.balance > depositAmount) {
@@ -136,7 +127,7 @@ contract Withdrawals is Initializable {
             uint256 maintainerReward = (totalReward.mul(maintainerFee)).div(10000);
             // don't send if reward is less than gas required to execute.
             if (maintainerReward > 25 szabo) {
-                emit MaintainerWithdrawn(settings.maintainer(), validator, maintainerReward);
+                emit MaintainerWithdrawn(settings.maintainer(), _wallet, maintainerReward);
                 Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward);
             }
         }
@@ -151,7 +142,7 @@ contract Withdrawals is Initializable {
       Must be the same as specified during the deposit.
     */
     function withdraw(address payable _wallet, address payable _withdrawer) external {
-        (bool unlocked, bytes32 validator) = walletsManager.wallets(_wallet);
+        (bool unlocked, bytes32 validator) = walletsRegistry.wallets(_wallet);
         require(unlocked, "Wallet withdrawals are not enabled.");
 
         bytes32 userId = keccak256(abi.encodePacked(validator, msg.sender, _withdrawer));
@@ -174,7 +165,7 @@ contract Withdrawals is Initializable {
         }
 
         withdrawnUsers[userId] = true;
-        emit UserWithdrawn(msg.sender, _withdrawer, userDeposit, userReward);
+        emit UserWithdrawn(msg.sender, _withdrawer, _wallet, userDeposit, userReward);
 
         Wallet(_wallet).withdraw(_withdrawer, userDeposit.add(userReward));
     }

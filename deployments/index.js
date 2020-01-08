@@ -1,14 +1,15 @@
 const { scripts } = require('@openzeppelin/cli');
 const {
   deployAdminsProxy,
-  deployOperatorsProxy
+  deployOperatorsProxy,
+  deployWalletsManagersProxy
 } = require('../deployments/access');
 const { getSalt } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
 const { deployPoolsProxy } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
-  deployWalletsManagerProxy,
+  deployWalletsRegistryProxy,
   deployWithdrawalsProxy
 } = require('../deployments/withdrawals');
 const {
@@ -16,12 +17,16 @@ const {
 } = require('../deployments/validatorsRegistry');
 
 async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
-  // Deploy admins and operators proxies
+  // Deploy admins, operators, managers proxies
   let adminsProxy = await deployAdminsProxy({
     networkConfig,
     initialAdmin
   });
   let operatorsProxy = await deployOperatorsProxy({
+    networkConfig,
+    adminsProxy
+  });
+  let walletsManagersProxy = await deployWalletsManagersProxy({
     networkConfig,
     adminsProxy
   });
@@ -91,12 +96,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     );
   }
 
-  // Calculate Wallets Manager proxy addresses via create2
-  let walletsManagerSalt = getSalt({
+  // Calculate Wallets Registry proxy addresses via create2
+  let walletsRegistrySalt = getSalt({
     excluded: [depositsSalt, validatorsRegistrySalt, poolsSalt]
   });
-  let walletsManagerCalcProxy = await scripts.queryDeployment({
-    salt: walletsManagerSalt,
+  let walletsRegistryCalcProxy = await scripts.queryDeployment({
+    salt: walletsRegistrySalt,
     ...networkConfig
   });
 
@@ -106,7 +111,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
       depositsSalt,
       validatorsRegistrySalt,
       poolsSalt,
-      walletsManagerSalt
+      walletsRegistrySalt
     ]
   });
   let withdrawalsCalcProxy = await scripts.queryDeployment({
@@ -114,28 +119,29 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     ...networkConfig
   });
 
-  // Deploy Wallets Manager proxy
-  let walletsManagerProxy = await deployWalletsManagerProxy({
+  // Deploy Wallets Registry proxy
+  let walletsRegistryProxy = await deployWalletsRegistryProxy({
     withdrawalsProxy: withdrawalsCalcProxy,
-    salt: walletsManagerSalt,
+    salt: walletsRegistrySalt,
     validatorsRegistryProxy,
     networkConfig,
-    adminsProxy
+    adminsProxy,
+    walletsManagersProxy
   });
-  if (walletsManagerProxy !== walletsManagerCalcProxy) {
+  if (walletsRegistryProxy !== walletsRegistryCalcProxy) {
     throw new Error(
-      `Wallets Manager contract actual address "${walletsManagerProxy}" does not match expected "${walletsManagerCalcProxy}"`
+      `Wallets Registry contract actual address "${walletsRegistryProxy} does not match expected "${walletsRegistryCalcProxy}"`
     );
   }
 
   // Deploy Withdrawals proxy
   let withdrawalsProxy = await deployWithdrawalsProxy({
     salt: withdrawalsSalt,
-    adminsProxy,
+    walletsManagersProxy,
     depositsProxy,
     settingsProxy,
     networkConfig,
-    walletsManagerProxy,
+    walletsRegistryProxy,
     validatorsRegistryProxy
   });
   if (withdrawalsProxy !== withdrawalsCalcProxy) {
@@ -147,11 +153,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   return {
     admins: adminsProxy,
     operators: operatorsProxy,
+    walletsManagers: walletsManagersProxy,
     settings: settingsProxy,
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,
     pools: poolsProxy,
-    walletsManager: walletsManagerProxy,
+    walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy
   };
 }

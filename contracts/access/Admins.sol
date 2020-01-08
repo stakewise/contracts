@@ -1,4 +1,4 @@
-pragma solidity 0.5.12;
+pragma solidity 0.5.13;
 
 import "@openzeppelin/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -7,7 +7,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 /**
  * @title Admins
  * Contract for adding/renouncing admin roles.
- * Admin users can change global settings, assign/remove operators, enable withdrawals.
+ * Admin users can change global settings, assign/remove operators and wallets managers.
  */
 contract Admins is Initializable {
     using Roles for Roles.Role;
@@ -19,13 +19,13 @@ contract Admins is Initializable {
     * Event for tracking added admins.
     * @param account - An address of the account which was assigned an admin role.
     */
-    event AdminAdded(address indexed account);
+    event AdminAdded(address account);
 
     /**
     * Event for tracking removed admins.
     * @param account - An address of the account which was removed an admin role.
     */
-    event AdminRemoved(address indexed account);
+    event AdminRemoved(address account);
 
     /**
     * Modifier for checking whether the caller has an admin role.
@@ -53,7 +53,7 @@ contract Admins is Initializable {
 
     /**
     * Function for assigning an admin role to the account.
-    * Can only be called by an admin account.
+    * Can only be called by an account with an admin role.
     * @param account - the account to assign an admin role to.
     */
     function addAdmin(address account) external onlyAdmin {
