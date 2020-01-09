@@ -32,7 +32,11 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   });
 
   // Deploy global settings
-  let settingsProxy = await deploySettingsProxy({ networkConfig, adminsProxy });
+  let settingsProxy = await deploySettingsProxy({
+    networkConfig,
+    adminsProxy,
+    operatorsProxy
+  });
 
   // Calculate Deposits proxy addresses via create2
   let depositsSalt = getSalt();

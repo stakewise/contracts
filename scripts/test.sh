@@ -1,13 +1,9 @@
 #!/usr/bin/env bash
-# https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.3.0/scripts/test.sh
 
 # Exit script as soon as a command fails.
 set -o errexit
 
-SOLIDITY_COVERAGE=${SOLIDITY_COVERAGE:-false}
-ONLY_GANACHE=${ONLY_GANACHE:-false}
-ACCOUNTS_NUMBER=${ACCOUNTS_NUMBER:-5000}
-ACCOUNT_BALANCE_ETHER=${ACCOUNT_BALANCE_ETHER:-1000000}
+GANACHE_PORT=${GANACHE_PORT:-8545}
 
 # Executes cleanup function at script exit.
 trap cleanup EXIT
@@ -19,54 +15,23 @@ cleanup() {
   fi
 }
 
-if [[ "$SOLIDITY_COVERAGE" = true ]]; then
-  ganache_port=8555
-else
-  ganache_port=8545
-fi
-
 ganache_running() {
-  nc -z localhost "$ganache_port"
-}
-
-start_ganache() {
-  local args=(
-    --port "$ganache_port"
-    --accounts ${ACCOUNTS_NUMBER}
-    --defaultBalanceEther ${ACCOUNT_BALANCE_ETHER}
-  )
-  if [[ "$SOLIDITY_COVERAGE" = true ]]; then
-    args+=(
-      --allowUnlimitedContractSize true
-      --gasLimit 0xfffffffffff
-    )
-    node_modules/.bin/testrpc-sc "${args[@]}" > /dev/null &
-  elif [[ "$ONLY_GANACHE" = true ]]; then
-    node_modules/.bin/ganache-cli "${args[@]}"
-    exit
-  else
-    node_modules/.bin/ganache-cli  "${args[@]}" > /dev/null &
-  fi
-
-  ganache_pid=$!
-  echo "Waiting for ganache to launch on port "${ganache_port}"..."
-  while ! ganache_running; do
-    sleep 1
-  done
-  echo "Ganache launched!"
+  nc -z localhost "${GANACHE_PORT}"
 }
 
 if ganache_running; then
   echo "Using existing ganache instance..."
 else
   echo "Starting ganache instance..."
-  start_ganache
+  node_modules/.bin/ganache-cli --port=${GANACHE_PORT} --accounts=5000 --defaultBalanceEther=1000000 > /dev/null &
+
+  ganache_pid=$!
+  echo "Waiting for ganache to launch on port "${GANACHE_PORT}"..."
+
+  while ! ganache_running; do
+    sleep 1
+  done
+  echo "Ganache launched!"
 fi
 
-node_modules/.bin/truffle version
-
-if [[ "$SOLIDITY_COVERAGE" = true ]]; then
-  NODE_ENV=test NETWORK=coverage SILENT=true node_modules/.bin/solidity-coverage "$@"
-else
-  NODE_ENV=test SILENT=true node_modules/.bin/truffle test "$@"
-fi
+NODE_ENV=test SILENT=true node_modules/.bin/truffle test "$@"

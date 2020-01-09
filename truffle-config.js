@@ -8,20 +8,19 @@ module.exports = {
     coverage: {
       host: 'localhost',
       port: 8555,
-      gas: 0xfffffffffff,
-      gasPrice: 0x01,
       network_id: '*'
     }
   },
   compilers: {
     solc: {
-      version: '0.5.13',
+      version: '0.5.15',
       optimizer: {
         enabled: true,
         runs: 10000
       }
     }
   },
+  plugins: ['solidity-coverage'],
   mocha: {
     reporter: 'eth-gas-reporter',
     currency: 'EUR'

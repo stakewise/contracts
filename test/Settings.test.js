@@ -5,7 +5,10 @@ const {
   expectEvent,
   expectRevert
 } = require('@openzeppelin/test-helpers');
-const { deployAdminsProxy } = require('../deployments/access');
+const {
+  deployAdminsProxy,
+  deployOperatorsProxy
+} = require('../deployments/access');
 const {
   deploySettingsProxy,
   initialSettings
@@ -39,9 +42,11 @@ function assertEqual(value1, value2) {
 }
 
 const Settings = artifacts.require('Settings');
+const Operators = artifacts.require('Operators');
 
-contract('Settings', ([_, admin, anyone]) => {
+contract('Settings', ([_, admin, operator, anyone]) => {
   let adminsProxy;
+  let operatorsProxy;
   let networkConfig;
   let settings;
 
@@ -52,6 +57,12 @@ contract('Settings', ([_, admin, anyone]) => {
       networkConfig,
       initialAdmin: admin
     });
+    operatorsProxy = await deployOperatorsProxy({
+      networkConfig,
+      adminsProxy
+    });
+    let operators = await Operators.at(operatorsProxy);
+    await operators.addOperator(operator, { from: admin });
   });
 
   after(() => {
@@ -60,7 +71,7 @@ contract('Settings', ([_, admin, anyone]) => {
 
   beforeEach(async () => {
     settings = await Settings.at(
-      await deploySettingsProxy({ networkConfig, adminsProxy })
+      await deploySettingsProxy({ networkConfig, adminsProxy, operatorsProxy })
     );
   });
 
@@ -92,10 +103,26 @@ contract('Settings', ([_, admin, anyone]) => {
         settings[setMethod](newValue, {
           from: anyone
         }),
-        'Only admin users can change this parameter.'
+        'Permission denied.'
       );
       assertEqual(await settings[setting](), initialSettings[setting]);
     }
+  });
+
+  it('operators can pause pool deposits', async () => {
+    const receipt = await settings.setPoolDepositsPaused(
+      !initialSettings.poolDepositsPaused,
+      {
+        from: operator
+      }
+    );
+    expectEvent(receipt, 'SettingChanged', {
+      settingName: web3.utils.fromAscii('poolDepositsPaused').padEnd(66, '0')
+    });
+    assertEqual(
+      await settings.poolDepositsPaused(),
+      !initialSettings.poolDepositsPaused
+    );
   });
 
   it('checks that pool fee is less than 100%', async () => {
