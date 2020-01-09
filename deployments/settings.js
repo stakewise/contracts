@@ -6,14 +6,18 @@ const initialSettings = {
   userDepositMinUnit: '1000000000000000',
   validatorDepositAmount: '32000000000000000000',
   maintainerFee: '523', // 5.23%,
-  maintainer: '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439',
+  maintainer: '0xCbfad58eF43Ce8E9bD571f6913b701Ba27D1D3aC',
   withdrawalCredentials:
     '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4',
   poolStakingDuration: '86400',
   poolDepositsPaused: false
 };
 
-async function deploySettingsProxy({ networkConfig, adminsProxy }) {
+async function deploySettingsProxy({
+  networkConfig,
+  adminsProxy,
+  operatorsProxy
+}) {
   const proxy = await scripts.create({
     contractAlias: 'Settings',
     methodName: 'initialize',
@@ -25,7 +29,8 @@ async function deploySettingsProxy({ networkConfig, adminsProxy }) {
       initialSettings.userDepositMinUnit,
       initialSettings.validatorDepositAmount,
       initialSettings.withdrawalCredentials,
-      adminsProxy
+      adminsProxy,
+      operatorsProxy
     ],
     ...networkConfig
   });

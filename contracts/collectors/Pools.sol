@@ -1,4 +1,4 @@
-pragma solidity 0.5.13;
+pragma solidity 0.5.15;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -97,11 +97,10 @@ contract Pools is BaseCollector {
     function cancelDeposit(address payable _withdrawer, uint256 _amount) external {
         require(_amount > 0, "Cancel amount cannot be zero.");
         require(_amount % settings.userDepositMinUnit() == 0, "Invalid cancel amount unit.");
-        require(deposits.amounts(keccak256(abi.encodePacked(
-            keccak256(abi.encodePacked(address(this), nextEntityId)),
-            msg.sender,
-            _withdrawer
-        ))) >= _amount, "User does not have specified cancel amount.");
+        require(
+            deposits.amounts(keccak256(abi.encodePacked(keccak256(abi.encodePacked(address(this), nextEntityId)), msg.sender, _withdrawer))) >= _amount,
+            "User does not have specified cancel amount."
+        );
 
         deposits.cancelDeposit(nextEntityId, msg.sender, _withdrawer, _amount);
         totalSupply -= _amount;

@@ -1,7 +1,8 @@
-pragma solidity 0.5.13;
+pragma solidity 0.5.15;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./access/Admins.sol";
+import "./access/Operators.sol";
 
 /**
  * @title Settings
@@ -33,6 +34,9 @@ contract Settings is Initializable {
     // Address of the Admins contract.
     Admins private admins;
 
+    // Address of the Operators contract.
+    Operators private operators;
+
     /**
     * Event for tracking changed settings.
     * @param settingName - A name of the changed setting.
@@ -49,6 +53,7 @@ contract Settings is Initializable {
     * @param _validatorDepositAmount - The deposit amount required to become an Ethereum validator.
     * @param _withdrawalCredentials - The withdrawal credentials.
     * @param _admins - An address of the Admins contract.
+    * @param _operators - An address of the Operators contract.
     */
     function initialize(
         address payable _maintainer,
@@ -58,7 +63,8 @@ contract Settings is Initializable {
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
         bytes memory _withdrawalCredentials,
-        Admins _admins
+        Admins _admins,
+        Operators _operators
     )
         public initializer
     {
@@ -70,6 +76,7 @@ contract Settings is Initializable {
         validatorDepositAmount = _validatorDepositAmount;
         withdrawalCredentials = _withdrawalCredentials;
         admins = _admins;
+        operators = _operators;
     }
 
     /**
@@ -77,7 +84,7 @@ contract Settings is Initializable {
     * @param newValue - the new minimal deposit unit.
     */
     function setUserDepositMinUnit(uint64 newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
 
         userDepositMinUnit = newValue;
         emit SettingChanged("userDepositMinUnit");
@@ -88,7 +95,7 @@ contract Settings is Initializable {
     * @param newValue - the new validator's deposit amount.
     */
     function setValidatorDepositAmount(uint128 newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
 
         validatorDepositAmount = newValue;
         emit SettingChanged("validatorDepositAmount");
@@ -99,7 +106,7 @@ contract Settings is Initializable {
     * @param newValue - the new withdrawal credentials.
     */
     function setWithdrawalCredentials(bytes calldata newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
 
         withdrawalCredentials = newValue;
         emit SettingChanged("withdrawalCredentials");
@@ -110,7 +117,7 @@ contract Settings is Initializable {
     * @param newValue - the new maintainer's address.
     */
     function setMaintainer(address payable newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
 
         maintainer = newValue;
         emit SettingChanged("maintainer");
@@ -121,7 +128,7 @@ contract Settings is Initializable {
     * @param newValue - the new maintainer's fee. Must be less than 10000 (100.00%).
     */
     function setMaintainerFee(uint16 newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
         require(newValue < 10000, "Invalid value.");
 
         maintainerFee = newValue;
@@ -133,7 +140,7 @@ contract Settings is Initializable {
     * @param newValue - the new Pools collector staking duration (in seconds).
     */
     function setPoolStakingDuration(uint32 newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
 
         poolStakingDuration = newValue;
         emit SettingChanged("poolStakingDuration");
@@ -144,7 +151,7 @@ contract Settings is Initializable {
     * @param newValue - whether to pause or resume Pools collector deposits.
     */
     function setPoolDepositsPaused(bool newValue) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can change this parameter.");
+        require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
 
         poolDepositsPaused = newValue;
         emit SettingChanged("poolDepositsPaused");

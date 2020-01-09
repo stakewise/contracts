@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
-    "coverage": "SOLIDITY_COVERAGE=true ./scripts/test.sh",
+    "coverage": "NODE_ENV=test SILENT=true truffle run coverage --network development --temp build",
     "test": "./scripts/test.sh",
     "lint": "npm run lint:js && npm run lint:sol && prettier '*.{json,md}'",
     "lint:sol": "solhint --max-warnings 0 'contracts/**/*.sol'",
@@ -28,7 +28,9 @@
       "git add -f"
     ],
     "*.sol": [
-      "solhint --max-warnings 0 'contracts/**/*.sol'"
+      "solhint --max-warnings 0 'contracts/**/*.sol'",
+      "solium -d contracts/ --fix",
+      "git add"
     ]
   },
   "repository": {
@@ -44,17 +46,18 @@
     "@codechecks/client": "^0.1.10",
     "@openzeppelin/test-helpers": "^0.5.4",
     "chai": "^4.2.0",
-    "eslint": "^6.7.2",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-plugin-prettier": "^3.1.1",
-    "eth-gas-reporter": "^0.2.12",
-    "ganache-cli": "^6.7.0",
-    "husky": "^3.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eth-gas-reporter": "^0.2.14",
+    "ethlint": "^1.2.5",
+    "ganache-cli": "^6.8.1",
+    "husky": "^4.0.1",
     "lint-staged": "^9.5.0",
     "prettier": "^1.19.1",
     "solhint": "^2.3.0",
-    "solidity-coverage": "^0.6.7",
-    "truffle": "^5.1.2"
+    "solidity-coverage": "^0.7.1",
+    "truffle": "^5.1.7"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.6.0",

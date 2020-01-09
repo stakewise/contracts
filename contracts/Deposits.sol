@@ -1,4 +1,4 @@
-pragma solidity 0.5.13;
+pragma solidity 0.5.15;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./access/Admins.sol";
@@ -72,11 +72,7 @@ contract Deposits is Initializable {
         external
     {
         require(msg.sender == address(pools), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(
-                keccak256(abi.encodePacked(msg.sender, _entityId)),
-                _sender,
-                _withdrawer
-        ))] += _amount;
+        amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(msg.sender, _entityId)), _sender, _withdrawer))] += _amount;
         emit DepositAdded(msg.sender, _entityId, _sender, _withdrawer, _amount);
     }
 
@@ -97,11 +93,7 @@ contract Deposits is Initializable {
         external
     {
         require(msg.sender == address(pools), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(
-                keccak256(abi.encodePacked(msg.sender, _entityId)),
-                _sender,
-                _withdrawer
-        ))] -= _amount;
+        amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(msg.sender, _entityId)), _sender, _withdrawer))] -= _amount;
         emit DepositCanceled(msg.sender, _entityId, _sender, _withdrawer, _amount);
     }
 }
