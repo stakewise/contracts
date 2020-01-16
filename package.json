@@ -52,12 +52,12 @@
     "eth-gas-reporter": "^0.2.14",
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.8.1",
-    "husky": "^4.0.1",
+    "husky": "^4.0.10",
     "lint-staged": "^9.5.0",
     "prettier": "^1.19.1",
     "solhint": "^2.3.0",
     "solidity-coverage": "^0.7.1",
-    "truffle": "^5.1.7"
+    "truffle": "^5.1.8"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.6.0",
