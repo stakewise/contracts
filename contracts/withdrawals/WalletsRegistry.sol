@@ -121,7 +121,7 @@ contract WalletsRegistry is Initializable {
     */
     function resetWallet(address _wallet) external {
         require(admins.isAdmin(msg.sender), "Permission denied.");
-        require(wallets[_wallet].validator[0] != 0, "Wallet has been already reset.");
+        require(wallets[_wallet].validator != "", "Wallet has been already reset.");
 
         delete wallets[_wallet];
         availableWallets.push(_wallet);

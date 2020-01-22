@@ -68,7 +68,7 @@ contract ValidatorsRegistry is Initializable {
         require(msg.sender == address(pools), "Permission denied.");
 
         bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
-        require(validators[validatorId].collectorEntityId[0] == 0, "Public key has been already used.");
+        require(validators[validatorId].collectorEntityId == "", "Public key has been already used.");
 
         Validator memory validator = Validator(
             settings.validatorDepositAmount(),

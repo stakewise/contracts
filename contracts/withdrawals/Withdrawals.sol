@@ -103,7 +103,7 @@ contract Withdrawals is Initializable {
     */
     function enableWithdrawals(address payable _wallet) external {
         (, bytes32 validator) = walletsRegistry.wallets(_wallet);
-        require(validator[0] != 0, "Wallet is not assigned to any validator.");
+        require(validator != "", "Wallet is not assigned to any validator.");
 
         (uint256 depositAmount, uint256 maintainerFee,) = validatorsRegistry.validators(validator);
         require(_wallet.balance > 0, "Wallet has no ether in it.");
