@@ -22,22 +22,30 @@ contract Pools is BaseCollector {
     * @param _operators - Address of the Operators contract.
     * @param _validatorRegistration - Address of the VRC (deployed by Ethereum).
     * @param _validatorsRegistry - Address of the Validators Registry contract.
+    * @param _stakingDuration - The staking duration of the Collector (in seconds).
+    * @param _newEntityPaused - Defines whether new entity creation is paused.
     */
     function initialize(
         Deposits _deposits,
         Settings _settings,
+        Admins _admins,
         Operators _operators,
         IValidatorRegistration _validatorRegistration,
-        ValidatorsRegistry _validatorsRegistry
+        ValidatorsRegistry _validatorsRegistry,
+        uint256 _stakingDuration,
+        bool _newEntityPaused
     )
         public initializer
     {
         BaseCollector.initialize(
             _deposits,
             _settings,
+            _admins,
             _operators,
             _validatorRegistration,
-            _validatorsRegistry
+            _validatorsRegistry,
+            _stakingDuration,
+            _newEntityPaused
         );
     }
 
@@ -57,7 +65,7 @@ contract Pools is BaseCollector {
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         require(
-            !settings.poolDepositsPaused() ||
+            !newEntityPaused ||
             (
                 totalSupply % validatorTargetAmount != 0 &&
                 msg.value <= validatorTargetAmount - (totalSupply % validatorTargetAmount)
