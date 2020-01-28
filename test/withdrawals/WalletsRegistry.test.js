@@ -107,9 +107,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       });
 
       // Validator is marked as assigned
-      expect(await walletsRegistry.assignedValidators(validatorId)).to.be.equal(
-        true
-      );
+      expect(await walletsRegistry.assignedValidators(validatorId)).equal(true);
     });
 
     it('re-uses existing available wallet', async () => {
@@ -143,9 +141,9 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       });
 
       // Validator is marked as assigned
-      expect(
-        await walletsRegistry.assignedValidators(newValidatorId)
-      ).to.be.equal(true);
+      expect(await walletsRegistry.assignedValidators(newValidatorId)).equal(
+        true
+      );
     });
   });
 
@@ -190,7 +188,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
         wallet
       });
       let { unlocked, validator } = await walletsRegistry.wallets(wallet);
-      expect(unlocked).to.be.equal(false);
+      expect(unlocked).equal(false);
       expect(validator).to.satisfy(val =>
         val.startsWith(constants.ZERO_ADDRESS)
       );

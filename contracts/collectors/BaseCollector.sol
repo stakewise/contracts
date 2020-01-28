@@ -1,7 +1,6 @@
 pragma solidity 0.5.16;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../access/Admins.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
 import "../validators/ValidatorsRegistry.sol";
@@ -17,12 +16,6 @@ contract BaseCollector is Initializable {
     // Tracks accumulated contract ether.
     uint256 public totalSupply;
 
-    // The staking duration of the Collector (in seconds).
-    uint256 public stakingDuration;
-
-    // Defines whether new entity creation is paused.
-    bool public newEntityPaused;
-
     // The ID of the next entity which has to accumulate validator deposit amount.
     uint256 public nextEntityId;
 
@@ -35,9 +28,6 @@ contract BaseCollector is Initializable {
     // Address of the Settings contract.
     Settings internal settings;
 
-    // Address of the Admins contract.
-    Admins private admins;
-
     // Address of the Operators contract.
     Operators private operators;
 
@@ -48,72 +38,29 @@ contract BaseCollector is Initializable {
     ValidatorsRegistry private validatorsRegistry;
 
     /**
-    * Event for tracking staking duration changes.
-    * @param stakingDuration - The staking duration of the Collector (in seconds).
-    */
-    event StakingDurationChanged(uint256 stakingDuration);
-
-    /**
-    * Event for tracking new entity pausing changes.
-    * @param newEntityPaused - Defines whether new entity creation is paused.
-    */
-    event NewEntityPaused(bool newEntityPaused);
-
-    /**
     * Constructor for initializing the BaseCollector contract.
     * @dev Must be called by contracts which inherit from it.
     * @param _deposits - Address of the Deposits contract.
     * @param _settings - Address of the Settings contract.
-    * @param _admins - Address of the Admins contract.
     * @param _operators - Address of the Operators contract.
     * @param _validatorRegistration - Address of the VRC (deployed by Ethereum).
     * @param _validatorsRegistry - Address of the Validators Registry contract.
-    * @param _stakingDuration - The staking duration of the Collector (in seconds).
-    * @param _newEntityPaused - Defines whether new entity creation is paused.
     */
     function initialize(
         Deposits _deposits,
         Settings _settings,
-        Admins _admins,
         Operators _operators,
         IValidatorRegistration _validatorRegistration,
-        ValidatorsRegistry _validatorsRegistry,
-        uint256 _stakingDuration,
-        bool _newEntityPaused
+        ValidatorsRegistry _validatorsRegistry
     )
         public initializer
     {
         deposits = _deposits;
         settings = _settings;
-        admins = _admins;
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validatorsRegistry = _validatorsRegistry;
-        stakingDuration = _stakingDuration;
-        newEntityPaused = _newEntityPaused;
         nextEntityId = 1;
-    }
-
-    /**
-    * Function for changing the staking duration.
-    * @param newDuration - the new staking duration (in seconds).
-    */
-    function setStakingDuration(uint256 newDuration) external {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-
-        stakingDuration = newDuration;
-        emit StakingDurationChanged(newDuration);
-    }
-
-    /**
-    * Function for pausing and resuming new entity creation.
-    * @param isPaused - whether new entity creation is paused or resumed.
-    */
-    function setNewEntityPaused(bool isPaused) external {
-        require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
-
-        newEntityPaused = isPaused;
-        emit NewEntityPaused(isPaused);
     }
 
     /**
@@ -129,7 +76,7 @@ contract BaseCollector is Initializable {
         uint256 entityId = readyEntities[readyEntities.length - 1];
         readyEntities.pop();
 
-        validatorsRegistry.register(_pubKey, entityId, stakingDuration);
+        validatorsRegistry.register(_pubKey, entityId);
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
         totalSupply -= validatorDepositAmount;
         validatorRegistration.deposit.value(validatorDepositAmount)(

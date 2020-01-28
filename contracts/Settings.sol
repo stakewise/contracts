@@ -25,6 +25,12 @@ contract Settings is Initializable {
     // The withdrawal credentials used to initiate Validator's withdrawal from the beacon chain.
     bytes public withdrawalCredentials;
 
+    // The mapping between collector and its staking duration.
+    mapping(address => uint256) public stakingDurations;
+
+    // The mapping between collector and whether its new entities creation is paused or not.
+    mapping(address => bool) public pausedCollectors;
+
     // Address of the Admins contract.
     Admins private admins;
 
@@ -45,6 +51,7 @@ contract Settings is Initializable {
     * @param _validatorDepositAmount - The deposit amount required to become an Ethereum validator.
     * @param _withdrawalCredentials - The withdrawal credentials.
     * @param _admins - An address of the Admins contract.
+    * @param _operators - An address of the Operators contract.
     */
     function initialize(
         address payable _maintainer,
@@ -52,7 +59,8 @@ contract Settings is Initializable {
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
         bytes memory _withdrawalCredentials,
-        Admins _admins
+        Admins _admins,
+        Operators _operators
     )
         public initializer
     {
@@ -62,6 +70,7 @@ contract Settings is Initializable {
         validatorDepositAmount = _validatorDepositAmount;
         withdrawalCredentials = _withdrawalCredentials;
         admins = _admins;
+        operators = _operators;
     }
 
     /**
@@ -118,5 +127,29 @@ contract Settings is Initializable {
 
         maintainerFee = newValue;
         emit SettingChanged("maintainerFee");
+    }
+
+    /**
+    * Function for changing staking durations for the collectors.
+    * @param collector - the address of the collector.
+    * @param stakingDuration - the new staking duration of the collector.
+    */
+    function setStakingDuration(address collector, uint256 stakingDuration) external {
+        require(admins.isAdmin(msg.sender), "Permission denied.");
+
+        stakingDurations[collector] = stakingDuration;
+        emit SettingChanged("stakingDurations");
+    }
+
+    /**
+    * Function for pausing or resuming collector deposits.
+    * @param collector - the address of the collector.
+    * @param isPaused - defines whether collector is paused or not.
+    */
+    function setCollectorPaused(address collector, bool isPaused) external {
+        require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
+
+        pausedCollectors[collector] = isPaused;
+        emit SettingChanged("pausedCollectors");
     }
 }

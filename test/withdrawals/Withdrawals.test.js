@@ -187,9 +187,7 @@ contract('Withdrawals', ([_, ...users]) => {
 
     it('unlocks the wallet for withdrawals', async () => {
       // initially wallet is locked
-      expect((await walletsRegistry.wallets(wallet)).unlocked).to.be.equal(
-        false
-      );
+      expect((await walletsRegistry.wallets(wallet)).unlocked).equal(false);
       await send.ether(other, wallet, initialSettings.validatorDepositAmount);
 
       // enable withdrawals
@@ -198,9 +196,7 @@ contract('Withdrawals', ([_, ...users]) => {
       });
 
       // wallet must be unlocked
-      expect((await walletsRegistry.wallets(wallet)).unlocked).to.be.equal(
-        true
-      );
+      expect((await walletsRegistry.wallets(wallet)).unlocked).equal(true);
     });
 
     it("doesn't send maintainer's reward when no profit", async () => {
@@ -342,9 +338,7 @@ contract('Withdrawals', ([_, ...users]) => {
         );
 
         // wallet unlocked
-        expect((await walletsRegistry.wallets(wallet)).unlocked).to.be.equal(
-          true
-        );
+        expect((await walletsRegistry.wallets(wallet)).unlocked).equal(true);
       }
     });
   });
