@@ -25,8 +25,8 @@ const newValues = [
   ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
-  ['poolStakingDuration', '31556952'],
-  ['poolDepositsPaused', true]
+  ['stakingDuration', new BN(31556952)],
+  ['collectorPaused', true]
 ];
 
 function getSetMethod(setting) {
@@ -44,7 +44,7 @@ function assertEqual(value1, value2) {
 const Settings = artifacts.require('Settings');
 const Operators = artifacts.require('Operators');
 
-contract('Settings', ([_, admin, operator, anyone]) => {
+contract('Settings', ([_, admin, operator, collector, anyone]) => {
   let adminsProxy;
   let operatorsProxy;
   let networkConfig;
@@ -83,46 +83,89 @@ contract('Settings', ([_, admin, operator, anyone]) => {
 
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      await assertEqual(await settings[setting](), initialSettings[setting]);
-      const setMethod = getSetMethod(setting);
-      const receipt = await settings[setMethod](newValue, {
-        from: admin
-      });
-      expectEvent(receipt, 'SettingChanged', {
-        settingName: web3.utils.fromAscii(setting).padEnd(66, '0')
-      });
-      assertEqual(await settings[setting](), newValue);
+      if (setting === 'stakingDuration') {
+        expect(
+          await settings.stakingDurations(collector)
+        ).to.be.bignumber.equal(new BN(0));
+        const receipt = await settings.setStakingDuration(collector, newValue, {
+          from: admin
+        });
+        expectEvent(receipt, 'SettingChanged', {
+          settingName: web3.utils.fromAscii('stakingDurations').padEnd(66, '0')
+        });
+        expect(
+          await settings.stakingDurations(collector)
+        ).to.be.bignumber.equal(newValue);
+      } else if (setting === 'collectorPaused') {
+        expect(await settings.pausedCollectors(collector)).equal(false);
+        const receipt = await settings.setCollectorPaused(collector, newValue, {
+          from: admin
+        });
+        expectEvent(receipt, 'SettingChanged', {
+          settingName: web3.utils.fromAscii('pausedCollectors').padEnd(66, '0')
+        });
+        expect(await settings.pausedCollectors(collector)).equal(newValue);
+      } else {
+        await assertEqual(await settings[setting](), initialSettings[setting]);
+        const setMethod = getSetMethod(setting);
+        const receipt = await settings[setMethod](newValue, {
+          from: admin
+        });
+        expectEvent(receipt, 'SettingChanged', {
+          settingName: web3.utils.fromAscii(setting).padEnd(66, '0')
+        });
+        assertEqual(await settings[setting](), newValue);
+      }
     }
   });
 
   it('others cannot change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      assertEqual(await settings[setting](), initialSettings[setting]);
-      const setMethod = getSetMethod(setting);
-      await expectRevert(
-        settings[setMethod](newValue, {
-          from: anyone
-        }),
-        'Permission denied.'
-      );
-      assertEqual(await settings[setting](), initialSettings[setting]);
+      if (setting === 'stakingDuration') {
+        expect(
+          await settings.stakingDurations(collector)
+        ).to.be.bignumber.equal(new BN(0));
+        await expectRevert(
+          settings.setStakingDuration(collector, newValue, {
+            from: anyone
+          }),
+          'Permission denied.'
+        );
+        expect(
+          await settings.stakingDurations(collector)
+        ).to.be.bignumber.equal(new BN(0));
+      } else if (setting === 'collectorPaused') {
+        expect(await settings.pausedCollectors(collector)).equal(false);
+        await expectRevert(
+          settings.setCollectorPaused(collector, newValue, {
+            from: anyone
+          }),
+          'Permission denied.'
+        );
+        expect(await settings.pausedCollectors(collector)).equal(false);
+      } else {
+        assertEqual(await settings[setting](), initialSettings[setting]);
+        const setMethod = getSetMethod(setting);
+        await expectRevert(
+          settings[setMethod](newValue, {
+            from: anyone
+          }),
+          'Permission denied.'
+        );
+        assertEqual(await settings[setting](), initialSettings[setting]);
+      }
     }
   });
 
-  it('operators can pause pool deposits', async () => {
-    const receipt = await settings.setPoolDepositsPaused(
-      !initialSettings.poolDepositsPaused,
-      {
-        from: operator
-      }
-    );
-    expectEvent(receipt, 'SettingChanged', {
-      settingName: web3.utils.fromAscii('poolDepositsPaused').padEnd(66, '0')
+  it('operators can pause collectors', async () => {
+    expect(await settings.pausedCollectors(collector)).equal(false);
+    const receipt = await settings.setCollectorPaused(collector, true, {
+      from: operator
     });
-    assertEqual(
-      await settings.poolDepositsPaused(),
-      !initialSettings.poolDepositsPaused
-    );
+    expectEvent(receipt, 'SettingChanged', {
+      settingName: web3.utils.fromAscii('pausedCollectors').padEnd(66, '0')
+    });
+    expect(await settings.pausedCollectors(collector)).equal(true);
   });
 
   it('checks that pool fee is less than 100%', async () => {

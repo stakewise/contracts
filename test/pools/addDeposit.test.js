@@ -302,10 +302,10 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   });
 
   it('fails to add a deposit to paused empty pool', async () => {
-    await settings.setPoolDepositsPaused(true, {
+    await settings.setCollectorPaused(pools.address, true, {
       from: admin
     });
-    expect(await settings.poolDepositsPaused()).equal(true);
+    expect(await settings.pausedCollectors(pools.address)).equal(true);
 
     await expectRevert(
       pools.addDeposit(withdrawer1, {
@@ -342,11 +342,11 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     // Check pools balance
     await checkCollectorBalance(pools, depositAmount);
 
-    // Pause pool deposits
-    await settings.setPoolDepositsPaused(true, {
+    // Pause Pools collector
+    await settings.setCollectorPaused(pools.address, true, {
       from: admin
     });
-    expect(await settings.poolDepositsPaused()).equal(true);
+    expect(await settings.pausedCollectors(pools.address)).equal(true);
 
     // Add deposit bigger than required to finish current round
     await expectRevert(
@@ -385,11 +385,11 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     // Check pools balance
     await checkCollectorBalance(pools, depositAmount);
 
-    // Pause pool deposits
-    await settings.setPoolDepositsPaused(true, {
+    // Pause Pools collector
+    await settings.setCollectorPaused(pools.address, true, {
       from: admin
     });
-    expect(await settings.poolDepositsPaused()).equal(true);
+    expect(await settings.pausedCollectors(pools.address)).equal(true);
 
     // Add deposit with amount required to finish current round
     depositAmount = new BN(initialSettings.validatorDepositAmount).sub(

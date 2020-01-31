@@ -15,10 +15,12 @@ const {
 
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
+const Settings = artifacts.require('Settings');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
+const stakingDuration = new BN(86400);
 
 contract(
   'Pools',
@@ -42,7 +44,8 @@ contract(
       let {
         pools: poolsProxy,
         operators: operatorsProxy,
-        validatorsRegistry: validatorsRegistryProxy
+        validatorsRegistry: validatorsRegistryProxy,
+        settings: settingsProxy
       } = await deployAllProxies({
         initialAdmin: admin,
         networkConfig,
@@ -52,6 +55,12 @@ contract(
       validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
       let operators = await Operators.at(operatorsProxy);
       await operators.addOperator(operator, { from: admin });
+
+      // set staking duration
+      let settings = await Settings.at(settingsProxy);
+      await settings.setStakingDuration(pools.address, stakingDuration, {
+        from: admin
+      });
     });
 
     it('fails to register Validator if there are no ready pools', async () => {
@@ -125,6 +134,7 @@ contract(
 
         await checkValidatorRegistered({
           vrc,
+          stakingDuration,
           transaction: tx,
           entityId: new BN(validatorRegistrationArgs.length - i),
           pubKey: validatorRegistrationArgs[i].pubKey,

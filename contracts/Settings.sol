@@ -13,14 +13,8 @@ contract Settings is Initializable {
     // The address of the application owner, where the fee will be paid.
     address payable public maintainer;
 
-    // Defines whether new Pool collector deposits are only possible in order to finish the last staking round.
-    bool public poolDepositsPaused;
-
     // The percentage fee users pay from their income for using the service.
     uint16 public maintainerFee;
-
-    // The Pool collector staking duration in seconds.
-    uint32 public poolStakingDuration;
 
     // The minimal unit (wei, gwei, etc.) deposit can have.
     uint64 public userDepositMinUnit;
@@ -30,6 +24,12 @@ contract Settings is Initializable {
 
     // The withdrawal credentials used to initiate Validator's withdrawal from the beacon chain.
     bytes public withdrawalCredentials;
+
+    // The mapping between collector and its staking duration.
+    mapping(address => uint256) public stakingDurations;
+
+    // The mapping between collector and whether its new entities creation is paused or not.
+    mapping(address => bool) public pausedCollectors;
 
     // Address of the Admins contract.
     Admins private admins;
@@ -46,9 +46,7 @@ contract Settings is Initializable {
     /**
     * Constructor for initializing the Settings contract.
     * @param _maintainer - An address of the maintainer, where the fee is paid.
-    * @param _poolDepositsPaused - Defines whether to reject new round deposits.
     * @param _maintainerFee - A percentage fee for using the service.
-    * @param _poolStakingDuration - The Pools collector staking duration (in seconds).
     * @param _userDepositMinUnit - The minimal unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - The deposit amount required to become an Ethereum validator.
     * @param _withdrawalCredentials - The withdrawal credentials.
@@ -57,9 +55,7 @@ contract Settings is Initializable {
     */
     function initialize(
         address payable _maintainer,
-        bool _poolDepositsPaused,
         uint16 _maintainerFee,
-        uint32 _poolStakingDuration,
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
         bytes memory _withdrawalCredentials,
@@ -69,9 +65,7 @@ contract Settings is Initializable {
         public initializer
     {
         maintainer = _maintainer;
-        poolDepositsPaused = _poolDepositsPaused;
         maintainerFee = _maintainerFee;
-        poolStakingDuration = _poolStakingDuration;
         userDepositMinUnit = _userDepositMinUnit;
         validatorDepositAmount = _validatorDepositAmount;
         withdrawalCredentials = _withdrawalCredentials;
@@ -136,24 +130,26 @@ contract Settings is Initializable {
     }
 
     /**
-    * Function for changing the Pools collector staking duration.
-    * @param newValue - the new Pools collector staking duration (in seconds).
+    * Function for changing staking durations for the collectors.
+    * @param collector - the address of the collector.
+    * @param stakingDuration - the new staking duration of the collector.
     */
-    function setPoolStakingDuration(uint32 newValue) external {
+    function setStakingDuration(address collector, uint256 stakingDuration) external {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
-        poolStakingDuration = newValue;
-        emit SettingChanged("poolStakingDuration");
+        stakingDurations[collector] = stakingDuration;
+        emit SettingChanged("stakingDurations");
     }
 
     /**
-    * Function for pausing or resuming Pools collector deposits.
-    * @param newValue - whether to pause or resume Pools collector deposits.
+    * Function for pausing or resuming collector deposits.
+    * @param collector - the address of the collector.
+    * @param isPaused - defines whether collector is paused or not.
     */
-    function setPoolDepositsPaused(bool newValue) external {
+    function setCollectorPaused(address collector, bool isPaused) external {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
 
-        poolDepositsPaused = newValue;
-        emit SettingChanged("poolDepositsPaused");
+        pausedCollectors[collector] = isPaused;
+        emit SettingChanged("pausedCollectors");
     }
 }

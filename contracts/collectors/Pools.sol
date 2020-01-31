@@ -57,11 +57,11 @@ contract Pools is BaseCollector {
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         require(
-            !settings.poolDepositsPaused() ||
-            (
-                totalSupply % validatorTargetAmount != 0 &&
-                msg.value <= validatorTargetAmount - (totalSupply % validatorTargetAmount)
-            ),
+            !settings.pausedCollectors(address(this)) ||
+        (
+            totalSupply % validatorTargetAmount != 0 &&
+            msg.value <= validatorTargetAmount - (totalSupply % validatorTargetAmount)
+        ),
             "Deposit amount cannot be larger than required to finish current pool."
         );
         uint256 toCollect;

@@ -142,6 +142,7 @@ async function checkValidatorRegistered({
   signature,
   collectorAddress,
   validatorsRegistry,
+  stakingDuration,
   maintainerFee = new BN(initialSettings.maintainerFee),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount)
@@ -172,6 +173,7 @@ async function checkValidatorRegistered({
       pubKey: pubKey,
       collectorEntityId,
       withdrawalCredentials,
+      stakingDuration,
       depositAmount: validatorDepositAmount,
       maintainerFee
     }
@@ -183,7 +185,7 @@ async function checkValidatorRegistered({
   );
   expect(validator.depositAmount).to.be.bignumber.equal(validatorDepositAmount);
   expect(validator.maintainerFee).to.be.bignumber.equal(maintainerFee);
-  expect(validator.collectorEntityId).to.be.equal(collectorEntityId);
+  expect(validator.collectorEntityId).equal(collectorEntityId);
 }
 
 async function createValidator({
