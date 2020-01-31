@@ -15,7 +15,7 @@ contract ValidatorsRegistry is Initializable {
     * Structure to store information about the validator.
     * @param depositAmount - validator deposit amount.
     * @param maintainerFee - fee to pay to the maintainer after withdrawal.
-    * @param collectorEntityId - ID of the collector's entity where the deposit was accumulated.
+    * @param collectorEntityId - ID of the collector's entity where the deposit was accumulated in.
     */
     struct Validator {
         uint256 depositAmount;
