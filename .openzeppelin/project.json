@@ -9,7 +9,8 @@
     "Deposits": "Deposits",
     "ValidatorsRegistry": "ValidatorsRegistry",
     "WalletsRegistry": "WalletsRegistry",
-    "Withdrawals": "Withdrawals"
+    "Withdrawals": "Withdrawals",
+    "Individuals": "Individuals"
   },
   "dependencies": {},
   "name": "shared-validator",
