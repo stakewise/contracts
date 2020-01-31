@@ -20,17 +20,14 @@
   "lint-staged": {
     "*.js": [
       "eslint --fix",
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ],
     "*.{json,md}": [
-      "prettier --write",
-      "git add -f"
+      "prettier --write"
     ],
     "*.sol": [
       "solhint --max-warnings 0 'contracts/**/*.sol'",
-      "solium -d contracts/ --fix",
-      "git add"
+      "solium -d contracts/ --fix"
     ]
   },
   "repository": {
