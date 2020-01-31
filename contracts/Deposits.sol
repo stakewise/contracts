@@ -2,6 +2,7 @@ pragma solidity 0.5.16;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./access/Admins.sol";
+import "./collectors/Individuals.sol";
 import "./collectors/Pools.sol";
 
 /**
@@ -15,6 +16,9 @@ contract Deposits is Initializable {
 
     // Address of the Pools contract.
     Pools private pools;
+
+    // Address of the Individuals contract.
+    Individuals private individuals;
 
     /**
     * Event for tracking added deposits.
@@ -51,9 +55,11 @@ contract Deposits is Initializable {
     /**
     * Constructor for initializing the Deposits contract.
     * @param _pools - An address of the Pools contract.
+    * @param _individuals - An address of the Individuals contract.
     */
-    function initialize(Pools _pools) public initializer {
+    function initialize(Pools _pools, Individuals _individuals) public initializer {
         pools = _pools;
+        individuals = _individuals;
     }
 
     /**
@@ -71,7 +77,7 @@ contract Deposits is Initializable {
     )
         external
     {
-        require(msg.sender == address(pools), "Permission denied.");
+        require(msg.sender == address(pools) || msg.sender == address(individuals), "Permission denied.");
         amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(msg.sender, _entityId)), _sender, _withdrawer))] += _amount;
         emit DepositAdded(msg.sender, _entityId, _sender, _withdrawer, _amount);
     }

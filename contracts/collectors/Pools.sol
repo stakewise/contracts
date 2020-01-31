@@ -46,12 +46,12 @@ contract Pools is BaseCollector {
     * User must transfer ether amount together with calling the function.
     * The amount will be added to the unfilled pool.
     * If the transferred amount makes the current pool exceed `settings.validatorDepositAmount`,
-    * it will be split between the current pool and the next one. If `settings.poolDepositsPaused`
-    * is set to `true`, the maximum deposit size is the amount required to send current pool for staking.
-    * @param _withdrawer - an account where deposit + rewards will be sent after withdrawal.
+    * it will be split between the current pool and the next one. If Pools collector is paused in `Settings` contract,
+    * the maximum deposit size is the amount required to send current pool for staking.
+    * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
     */
     function addDeposit(address _withdrawer) external payable {
-        require(_withdrawer != address(0), "Withdraw address cannot be zero address.");
+        require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
         require(msg.value > 0, "Deposit amount cannot be zero.");
         require(msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount unit.");
 

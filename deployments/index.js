@@ -1,12 +1,14 @@
-const { scripts } = require('@openzeppelin/cli');
 const {
   deployAdminsProxy,
   deployOperatorsProxy,
   deployWalletsManagersProxy
 } = require('../deployments/access');
-const { getSalt } = require('../deployments/common');
+const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
-const { deployPoolsProxy } = require('../deployments/collectors');
+const {
+  deployPoolsProxy,
+  deployIndividualsProxy
+} = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
   deployWalletsRegistryProxy,
@@ -38,30 +40,34 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     operatorsProxy
   });
 
-  // Calculate Deposits proxy addresses via create2
-  let depositsSalt = getSalt();
-  let depositsCalcProxy = await scripts.queryDeployment({
+  // Calculate Deposits proxy address via create2
+  let {
     salt: depositsSalt,
-    ...networkConfig
-  });
+    contractAddress: depositsCalcProxy
+  } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Validators Registry proxy addresses via create2
-  let validatorsRegistrySalt = getSalt({ excluded: [depositsSalt] });
-  let validatorsRegistryCalcProxy = await scripts.queryDeployment({
+  // Calculate Validators Registry proxy address via create2
+  let {
     salt: validatorsRegistrySalt,
-    ...networkConfig
-  });
+    contractAddress: validatorsRegistryCalcProxy
+  } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Pools proxy addresses via create2
-  let poolsSalt = getSalt({ excluded: [depositsSalt, validatorsRegistrySalt] });
-  let poolsCalcProxy = await scripts.queryDeployment({
+  // Calculate Pools proxy address via create2
+  let {
     salt: poolsSalt,
-    ...networkConfig
-  });
+    contractAddress: poolsCalcProxy
+  } = await calculateContractAddress({ networkConfig });
+
+  // Calculate Individuals proxy address via create2
+  let {
+    salt: individualsSalt,
+    contractAddress: individualsCalcProxy
+  } = await calculateContractAddress({ networkConfig });
 
   // Deploy Deposits proxy
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
+    individualsProxy: individualsCalcProxy,
     salt: depositsSalt,
     networkConfig
   });
@@ -74,6 +80,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy Validators Registry proxy
   let validatorsRegistryProxy = await deployValidatorsRegistry({
     poolsProxy: poolsCalcProxy,
+    individualsProxy: individualsCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
     networkConfig
@@ -100,28 +107,33 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     );
   }
 
+  // Deploy Individuals proxy
+  let individualsProxy = await deployIndividualsProxy({
+    vrc,
+    salt: individualsSalt,
+    depositsProxy,
+    settingsProxy,
+    operatorsProxy,
+    validatorsRegistryProxy,
+    networkConfig
+  });
+  if (individualsProxy !== individualsCalcProxy) {
+    throw new Error(
+      `Individuals contract actual address "${individualsProxy}" does not match expected "${individualsCalcProxy}"`
+    );
+  }
+
   // Calculate Wallets Registry proxy addresses via create2
-  let walletsRegistrySalt = getSalt({
-    excluded: [depositsSalt, validatorsRegistrySalt, poolsSalt]
-  });
-  let walletsRegistryCalcProxy = await scripts.queryDeployment({
+  let {
     salt: walletsRegistrySalt,
-    ...networkConfig
-  });
+    contractAddress: walletsRegistryCalcProxy
+  } = await calculateContractAddress({ networkConfig });
 
   // Calculate Withdrawals proxy addresses via create2
-  let withdrawalsSalt = getSalt({
-    excluded: [
-      depositsSalt,
-      validatorsRegistrySalt,
-      poolsSalt,
-      walletsRegistrySalt
-    ]
-  });
-  let withdrawalsCalcProxy = await scripts.queryDeployment({
+  let {
     salt: withdrawalsSalt,
-    ...networkConfig
-  });
+    contractAddress: withdrawalsCalcProxy
+  } = await calculateContractAddress({ networkConfig });
 
   // Deploy Wallets Registry proxy
   let walletsRegistryProxy = await deployWalletsRegistryProxy({
@@ -162,6 +174,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,
     pools: poolsProxy,
+    individuals: individualsProxy,
     walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy
   };

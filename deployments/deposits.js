@@ -1,11 +1,16 @@
 const { scripts } = require('@openzeppelin/cli');
 const { log } = require('./common');
 
-async function deployDepositsProxy({ poolsProxy, salt, networkConfig }) {
+async function deployDepositsProxy({
+  poolsProxy,
+  individualsProxy,
+  salt,
+  networkConfig
+}) {
   const proxy = await scripts.create({
     contractAlias: 'Deposits',
     methodName: 'initialize',
-    methodArgs: [poolsProxy],
+    methodArgs: [poolsProxy, individualsProxy],
     salt,
     ...networkConfig
   });

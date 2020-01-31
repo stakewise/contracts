@@ -6,6 +6,7 @@ const { initialSettings } = require('../deployments/settings');
 const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');
+const Individuals = artifacts.require('Individuals');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 function getDepositAmount({
@@ -54,12 +55,12 @@ async function checkUserTotalAmount({
   collectorAddress,
   entityId,
   senderAddress,
-  withdrawalAddress,
+  withdrawerAddress,
   expectedAmount
 }) {
   expect(
     await depositsContract.amounts(
-      getUserId(collectorAddress, entityId, senderAddress, withdrawalAddress)
+      getUserId(collectorAddress, entityId, senderAddress, withdrawerAddress)
     )
   ).to.be.bignumber.equal(expectedAmount);
 }
@@ -70,7 +71,7 @@ async function checkDepositAdded({
   collectorAddress,
   entityId,
   senderAddress,
-  withdrawalAddress,
+  withdrawerAddress,
   addedAmount,
   totalAmount
 }) {
@@ -83,7 +84,7 @@ async function checkDepositAdded({
       collector: collectorAddress,
       entityId,
       sender: senderAddress,
-      withdrawer: withdrawalAddress,
+      withdrawer: withdrawerAddress,
       amount: addedAmount
     }
   );
@@ -94,7 +95,7 @@ async function checkDepositAdded({
     collectorAddress,
     entityId,
     senderAddress,
-    withdrawalAddress,
+    withdrawerAddress,
     expectedAmount: totalAmount
   });
 }
@@ -105,7 +106,7 @@ async function checkDepositCanceled({
   collectorAddress,
   entityId,
   senderAddress,
-  withdrawalAddress,
+  withdrawerAddress,
   canceledAmount,
   totalAmount
 }) {
@@ -118,7 +119,7 @@ async function checkDepositCanceled({
       collector: collectorAddress,
       entityId,
       sender: senderAddress,
-      withdrawer: withdrawalAddress,
+      withdrawer: withdrawerAddress,
       amount: canceledAmount
     }
   );
@@ -129,7 +130,7 @@ async function checkDepositCanceled({
     collectorAddress,
     entityId,
     senderAddress,
-    withdrawalAddress,
+    withdrawerAddress,
     expectedAmount: totalAmount
   });
 }
@@ -190,25 +191,30 @@ async function checkValidatorRegistered({
 
 async function createValidator({
   args = validatorRegistrationArgs[0],
-  hasReadyPool = false,
+  hasReadyEntity = false,
   poolsProxy,
+  individualsProxy,
   operator,
   sender,
   withdrawer
 }) {
-  // Genrate random public key
-  let pools = await Pools.at(poolsProxy);
+  let collector;
+  if (individualsProxy) {
+    collector = await Individuals.at(individualsProxy);
+  } else if (poolsProxy) {
+    collector = await Pools.at(poolsProxy);
+  }
 
-  if (!hasReadyPool) {
+  if (!hasReadyEntity) {
     // Create new ready pool
-    await pools.addDeposit(withdrawer, {
+    await collector.addDeposit(withdrawer, {
       from: sender,
       value: initialSettings.validatorDepositAmount
     });
   }
 
-  // Register validator for the ready pool
-  await pools.registerValidator(
+  // Register validator for the ready entity
+  await collector.registerValidator(
     args.pubKey,
     args.signature,
     args.hashTreeRoot,

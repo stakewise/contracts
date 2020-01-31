@@ -47,17 +47,17 @@
     "@openzeppelin/test-helpers": "^0.5.4",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.9.0",
+    "eslint-config-prettier": "^6.10.0",
     "eslint-plugin-prettier": "^3.1.2",
     "eth-gas-reporter": "^0.2.14",
     "ethlint": "^1.2.5",
-    "ganache-cli": "^6.8.1",
-    "husky": "^4.0.10",
-    "lint-staged": "^9.5.0",
+    "ganache-cli": "^6.9.0",
+    "husky": "^4.2.1",
+    "lint-staged": "10.0.7",
     "prettier": "^1.19.1",
     "solhint": "^2.3.0",
     "solidity-coverage": "^0.7.1",
-    "truffle": "^5.1.8"
+    "truffle": "^5.1.11"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.6.0",

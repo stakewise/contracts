@@ -28,4 +28,31 @@ async function deployPoolsProxy({
   return proxy.address;
 }
 
-module.exports = { deployPoolsProxy };
+async function deployIndividualsProxy({
+  depositsProxy,
+  settingsProxy,
+  operatorsProxy,
+  vrc,
+  validatorsRegistryProxy,
+  salt,
+  networkConfig
+}) {
+  const proxy = await scripts.create({
+    contractAlias: 'Individuals',
+    methodName: 'initialize',
+    methodArgs: [
+      depositsProxy,
+      settingsProxy,
+      operatorsProxy,
+      vrc,
+      validatorsRegistryProxy
+    ],
+    salt,
+    ...networkConfig
+  });
+
+  log(`Individuals contract: ${proxy.address}`);
+  return proxy.address;
+}
+
+module.exports = { deployPoolsProxy, deployIndividualsProxy };

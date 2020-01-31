@@ -47,7 +47,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
     }
   });
 
-  it('only collectors can decrease deposit amounts', async () => {
+  it('only collectors can cancel deposits', async () => {
     for (let i = 0; i < users.length; i++) {
       await expectRevert(
         deposits.cancelDeposit(1, users[i], users[i], ether('3'), {
