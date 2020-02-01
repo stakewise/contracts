@@ -25,6 +25,7 @@ const newValues = [
   ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
+  ['minStakingDuration', new BN(1209600)],
   ['stakingDuration', new BN(31556952)],
   ['collectorPaused', true]
 ];
@@ -168,7 +169,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     expect(await settings.pausedCollectors(collector)).equal(true);
   });
 
-  it('checks that pool fee is less than 100%', async () => {
+  it("checks that maintainer's fee is less than 100%", async () => {
     await expectRevert(
       settings.setMaintainerFee(new BN(10000), {
         from: admin

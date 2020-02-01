@@ -145,6 +145,7 @@ async function checkValidatorRegistered({
   validatorsRegistry,
   stakingDuration,
   maintainerFee = new BN(initialSettings.maintainerFee),
+  minStakingDuration = new BN(initialSettings.minStakingDuration),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount)
 }) {
@@ -176,7 +177,8 @@ async function checkValidatorRegistered({
       withdrawalCredentials,
       stakingDuration,
       depositAmount: validatorDepositAmount,
-      maintainerFee
+      maintainerFee,
+      minStakingDuration
     }
   );
 
