@@ -29,8 +29,9 @@ async function calculateContractAddress({ networkConfig }) {
     ...networkConfig
   });
   while ((await ZWeb3.getCode(contractAddress)) !== '0x') {
+    salt = Math.round(Math.random() * 100000);
     contractAddress = await scripts.queryDeployment({
-      salt: Math.round(Math.random() * 100000),
+      salt,
       ...networkConfig
     });
   }
