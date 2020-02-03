@@ -16,6 +16,9 @@ contract Settings is Initializable {
     // The percentage fee users pay from their income for using the service.
     uint16 public maintainerFee;
 
+    // The minimal staking duration of the Validator.
+    uint48 public minStakingDuration;
+
     // The minimal unit (wei, gwei, etc.) deposit can have.
     uint64 public userDepositMinUnit;
 
@@ -47,6 +50,7 @@ contract Settings is Initializable {
     * Constructor for initializing the Settings contract.
     * @param _maintainer - An address of the maintainer, where the fee is paid.
     * @param _maintainerFee - A percentage fee for using the service.
+    * @param _minStakingDuration - The minimal staking duration of the Validator.
     * @param _userDepositMinUnit - The minimal unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - The deposit amount required to become an Ethereum validator.
     * @param _withdrawalCredentials - The withdrawal credentials.
@@ -56,6 +60,7 @@ contract Settings is Initializable {
     function initialize(
         address payable _maintainer,
         uint16 _maintainerFee,
+        uint48 _minStakingDuration,
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
         bytes memory _withdrawalCredentials,
@@ -66,6 +71,7 @@ contract Settings is Initializable {
     {
         maintainer = _maintainer;
         maintainerFee = _maintainerFee;
+        minStakingDuration = _minStakingDuration;
         userDepositMinUnit = _userDepositMinUnit;
         validatorDepositAmount = _validatorDepositAmount;
         withdrawalCredentials = _withdrawalCredentials;
@@ -127,6 +133,17 @@ contract Settings is Initializable {
 
         maintainerFee = newValue;
         emit SettingChanged("maintainerFee");
+    }
+
+    /**
+    * Function for changing Validator's minimal staking duration.
+    * @param newValue - new minimal duration.
+    */
+    function setMinStakingDuration(uint48 newValue) external {
+        require(admins.isAdmin(msg.sender), "Permission denied.");
+
+        minStakingDuration = newValue;
+        emit SettingChanged("minStakingDuration");
     }
 
     /**

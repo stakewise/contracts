@@ -13,22 +13,22 @@ const {
   validatorRegistrationArgs
 } = require('../utils');
 
-const Pools = artifacts.require('Pools');
+const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
 const Settings = artifacts.require('Settings');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
-const stakingDuration = new BN(86400);
+const stakingDuration = new BN('31536000');
 
 contract(
-  'Pools',
+  'Privates',
   ([_, admin, operator, sender, withdrawer, other, ...accounts]) => {
     let networkConfig;
     let vrc;
     let validatorsRegistry;
-    let pools;
+    let privates;
 
     before(async () => {
       networkConfig = await getNetworkConfig();
@@ -42,7 +42,7 @@ contract(
 
     beforeEach(async () => {
       let {
-        pools: poolsProxy,
+        privates: privatesProxy,
         operators: operatorsProxy,
         validatorsRegistry: validatorsRegistryProxy,
         settings: settingsProxy
@@ -51,21 +51,21 @@ contract(
         networkConfig,
         vrc: vrc.options.address
       });
-      pools = await Pools.at(poolsProxy);
+      privates = await Privates.at(privatesProxy);
       validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
       let operators = await Operators.at(operatorsProxy);
       await operators.addOperator(operator, { from: admin });
 
       // set staking duration
       let settings = await Settings.at(settingsProxy);
-      await settings.setStakingDuration(pools.address, stakingDuration, {
+      await settings.setStakingDuration(privates.address, stakingDuration, {
         from: admin
       });
     });
 
-    it('fails to register Validator if there are no ready pools', async () => {
+    it('fails to register Validator if there are no ready entities', async () => {
       await expectRevert(
-        pools.registerValidator(pubKey, signature, hashTreeRoot, {
+        privates.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'There are no ready entities.'
@@ -73,12 +73,12 @@ contract(
     });
 
     it('fails to register Validator with callers other than operator', async () => {
-      await pools.addDeposit(withdrawer, {
+      await privates.addDeposit(withdrawer, {
         from: sender,
         value: validatorDepositAmount
       });
       await expectRevert(
-        pools.registerValidator(pubKey, signature, hashTreeRoot, {
+        privates.registerValidator(pubKey, signature, hashTreeRoot, {
           from: other
         }),
         'Permission denied.'
@@ -87,33 +87,33 @@ contract(
 
     it('fails to register Validator with used public key', async () => {
       // Register validator 1
-      await pools.addDeposit(withdrawer, {
+      await privates.addDeposit(withdrawer, {
         from: sender,
         value: validatorDepositAmount
       });
 
-      await pools.registerValidator(pubKey, signature, hashTreeRoot, {
+      await privates.registerValidator(pubKey, signature, hashTreeRoot, {
         from: operator
       });
 
       // Register validator 2 with the same validator public key
-      await pools.addDeposit(withdrawer, {
+      await privates.addDeposit(withdrawer, {
         from: sender,
         value: validatorDepositAmount
       });
       await expectRevert(
-        pools.registerValidator(pubKey, signature, hashTreeRoot, {
+        privates.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'Public key has been already used.'
       );
     });
 
-    it('succeeds to register Validators for ready pools', async () => {
+    it('succeeds to register Validators for ready entities', async () => {
       const totalAmount = new BN(0);
-      // Create ready pools
+      // Create ready entities
       for (let i = 0; i < validatorRegistrationArgs.length; i++) {
-        await pools.addDeposit(withdrawer, {
+        await privates.addDeposit(withdrawer, {
           from: accounts[i],
           value: validatorDepositAmount
         });
@@ -121,11 +121,11 @@ contract(
       }
 
       // Check balance increased correctly
-      await checkCollectorBalance(pools, totalAmount);
+      await checkCollectorBalance(privates, totalAmount);
 
       // Register validators
       for (let i = 0; i < validatorRegistrationArgs.length; i++) {
-        const { tx } = await pools.registerValidator(
+        const { tx } = await privates.registerValidator(
           validatorRegistrationArgs[i].pubKey,
           validatorRegistrationArgs[i].signature,
           validatorRegistrationArgs[i].hashTreeRoot,
@@ -141,7 +141,7 @@ contract(
           transaction: tx,
           entityId: new BN(validatorRegistrationArgs.length - i),
           pubKey: validatorRegistrationArgs[i].pubKey,
-          collectorAddress: pools.address,
+          collectorAddress: privates.address,
           validatorsRegistry: validatorsRegistry,
           signature: validatorRegistrationArgs[i].signature
         });
@@ -149,12 +149,12 @@ contract(
 
       // Registrations are not possible anymore
       await expectRevert(
-        pools.registerValidator(pubKey, signature, hashTreeRoot, {
+        privates.registerValidator(pubKey, signature, hashTreeRoot, {
           from: operator
         }),
         'There are no ready entities.'
       );
-      await checkCollectorBalance(pools, new BN(0));
+      await checkCollectorBalance(privates, new BN(0));
     });
   }
 );

@@ -47,7 +47,11 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
 
   beforeEach(async () => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
-      { initialAdmin: admin, networkConfig, vrc: vrc.options.address }
+      {
+        initialAdmin: admin,
+        networkConfig,
+        vrc: vrc.options.address
+      }
     );
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
@@ -81,12 +85,12 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1
+      withdrawerAddress: withdrawer1
     });
     await checkCollectorBalance(pools, poolsBalance);
   });
 
-  it('fails to cancel a deposit with invalid withdraw address', async () => {
+  it('fails to cancel a deposit with invalid withdrawer address', async () => {
     await expectRevert(
       pools.cancelDeposit(constants.ZERO_ADDRESS, ether('1'), {
         from: sender1
@@ -99,7 +103,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1
+      withdrawerAddress: withdrawer1
     });
     await checkCollectorBalance(pools, poolsBalance);
   });
@@ -117,7 +121,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1
+      withdrawerAddress: withdrawer1
     });
     await checkCollectorBalance(pools, poolsBalance);
   });
@@ -133,7 +137,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender2,
-      withdrawalAddress: withdrawer2
+      withdrawerAddress: withdrawer2
     });
     await checkCollectorBalance(pools, poolsBalance);
   });
@@ -166,7 +170,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1
+      withdrawerAddress: withdrawer1
     });
     await checkCollectorBalance(pools, poolsBalance.add(cancelAmount));
   });
@@ -185,7 +189,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       entityId: new BN(1),
       collectorAddress: pools.address,
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1
+      withdrawerAddress: withdrawer1
     });
     await checkCollectorBalance(pools, poolsBalance);
   });
@@ -201,7 +205,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       canceledAmount: amount1,
       totalAmount: ether('0')
     });
@@ -225,7 +229,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       canceledAmount: cancelAmount,
       totalAmount: amount1.sub(cancelAmount)
     });
@@ -256,7 +260,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(2),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       canceledAmount: cancelAmount,
       totalAmount: new BN(0)
     });

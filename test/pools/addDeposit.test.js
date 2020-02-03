@@ -29,6 +29,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
   let deposits;
   let vrc;
   let pools;
+  let settings;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -55,12 +56,12 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     settings = await Settings.at(settingsProxy);
   });
 
-  it('fails to add a deposit with zero withdrawal address', async () => {
+  it('fails to add a deposit with zero withdrawer address', async () => {
     await expectRevert(
       pools.addDeposit(constants.ZERO_ADDRESS, {
         from: sender1
       }),
-      'Withdraw address cannot be zero address.'
+      'Withdrawer address cannot be zero address.'
     );
     await checkCollectorBalance(pools, new BN(0));
   });
@@ -104,7 +105,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
@@ -132,7 +133,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
@@ -144,7 +145,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(2),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount.sub(validatorDepositAmount),
       totalAmount: depositAmount.sub(validatorDepositAmount)
     });
@@ -170,7 +171,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount1,
       totalAmount: depositAmount1
     });
@@ -189,7 +190,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender2,
-      withdrawalAddress: withdrawer2,
+      withdrawerAddress: withdrawer2,
       addedAmount: depositAmount2,
       totalAmount: depositAmount2
     });
@@ -216,7 +217,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
         collectorAddress: pools.address,
         entityId: new BN(1),
         senderAddress: sender1,
-        withdrawalAddress: withdrawer1,
+        withdrawerAddress: withdrawer1,
         addedAmount: depositAmount,
         totalAmount: userBalance
       });
@@ -250,7 +251,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
           collectorAddress: pools.address,
           entityId: new BN(1),
           senderAddress: sender1,
-          withdrawalAddress: withdrawer1,
+          withdrawerAddress: withdrawer1,
           addedAmount: depositAmount,
           totalAmount: balance1
         });
@@ -263,7 +264,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
           collectorAddress: pools.address,
           entityId: new BN(2),
           senderAddress: sender1,
-          withdrawalAddress: withdrawer1,
+          withdrawerAddress: withdrawer1,
           addedAmount: depositAmount,
           totalAmount: balance2
         });
@@ -277,7 +278,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
           collectorAddress: pools.address,
           entityId: new BN(1),
           senderAddress: sender1,
-          withdrawalAddress: withdrawer1,
+          withdrawerAddress: withdrawer1,
           addedAmount: toPool1,
           totalAmount: balance1
         });
@@ -290,7 +291,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
           collectorAddress: pools.address,
           entityId: new BN(2),
           senderAddress: sender1,
-          withdrawalAddress: withdrawer1,
+          withdrawerAddress: withdrawer1,
           addedAmount: toPool2,
           totalAmount: balance2
         });
@@ -334,7 +335,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
@@ -377,7 +378,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
@@ -407,7 +408,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
       collectorAddress: pools.address,
       entityId: new BN(1),
       senderAddress: sender1,
-      withdrawalAddress: withdrawer1,
+      withdrawerAddress: withdrawer1,
       addedAmount: depositAmount,
       totalAmount: initialSettings.validatorDepositAmount
     });

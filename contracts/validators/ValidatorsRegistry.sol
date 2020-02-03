@@ -1,6 +1,7 @@
 pragma solidity 0.5.16;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "../collectors/Privates.sol";
 import "../collectors/Pools.sol";
 import "../Settings.sol";
 
@@ -29,6 +30,9 @@ contract ValidatorsRegistry is Initializable {
     // Address of the Pools contract.
     Pools private pools;
 
+    // Address of the Privates contract.
+    Privates private privates;
+
     // Address of the Settings contract.
     Settings private settings;
 
@@ -38,6 +42,7 @@ contract ValidatorsRegistry is Initializable {
     * @param pubKey - Validator's public key.
     * @param withdrawalCredentials - The withdrawal credentials used to perform withdrawal for this validator.
     * @param maintainerFee - Fee to pay to the maintainer after withdrawal.
+    * @param minStakingDuration - The minimal staking duration of the Validator.
     * @param stakingDuration - Staking duration of the validator.
     * @param depositAmount - Validator's deposit amount.
     */
@@ -46,6 +51,7 @@ contract ValidatorsRegistry is Initializable {
         bytes pubKey,
         bytes withdrawalCredentials,
         uint16 maintainerFee,
+        uint48 minStakingDuration,
         uint256 stakingDuration,
         uint256 depositAmount
     );
@@ -53,10 +59,12 @@ contract ValidatorsRegistry is Initializable {
     /**
     * Constructor for initializing the ValidatorsRegistry contract.
     * @param _pools - Address of the Pols contract.
+    * @param _privates - Address of the Privates contract.
     * @param _settings - Address of the Settings contract.
     */
-    function initialize(Pools _pools, Settings _settings) public initializer {
+    function initialize(Pools _pools, Privates _privates, Settings _settings) public initializer {
         pools = _pools;
+        privates = _privates;
         settings = _settings;
     }
 
@@ -67,7 +75,7 @@ contract ValidatorsRegistry is Initializable {
     * @param _entityId - ID of the collector's entity the validator's deposit was accumulated.
     */
     function register(bytes calldata _pubKey, uint256 _entityId) external {
-        require(msg.sender == address(pools), "Permission denied.");
+        require(msg.sender == address(pools) || msg.sender == address(privates), "Permission denied.");
 
         bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
         require(validators[validatorId].collectorEntityId == "", "Public key has been already used.");
@@ -83,6 +91,7 @@ contract ValidatorsRegistry is Initializable {
             _pubKey,
             settings.withdrawalCredentials(),
             validator.maintainerFee,
+            settings.minStakingDuration(),
             settings.stakingDurations(msg.sender),
             validator.depositAmount
         );

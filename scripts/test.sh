@@ -34,4 +34,4 @@ else
   echo "Ganache launched!"
 fi
 
-NODE_ENV=test SILENT=true node_modules/.bin/truffle test "$@"
+NODE_ENV=test SILENT=true node_modules/.bin/truffle test --network development "$@"

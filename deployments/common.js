@@ -1,5 +1,5 @@
 const { ConfigManager, scripts } = require('@openzeppelin/cli');
-
+const { ZWeb3 } = require('@openzeppelin/upgrades');
 function log(message) {
   if (process.env.SILENT !== 'true') {
     console.log(message);
@@ -22,17 +22,26 @@ async function deployLogicContracts({ networkConfig }) {
   });
 }
 
-function getSalt({ excluded = [] } = {}) {
+async function calculateContractAddress({ networkConfig }) {
   let salt = Math.round(Math.random() * 100000);
-  while (excluded.includes(salt)) {
+  let contractAddress = await scripts.queryDeployment({
+    salt,
+    ...networkConfig
+  });
+  while ((await ZWeb3.getCode(contractAddress)) !== '0x') {
     salt = Math.round(Math.random() * 100000);
+    contractAddress = await scripts.queryDeployment({
+      salt,
+      ...networkConfig
+    });
   }
-  return salt;
+
+  return { salt, contractAddress };
 }
 
 module.exports = {
   log,
-  getSalt,
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
+  calculateContractAddress
 };
