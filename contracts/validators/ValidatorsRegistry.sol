@@ -1,7 +1,7 @@
 pragma solidity 0.5.16;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../collectors/Individuals.sol";
+import "../collectors/Privates.sol";
 import "../collectors/Pools.sol";
 import "../Settings.sol";
 
@@ -30,8 +30,8 @@ contract ValidatorsRegistry is Initializable {
     // Address of the Pools contract.
     Pools private pools;
 
-    // Address of the Individuals contract.
-    Individuals private individuals;
+    // Address of the Privates contract.
+    Privates private privates;
 
     // Address of the Settings contract.
     Settings private settings;
@@ -59,12 +59,12 @@ contract ValidatorsRegistry is Initializable {
     /**
     * Constructor for initializing the ValidatorsRegistry contract.
     * @param _pools - Address of the Pols contract.
-    * @param _individuals - Address of the Individuals contract.
+    * @param _privates - Address of the Privates contract.
     * @param _settings - Address of the Settings contract.
     */
-    function initialize(Pools _pools, Individuals _individuals, Settings _settings) public initializer {
+    function initialize(Pools _pools, Privates _privates, Settings _settings) public initializer {
         pools = _pools;
-        individuals = _individuals;
+        privates = _privates;
         settings = _settings;
     }
 
@@ -75,7 +75,7 @@ contract ValidatorsRegistry is Initializable {
     * @param _entityId - ID of the collector's entity the validator's deposit was accumulated.
     */
     function register(bytes calldata _pubKey, uint256 _entityId) external {
-        require(msg.sender == address(pools) || msg.sender == address(individuals), "Permission denied.");
+        require(msg.sender == address(pools) || msg.sender == address(privates), "Permission denied.");
 
         bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
         require(validators[validatorId].collectorEntityId == "", "Public key has been already used.");

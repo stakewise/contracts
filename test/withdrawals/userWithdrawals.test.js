@@ -25,7 +25,7 @@ const {
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
-const Individuals = artifacts.require('Individuals');
+const Privates = artifacts.require('Privates');
 const Pools = artifacts.require('Pools');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
@@ -567,8 +567,8 @@ contract('Withdrawals', ([_, ...users]) => {
     expect(await balance.current(wallet)).to.be.bignumber.equal(new BN(0));
   });
 
-  it('can withdraw individual from rewarded validator', async () => {
-    let individuals = await Individuals.at(proxies.individuals);
+  it('can withdraw private deposits from rewarded validator', async () => {
+    let privates = await Privates.at(proxies.privates);
 
     const maintainerFee = new BN(2000);
     const validatorDepositAmount = new BN(
@@ -582,7 +582,7 @@ contract('Withdrawals', ([_, ...users]) => {
     let expectedUserReward = ether('1.8528873712');
 
     // User performs deposit equal to validator deposit amount
-    await individuals.addDeposit(accounts[0], {
+    await privates.addDeposit(accounts[0], {
       from: sender,
       value: validatorDepositAmount
     });
@@ -591,7 +591,7 @@ contract('Withdrawals', ([_, ...users]) => {
     let validatorId = await createValidator({
       args: validatorRegistrationArgs[1],
       hasReadyEntity: true,
-      individualsProxy: proxies.individuals,
+      privatesProxy: proxies.privates,
       operator
     });
 
@@ -651,15 +651,15 @@ contract('Withdrawals', ([_, ...users]) => {
     expect(await balance.current(wallet)).to.be.bignumber.equal(new BN(0));
   });
 
-  it('can withdraw individual deposit from penalised validator', async () => {
+  it('can withdraw private deposit from penalised validator', async () => {
     const validatorDepositAmount = new BN(
       initialSettings.validatorDepositAmount
     );
-    let individuals = await Individuals.at(proxies.individuals);
+    let privates = await Privates.at(proxies.privates);
     const withdrawerBalance = await balance.tracker(accounts[0]);
 
     // User performs deposit equal to validator deposit amount
-    await individuals.addDeposit(accounts[0], {
+    await privates.addDeposit(accounts[0], {
       from: sender,
       value: validatorDepositAmount
     });
@@ -668,7 +668,7 @@ contract('Withdrawals', ([_, ...users]) => {
     let validatorId = await createValidator({
       args: validatorRegistrationArgs[1],
       hasReadyEntity: true,
-      individualsProxy: proxies.individuals,
+      privatesProxy: proxies.privates,
       operator
     });
 

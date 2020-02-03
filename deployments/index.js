@@ -7,7 +7,7 @@ const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
 const {
   deployPoolsProxy,
-  deployIndividualsProxy
+  deployPrivatesProxy
 } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
@@ -58,16 +58,16 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     contractAddress: poolsCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Individuals proxy address via create2
+  // Calculate Privates proxy address via create2
   let {
-    salt: individualsSalt,
-    contractAddress: individualsCalcProxy
+    salt: privatesSalt,
+    contractAddress: privatesCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
   // Deploy Deposits proxy
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
-    individualsProxy: individualsCalcProxy,
+    privatesProxy: privatesCalcProxy,
     salt: depositsSalt,
     networkConfig
   });
@@ -80,7 +80,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy Validators Registry proxy
   let validatorsRegistryProxy = await deployValidatorsRegistry({
     poolsProxy: poolsCalcProxy,
-    individualsProxy: individualsCalcProxy,
+    privatesProxy: privatesCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
     networkConfig
@@ -107,19 +107,19 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     );
   }
 
-  // Deploy Individuals proxy
-  let individualsProxy = await deployIndividualsProxy({
+  // Deploy Privates proxy
+  let privatesProxy = await deployPrivatesProxy({
     vrc,
-    salt: individualsSalt,
+    salt: privatesSalt,
     depositsProxy,
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
     networkConfig
   });
-  if (individualsProxy !== individualsCalcProxy) {
+  if (privatesProxy !== privatesCalcProxy) {
     throw new Error(
-      `Individuals contract actual address "${individualsProxy}" does not match expected "${individualsCalcProxy}"`
+      `Privates contract actual address "${privatesProxy}" does not match expected "${privatesCalcProxy}"`
     );
   }
 
@@ -174,7 +174,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,
     pools: poolsProxy,
-    individuals: individualsProxy,
+    privates: privatesProxy,
     walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy
   };

@@ -28,7 +28,7 @@ async function deployPoolsProxy({
   return proxy.address;
 }
 
-async function deployIndividualsProxy({
+async function deployPrivatesProxy({
   depositsProxy,
   settingsProxy,
   operatorsProxy,
@@ -38,7 +38,7 @@ async function deployIndividualsProxy({
   networkConfig
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Individuals',
+    contractAlias: 'Privates',
     methodName: 'initialize',
     methodArgs: [
       depositsProxy,
@@ -51,8 +51,8 @@ async function deployIndividualsProxy({
     ...networkConfig
   });
 
-  log(`Individuals contract: ${proxy.address}`);
+  log(`Privates contract: ${proxy.address}`);
   return proxy.address;
 }
 
-module.exports = { deployPoolsProxy, deployIndividualsProxy };
+module.exports = { deployPoolsProxy, deployPrivatesProxy };

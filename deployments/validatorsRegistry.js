@@ -5,13 +5,13 @@ async function deployValidatorsRegistry({
   networkConfig,
   settingsProxy,
   poolsProxy,
-  individualsProxy,
+  privatesProxy,
   salt
 }) {
   const proxy = await scripts.create({
     contractAlias: 'ValidatorsRegistry',
     methodName: 'initialize',
-    methodArgs: [poolsProxy, individualsProxy, settingsProxy],
+    methodArgs: [poolsProxy, privatesProxy, settingsProxy],
     salt,
     ...networkConfig
   });

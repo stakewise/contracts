@@ -124,7 +124,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       // Deploy next validator
       let newValidatorId = await createValidator({
         args: validatorRegistrationArgs[1],
-        individualsProxy: proxies.individuals,
+        privatesProxy: proxies.privates,
         operator,
         sender,
         withdrawer

@@ -9,14 +9,14 @@ import "../Settings.sol";
 import "./BaseCollector.sol";
 
 /**
- * @title Individuals
+ * @title Privates
  *
- * Individuals contract requires users to deposit the full amount required to become a Validator.
+ * Privates contract requires users to deposit the full amount required to become a Validator.
  * As soon as the Validator's deposit amount is added, the entity will be sent for the registration.
  */
-contract Individuals is BaseCollector {
+contract Privates is BaseCollector {
     /**
-    * Constructor for initializing the Individuals contract.
+    * Constructor for initializing the Privates contract.
     * @param _deposits - Address of the Deposits contract.
     * @param _settings - Address of the Settings contract.
     * @param _operators - Address of the Operators contract.
@@ -42,10 +42,10 @@ contract Individuals is BaseCollector {
     }
 
     /**
-    * Function for adding individual deposits.
+    * Function for adding private deposits.
     * User must transfer ether amount together with calling the function.
     * The deposit amount must be the same as Validator's deposit amount.
-    * The depositing will be disallowed in case `Individuals` collector is paused in `Settings` contract.
+    * The depositing will be disallowed in case `Privates` collector is paused in `Settings` contract.
     * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
     */
     function addDeposit(address _withdrawer) external payable {

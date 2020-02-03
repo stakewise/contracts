@@ -6,7 +6,7 @@ const { initialSettings } = require('../deployments/settings');
 const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');
-const Individuals = artifacts.require('Individuals');
+const Privates = artifacts.require('Privates');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 function getDepositAmount({
@@ -195,14 +195,14 @@ async function createValidator({
   args = validatorRegistrationArgs[0],
   hasReadyEntity = false,
   poolsProxy,
-  individualsProxy,
+  privatesProxy,
   operator,
   sender,
   withdrawer
 }) {
   let collector;
-  if (individualsProxy) {
-    collector = await Individuals.at(individualsProxy);
+  if (privatesProxy) {
+    collector = await Privates.at(privatesProxy);
   } else if (poolsProxy) {
     collector = await Pools.at(poolsProxy);
   }
