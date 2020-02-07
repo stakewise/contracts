@@ -5,6 +5,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/WalletsManagers.sol";
 import "../Deposits.sol";
 import "../validators/ValidatorsRegistry.sol";
+import "../validators/ValidatorTransfers.sol";
 import "./Wallet.sol";
 import "./WalletsRegistry.sol";
 
@@ -38,6 +39,9 @@ contract Withdrawals is Initializable {
 
     // Address of the ValidatorsRegistry contract.
     ValidatorsRegistry private validatorsRegistry;
+
+    // Address of the Validator Transfers contract.
+    ValidatorTransfers private validatorTransfers;
 
     // Address of the WalletsRegistry contract.
     WalletsRegistry private walletsRegistry;
@@ -76,6 +80,7 @@ contract Withdrawals is Initializable {
     * @param _deposits - Address of the Deposits contract.
     * @param _settings - Address of the Settings contract.
     * @param _validatorsRegistry - Address of the Validators Registry contract.
+    * @param _validatorTransfers - Address of the Validator Transfers contract.
     * @param _walletsRegistry - Address of the Wallets Registry contract.
     */
     function initialize(
@@ -83,6 +88,7 @@ contract Withdrawals is Initializable {
         Deposits _deposits,
         Settings _settings,
         ValidatorsRegistry _validatorsRegistry,
+        ValidatorTransfers _validatorTransfers,
         WalletsRegistry _walletsRegistry
     )
         public initializer
@@ -91,6 +97,7 @@ contract Withdrawals is Initializable {
         deposits = _deposits;
         settings = _settings;
         validatorsRegistry = _validatorsRegistry;
+        validatorTransfers = _validatorTransfers;
         walletsRegistry = _walletsRegistry;
     }
 
@@ -104,16 +111,22 @@ contract Withdrawals is Initializable {
     function enableWithdrawals(address payable _wallet) external {
         (, bytes32 validator) = walletsRegistry.wallets(_wallet);
         require(validator != "", "Wallet is not assigned to any validator.");
-
-        (uint256 depositAmount, uint256 maintainerFee,) = validatorsRegistry.validators(validator);
         require(_wallet.balance > 0, "Wallet has no ether in it.");
-
         require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
+        (
+            uint256 depositAmount,
+            uint256 maintainerFee,
+            bytes32 collectorEntityId
+        ) = validatorsRegistry.validators(validator);
+        uint256 userDebts = validatorTransfers.userDebts(validator);
+        uint256 maintainerReward = validatorTransfers.maintainerDebts(validator);
+        uint256 entityBalance = (_wallet.balance).sub(userDebts).sub(maintainerReward);
+
         uint256 penalty;
-        if (_wallet.balance < depositAmount) {
-            // validator was penalized
-            penalty = (_wallet.balance).mul(1 ether).div(depositAmount);
+        if (entityBalance < depositAmount) {
+            // validator was penalised
+            penalty = entityBalance.mul(1 ether).div(depositAmount);
             validatorPenalties[validator] = penalty;
         } else {
             validatorLeftDeposits[validator] = depositAmount;
@@ -121,15 +134,20 @@ contract Withdrawals is Initializable {
 
         walletsRegistry.unlockWallet(_wallet);
 
-        // Maintainer gets a fee only in case there is a profit.
-        if (_wallet.balance > depositAmount) {
-            uint256 totalReward = (_wallet.balance).sub(depositAmount);
-            uint256 maintainerReward = (totalReward.mul(maintainerFee)).div(10000);
-            // don't send if reward is less than gas required to execute.
-            if (maintainerReward > 25 szabo) {
-                emit MaintainerWithdrawn(settings.maintainer(), _wallet, maintainerReward);
-                Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward);
-            }
+        // Maintainer gets a fee for the entity only in case there is a profit.
+        if (entityBalance > depositAmount) {
+            maintainerReward = maintainerReward.add(((entityBalance.sub(depositAmount)).mul(maintainerFee)).div(10000));
+        }
+
+        if (userDebts > 0) {
+            validatorTransfers.resolveDebts(validator);
+            Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebts);
+        }
+
+        // don't send if reward is less than gas required to execute.
+        if (maintainerReward > 25 szabo) {
+            emit MaintainerWithdrawn(settings.maintainer(), _wallet, maintainerReward);
+            Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward);
         }
     }
 
@@ -145,11 +163,11 @@ contract Withdrawals is Initializable {
         (bool unlocked, bytes32 validator) = walletsRegistry.wallets(_wallet);
         require(unlocked, "Wallet withdrawals are not enabled.");
 
-        bytes32 userId = keccak256(abi.encodePacked(validator, msg.sender, _withdrawer));
+        (, , bytes32 collectorEntityId) = validatorsRegistry.validators(validator);
+        bytes32 userId = keccak256(abi.encodePacked(collectorEntityId, msg.sender, _withdrawer));
         require(!withdrawnUsers[userId], "The withdrawal has already been performed.");
 
-        (, , bytes32 collectorEntityId) = validatorsRegistry.validators(validator);
-        uint256 userDeposit = deposits.amounts(keccak256(abi.encodePacked(collectorEntityId, msg.sender, _withdrawer)));
+        uint256 userDeposit = deposits.amounts(userId);
         require(userDeposit > 0, "User does not have a share in this wallet.");
 
         uint256 penalty = validatorPenalties[validator];
