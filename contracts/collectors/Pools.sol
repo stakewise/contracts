@@ -22,13 +22,15 @@ contract Pools is BaseCollector {
     * @param _operators - Address of the Operators contract.
     * @param _validatorRegistration - Address of the VRC (deployed by Ethereum).
     * @param _validatorsRegistry - Address of the Validators Registry contract.
+    * @param _validatorTransfers - Address of the Validator Transfers contract.
     */
     function initialize(
         Deposits _deposits,
         Settings _settings,
         Operators _operators,
         IValidatorRegistration _validatorRegistration,
-        ValidatorsRegistry _validatorsRegistry
+        ValidatorsRegistry _validatorsRegistry,
+        ValidatorTransfers _validatorTransfers
     )
         public initializer
     {
@@ -37,7 +39,8 @@ contract Pools is BaseCollector {
             _settings,
             _operators,
             _validatorRegistration,
-            _validatorsRegistry
+            _validatorsRegistry,
+            _validatorTransfers
         );
     }
 

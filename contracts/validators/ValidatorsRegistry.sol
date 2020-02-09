@@ -36,7 +36,7 @@ contract ValidatorsRegistry is Initializable {
     // Address of the Settings contract.
     Settings private settings;
 
-    // Checks whether the caller is the Collector.
+    // Checks whether the caller is the Collector contract.
     modifier onlyCollectors() {
         require(msg.sender == address(pools) || msg.sender == address(privates), "Permission denied.");
         _;
@@ -125,7 +125,7 @@ contract ValidatorsRegistry is Initializable {
     */
     function update(bytes32 _validatorId, uint256 _entityId) external onlyCollectors {
         Validator storage validator = validators[_validatorId];
-        require(validator.depositAmount == settings.validatorDepositAmount(), "Validator deposit amounts are not equal.");
+        require(validator.depositAmount == settings.validatorDepositAmount(), "Validator deposit amount cannot be updated.");
 
         bytes32 newCollectorEntityId = keccak256(abi.encodePacked(msg.sender, _entityId));
         require(validator.collectorEntityId != newCollectorEntityId, "New collector entity ID must be different.");

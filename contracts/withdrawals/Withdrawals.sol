@@ -4,6 +4,7 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/WalletsManagers.sol";
 import "../Deposits.sol";
+import "../Settings.sol";
 import "../validators/ValidatorsRegistry.sol";
 import "../validators/ValidatorTransfers.sol";
 import "./Wallet.sol";
@@ -104,32 +105,27 @@ contract Withdrawals is Initializable {
     /**
     * Function for enabling withdrawals.
     * Calculates validator's penalty, sends a fee to the maintainer (if no penalty),
-    * unlocks the wallet for withdrawals.
+    * resolves debts of the validator to previous entities, unlocks the wallet for withdrawals.
     * Can only be called by users with a wallets manager role.
     * @param _wallet - An address of the wallet to enable withdrawals for.
     */
     function enableWithdrawals(address payable _wallet) external {
-        (, bytes32 validator) = walletsRegistry.wallets(_wallet);
-        require(validator != "", "Wallet is not assigned to any validator.");
-        require(_wallet.balance > 0, "Wallet has no ether in it.");
+        (, bytes32 validatorId) = walletsRegistry.wallets(_wallet);
+        require(validatorId != "", "Wallet is not assigned to any validator.");
         require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
-        (
-            uint256 depositAmount,
-            uint256 maintainerFee,
-            bytes32 collectorEntityId
-        ) = validatorsRegistry.validators(validator);
-        uint256 userDebts = validatorTransfers.userDebts(validator);
-        uint256 maintainerReward = validatorTransfers.maintainerDebts(validator);
-        uint256 entityBalance = (_wallet.balance).sub(userDebts).sub(maintainerReward);
+        (uint256 depositAmount, uint256 maintainerFee,) = validatorsRegistry.validators(validatorId);
+        (uint256 userDebt, uint256 maintainerReward,) = validatorTransfers.validatorDebts(validatorId);
+        uint256 entityBalance = (_wallet.balance).sub(userDebt).sub(maintainerReward);
+        require(entityBalance > 0, "Wallet has not enough ether in it.");
 
         uint256 penalty;
         if (entityBalance < depositAmount) {
             // validator was penalised
             penalty = entityBalance.mul(1 ether).div(depositAmount);
-            validatorPenalties[validator] = penalty;
+            validatorPenalties[validatorId] = penalty;
         } else {
-            validatorLeftDeposits[validator] = depositAmount;
+            validatorLeftDeposits[validatorId] = depositAmount;
         }
 
         walletsRegistry.unlockWallet(_wallet);
@@ -139,9 +135,9 @@ contract Withdrawals is Initializable {
             maintainerReward = maintainerReward.add(((entityBalance.sub(depositAmount)).mul(maintainerFee)).div(10000));
         }
 
-        if (userDebts > 0) {
-            validatorTransfers.resolveDebts(validator);
-            Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebts);
+        if (userDebt > 0) {
+            validatorTransfers.resolveDebt(validatorId);
+            Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebt);
         }
 
         // don't send if reward is less than gas required to execute.

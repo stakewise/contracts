@@ -108,20 +108,16 @@ contract BaseCollector is Initializable {
     /**
     * Function for transferring Validator ownership to another entity.
     * @param _validatorId - Validator ID from Validators Registry to transfer.
-    * @param _currentRewards - Validator's current reward to register as debt.
+    * @param _currentReward - Validator's current reward to register as debt.
     */
     function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {
-        require(validatorTransfers.canTransferValidator(msg.sender), "Permission denied.");
+        require(validatorTransfers.isManager(msg.sender), "Permission denied.");
 
         (
             uint256 currentDepositAmount,
             uint256 currentMaintainerFee,
             bytes32 currentCollectorEntityId
         ) = validatorsRegistry.validators(_validatorId);
-//        require(
-//            validatorTransfers.requestedTransfer(currentCollectorEntityId),
-//            "Validator entity did not request transfer."
-//        );
 
         uint256 entityId = readyEntities[readyEntities.length - 1];
         readyEntities.pop();
@@ -129,7 +125,7 @@ contract BaseCollector is Initializable {
 
         uint256 maintainerReward = (_currentReward * currentMaintainerFee) / 10000;
         totalSupply -= currentDepositAmount;
-        validatorTransfers.registerDebt.value(currentDepositAmount)(
+        validatorTransfers.registerTransfer.value(currentDepositAmount)(
             _validatorId,
             currentCollectorEntityId,
             _currentReward - maintainerReward,
