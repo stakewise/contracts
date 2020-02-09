@@ -27,13 +27,16 @@ const Pools = artifacts.require('Pools');
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
-contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
-  let networkConfig;
-  let deposits;
-  let vrc;
-  let pools;
-  let amount1, amount2;
-  let poolsBalance;
+contract('Pools', ([_, ...accounts]) => {
+  let networkConfig, deposits, vrc, pools, amount1, amount2, poolsBalance;
+  [
+    admin,
+    transfersManager,
+    sender1,
+    withdrawer1,
+    sender2,
+    withdrawer2
+  ] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -49,6 +52,7 @@ contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
       {
         initialAdmin: admin,
+        transfersManager,
         networkConfig,
         vrc: vrc.options.address
       }

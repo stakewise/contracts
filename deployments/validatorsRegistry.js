@@ -1,7 +1,7 @@
 const { scripts } = require('@openzeppelin/cli');
 const { log } = require('./common');
 
-async function deployValidatorsRegistry({
+async function deployValidatorsRegistryProxy({
   networkConfig,
   settingsProxy,
   poolsProxy,
@@ -21,5 +21,5 @@ async function deployValidatorsRegistry({
 }
 
 module.exports = {
-  deployValidatorsRegistry
+  deployValidatorsRegistryProxy
 };

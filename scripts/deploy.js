@@ -19,6 +19,7 @@ Loggy.silent(true);
   // Deploy all proxies
   await deployAllProxies({
     initialAdmin: process.env.INITIAL_ADMIN,
+    transfersManager: process.env.TRANSFERS_MANAGER,
     vrc: process.env.VRC,
     networkConfig
   });

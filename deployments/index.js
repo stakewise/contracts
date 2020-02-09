@@ -15,10 +15,18 @@ const {
   deployWithdrawalsProxy
 } = require('../deployments/withdrawals');
 const {
-  deployValidatorsRegistry
+  deployValidatorsRegistryProxy
 } = require('../deployments/validatorsRegistry');
+const {
+  deployValidatorTransfersProxy
+} = require('../deployments/validatorTransfers');
 
-async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
+async function deployAllProxies({
+  initialAdmin,
+  transfersManager,
+  networkConfig,
+  vrc
+}) {
   // Deploy admins, operators, managers proxies
   let adminsProxy = await deployAdminsProxy({
     networkConfig,
@@ -64,6 +72,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     contractAddress: privatesCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
+  // Calculate Validator Transfers proxy address via create2
+  let {
+    salt: validatorTransfersSalt,
+    contractAddress: validatorTransfersCalcProxy
+  } = await calculateContractAddress({ networkConfig });
+
   // Deploy Deposits proxy
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
@@ -78,7 +92,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   }
 
   // Deploy Validators Registry proxy
-  let validatorsRegistryProxy = await deployValidatorsRegistry({
+  let validatorsRegistryProxy = await deployValidatorsRegistryProxy({
     poolsProxy: poolsCalcProxy,
     privatesProxy: privatesCalcProxy,
     salt: validatorsRegistrySalt,
@@ -99,6 +113,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig
   });
   if (poolsProxy !== poolsCalcProxy) {
@@ -115,6 +130,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig
   });
   if (privatesProxy !== privatesCalcProxy) {
@@ -158,11 +174,31 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     networkConfig,
     walletsRegistryProxy,
-    validatorsRegistryProxy
+    validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy
   });
   if (withdrawalsProxy !== withdrawalsCalcProxy) {
     throw new Error(
       `Withdrawals contract actual address "${withdrawalsProxy}" does not match expected "${withdrawalsCalcProxy}"`
+    );
+  }
+
+  // Deploy Validator Transfers proxy
+  let validatorTransfersProxy = await deployValidatorTransfersProxy({
+    salt: validatorTransfersSalt,
+    adminsProxy,
+    depositsProxy,
+    poolsProxy,
+    privatesProxy,
+    validatorsRegistryProxy,
+    walletsRegistryProxy,
+    withdrawalsProxy,
+    transfersManager,
+    networkConfig
+  });
+  if (validatorTransfersProxy !== validatorTransfersCalcProxy) {
+    throw new Error(
+      `Validator Transfers contract actual address "${validatorTransfersProxy}" does not match expected "${validatorTransfersCalcProxy}"`
     );
   }
 

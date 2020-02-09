@@ -5,15 +5,17 @@ const {
   deployLogicContracts
 } = require('../deployments/common');
 const { deployVRC } = require('../deployments/vrc');
+const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 const { removeNetworkFile } = require('./utils');
 
 const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
-contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
+contract('ValidatorsRegistry', ([_, ...accounts]) => {
   let networkConfig;
   let validatorsRegistry;
-  let users = [admin, operator, anyone];
+  let [admin, transfersManager, operator, anyone] = accounts;
+  let users = [admin, transfersManager, operator, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -24,6 +26,7 @@ contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
       operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
+      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -41,6 +44,21 @@ contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
       await expectRevert(
         validatorsRegistry.register(
           web3.utils.fromAscii('\x11'.repeat(48)),
+          web3.utils.soliditySha3('collector', 1),
+          {
+            from: users[i]
+          }
+        ),
+        'Permission denied.'
+      );
+    }
+  });
+
+  it('only collectors can update validators', async () => {
+    for (let i = 0; i < users.length; i++) {
+      await expectRevert(
+        validatorsRegistry.update(
+          web3.utils.soliditySha3(validatorRegistrationArgs[0].pubKey),
           web3.utils.soliditySha3('collector', 1),
           {
             from: users[i]

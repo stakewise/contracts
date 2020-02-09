@@ -19,8 +19,24 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 contract('Wallet', ([_, ...accounts]) => {
   let networkConfig;
   let wallet;
-  let [admin, operator, sender, withdrawer, manager, anyone] = accounts;
-  let users = [admin, operator, sender, withdrawer, manager, anyone];
+  let [
+    admin,
+    operator,
+    sender,
+    withdrawer,
+    transfersManager,
+    walletsManager,
+    anyone
+  ] = accounts;
+  let users = [
+    admin,
+    operator,
+    sender,
+    withdrawer,
+    transfersManager,
+    walletsManager,
+    anyone
+  ];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -28,6 +44,7 @@ contract('Wallet', ([_, ...accounts]) => {
     let vrc = await deployVRC({ from: admin });
     let proxies = await deployAllProxies({
       initialAdmin: admin,
+      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -35,7 +52,7 @@ contract('Wallet', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(manager, { from: admin });
+    await walletsManagers.addManager(walletsManager, { from: admin });
 
     let validatorId = await createValidator({
       poolsProxy: proxies.pools,
@@ -46,7 +63,7 @@ contract('Wallet', ([_, ...accounts]) => {
 
     let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: manager
+      from: walletsManager
     });
     wallet = await Wallet.at(logs[0].args.wallet);
   });

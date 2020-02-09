@@ -7,6 +7,7 @@ import "../collectors/Privates.sol";
 import "../collectors/Pools.sol";
 import "../Deposits.sol";
 import "../validators/ValidatorsRegistry.sol";
+import "../withdrawals/WalletsRegistry.sol";
 import "../withdrawals/Withdrawals.sol";
 
 /**
@@ -60,6 +61,9 @@ contract ValidatorTransfers is Initializable {
     // Address of the ValidatorsRegistry contract.
     ValidatorsRegistry private validatorsRegistry;
 
+    // Address of the WalletsRegistry contract.
+    WalletsRegistry private walletsRegistry;
+
     // Address of the Withdrawals contract.
     Withdrawals private withdrawals;
 
@@ -111,6 +115,7 @@ contract ValidatorTransfers is Initializable {
     * @param _pools - Address of the Pools contract.
     * @param _privates - Address of the Privates contract.
     * @param _validatorsRegistry - Address of the Validators Registry contract.
+    * @param _walletsRegistry - Address of the Wallets Registry contract.
     * @param _withdrawals - Address of the Withdrawals contract.
     * @param _manager - initial manager account.
     */
@@ -120,6 +125,7 @@ contract ValidatorTransfers is Initializable {
         Pools _pools,
         Privates _privates,
         ValidatorsRegistry _validatorsRegistry,
+        WalletsRegistry _walletsRegistry,
         Withdrawals _withdrawals,
         address _manager
     )
@@ -130,6 +136,7 @@ contract ValidatorTransfers is Initializable {
         pools = _pools;
         privates = _privates;
         validatorsRegistry = _validatorsRegistry;
+        walletsRegistry = _walletsRegistry;
         withdrawals = _withdrawals;
         manager = _manager;
     }
@@ -151,6 +158,10 @@ contract ValidatorTransfers is Initializable {
     {
 //        require(transferRequests(_collectorEntityId), "Collector entity did not request transfer.");
         require(entityValidators[_collectorEntityId] == "", "Collector entity is already registered.");
+        require(
+            !walletsRegistry.assignedValidators(_validatorId),
+            "Cannot register transfer for validator with assigned wallet."
+        );
         require(msg.sender == address(pools) || msg.sender == address(privates), "Permission denied.");
 
         entityValidators[_collectorEntityId] = _validatorId;

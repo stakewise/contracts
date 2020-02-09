@@ -107,7 +107,7 @@ contract BaseCollector is Initializable {
 
     /**
     * Function for transferring Validator ownership to another entity.
-    * @param _validatorId - Validator ID from Validators Registry to transfer.
+    * @param _validatorId - ID of the validator to transfer.
     * @param _currentReward - Validator's current reward to register as debt.
     */
     function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {

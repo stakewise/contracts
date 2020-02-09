@@ -7,6 +7,7 @@ async function deployPoolsProxy({
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
+  validatorTransfersProxy,
   salt,
   networkConfig
 }) {
@@ -18,7 +19,8 @@ async function deployPoolsProxy({
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy
+      validatorsRegistryProxy,
+      validatorTransfersProxy
     ],
     salt,
     ...networkConfig
@@ -34,6 +36,7 @@ async function deployPrivatesProxy({
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
+  validatorTransfersProxy,
   salt,
   networkConfig
 }) {
@@ -45,7 +48,8 @@ async function deployPrivatesProxy({
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy
+      validatorsRegistryProxy,
+      validatorTransfersProxy
     ],
     salt,
     ...networkConfig
