@@ -157,7 +157,6 @@ contract ValidatorTransfers is Initializable {
         external payable
     {
 //        require(transferRequests(_collectorEntityId), "Collector entity did not request transfer.");
-        require(entityValidators[_collectorEntityId] == "", "Collector entity is already registered.");
         require(
             !walletsRegistry.assignedValidators(_validatorId),
             "Cannot register transfer for validator with assigned wallet."

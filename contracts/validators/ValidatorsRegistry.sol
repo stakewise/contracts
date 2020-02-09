@@ -128,7 +128,6 @@ contract ValidatorsRegistry is Initializable {
         require(validator.depositAmount == settings.validatorDepositAmount(), "Validator deposit amount cannot be updated.");
 
         bytes32 newCollectorEntityId = keccak256(abi.encodePacked(msg.sender, _entityId));
-        require(validator.collectorEntityId != newCollectorEntityId, "New collector entity ID must be different.");
         validator.collectorEntityId = newCollectorEntityId;
         validator.maintainerFee = settings.maintainerFee();
         emit ValidatorUpdated(
