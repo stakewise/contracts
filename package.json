@@ -54,11 +54,11 @@
     "prettier": "^1.19.1",
     "solhint": "^2.3.0",
     "solidity-coverage": "^0.7.1",
-    "truffle": "^5.1.11"
+    "truffle": "^5.1.12"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.6.0",
-    "@openzeppelin/contracts": "^2.4.0",
+    "@openzeppelin/contracts": "^2.5.0",
     "@openzeppelin/upgrades": "^2.6.0",
     "truffle-hdwallet-provider": "^1.0.17"
   }

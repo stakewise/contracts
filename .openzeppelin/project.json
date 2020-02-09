@@ -10,7 +10,8 @@
     "ValidatorsRegistry": "ValidatorsRegistry",
     "WalletsRegistry": "WalletsRegistry",
     "Withdrawals": "Withdrawals",
-    "Privates": "Privates"
+    "Privates": "Privates",
+    "ValidatorTransfers": "ValidatorTransfers"
   },
   "dependencies": {},
   "name": "shared-validator",
