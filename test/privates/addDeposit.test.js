@@ -23,9 +23,9 @@ const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Privates', ([_, ...accounts]) => {
+contract('Add Private Deposit', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, privates, settings;
-  [
+  let [
     admin,
     transfersManager,
     sender1,

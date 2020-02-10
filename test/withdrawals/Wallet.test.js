@@ -9,14 +9,14 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, createValidator } = require('../utils');
+const { removeNetworkFile, registerValidator } = require('../utils');
 
 const Wallet = artifacts.require('Wallet');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
-contract('Wallet', ([_, ...accounts]) => {
+contract('Wallet Contract', ([_, ...accounts]) => {
   let networkConfig;
   let wallet;
   let [
@@ -54,7 +54,7 @@ contract('Wallet', ([_, ...accounts]) => {
     let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
     await walletsManagers.addManager(walletsManager, { from: admin });
 
-    let validatorId = await createValidator({
+    let validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,

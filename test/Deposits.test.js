@@ -10,7 +10,7 @@ const { removeNetworkFile } = require('./utils');
 const Deposits = artifacts.require('Deposits');
 const Operators = artifacts.require('Operators');
 
-contract('Deposits', ([_, admin, operator, transfersManager, anyone]) => {
+contract('Deposits Contract', ([_, admin, operator, transfersManager, anyone]) => {
   let networkConfig;
   let deposits;
   let users = [admin, operator, anyone];

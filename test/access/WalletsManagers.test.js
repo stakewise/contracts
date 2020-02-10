@@ -16,10 +16,11 @@ const { removeNetworkFile } = require('../utils');
 
 const WalletsManagers = artifacts.require('WalletsManagers');
 
-contract('WalletsManagers', ([_, admin, manager, anotherManager, anyone]) => {
+contract('WalletsManagers Contract', ([_, ...accounts]) => {
   let networkConfig;
   let adminsProxy;
   let walletsManagers;
+  let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();

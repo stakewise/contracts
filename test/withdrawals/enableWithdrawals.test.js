@@ -17,7 +17,7 @@ const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
-  createValidator,
+  registerValidator,
   validatorRegistrationArgs
 } = require('../utils');
 
@@ -65,7 +65,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     settings = await Settings.at(proxies.settings);
-    validatorId = await createValidator({
+    validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender: other,
@@ -146,7 +146,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
 
       for (let i = 0; i < tests.length; i++) {
         // Collect deposits, create validator
-        let validatorId = await createValidator({
+        let validatorId = await registerValidator({
           args: validatorRegistrationArgs[i + 1],
           poolsProxy: proxies.pools,
           operator,
@@ -282,7 +282,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
         await settings.setMaintainerFee(maintainerFee, { from: admin });
 
         // collect deposits, create validator
-        let validatorId = await createValidator({
+        let validatorId = await registerValidator({
           args: validatorRegistrationArgs[i + 1],
           poolsProxy: proxies.pools,
           operator,

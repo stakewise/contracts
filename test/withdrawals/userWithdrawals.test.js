@@ -18,7 +18,7 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   getDepositAmount,
-  createValidator,
+  registerValidator,
   validatorRegistrationArgs
 } = require('../utils');
 
@@ -30,7 +30,7 @@ const Pools = artifacts.require('Pools');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
 
-contract('Withdrawals', ([_, ...accounts]) => {
+contract('User Withdrawals', ([_, ...accounts]) => {
   let networkConfig,
     proxies,
     settings,
@@ -75,7 +75,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     settings = await Settings.at(proxies.settings);
-    validatorId = await createValidator({
+    validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender: other,
@@ -225,7 +225,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
       }
 
       // Create validator
-      let validatorId = await createValidator({
+      let validatorId = await registerValidator({
         args: validatorRegistrationArgs[i + 1],
         hasReadyEntity: true,
         poolsProxy: proxies.pools,
@@ -422,7 +422,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
       }
 
       // Create validator
-      let validatorId = await createValidator({
+      let validatorId = await registerValidator({
         args: validatorRegistrationArgs[i + 1],
         hasReadyEntity: true,
         poolsProxy: proxies.pools,
@@ -522,7 +522,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     }
 
     // Start validator
-    let validatorId = await createValidator({
+    let validatorId = await registerValidator({
       args: validatorRegistrationArgs[1],
       hasReadyEntity: true,
       poolsProxy: proxies.pools,
@@ -597,7 +597,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     });
 
     // Start validator
-    let validatorId = await createValidator({
+    let validatorId = await registerValidator({
       args: validatorRegistrationArgs[1],
       hasReadyEntity: true,
       privatesProxy: proxies.privates,
@@ -674,7 +674,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     });
 
     // Start validator
-    let validatorId = await createValidator({
+    let validatorId = await registerValidator({
       args: validatorRegistrationArgs[1],
       hasReadyEntity: true,
       privatesProxy: proxies.privates,

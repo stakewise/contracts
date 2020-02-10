@@ -11,7 +11,7 @@ const {
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
-  createValidator,
+  registerValidator,
   validatorRegistrationArgs
 } = require('../utils');
 
@@ -19,7 +19,7 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
-contract('WalletsRegistry', ([_, ...accounts]) => {
+contract('WalletsRegistry Contract', ([_, ...accounts]) => {
   let walletsRegistry;
   let validatorId;
   let proxies;
@@ -57,7 +57,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
     await walletsManagers.addManager(walletsManager, { from: admin });
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
-    validatorId = await createValidator({
+    validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,
@@ -130,7 +130,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       });
 
       // Deploy next validator
-      let newValidatorId = await createValidator({
+      let newValidatorId = await registerValidator({
         args: validatorRegistrationArgs[1],
         privatesProxy: proxies.privates,
         operator,

@@ -8,6 +8,7 @@ const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 const Pools = artifacts.require('Pools');
 const Privates = artifacts.require('Privates');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
+const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 function getDepositAmount({
   min = new BN(initialSettings.userDepositMinUnit),
@@ -191,7 +192,73 @@ async function checkValidatorRegistered({
   expect(validator.collectorEntityId).equal(collectorEntityId);
 }
 
-async function createValidator({
+async function checkValidatorTransferred({
+  transaction,
+  validatorId,
+  newEntityId,
+  prevEntityId,
+  collectorAddress,
+  validatorsRegistry,
+  validatorTransfers,
+  userDebt,
+  maintainerDebt,
+  newStakingDuration,
+  newMaintainerFee = new BN(initialSettings.maintainerFee),
+  newMinStakingDuration = new BN(initialSettings.minStakingDuration)
+}) {
+  let newCollectorEntityId = await getCollectorEntityId(
+    collectorAddress,
+    newEntityId
+  );
+  // Check ValidatorsRegistry log emitted
+  await expectEvent.inTransaction(
+    transaction,
+    ValidatorsRegistry,
+    'ValidatorUpdated',
+    {
+      validatorId,
+      collectorEntityId: newCollectorEntityId,
+      maintainerFee: newMaintainerFee,
+      minStakingDuration: newMinStakingDuration,
+      stakingDuration: newStakingDuration
+    }
+  );
+
+  // Check validator entry update
+  let validator = await validatorsRegistry.validators(validatorId);
+  expect(validator.maintainerFee).to.be.bignumber.equal(newMaintainerFee);
+  expect(validator.collectorEntityId).equal(newCollectorEntityId);
+
+  let prevCollectorEntityId = await getCollectorEntityId(
+    collectorAddress,
+    prevEntityId
+  );
+
+  // Check ValidatorTransfers log emitted
+  await expectEvent.inTransaction(
+    transaction,
+    ValidatorTransfers,
+    'TransferRegistered',
+    {
+      validatorId,
+      collectorEntityId: prevCollectorEntityId,
+      userDebt,
+      maintainerDebt
+    }
+  );
+
+  // check debt entry created
+  let validatorDebt = await validatorTransfers.validatorDebts(validatorId);
+  expect(validatorDebt.userDebt).to.be.bignumber.equal(userDebt);
+  expect(validatorDebt.maintainerDebt).to.be.bignumber.equal(maintainerDebt);
+
+  // check validator recorded for previous collector entity
+  expect(
+    await validatorTransfers.entityValidators(prevCollectorEntityId)
+  ).to.equal(validatorId);
+}
+
+async function registerValidator({
   args = validatorRegistrationArgs[0],
   hasReadyEntity = false,
   poolsProxy,
@@ -230,9 +297,10 @@ async function createValidator({
 
 module.exports = {
   validatorRegistrationArgs,
-  createValidator,
+  registerValidator,
   checkCollectorBalance,
   checkValidatorRegistered,
+  checkValidatorTransferred,
   removeNetworkFile,
   getDepositAmount,
   getUserId,

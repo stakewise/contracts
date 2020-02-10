@@ -1,17 +1,17 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../deployments');
+const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
   deployLogicContracts
-} = require('../deployments/common');
-const { deployVRC } = require('../deployments/vrc');
-const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
-const { removeNetworkFile } = require('./utils');
+} = require('../../deployments/common');
+const { deployVRC } = require('../../deployments/vrc');
+const { validatorRegistrationArgs } = require('../validatorRegistrationArgs');
+const { removeNetworkFile } = require('../utils');
 
 const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
-contract('ValidatorsRegistry', ([_, ...accounts]) => {
+contract('ValidatorsRegistry Contract', ([_, ...accounts]) => {
   let networkConfig;
   let validatorsRegistry;
   let [admin, transfersManager, operator, anyone] = accounts;

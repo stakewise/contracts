@@ -22,9 +22,9 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const stakingDuration = new BN(86400);
 
-contract('Pools', ([_, ...accounts]) => {
+contract('Register Validator', ([_, ...accounts]) => {
   let networkConfig, vrc, validatorsRegistry, pools;
-  [
+  let [
     admin,
     transfersManager,
     operator,

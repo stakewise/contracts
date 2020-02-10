@@ -209,6 +209,7 @@ async function deployAllProxies({
     settings: settingsProxy,
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,
+    validatorTransfers: validatorTransfersProxy,
     pools: poolsProxy,
     privates: privatesProxy,
     walletsRegistry: walletsRegistryProxy,

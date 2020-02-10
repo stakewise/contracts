@@ -16,10 +16,11 @@ const { removeNetworkFile } = require('../utils');
 
 const Operators = artifacts.require('Operators');
 
-contract('Operators', ([_, admin, operator, anotherOperator, anyone]) => {
+contract('Operators Contract', ([_, ...accounts]) => {
   let networkConfig;
   let adminsProxy;
   let operators;
+  let [admin, operator, anotherOperator, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();

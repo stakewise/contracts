@@ -170,8 +170,8 @@ contract ValidatorTransfers is Initializable {
         emit TransferRegistered(
             _validatorId,
             _collectorEntityId,
-            _userDebt,
-            _maintainerDebt
+            validatorDebt.userDebt,
+            validatorDebt.maintainerDebt
         );
     }
 
@@ -244,7 +244,7 @@ contract ValidatorTransfers is Initializable {
     }
 
     /**
-    * A fallback function to receive debt payments.
+    * A function to receive debt payments.
     */
-    function() external payable {}
+    receive() external payable { }
 }

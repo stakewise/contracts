@@ -24,9 +24,9 @@ const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Pools', ([_, ...accounts]) => {
+contract('Add Pool Deposit', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, pools, settings;
-  [
+  let [
     admin,
     transfersManager,
     sender1,

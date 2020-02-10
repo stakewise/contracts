@@ -27,9 +27,9 @@ const Pools = artifacts.require('Pools');
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
-contract('Pools', ([_, ...accounts]) => {
+contract('Cancel Pool Deposit', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, pools, amount1, amount2, poolsBalance;
-  [
+  let [
     admin,
     transfersManager,
     sender1,
