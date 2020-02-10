@@ -1,12 +1,4 @@
-const { expect } = require('chai');
-const {
-  BN,
-  send,
-  expectRevert,
-  expectEvent,
-  ether,
-  balance
-} = require('@openzeppelin/test-helpers');
+const { BN, send, expectEvent, ether } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -14,12 +6,7 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
-const {
-  removeNetworkFile,
-  checkCollectorBalance,
-  checkValidatorTransferred,
-  registerValidator
-} = require('../utils');
+const { removeNetworkFile, registerValidator } = require('../utils');
 
 const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
@@ -38,8 +25,6 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
     withdrawals,
-    validatorsRegistry,
-    validatorTransfers,
     privates,
     settings,
     wallet,
