@@ -1,7 +1,7 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "../libraries/SafeMath.sol";
 import "../access/WalletsManagers.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
@@ -138,7 +138,7 @@ contract Withdrawals is Initializable {
 
         if (userDebt > 0) {
             validatorTransfers.resolveDebt(validatorId);
-            Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebt);
+            payable(address(validatorsRegistry)).transfer(1 ether);
         }
 
         if (maintainerReward.add(maintainerDebt) > 0) {

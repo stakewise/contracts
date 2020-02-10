@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -32,7 +32,7 @@ contract Pools is BaseCollector {
         ValidatorsRegistry _validatorsRegistry,
         ValidatorTransfers _validatorTransfers
     )
-        public initializer
+        public override initializer
     {
         BaseCollector.initialize(
             _deposits,

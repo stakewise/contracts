@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
 import "./Withdrawals.sol";
 
@@ -27,9 +27,9 @@ contract Wallet {
     }
 
     /**
-    * A fallback function to receive transfers.
+    * A function to receive transfers.
     */
-    function() external payable {
+    receive() external payable {
         emit EtherAdded(msg.sender, msg.value);
     }
 

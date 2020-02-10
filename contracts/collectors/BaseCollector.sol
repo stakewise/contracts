@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -65,7 +65,7 @@ contract BaseCollector is Initializable {
         ValidatorsRegistry _validatorsRegistry,
         ValidatorTransfers _validatorTransfers
     )
-        public initializer
+        public virtual initializer
     {
         deposits = _deposits;
         settings = _settings;

@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../collectors/Privates.sol";

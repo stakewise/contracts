@@ -1,7 +1,7 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.2;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "../libraries/SafeMath.sol";
 import "../access/Admins.sol";
 import "../access/Operators.sol";
 import "../collectors/Privates.sol";

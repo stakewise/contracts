@@ -14,7 +14,7 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: '0.5.16',
+      version: '0.6.2',
       optimizer: {
         enabled: true,
         runs: 10000
@@ -22,6 +22,7 @@ module.exports = {
     }
   },
   plugins: ['solidity-coverage'],
+  // FIXME: https://github.com/cgewecke/eth-gas-reporter/issues/191
   mocha: {
     reporter: 'eth-gas-reporter',
     currency: 'EUR'
