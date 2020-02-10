@@ -207,6 +207,11 @@ contract ValidatorTransfers is Initializable {
     }
 
     /**
+    * A fallback function to receive transfers.
+    */
+    function() external payable { }
+
+    /**
     * Function for withdrawing deposits and rewards to the withdrawer address.
     * User reward is calculated based on the deposit amount.
     * @param _collectorEntityId - An ID of the collector entity, the deposit belongs to.
@@ -242,9 +247,4 @@ contract ValidatorTransfers is Initializable {
         emit UserWithdrawn(msg.sender, _withdrawer, depositWithdrawal, rewardWithdrawal);
         _withdrawer.transfer(withdrawalAmount);
     }
-
-    /**
-    * A function to receive debt payments.
-    */
-    receive() external payable { }
 }

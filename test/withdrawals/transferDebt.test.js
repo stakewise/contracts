@@ -12,8 +12,6 @@ const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
-const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 
@@ -55,8 +53,6 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
       privates: privatesProxy,
       operators: operatorsProxy,
       walletsManagers: walletsManagersProxy,
-      validatorsRegistry: validatorsRegistryProxy,
-      validatorTransfers: validatorTransfersProxy,
       withdrawals: withdrawalsProxy,
       walletsRegistry: walletsRegistryProxy,
       settings: settingsProxy
@@ -67,8 +63,6 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
       vrc: vrc.options.address
     });
     privates = await Privates.at(privatesProxy);
-    validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
-    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
     walletsRegistry = await WalletsRegistry.at(walletsRegistryProxy);
     withdrawals = await Withdrawals.at(withdrawalsProxy);
 
