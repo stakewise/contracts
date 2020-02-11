@@ -17,7 +17,7 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../deployments/common');
-const { removeNetworkFile } = require('./utils');
+const { removeNetworkFile } = require('./common/utils');
 
 const newValues = [
   ['userDepositMinUnit', ether('0.002')],

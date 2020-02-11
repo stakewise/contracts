@@ -44,7 +44,8 @@ contract Wallet {
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value
-        (bool success, ) = _withdrawer.call.value(_amount)("");
+        (bool success,) = _withdrawer.call.value(_amount)("");
+        // solhint-enable avoid-call-value
         require(success, "Transfer has failed.");
     }
 }

@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
-    "coverage": "NODE_ENV=test SILENT=true truffle run coverage --network development --temp build",
+    "coverage": "NODE_ENV=test SILENT=true NETWORK=coverage truffle run coverage --network coverage --temp build",
     "test": "./scripts/test.sh",
     "lint": "npm run lint:js && npm run lint:sol && prettier '*.{json,md}'",
     "lint:sol": "solhint --max-warnings 0 'contracts/**/*.sol'",

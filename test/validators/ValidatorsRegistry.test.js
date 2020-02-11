@@ -5,13 +5,13 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { validatorRegistrationArgs } = require('../validatorRegistrationArgs');
-const { removeNetworkFile } = require('../utils');
+const { validatorRegistrationArgs } = require('../common/validatorRegistrationArgs');
+const { removeNetworkFile } = require('../common/utils');
 
 const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
-contract('ValidatorsRegistry Contract', ([_, ...accounts]) => {
+contract('ValidatorsRegistry', ([_, ...accounts]) => {
   let networkConfig;
   let validatorsRegistry;
   let [admin, transfersManager, operator, anyone] = accounts;

@@ -9,11 +9,11 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
-const { removeNetworkFile } = require('../utils');
+const { removeNetworkFile } = require('../common/utils');
 
 const Admins = artifacts.require('Admins');
 
-contract('Admins Contract', ([_, ...accounts]) => {
+contract('Admins', ([_, ...accounts]) => {
   let networkConfig;
   let admins;
   let [admin, otherAdmin, anyone] = accounts;

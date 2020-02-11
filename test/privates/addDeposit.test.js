@@ -15,7 +15,7 @@ const {
   checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance
-} = require('../utils');
+} = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
 const Privates = artifacts.require('Privates');
@@ -23,7 +23,7 @@ const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Add Private Deposit', ([_, ...accounts]) => {
+contract('Privates (add deposit)', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, privates, settings;
   let [
     admin,

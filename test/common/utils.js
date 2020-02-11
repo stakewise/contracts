@@ -2,7 +2,7 @@ const fs = require('fs');
 const { expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
-const { initialSettings } = require('../deployments/settings');
+const { initialSettings } = require('../../deployments/settings');
 const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');

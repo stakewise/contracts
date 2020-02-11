@@ -9,16 +9,15 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, registerValidator } = require('../utils');
+const { removeNetworkFile, registerValidator } = require('../common/utils');
 
 const Wallet = artifacts.require('Wallet');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
-contract('Wallet Contract', ([_, ...accounts]) => {
-  let networkConfig;
-  let wallet;
+contract('Wallet', ([_, ...accounts]) => {
+  let networkConfig, wallet;
   let [
     admin,
     operator,

@@ -17,7 +17,7 @@ const {
   checkCollectorBalance,
   checkValidatorTransferred,
   registerValidator
-} = require('../utils');
+} = require('../common/utils');
 
 const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
@@ -31,7 +31,7 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
 const currentReward = ether('0.034871228');
 
-contract('Transfer Validator', ([_, ...accounts]) => {
+contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
     validatorsRegistry,

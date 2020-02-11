@@ -1,6 +1,7 @@
 const {
   expectRevert,
   expectEvent,
+  ether,
   constants
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
@@ -13,18 +14,14 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs
-} = require('../utils');
+} = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
-contract('WalletsRegistry Contract', ([_, ...accounts]) => {
-  let walletsRegistry;
-  let validatorId;
-  let proxies;
-  let networkConfig;
-  let vrc;
+contract('WalletsRegistry', ([_, ...accounts]) => {
+  let walletsRegistry, proxies, validatorId, networkConfig, vrc;
   let [
     admin,
     operator,
@@ -218,7 +215,7 @@ contract('WalletsRegistry Contract', ([_, ...accounts]) => {
     it('only withdrawals contract can unlock wallets', async () => {
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
-          walletsRegistry.unlockWallet(wallet, {
+          walletsRegistry.unlockWallet(wallet, ether('1'), {
             from: users[i]
           }),
           'Permission denied.'

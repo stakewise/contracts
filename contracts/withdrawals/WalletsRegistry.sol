@@ -133,12 +133,13 @@ contract WalletsRegistry is Initializable {
     * Can only be called by Withdrawals contract.
     * Users will be able to withdraw their shares from unlocked wallet.
     * @param _wallet - Address of the wallet to unlock.
+    * @param _balance - Wallet balance at unlock time.
     */
-    function unlockWallet(address payable _wallet) external {
+    function unlockWallet(address payable _wallet, uint256 _balance) external {
         require(msg.sender == address(withdrawals), "Permission denied.");
         require(!wallets[_wallet].unlocked, "Wallet is already unlocked.");
 
         wallets[_wallet].unlocked = true;
-        emit WalletUnlocked(wallets[_wallet].validator, _wallet, _wallet.balance);
+        emit WalletUnlocked(wallets[_wallet].validator, _wallet, _balance);
     }
 }

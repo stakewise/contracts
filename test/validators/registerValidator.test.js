@@ -11,7 +11,7 @@ const {
   checkCollectorBalance,
   checkValidatorRegistered,
   validatorRegistrationArgs
-} = require('../utils');
+} = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
@@ -22,7 +22,7 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const stakingDuration = new BN(86400);
 
-contract('Register Validator', ([_, ...accounts]) => {
+contract('BaseCollector (register validator)', ([_, ...accounts]) => {
   let networkConfig, vrc, validatorsRegistry, pools;
   let [
     admin,
@@ -68,7 +68,7 @@ contract('Register Validator', ([_, ...accounts]) => {
     });
   });
 
-  it('fails to register Validator if there are no ready pools', async () => {
+  it('fails to register Validator if there are no ready entities', async () => {
     await expectRevert(
       pools.registerValidator(pubKey, signature, hashTreeRoot, {
         from: operator
@@ -114,7 +114,7 @@ contract('Register Validator', ([_, ...accounts]) => {
     );
   });
 
-  it('succeeds to register Validators for ready pools', async () => {
+  it('succeeds to register Validators for ready entities', async () => {
     const totalAmount = new BN(0);
     // Create ready pools
     for (let i = 0; i < validatorRegistrationArgs.length; i++) {

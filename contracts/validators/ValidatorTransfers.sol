@@ -89,16 +89,18 @@ contract ValidatorTransfers is Initializable {
 
     /**
     * Event for tracking user withdrawals.
+    * @param validatorId - ID of the transferred validator.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
-    * @param depositAmount - withdrawn deposit amount.
-    * @param rewardAmount - withdrawn reward amount.
+    * @param deposit - withdrawn deposit amount.
+    * @param reward - withdrawn reward amount.
     */
     event UserWithdrawn(
+        bytes32 validatorId,
         address sender,
         address withdrawer,
-        uint256 depositAmount,
-        uint256 rewardAmount
+        uint256 deposit,
+        uint256 reward
     );
 
     /**
@@ -156,7 +158,6 @@ contract ValidatorTransfers is Initializable {
     )
         external payable
     {
-//        require(transferRequests(_collectorEntityId), "Collector entity did not request transfer.");
         require(
             !walletsRegistry.assignedValidators(_validatorId),
             "Cannot register transfer for validator with assigned wallet."
@@ -189,13 +190,13 @@ contract ValidatorTransfers is Initializable {
     }
 
     /**
-    * Function for updating a transfers manager account. Can only be called by an admin account.
-    * @param _newManager - the new manager account.
+    * Function for updating a transfers manager. Can only be called by an admin account.
+    * @param _newManager - the new transfers manager account.
     */
     function updateManager(address _newManager) external {
-        require(admins.isAdmin(msg.sender), "Only admin users can update manager account.");
+        require(admins.isAdmin(msg.sender), "Permission denied.");
         manager = _newManager;
-        emit ManagerUpdated(_newManager, msg.sender);
+        emit ManagerUpdated(manager, msg.sender);
     }
 
     /**
@@ -205,11 +206,6 @@ contract ValidatorTransfers is Initializable {
     function isManager(address _account) public view returns (bool) {
         return _account == manager;
     }
-
-    /**
-    * A fallback function to receive transfers.
-    */
-    function() external payable { }
 
     /**
     * Function for withdrawing deposits and rewards to the withdrawer address.
@@ -242,9 +238,18 @@ contract ValidatorTransfers is Initializable {
 
         uint256 withdrawalAmount = depositWithdrawal.add(rewardWithdrawal);
         require(withdrawalAmount > 0, "Nothing to withdraw.");
-        require(withdrawalAmount <= address(this).balance, "Withdrawal amount is bigger than balance.");
 
-        emit UserWithdrawn(msg.sender, _withdrawer, depositWithdrawal, rewardWithdrawal);
-        _withdrawer.transfer(withdrawalAmount);
+        emit UserWithdrawn(validatorId, msg.sender, _withdrawer, depositWithdrawal, rewardWithdrawal);
+        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
+        // solhint-disable avoid-call-value
+        // solium-disable-next-line security/no-call-value
+        (bool success,) = _withdrawer.call.value(withdrawalAmount)("");
+        // solhint-enable avoid-call-value
+        require(success, "Transfer has failed.");
     }
+
+    /**
+    * A fallback function to receive transfers.
+    */
+    function() external payable { }
 }

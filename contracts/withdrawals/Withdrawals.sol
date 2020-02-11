@@ -128,20 +128,19 @@ contract Withdrawals is Initializable {
             validatorLeftDeposits[validatorId] = depositAmount;
         }
 
-        walletsRegistry.unlockWallet(_wallet);
-
         // Maintainer gets a fee for the entity only in case there is a profit.
         if (entityBalance > depositAmount) {
             maintainerReward = maintainerReward.add(((entityBalance.sub(depositAmount)).mul(maintainerFee)).div(10000));
         }
+
+        walletsRegistry.unlockWallet(_wallet, entityBalance);
 
         if (userDebt > 0) {
             validatorTransfers.resolveDebt(validatorId);
             Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebt);
         }
 
-        // don't send if reward is less than gas required to execute.
-        if (maintainerReward > 25 szabo) {
+        if (maintainerReward > 0) {
             emit MaintainerWithdrawn(settings.maintainer(), _wallet, maintainerReward);
             Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward);
         }
