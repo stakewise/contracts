@@ -5,7 +5,9 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { validatorRegistrationArgs } = require('../common/validatorRegistrationArgs');
+const {
+  validatorRegistrationArgs
+} = require('../common/validatorRegistrationArgs');
 const { removeNetworkFile } = require('../common/utils');
 
 const Operators = artifacts.require('Operators');

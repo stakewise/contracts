@@ -1,11 +1,9 @@
-const { expect } = require('chai');
 const {
   BN,
   expectRevert,
   expectEvent,
   ether,
-  send,
-  balance
+  send
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -16,8 +14,6 @@ const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
-  checkCollectorBalance,
-  checkValidatorTransferred,
   getCollectorEntityId,
   registerValidator
 } = require('../common/utils');
@@ -26,7 +22,6 @@ const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
@@ -67,38 +62,32 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    let {
-      privates: privatesProxy,
-      operators: operatorsProxy,
-      walletsManagers: walletsManagersProxy,
-      withdrawals: withdrawalsProxy,
-      walletsRegistry: walletsRegistryProxy,
-      validatorTransfers: validatorTransfersProxy,
-      settings: settingsProxy
-    } = await deployAllProxies({
+    let proxies = await deployAllProxies({
       initialAdmin: admin,
       transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
-    privates = await Privates.at(privatesProxy);
-    walletsRegistry = await WalletsRegistry.at(walletsRegistryProxy);
-    withdrawals = await Withdrawals.at(withdrawalsProxy);
-    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
+    privates = await Privates.at(proxies.privates);
+    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
+    withdrawals = await Withdrawals.at(proxies.withdrawals);
+    validatorTransfers = await ValidatorTransfers.at(
+      proxies.validatorTransfers
+    );
 
-    let operators = await Operators.at(operatorsProxy);
+    let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(walletsManagersProxy);
+    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
     await walletsManagers.addManager(walletsManager, { from: admin });
 
     // set maintainer's fee
-    settings = await Settings.at(settingsProxy);
+    settings = await Settings.at(proxies.settings);
     await settings.setMaintainerFee(maintainerFee, { from: admin });
 
     // register new validator
     validatorId = await registerValidator({
-      privatesProxy,
+      privatesProxy: proxies.privates,
       operator,
       sender,
       withdrawer
@@ -199,7 +188,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         validatorId,
         sender,
         withdrawer,
-        depositAmount: validatorDepositAmount,
+        deposit: validatorDepositAmount,
         reward: new BN(0)
       });
 
@@ -325,11 +314,5 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         'Nothing to withdraw.'
       );
     });
-
-    // it('user can withdraw deposit', async () => {});
-
-    // it('user can withdraw income', async () => {});
-    //
-    // it('user can withdraw deposit and income', async () => {});
   });
 });
