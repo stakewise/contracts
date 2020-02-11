@@ -41,6 +41,10 @@ contract Wallet {
     */
     function withdraw(address payable _withdrawer, uint256 _amount) external {
         require(msg.sender == address(withdrawals), "Permission denied.");
-        _withdrawer.transfer(_amount);
+        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
+        // solhint-disable avoid-call-value
+        // solium-disable-next-line security/no-call-value
+        (bool success, ) = _withdrawer.call.value(_amount)("");
+        require(success, "Transfer has failed.");
     }
 }

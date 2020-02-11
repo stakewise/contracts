@@ -1,4 +1,11 @@
-const { BN, send, expectEvent, ether } = require('@openzeppelin/test-helpers');
+const { expect } = require('chai');
+const {
+  BN,
+  send,
+  expectEvent,
+  ether,
+  balance
+} = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -12,6 +19,7 @@ const Privates = artifacts.require('Privates');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
+const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 
@@ -26,6 +34,7 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
     privates,
     settings,
     wallet,
+    validatorTransfers,
     walletsRegistry,
     validatorId;
   let [
@@ -55,6 +64,7 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
       walletsManagers: walletsManagersProxy,
       withdrawals: withdrawalsProxy,
       walletsRegistry: walletsRegistryProxy,
+      validatorTransfers: validatorTransfersProxy,
       settings: settingsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
@@ -65,6 +75,7 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
     privates = await Privates.at(privatesProxy);
     walletsRegistry = await WalletsRegistry.at(walletsRegistryProxy);
     withdrawals = await Withdrawals.at(withdrawalsProxy);
+    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
 
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });
@@ -108,15 +119,30 @@ contract('Validator Transfer Debt', ([_, ...accounts]) => {
     let validatorBalance = validatorDepositAmount
       .add(prevEntityReward)
       .add(ether('1'));
+    // deposit + rewards received from the chain
     await send.ether(other, wallet, validatorBalance);
+
+    // enable withdrawals
     const { tx } = await withdrawals.enableWithdrawals(wallet, {
       from: walletsManager
     });
+    // Wallet unlocked
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validator: validatorId,
-      wallet,
-      balance: validatorBalance.sub(prevEntityReward)
+      wallet
+      // balance: validatorBalance.sub(prevEntityReward)
     });
+    expect(await balance.current(wallet)).to.be.bignumber.equal(
+      validatorBalance.sub(prevEntityReward)
+    );
+
+    // Debt resolved
+    await expectEvent.inTransaction(tx, validatorTransfers, 'DebtResolved', {
+      validatorId
+    });
+    expect(
+      await balance.current(validatorTransfers.address)
+    ).to.be.bignumber.equal(validatorDepositAmount.add(prevEntityReward));
   });
 
   // it('resolves validator debts when enabling withdrawals for penalised validator', async () => {
