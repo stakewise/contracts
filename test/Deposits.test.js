@@ -10,7 +10,7 @@ const { removeNetworkFile } = require('./common/utils');
 const Deposits = artifacts.require('Deposits');
 const Operators = artifacts.require('Operators');
 
-contract('Deposits', ([_, admin, operator, transfersManager, anyone]) => {
+contract('Deposits', ([_, admin, operator, anyone]) => {
   let networkConfig;
   let deposits;
   let users = [admin, operator, anyone];
@@ -24,7 +24,6 @@ contract('Deposits', ([_, admin, operator, transfersManager, anyone]) => {
       operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

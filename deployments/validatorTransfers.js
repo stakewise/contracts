@@ -9,7 +9,6 @@ async function deployValidatorTransfersProxy({
   validatorsRegistryProxy,
   walletsRegistryProxy,
   withdrawalsProxy,
-  transfersManager,
   salt,
   networkConfig
 }) {
@@ -23,8 +22,7 @@ async function deployValidatorTransfersProxy({
       privatesProxy,
       validatorsRegistryProxy,
       walletsRegistryProxy,
-      withdrawalsProxy,
-      transfersManager
+      withdrawalsProxy
     ],
     salt,
     ...networkConfig

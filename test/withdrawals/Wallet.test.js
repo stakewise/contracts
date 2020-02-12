@@ -18,24 +18,8 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('Wallet', ([_, ...accounts]) => {
   let networkConfig, wallet;
-  let [
-    admin,
-    operator,
-    sender,
-    withdrawer,
-    transfersManager,
-    walletsManager,
-    anyone
-  ] = accounts;
-  let users = [
-    admin,
-    operator,
-    sender,
-    withdrawer,
-    transfersManager,
-    walletsManager,
-    anyone
-  ];
+  let [admin, operator, sender, withdrawer, walletsManager, anyone] = accounts;
+  let users = [admin, operator, sender, withdrawer, walletsManager, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -43,7 +27,6 @@ contract('Wallet', ([_, ...accounts]) => {
     let vrc = await deployVRC({ from: admin });
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

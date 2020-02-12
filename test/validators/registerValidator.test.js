@@ -24,15 +24,7 @@ const stakingDuration = new BN(86400);
 
 contract('BaseCollector (register validator)', ([_, ...accounts]) => {
   let networkConfig, vrc, validatorsRegistry, pools;
-  let [
-    admin,
-    transfersManager,
-    operator,
-    sender,
-    withdrawer,
-    other,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, sender, withdrawer, other, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -52,7 +44,6 @@ contract('BaseCollector (register validator)', ([_, ...accounts]) => {
       settings: settingsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

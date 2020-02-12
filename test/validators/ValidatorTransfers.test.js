@@ -41,15 +41,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     walletsRegistry,
     validatorId,
     collectorEntityId;
-  let [
-    admin,
-    operator,
-    transfersManager,
-    walletsManager,
-    sender,
-    withdrawer,
-    other
-  ] = accounts;
+  let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -64,7 +56,6 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
   beforeEach(async () => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -110,33 +101,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     );
   });
 
-  describe('Transfers Manager', () => {
-    it('fails to update manager with sender other than admin', async () => {
-      await expectRevert(
-        validatorTransfers.updateManager(other, {
-          from: transfersManager
-        }),
-        'Permission denied.'
-      );
-    });
-
-    it('admin user can update transfers manager', async () => {
-      const receipt = await validatorTransfers.updateManager(other, {
-        from: admin
-      });
-
-      expectEvent(receipt, 'ManagerUpdated', {
-        manager: other,
-        issuer: admin
-      });
-    });
-  });
-
   describe('Pausing transfers', () => {
     it('fails to pause transfers with sender other than admin', async () => {
       await expectRevert(
         validatorTransfers.setPaused(true, {
-          from: transfersManager
+          from: operator
         }),
         'Permission denied.'
       );
@@ -177,7 +146,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // transfer validator to the new entity
       await privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       });
 
       await expectRevert(
@@ -197,7 +166,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // transfer validator to the new entity
       await privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       });
 
       await validatorTransfers.withdraw(collectorEntityId, withdrawer, {
@@ -221,7 +190,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // transfer validator to the new entity
       await privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       });
 
       // user withdraws deposit
@@ -286,7 +255,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // transfer validator to the new entity
       await privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       });
 
       // assign wallet
@@ -335,7 +304,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // transfer validator to the new entity
       await privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       });
 
       // user withdraws deposit

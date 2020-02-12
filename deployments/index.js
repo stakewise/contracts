@@ -21,12 +21,7 @@ const {
   deployValidatorTransfersProxy
 } = require('../deployments/validatorTransfers');
 
-async function deployAllProxies({
-  initialAdmin,
-  transfersManager,
-  networkConfig,
-  vrc
-}) {
+async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy admins, operators, managers proxies
   let adminsProxy = await deployAdminsProxy({
     networkConfig,
@@ -193,7 +188,6 @@ async function deployAllProxies({
     validatorsRegistryProxy,
     walletsRegistryProxy,
     withdrawalsProxy,
-    transfersManager,
     networkConfig
   });
   if (validatorTransfersProxy !== validatorTransfersCalcProxy) {

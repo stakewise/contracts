@@ -43,7 +43,6 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
   let [
     admin,
     operator,
-    transfersManager,
     walletsManager,
     other,
     sender,
@@ -63,7 +62,6 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -123,7 +121,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
         {
-          from: transfersManager
+          from: operator
         }
       );
       let collectorEntityId = getCollectorEntityId(pools.address, entityId);

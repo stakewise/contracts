@@ -40,15 +40,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     settings,
     walletsRegistry,
     validatorId;
-  let [
-    admin,
-    operator,
-    transfersManager,
-    walletsManager,
-    sender,
-    withdrawer,
-    other
-  ] = accounts;
+  let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -71,7 +63,6 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       settings: settingsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -103,13 +94,13 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
   it('fails to transfer validator if there are no ready entities', async () => {
     await expectRevert(
       privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       }),
       'There are no ready entities.'
     );
   });
 
-  it('fails to transfer validator with caller other than manager', async () => {
+  it('fails to transfer validator with caller other than operator', async () => {
     // register new ready entity
     await privates.addDeposit(withdrawer, {
       from: sender,
@@ -139,7 +130,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     // transfer validator to the new entity
     await expectRevert(
       privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       }),
       'Validator transfers are paused.'
     );
@@ -161,7 +152,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     // transfer validator to the new entity
     await expectRevert(
       privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       }),
       'Validator deposit amount cannot be updated.'
     );
@@ -178,7 +169,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     // transfer validator to the new entity
     await expectRevert(
       privates.transferValidator('0x0', currentReward, {
-        from: transfersManager
+        from: operator
       }),
       'Validator deposit amount cannot be updated.'
     );
@@ -199,7 +190,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     // transfer validator to the new entity
     await expectRevert(
       privates.transferValidator(validatorId, currentReward, {
-        from: transfersManager
+        from: operator
       }),
       'Cannot register transfer for validator with assigned wallet.'
     );
@@ -216,7 +207,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
     // transfer validator to the new entity
     let { tx } = await privates.transferValidator(validatorId, currentReward, {
-      from: transfersManager
+      from: operator
     });
 
     // check balance updated
@@ -263,7 +254,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
     // transfer validator to the new entity
     let { tx } = await privates.transferValidator(validatorId, currentReward, {
-      from: transfersManager
+      from: operator
     });
 
     // check balance updated
@@ -357,7 +348,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         test.currentReward,
         {
-          from: transfersManager
+          from: operator
         }
       ));
 

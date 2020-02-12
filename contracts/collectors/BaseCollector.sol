@@ -111,7 +111,7 @@ contract BaseCollector is Initializable {
     * @param _currentReward - Validator's current reward to register as debt.
     */
     function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {
-        require(validatorTransfers.isManager(msg.sender), "Permission denied.");
+        require(operators.isOperator(msg.sender), "Permission denied.");
 
         (
             uint256 currentDepositAmount,

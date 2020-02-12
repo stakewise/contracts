@@ -43,15 +43,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     validatorTransfers,
     walletsRegistry,
     validatorId;
-  let [
-    admin,
-    operator,
-    transfersManager,
-    walletsManager,
-    sender,
-    withdrawer,
-    other
-  ] = accounts;
+  let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -66,7 +58,6 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -103,7 +94,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // transfer validator to the new entity
     await privates.transferValidator(validatorId, prevEntityReward, {
-      from: transfersManager
+      from: operator
     });
 
     // assign wallet to transferred validator

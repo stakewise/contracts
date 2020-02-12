@@ -21,14 +21,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     withdrawals,
     validatorId,
     vrc;
-  let [
-    admin,
-    operator,
-    transfersManager,
-    walletsManager,
-    other,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, walletsManager, other, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -43,7 +36,6 @@ contract('Withdrawals', ([_, ...accounts]) => {
   beforeEach(async () => {
     proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

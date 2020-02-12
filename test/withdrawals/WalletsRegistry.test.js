@@ -22,14 +22,7 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('WalletsRegistry', ([_, ...accounts]) => {
   let walletsRegistry, proxies, validatorId, networkConfig, vrc;
-  let [
-    admin,
-    operator,
-    sender,
-    withdrawer,
-    transfersManager,
-    walletsManager
-  ] = accounts;
+  let [admin, operator, sender, withdrawer, walletsManager] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -44,7 +37,6 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
   beforeEach(async () => {
     proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -203,7 +195,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
   // More unlocking tests are in Withdrawals.test.js
   describe('unlocking wallet', () => {
     let wallet;
-    let users = [admin, operator, transfersManager, walletsManager, sender];
+    let users = [admin, operator, walletsManager, sender];
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {

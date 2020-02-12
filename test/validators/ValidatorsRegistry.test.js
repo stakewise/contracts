@@ -16,8 +16,8 @@ const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 contract('ValidatorsRegistry', ([_, ...accounts]) => {
   let networkConfig;
   let validatorsRegistry;
-  let [admin, transfersManager, operator, anyone] = accounts;
-  let users = [admin, transfersManager, operator, anyone];
+  let [admin, operator, anyone] = accounts;
+  let users = [admin, operator, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -28,7 +28,6 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
       operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

@@ -29,14 +29,7 @@ const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
 contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, pools, amount1, amount2, poolsBalance;
-  let [
-    admin,
-    transfersManager,
-    sender1,
-    withdrawer1,
-    sender2,
-    withdrawer2
-  ] = accounts;
+  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -52,7 +45,6 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     let { deposits: depositsProxy, pools: poolsProxy } = await deployAllProxies(
       {
         initialAdmin: admin,
-        transfersManager,
         networkConfig,
         vrc: vrc.options.address
       }

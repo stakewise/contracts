@@ -32,7 +32,6 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
   let [
     admin,
     operator,
-    transfersManager,
     walletsManager,
     other,
     sender,
@@ -52,7 +51,6 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

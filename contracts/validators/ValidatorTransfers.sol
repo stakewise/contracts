@@ -3,6 +3,7 @@ pragma solidity 0.5.16;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Admins.sol";
+import "../access/Operators.sol";
 import "../collectors/Privates.sol";
 import "../collectors/Pools.sol";
 import "../Deposits.sol";
@@ -46,11 +47,11 @@ contract ValidatorTransfers is Initializable {
     // Defines whether validator transfers are paused or not.
     bool public isPaused;
 
-    // Address of the transfers manager.
-    address public manager;
-
     // Address of the Admins contract.
     Admins private admins;
+
+    // Address of the Operators contract.
+    Operators private operators;
 
     // Address of the Deposits contract.
     Deposits private deposits;
@@ -107,13 +108,6 @@ contract ValidatorTransfers is Initializable {
     );
 
     /**
-    * Event for tracking manager account updates.
-    * @param manager - An address of the account which was assigned as a manager.
-    * @param issuer - An address of the account which assigned a manager.
-    */
-    event ManagerUpdated(address manager, address issuer);
-
-    /**
     * Event for tracking whether validator transfers are paused or not.
     * @param isPaused - Defines whether validator transfers are paused or not.
     * @param issuer - An address of the account which paused transfers.
@@ -129,7 +123,6 @@ contract ValidatorTransfers is Initializable {
     * @param _validatorsRegistry - Address of the Validators Registry contract.
     * @param _walletsRegistry - Address of the Wallets Registry contract.
     * @param _withdrawals - Address of the Withdrawals contract.
-    * @param _manager - initial manager account.
     */
     function initialize(
         Admins _admins,
@@ -138,8 +131,7 @@ contract ValidatorTransfers is Initializable {
         Privates _privates,
         ValidatorsRegistry _validatorsRegistry,
         WalletsRegistry _walletsRegistry,
-        Withdrawals _withdrawals,
-        address _manager
+        Withdrawals _withdrawals
     )
         public initializer
     {
@@ -150,7 +142,6 @@ contract ValidatorTransfers is Initializable {
         validatorsRegistry = _validatorsRegistry;
         walletsRegistry = _walletsRegistry;
         withdrawals = _withdrawals;
-        manager = _manager;
     }
 
     /**
@@ -200,16 +191,6 @@ contract ValidatorTransfers is Initializable {
     }
 
     /**
-    * Function for updating a transfers manager. Can only be called by an admin account.
-    * @param _newManager - the new transfers manager account.
-    */
-    function updateManager(address _newManager) external {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-        manager = _newManager;
-        emit ManagerUpdated(manager, msg.sender);
-    }
-
-    /**
     * Function for pausing validator transfers. Can only be called by an admin account.
     * @param _isPaused - defines whether validator transfers are paused or not.
     */
@@ -217,14 +198,6 @@ contract ValidatorTransfers is Initializable {
         require(admins.isAdmin(msg.sender), "Permission denied.");
         isPaused = _isPaused;
         emit TransfersPaused(isPaused, msg.sender);
-    }
-
-    /**
-    * Function for checking whether an account is a transfers manager.
-    * @param _account - the account to check.
-    */
-    function isManager(address _account) public view returns (bool) {
-        return _account == manager;
     }
 
     /**

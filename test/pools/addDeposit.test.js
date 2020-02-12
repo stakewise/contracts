@@ -26,14 +26,7 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Pools (add deposit)', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, pools, settings;
-  let [
-    admin,
-    transfersManager,
-    sender1,
-    withdrawer1,
-    sender2,
-    withdrawer2
-  ] = accounts;
+  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -52,7 +45,6 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       settings: settingsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });

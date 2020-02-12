@@ -43,7 +43,6 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
   let [
     admin,
     operator,
-    transfersManager,
     walletsManager,
     other,
     sender,
@@ -63,7 +62,6 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
-      transfersManager,
       networkConfig,
       vrc: vrc.options.address
     });
@@ -121,7 +119,7 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
         {
-          from: transfersManager
+          from: operator
         }
       );
       let collectorEntityId = getCollectorEntityId(privates.address, entityId);
