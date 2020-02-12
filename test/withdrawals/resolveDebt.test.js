@@ -113,6 +113,15 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     wallet = logs[0].args.wallet;
   });
 
+  it('only Withdrawals contract can resolve debts', async () => {
+    await expectRevert(
+      validatorTransfers.resolveDebt(validatorId, {
+        from: admin
+      }),
+      'Permission denied.'
+    );
+  });
+
   it('resolves validator debts when enabling withdrawals', async () => {
     let validatorBalance = validatorDepositAmount
       .add(prevEntityReward)

@@ -95,6 +95,21 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     collectorEntityId = getCollectorEntityId(privates.address, new BN(1));
   });
 
+  it('only Collector contracts can register transfers', async () => {
+    await expectRevert(
+      validatorTransfers.registerTransfer(
+        validatorId,
+        collectorEntityId,
+        userReward,
+        new BN(0),
+        {
+          from: admin
+        }
+      ),
+      'Permission denied.'
+    );
+  });
+
   describe('Transfers Manager', () => {
     it('fails to update manager with sender other than admin', async () => {
       await expectRevert(
@@ -117,6 +132,28 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     });
   });
 
+  describe('Pausing transfers', () => {
+    it('fails to pause transfers with sender other than admin', async () => {
+      await expectRevert(
+        validatorTransfers.setPaused(true, {
+          from: transfersManager
+        }),
+        'Permission denied.'
+      );
+    });
+
+    it('admin user can pause transfers', async () => {
+      const receipt = await validatorTransfers.setPaused(true, {
+        from: admin
+      });
+
+      expectEvent(receipt, 'TransfersPaused', {
+        isPaused: true,
+        issuer: admin
+      });
+    });
+  });
+
   describe('Withdrawals', () => {
     it('user cannot withdraw from unknown collector entity', async () => {
       await expectRevert(
@@ -132,11 +169,22 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     });
 
     it('user not holding share cannot withdraw', async () => {
+      // register new private entity
+      await privates.addDeposit(withdrawer, {
+        from: sender,
+        value: validatorDepositAmount
+      });
+
+      // transfer validator to the new entity
+      await privates.transferValidator(validatorId, currentReward, {
+        from: transfersManager
+      });
+
       await expectRevert(
         validatorTransfers.withdraw(collectorEntityId, other, {
           from: other
         }),
-        'Collector entity is not registered.'
+        'User does not have a share in this collector entity.'
       );
     });
 

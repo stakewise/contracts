@@ -126,6 +126,27 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(privates, validatorDepositAmount);
   });
 
+  it('fails to transfer validator if transferring is paused', async () => {
+    // pause validator transfers
+    await validatorTransfers.setPaused(true, {
+      from: admin
+    });
+    // register new ready entity
+    await privates.addDeposit(withdrawer, {
+      from: sender,
+      value: validatorDepositAmount
+    });
+    // transfer validator to the new entity
+    await expectRevert(
+      privates.transferValidator(validatorId, currentReward, {
+        from: transfersManager
+      }),
+      'Validator transfers are paused.'
+    );
+    // check balance didn't change
+    await checkCollectorBalance(privates, validatorDepositAmount);
+  });
+
   it('fails to transfer validator with updated deposit amount', async () => {
     // change validator deposit amount
     let newValidatorDepositAmount = validatorDepositAmount.add(ether('1'));

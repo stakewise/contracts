@@ -43,8 +43,11 @@ contract ValidatorTransfers is Initializable {
     // Tracks whether user has withdrawn its reward.
     mapping(bytes32 => bool) public withdrawnRewards;
 
+    // Defines whether validator transfers are paused or not.
+    bool public isPaused;
+
     // Address of the transfers manager.
-    address private manager;
+    address public manager;
 
     // Address of the Admins contract.
     Admins private admins;
@@ -108,7 +111,14 @@ contract ValidatorTransfers is Initializable {
     * @param manager - An address of the account which was assigned as a manager.
     * @param issuer - An address of the account which assigned a manager.
     */
-    event ManagerUpdated(address manager, address indexed issuer);
+    event ManagerUpdated(address manager, address issuer);
+
+    /**
+    * Event for tracking whether validator transfers are paused or not.
+    * @param isPaused - Defines whether validator transfers are paused or not.
+    * @param issuer - An address of the account which paused transfers.
+    */
+    event TransfersPaused(bool isPaused, address issuer);
 
     /**
     * Constructor for initializing the ValidatorTransfers contract.
@@ -147,7 +157,7 @@ contract ValidatorTransfers is Initializable {
     * Function for registering validator transfers. Can only be called by collectors.
     * @param _validatorId - ID of the transferred validator.
     * @param _collectorEntityId - ID of the collector's entity, the validator was transferred from.
-    * @param _userDebt - validator rewards debt to the users.
+    * @param _userDebt - validator rewards debt to the user(s).
     * @param _maintainerDebt - validator rewards debt to the maintainer.
     */
     function registerTransfer(
@@ -158,6 +168,7 @@ contract ValidatorTransfers is Initializable {
     )
         external payable
     {
+        require(!isPaused, "Validator transfers are paused.");
         require(
             !walletsRegistry.assignedValidators(_validatorId),
             "Cannot register transfer for validator with assigned wallet."
@@ -184,7 +195,6 @@ contract ValidatorTransfers is Initializable {
         require(msg.sender == address(withdrawals), "Permission denied.");
 
         ValidatorDebt storage validatorDebt = validatorDebts[_validatorId];
-        require(!validatorDebt.resolved, "Validator debt was already resolved.");
         validatorDebt.resolved = true;
         emit DebtResolved(_validatorId);
     }
@@ -197,6 +207,16 @@ contract ValidatorTransfers is Initializable {
         require(admins.isAdmin(msg.sender), "Permission denied.");
         manager = _newManager;
         emit ManagerUpdated(manager, msg.sender);
+    }
+
+    /**
+    * Function for pausing validator transfers. Can only be called by an admin account.
+    * @param _isPaused - defines whether validator transfers are paused or not.
+    */
+    function setPaused(bool _isPaused) external {
+        require(admins.isAdmin(msg.sender), "Permission denied.");
+        isPaused = _isPaused;
+        emit TransfersPaused(isPaused, msg.sender);
     }
 
     /**
