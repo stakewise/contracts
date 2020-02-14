@@ -78,7 +78,7 @@ contract ValidatorTransfers is Initializable {
     * @param userDebt - validator rewards debt to the users.
     * @param maintainerDebt - validator rewards debt to the maintainer.
     */
-    event TransferRegistered(
+    event ValidatorTransferred(
         bytes32 validatorId,
         bytes32 collectorEntityId,
         uint256 userDebt,
@@ -170,7 +170,7 @@ contract ValidatorTransfers is Initializable {
         ValidatorDebt storage validatorDebt = validatorDebts[_validatorId];
         validatorDebt.userDebt = (validatorDebt.userDebt).add(_userDebt);
         validatorDebt.maintainerDebt = (validatorDebt.maintainerDebt).add(_maintainerDebt);
-        emit TransferRegistered(
+        emit ValidatorTransferred(
             _validatorId,
             _collectorEntityId,
             validatorDebt.userDebt,
