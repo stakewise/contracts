@@ -63,22 +63,6 @@ contract ValidatorsRegistry is Initializable {
     );
 
     /**
-    * Event for updating validators.
-    * @param validatorId - ID of the updated validator.
-    * @param collectorEntityId - ID of the collector's entity where the deposit was accumulated.
-    * @param maintainerFee - Fee to pay to the maintainer after withdrawal.
-    * @param minStakingDuration - The minimal staking duration of the Validator.
-    * @param stakingDuration - Staking duration of the validator.
-    */
-    event ValidatorUpdated(
-        bytes32 validatorId,
-        bytes32 collectorEntityId,
-        uint256 maintainerFee,
-        uint256 minStakingDuration,
-        uint256 stakingDuration
-    );
-
-    /**
     * Constructor for initializing the ValidatorsRegistry contract.
     * @param _pools - Address of the Pols contract.
     * @param _privates - Address of the Privates contract.
@@ -125,17 +109,8 @@ contract ValidatorsRegistry is Initializable {
     */
     function update(bytes32 _validatorId, uint256 _entityId) external onlyCollectors {
         Validator storage validator = validators[_validatorId];
-        require(validator.depositAmount == settings.validatorDepositAmount(), "Validator deposit amount cannot be updated.");
 
-        bytes32 newCollectorEntityId = keccak256(abi.encodePacked(msg.sender, _entityId));
-        validator.collectorEntityId = newCollectorEntityId;
+        validator.collectorEntityId = keccak256(abi.encodePacked(msg.sender, _entityId));
         validator.maintainerFee = settings.maintainerFee();
-        emit ValidatorUpdated(
-            _validatorId,
-            validator.collectorEntityId,
-            validator.maintainerFee,
-            settings.minStakingDuration(),
-            settings.stakingDurations(msg.sender)
-        );
     }
 }

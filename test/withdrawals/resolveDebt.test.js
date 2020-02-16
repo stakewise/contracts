@@ -16,7 +16,7 @@ const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
 
-const Privates = artifacts.require('Privates');
+const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
@@ -37,7 +37,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
     withdrawals,
-    privates,
+    pools,
     settings,
     wallet,
     validatorTransfers,
@@ -61,7 +61,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       networkConfig,
       vrc: vrc.options.address
     });
-    privates = await Privates.at(proxies.privates);
+    pools = await Pools.at(proxies.pools);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     validatorTransfers = await ValidatorTransfers.at(
@@ -80,20 +80,20 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // register new validator
     validatorId = await registerValidator({
-      privatesProxy: proxies.privates,
+      poolsProxy: proxies.pools,
       operator,
       sender: other,
       withdrawer: other
     });
 
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
 
     // transfer validator to the new entity
-    await privates.transferValidator(validatorId, prevEntityReward, {
+    await pools.transferValidator(validatorId, prevEntityReward, {
       from: operator
     });
 

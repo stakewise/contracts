@@ -5,7 +5,7 @@ async function deployValidatorTransfersProxy({
   adminsProxy,
   depositsProxy,
   poolsProxy,
-  privatesProxy,
+  settingsProxy,
   validatorsRegistryProxy,
   walletsRegistryProxy,
   withdrawalsProxy,
@@ -19,7 +19,7 @@ async function deployValidatorTransfersProxy({
       adminsProxy,
       depositsProxy,
       poolsProxy,
-      privatesProxy,
+      settingsProxy,
       validatorsRegistryProxy,
       walletsRegistryProxy,
       withdrawalsProxy

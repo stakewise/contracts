@@ -195,32 +195,32 @@ async function checkValidatorRegistered({
 async function checkValidatorTransferred({
   transaction,
   validatorId,
-  newEntityId,
-  prevEntityId,
-  collectorAddress,
+  newCollectorEntityId,
+  prevCollectorEntityId,
   validatorsRegistry,
   validatorTransfers,
   userDebt,
+  totalUserDebt,
   maintainerDebt,
+  totalMaintainerDebt,
   newStakingDuration,
   newMaintainerFee = new BN(initialSettings.maintainerFee),
   newMinStakingDuration = new BN(initialSettings.minStakingDuration)
 }) {
-  let newCollectorEntityId = await getCollectorEntityId(
-    collectorAddress,
-    newEntityId
-  );
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
     transaction,
-    ValidatorsRegistry,
-    'ValidatorUpdated',
+    ValidatorTransfers,
+    'ValidatorTransferred',
     {
       validatorId,
-      collectorEntityId: newCollectorEntityId,
-      maintainerFee: newMaintainerFee,
-      minStakingDuration: newMinStakingDuration,
-      stakingDuration: newStakingDuration
+      prevCollectorEntityId,
+      newCollectorEntityId,
+      userDebt,
+      maintainerDebt,
+      newMaintainerFee,
+      newMinStakingDuration,
+      newStakingDuration
     }
   );
 
@@ -229,33 +229,19 @@ async function checkValidatorTransferred({
   expect(validator.maintainerFee).to.be.bignumber.equal(newMaintainerFee);
   expect(validator.collectorEntityId).equal(newCollectorEntityId);
 
-  let prevCollectorEntityId = await getCollectorEntityId(
-    collectorAddress,
-    prevEntityId
-  );
-
-  // Check ValidatorTransfers log emitted
-  await expectEvent.inTransaction(
-    transaction,
-    ValidatorTransfers,
-    'TransferRegistered',
-    {
-      validatorId,
-      collectorEntityId: prevCollectorEntityId,
-      userDebt,
-      maintainerDebt
-    }
-  );
-
   // check debt entry created
   let validatorDebt = await validatorTransfers.validatorDebts(validatorId);
-  expect(validatorDebt.userDebt).to.be.bignumber.equal(userDebt);
-  expect(validatorDebt.maintainerDebt).to.be.bignumber.equal(maintainerDebt);
+  expect(validatorDebt.userDebt).to.be.bignumber.equal(totalUserDebt);
+  expect(validatorDebt.maintainerDebt).to.be.bignumber.equal(
+    totalMaintainerDebt
+  );
 
-  // check validator recorded for previous collector entity
-  expect(
-    await validatorTransfers.entityValidators(prevCollectorEntityId)
-  ).to.equal(validatorId);
+  // check previous collector entity rewards recorded
+  let entityReward = await validatorTransfers.entityRewards(
+    prevCollectorEntityId
+  );
+  expect(entityReward.validatorId).to.equal(validatorId);
+  expect(entityReward.amount).to.be.bignumber.equal(userDebt);
 }
 
 async function registerValidator({

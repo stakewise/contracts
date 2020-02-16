@@ -86,37 +86,52 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
   });
 
   it('user can withdraw deposit and reward from transferred validator', async () => {
-    let entityId = new BN(1);
-    for (const [
-      testCaseN,
-      { validatorReturn, maintainerFee, users, maintainerReward }
-    ] of testCases.entries()) {
-      // set maintainer's fee
-      await settings.setMaintainerFee(maintainerFee, { from: admin });
+    // add entity for last test case transfer
+    await pools.addDeposit(other, {
+      from: other,
+      value: validatorDepositAmount
+    });
 
-      // populate pool with deposits
+    // populate new entities
+    for (const { users } of testCases.values()) {
       for (let j = 0; j < users.length; j++) {
         await pools.addDeposit(otherAccounts[j], {
           from: sender,
           value: users[j].deposit
         });
       }
+    }
 
-      // Register validator
-      let validatorId = await registerValidator({
-        args: validatorRegistrationArgs[testCaseN],
-        hasReadyEntity: true,
-        poolsProxy: pools.address,
-        operator
-      });
+    // use last test case entity validator for transfers
+    // since the queue is processed from the end
+    // set maintainer's fee
+    await settings.setMaintainerFee(
+      testCases[testCases.length - 1].maintainerFee,
+      {
+        from: admin
+      }
+    );
+    let validatorId = await registerValidator({
+      args: validatorRegistrationArgs[0],
+      hasReadyEntity: true,
+      poolsProxy: pools.address,
+      operator
+    });
 
-      // add new entity for transfer
-      await pools.addDeposit(other, {
-        from: other,
-        value: validatorDepositAmount
-      });
+    // transfer validator from one test case entity to another
+    for (let testCaseN = testCases.length - 1; testCaseN >= 0; testCaseN--) {
+      if (testCaseN > 0) {
+        // set next entity maintainer's fee
+        await settings.setMaintainerFee(
+          testCases[testCaseN - 1].maintainerFee,
+          {
+            from: admin
+          }
+        );
+      }
 
-      // transfer validator to the new entity
+      // transfer validator
+      let validatorReturn = testCases[testCaseN].validatorReturn;
       await pools.transferValidator(
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
@@ -124,8 +139,25 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
           from: operator
         }
       );
-      let collectorEntityId = getCollectorEntityId(pools.address, entityId);
-      let validatorTransfersBalance = validatorDepositAmount.clone();
+
+      // ValidatorTransfers contract receives validator deposit amounts
+      expect(
+        await balance.current(validatorTransfers.address)
+      ).to.be.bignumber.equal(
+        new BN(testCases.length - testCaseN).mul(validatorDepositAmount)
+      );
+    }
+
+    // users withdraw their deposits
+    let validatorTransfersBalance = validatorDepositAmount.mul(
+      new BN(testCases.length)
+    );
+    for (const [testCaseN, { users }] of testCases.entries()) {
+      let collectorEntityId = getCollectorEntityId(
+        pools.address,
+        // +2 because there is one extra entity which holds current validator
+        new BN(testCaseN + 2)
+      );
 
       // users withdraw their deposits
       for (let j = 0; j < users.length; j++) {
@@ -159,26 +191,44 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
           await balance.current(validatorTransfers.address)
         ).to.be.bignumber.equal(validatorTransfersBalance);
       }
-      // ValidatorTransfers is empty
-      expect(
-        await balance.current(validatorTransfers.address)
-      ).to.be.bignumber.equal(new BN(0));
+    }
+    // All deposits have been withdrawn
+    expect(
+      await balance.current(validatorTransfers.address)
+    ).to.be.bignumber.equal(new BN(0));
 
-      // assign wallet
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
-      });
-      let wallet = logs[0].args.wallet;
+    // calculate validator return
+    let totalValidatorDebts = new BN(0);
+    for (const { validatorReturn, maintainerReward } of testCases.values()) {
+      totalValidatorDebts.iadd(
+        validatorReturn.sub(validatorDepositAmount).sub(maintainerReward)
+      );
+    }
 
-      // enable withdrawals
-      await send.ether(other, wallet, validatorReturn.add(ether('1')));
-      await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
-      });
+    // assign wallet
+    const { logs } = await walletsRegistry.assignWallet(validatorId, {
+      from: walletsManager
+    });
+    let wallet = logs[0].args.wallet;
 
-      validatorTransfersBalance = validatorReturn
-        .sub(maintainerReward)
-        .sub(validatorDepositAmount);
+    // enable withdrawals
+    // extra 1 eth of income for current validator holder
+    await send.ether(
+      other,
+      wallet,
+      totalValidatorDebts.add(ether('1')).add(validatorDepositAmount)
+    );
+    await withdrawals.enableWithdrawals(wallet, {
+      from: walletsManager
+    });
+
+    // users withdraw their rewards
+    for (const [testCaseN, { users }] of testCases.entries()) {
+      let collectorEntityId = getCollectorEntityId(
+        pools.address,
+        // +2 because there is one extra entity which holds current validator
+        new BN(testCaseN + 2)
+      );
 
       // users withdraw their rewards
       for (let j = 0; j < users.length; j++) {
@@ -207,17 +257,16 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         );
 
         // ValidatorTransfers balance has changed
-        validatorTransfersBalance.isub(users[j].reward);
+        totalValidatorDebts.isub(users[j].reward);
         expect(
           await balance.current(validatorTransfers.address)
-        ).to.be.bignumber.equal(validatorTransfersBalance);
+        ).to.be.bignumber.equal(totalValidatorDebts);
       }
-
-      // ValidatorTransfers is empty
-      expect(
-        await balance.current(validatorTransfers.address)
-      ).to.be.bignumber.equal(new BN(0));
-      entityId.iadd(new BN(2));
     }
+
+    // ValidatorTransfers is empty
+    expect(
+      await balance.current(validatorTransfers.address)
+    ).to.be.bignumber.equal(new BN(0));
   });
 });

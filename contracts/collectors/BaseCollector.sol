@@ -113,23 +113,21 @@ contract BaseCollector is Initializable {
     function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        (
-            uint256 currentDepositAmount,
-            uint256 currentMaintainerFee,
-            bytes32 currentCollectorEntityId
-        ) = validatorsRegistry.validators(_validatorId);
+        (uint256 prevDepositAmount, uint256 prevMaintainerFee, bytes32 prevCollectorEntityId) = validatorsRegistry.validators(_validatorId);
+        require(prevCollectorEntityId != "", "Validator with such ID is not registered.");
+        require(prevDepositAmount == settings.validatorDepositAmount(), "Validator deposit amount cannot be updated.");
 
         uint256 entityId = readyEntities[readyEntities.length - 1];
         readyEntities.pop();
         validatorsRegistry.update(_validatorId, entityId);
 
-        uint256 maintainerReward = (_currentReward * currentMaintainerFee) / 10000;
-        totalSupply -= currentDepositAmount;
-        validatorTransfers.registerTransfer.value(currentDepositAmount)(
+        uint256 maintainerDebt = (_currentReward * prevMaintainerFee) / 10000;
+        totalSupply -= prevDepositAmount;
+        validatorTransfers.registerTransfer.value(prevDepositAmount)(
             _validatorId,
-            currentCollectorEntityId,
-            _currentReward - maintainerReward,
-            maintainerReward
+            prevCollectorEntityId,
+            _currentReward - maintainerDebt,
+            maintainerDebt
         );
     }
 }

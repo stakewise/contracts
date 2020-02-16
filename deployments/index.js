@@ -184,7 +184,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     adminsProxy,
     depositsProxy,
     poolsProxy,
-    privatesProxy,
+    settingsProxy,
     validatorsRegistryProxy,
     walletsRegistryProxy,
     withdrawalsProxy,

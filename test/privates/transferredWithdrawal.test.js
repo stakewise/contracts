@@ -28,6 +28,7 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const Privates = artifacts.require('Privates');
+const Pools = artifacts.require('Pools');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
@@ -35,6 +36,7 @@ const stakingDuration = new BN('31536000');
 contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
   let networkConfig,
     privates,
+    pools,
     settings,
     walletsRegistry,
     withdrawals,
@@ -81,12 +83,12 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       proxies.validatorTransfers
     );
     privates = await Privates.at(proxies.privates);
+    pools = await Pools.at(proxies.pools);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
   });
 
   it('user can withdraw deposit and reward from transferred validator', async () => {
-    let entityId = new BN(1);
     for (const [
       testCaseN,
       { validatorReturn, maintainerFee, userDeposit, userReward }
@@ -109,20 +111,24 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       });
 
       // add new entity for transfer
-      await privates.addDeposit(other, {
+      // can only transfer to pool collector
+      await pools.addDeposit(other, {
         from: other,
         value: validatorDepositAmount
       });
 
       // transfer validator to the new entity
-      await privates.transferValidator(
+      await pools.transferValidator(
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
         {
           from: operator
         }
       );
-      let collectorEntityId = getCollectorEntityId(privates.address, entityId);
+      let collectorEntityId = getCollectorEntityId(
+        privates.address,
+        testCaseN + 1
+      );
 
       // track user's balance
       let userBalance = await balance.tracker(otherAccounts[0]);
@@ -186,7 +192,6 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(new BN(0));
-      entityId.iadd(new BN(2));
     }
   });
 });

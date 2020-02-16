@@ -16,10 +16,12 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkValidatorTransferred,
+  getCollectorEntityId,
   registerValidator
 } = require('../common/utils');
 
 const Privates = artifacts.require('Privates');
+const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
@@ -37,9 +39,11 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     validatorsRegistry,
     validatorTransfers,
     privates,
+    pools,
     settings,
     walletsRegistry,
-    validatorId;
+    validatorId,
+    prevCollectorEntityId;
   let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
@@ -53,47 +57,48 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    let {
-      privates: privatesProxy,
-      operators: operatorsProxy,
-      walletsManagers: walletsManagersProxy,
-      validatorsRegistry: validatorsRegistryProxy,
-      validatorTransfers: validatorTransfersProxy,
-      walletsRegistry: walletsRegistryProxy,
-      settings: settingsProxy
-    } = await deployAllProxies({
+    let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address
     });
-    privates = await Privates.at(privatesProxy);
-    validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
-    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
-    walletsRegistry = await WalletsRegistry.at(walletsRegistryProxy);
+    privates = await Privates.at(proxies.privates);
+    pools = await Pools.at(proxies.pools);
+    validatorsRegistry = await ValidatorsRegistry.at(
+      proxies.validatorsRegistry
+    );
+    validatorTransfers = await ValidatorTransfers.at(
+      proxies.validatorTransfers
+    );
+    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
 
-    let operators = await Operators.at(operatorsProxy);
+    let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(walletsManagersProxy);
+    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
     await walletsManagers.addManager(walletsManager, { from: admin });
 
     // set staking duration
-    settings = await Settings.at(settingsProxy);
-    await settings.setStakingDuration(privates.address, stakingDuration, {
+    settings = await Settings.at(proxies.settings);
+    await settings.setStakingDuration(pools.address, stakingDuration, {
       from: admin
     });
 
     validatorId = await registerValidator({
-      privatesProxy,
+      privatesProxy: proxies.privates,
       operator,
       sender: other,
       withdrawer: other
     });
+    prevCollectorEntityId = await getCollectorEntityId(
+      proxies.privates,
+      new BN(1)
+    );
   });
 
   it('fails to transfer validator if there are no ready entities', async () => {
     await expectRevert(
-      privates.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, currentReward, {
         from: operator
       }),
       'There are no ready entities.'
@@ -102,19 +107,19 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
   it('fails to transfer validator with caller other than operator', async () => {
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
     // transfer validator to the new entity
     await expectRevert(
-      privates.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, currentReward, {
         from: other
       }),
       'Permission denied.'
     );
     // check balance didn't change
-    await checkCollectorBalance(privates, validatorDepositAmount);
+    await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
   it('fails to transfer validator if transferring is paused', async () => {
@@ -123,19 +128,19 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       from: admin
     });
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
     // transfer validator to the new entity
     await expectRevert(
-      privates.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, currentReward, {
         from: operator
       }),
       'Validator transfers are paused.'
     );
     // check balance didn't change
-    await checkCollectorBalance(privates, validatorDepositAmount);
+    await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
   it('fails to transfer validator with updated deposit amount', async () => {
@@ -145,36 +150,36 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       from: admin
     });
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: newValidatorDepositAmount
     });
     // transfer validator to the new entity
     await expectRevert(
-      privates.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, currentReward, {
         from: operator
       }),
       'Validator deposit amount cannot be updated.'
     );
     // check balance didn't change
-    await checkCollectorBalance(privates, newValidatorDepositAmount);
+    await checkCollectorBalance(pools, newValidatorDepositAmount);
   });
 
   it('fails to transfer an unknown validator', async () => {
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
     // transfer validator to the new entity
     await expectRevert(
-      privates.transferValidator('0x0', currentReward, {
+      pools.transferValidator('0x0', currentReward, {
         from: operator
       }),
-      'Validator deposit amount cannot be updated.'
+      'Validator with such ID is not registered.'
     );
     // check balance didn't change
-    await checkCollectorBalance(privates, validatorDepositAmount);
+    await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
   it('fails to transfer validator with assigned wallet', async () => {
@@ -183,6 +188,23 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       from: walletsManager
     });
     // register new ready entity
+    await pools.addDeposit(withdrawer, {
+      from: sender,
+      value: validatorDepositAmount
+    });
+    // transfer validator to the new entity
+    await expectRevert(
+      pools.transferValidator(validatorId, currentReward, {
+        from: operator
+      }),
+      'Cannot register transfer for validator with assigned wallet.'
+    );
+    // check balance didn't change
+    await checkCollectorBalance(pools, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator to collector entity other than Pool', async () => {
+    // register new ready entity
     await privates.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
@@ -192,7 +214,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       privates.transferValidator(validatorId, currentReward, {
         from: operator
       }),
-      'Cannot register transfer for validator with assigned wallet.'
+      'Permission denied.'
     );
     // check balance didn't change
     await checkCollectorBalance(privates, validatorDepositAmount);
@@ -200,18 +222,18 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
   it('can transfer validator to the new entity', async () => {
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
 
     // transfer validator to the new entity
-    let { tx } = await privates.transferValidator(validatorId, currentReward, {
+    let { tx } = await pools.transferValidator(validatorId, currentReward, {
       from: operator
     });
 
     // check balance updated
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(pools, new BN(0));
 
     // calculate debts
     let maintainerDebt = currentReward
@@ -223,14 +245,21 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     await checkValidatorTransferred({
       transaction: tx,
       validatorId,
+      prevCollectorEntityId,
+      newCollectorEntityId: await getCollectorEntityId(
+        pools.address,
+        new BN(1)
+      ),
       prevEntityId: new BN(1),
       newEntityId: new BN(2),
       newStakingDuration: stakingDuration,
-      collectorAddress: privates.address,
+      collectorAddress: pools.address,
       validatorsRegistry,
       validatorTransfers,
       userDebt,
-      maintainerDebt
+      maintainerDebt,
+      totalUserDebt: userDebt,
+      totalMaintainerDebt: maintainerDebt
     });
 
     // check ValidatorTransfers balance
@@ -241,7 +270,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
   it('updates maintainer fee for transferred validator', async () => {
     // register new ready entity
-    await privates.addDeposit(withdrawer, {
+    await pools.addDeposit(withdrawer, {
       from: sender,
       value: validatorDepositAmount
     });
@@ -253,12 +282,12 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
 
     // transfer validator to the new entity
-    let { tx } = await privates.transferValidator(validatorId, currentReward, {
+    let { tx } = await pools.transferValidator(validatorId, currentReward, {
       from: operator
     });
 
     // check balance updated
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(pools, new BN(0));
 
     // calculate debts
     let maintainerDebt = currentReward
@@ -271,14 +300,19 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       transaction: tx,
       validatorId,
       newMaintainerFee,
-      prevEntityId: new BN(1),
-      newEntityId: new BN(2),
+      prevCollectorEntityId,
+      newCollectorEntityId: await getCollectorEntityId(
+        pools.address,
+        new BN(1)
+      ),
       newStakingDuration: stakingDuration,
-      collectorAddress: privates.address,
+      collectorAddress: pools.address,
       validatorsRegistry,
       validatorTransfers,
       userDebt,
-      maintainerDebt
+      maintainerDebt,
+      totalUserDebt: userDebt,
+      totalMaintainerDebt: maintainerDebt
     });
 
     // check Validator Transfers balance
@@ -328,12 +362,13 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
     let tx;
     let expectedBalance = new BN(0);
-    let entityCounter = new BN(1);
-    let expectedUserDebt = new BN(0);
-    let expectedMaintainerDebt = new BN(0);
+    let totalUserDebt = new BN(0);
+    let totalMaintainerDebt = new BN(0);
+    let entityCounter = new BN(0);
+
     for (const test of tests) {
       // register new ready entity
-      await privates.addDeposit(withdrawer, {
+      await pools.addDeposit(withdrawer, {
         from: sender,
         value: validatorDepositAmount
       });
@@ -344,44 +379,45 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      ({ tx } = await privates.transferValidator(
-        validatorId,
-        test.currentReward,
-        {
-          from: operator
-        }
-      ));
+      ({ tx } = await pools.transferValidator(validatorId, test.currentReward, {
+        from: operator
+      }));
 
       // check balance updated
-      await checkCollectorBalance(privates, new BN(0));
+      await checkCollectorBalance(pools, new BN(0));
 
       // increment balance and debts
       expectedBalance.iadd(validatorDepositAmount);
-      expectedUserDebt.iadd(test.userDebt);
-      expectedMaintainerDebt.iadd(test.maintainerDebt);
+      totalUserDebt.iadd(test.userDebt);
+      totalMaintainerDebt.iadd(test.maintainerDebt);
+      entityCounter.iadd(new BN(1));
 
+      let newCollectorEntityId = getCollectorEntityId(
+        pools.address,
+        entityCounter
+      );
       // check validator transferred
       await checkValidatorTransferred({
         transaction: tx,
         validatorId,
         newMaintainerFee: test.newMaintainerFee,
-        prevEntityId: entityCounter,
-        newEntityId: entityCounter.add(new BN(1)),
+        prevCollectorEntityId,
+        newCollectorEntityId,
         newStakingDuration: stakingDuration,
         collectorAddress: privates.address,
         validatorsRegistry,
         validatorTransfers,
-        userDebt: expectedUserDebt,
-        maintainerDebt: expectedMaintainerDebt
+        userDebt: test.userDebt,
+        maintainerDebt: test.maintainerDebt,
+        totalUserDebt: totalUserDebt,
+        totalMaintainerDebt: totalMaintainerDebt
       });
 
       // check Validator Transfers balance
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(expectedBalance);
-
-      // increment entity counter
-      entityCounter.iadd(new BN(1));
+      prevCollectorEntityId = newCollectorEntityId;
     }
   });
 });
