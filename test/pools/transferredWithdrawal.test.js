@@ -93,7 +93,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
     });
 
     // populate new entities
-    for (const { users } of testCases.values()) {
+    for (const { users } of testCases) {
       for (let j = 0; j < users.length; j++) {
         await pools.addDeposit(otherAccounts[j], {
           from: sender,
@@ -199,7 +199,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
 
     // calculate validator return
     let totalValidatorDebts = new BN(0);
-    for (const { validatorReturn, maintainerReward } of testCases.values()) {
+    for (const { validatorReturn, maintainerReward } of testCases) {
       totalValidatorDebts.iadd(
         validatorReturn.sub(validatorDepositAmount).sub(maintainerReward)
       );
