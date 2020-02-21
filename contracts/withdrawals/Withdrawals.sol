@@ -50,12 +50,12 @@ contract Withdrawals is Initializable {
     /**
     * Event for tracking fees paid to the maintainer.
     * @param maintainer - an address of the maintainer.
-    * @param wallet - an address of the wallet the fee was payed from.
+    * @param collectorEntityId - ID of the collector entity, the maintainer withdrawn from.
     * @param amount - fee transferred to the maintainer's address.
     */
     event MaintainerWithdrawn(
         address maintainer,
-        address wallet,
+        bytes32 collectorEntityId,
         uint256 amount
     );
 
@@ -63,16 +63,16 @@ contract Withdrawals is Initializable {
     * Event for tracking user withdrawals.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
-    * @param wallet - an address of the wallet contract.
-    * @param deposit - an amount deposited.
-    * @param reward - a reward generated.
+    * @param collectorEntityId - ID of the collector entity, the user withdrawn from.
+    * @param depositAmount - an amount deposited.
+    * @param rewardAmount - a reward generated.
     */
     event UserWithdrawn(
         address sender,
         address withdrawer,
-        address wallet,
-        uint256 deposit,
-        uint256 reward
+        bytes32 collectorEntityId,
+        uint256 depositAmount,
+        uint256 rewardAmount
     );
 
     /**
@@ -114,9 +114,9 @@ contract Withdrawals is Initializable {
         require(validatorId != "", "Wallet is not assigned to any validator.");
         require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
-        (uint256 depositAmount, uint256 maintainerFee,) = validatorsRegistry.validators(validatorId);
-        (uint256 userDebt, uint256 maintainerReward,) = validatorTransfers.validatorDebts(validatorId);
-        uint256 entityBalance = (_wallet.balance).sub(userDebt).sub(maintainerReward);
+        (uint256 depositAmount, uint256 maintainerFee, bytes32 collectorEntityId) = validatorsRegistry.validators(validatorId);
+        (uint256 userDebt, uint256 maintainerDebt,) = validatorTransfers.validatorDebts(validatorId);
+        uint256 entityBalance = (_wallet.balance).sub(userDebt).sub(maintainerDebt);
         require(entityBalance > 0, "Wallet has not enough ether in it.");
 
         uint256 penalty;
@@ -129,20 +129,21 @@ contract Withdrawals is Initializable {
         }
 
         // Maintainer gets a fee for the entity only in case there is a profit.
+        uint256 maintainerReward;
         if (entityBalance > depositAmount) {
-            maintainerReward = maintainerReward.add(((entityBalance.sub(depositAmount)).mul(maintainerFee)).div(10000));
+            maintainerReward = ((entityBalance.sub(depositAmount)).mul(maintainerFee)).div(10000);
         }
 
-        walletsRegistry.unlockWallet(_wallet, entityBalance);
+        walletsRegistry.unlockWallet(_wallet, entityBalance.sub(maintainerReward));
 
         if (userDebt > 0) {
             validatorTransfers.resolveDebt(validatorId);
             Wallet(_wallet).withdraw(address(uint160(address(validatorTransfers))), userDebt);
         }
 
-        if (maintainerReward > 0) {
-            emit MaintainerWithdrawn(settings.maintainer(), _wallet, maintainerReward);
-            Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward);
+        if (maintainerReward.add(maintainerDebt) > 0) {
+            emit MaintainerWithdrawn(settings.maintainer(), collectorEntityId, maintainerReward);
+            Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward.add(maintainerDebt));
         }
     }
 
@@ -178,7 +179,7 @@ contract Withdrawals is Initializable {
         }
 
         withdrawnUsers[userId] = true;
-        emit UserWithdrawn(msg.sender, _withdrawer, _wallet, userDeposit, userReward);
+        emit UserWithdrawn(msg.sender, _withdrawer, collectorEntityId, userDeposit, userReward);
 
         Wallet(_wallet).withdraw(_withdrawer, userDeposit.add(userReward));
     }

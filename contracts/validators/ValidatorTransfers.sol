@@ -16,7 +16,7 @@ import "../withdrawals/Withdrawals.sol";
  * @title Validator Transfers.
  * This contract keeps track of validator transfers to other entities.
  * It should be used to match entities who would like to finish staking with entities who would like to be registered as new validators.
- * It allows for exiting entity users to withdraw their deposits and register their incomes as debts until Phase 2 release.
+ * It allows for exiting entity users to withdraw their deposits and register their rewards as debts until Phase 2 release.
  * It will be used up to Phase 2 release.
  */
 contract ValidatorTransfers is Initializable {
@@ -113,18 +113,18 @@ contract ValidatorTransfers is Initializable {
 
     /**
     * Event for tracking user withdrawals.
-    * @param validatorId - ID of the transferred validator.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
-    * @param deposit - withdrawn deposit amount.
-    * @param reward - withdrawn reward amount.
+    * @param collectorEntityId - ID of the transferred collector entity, the user withdrawn from.
+    * @param depositAmount - withdrawn deposit amount.
+    * @param rewardAmount - withdrawn reward amount.
     */
     event UserWithdrawn(
-        bytes32 validatorId,
         address sender,
         address withdrawer,
-        uint256 deposit,
-        uint256 reward
+        bytes32 collectorEntityId,
+        uint256 depositAmount,
+        uint256 rewardAmount
     );
 
     /**
@@ -263,7 +263,7 @@ contract ValidatorTransfers is Initializable {
         uint256 withdrawalAmount = depositWithdrawal.add(rewardWithdrawal);
         require(withdrawalAmount > 0, "Nothing to withdraw.");
 
-        emit UserWithdrawn(entityReward.validatorId, msg.sender, _withdrawer, depositWithdrawal, rewardWithdrawal);
+        emit UserWithdrawn(msg.sender, _withdrawer, _collectorEntityId, depositWithdrawal, rewardWithdrawal);
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value

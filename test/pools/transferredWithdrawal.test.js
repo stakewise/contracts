@@ -212,7 +212,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
     let wallet = logs[0].args.wallet;
 
     // enable withdrawals
-    // extra 1 eth of income for current validator holder
+    // extra 1 eth of reward for current validator holder
     await send.ether(
       other,
       wallet,

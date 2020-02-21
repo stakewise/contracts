@@ -48,7 +48,7 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Event for tracking wallet new assignment.
-    * @param validator - ID (public key hash) of the validator wallet was assigned to.
+    * @param validator - ID (public key hash) of the validator wallet is assigned to.
     * @param wallet - address of the wallet the deposits and rewards will be withdrawn to.
     */
     event WalletAssigned(bytes32 validator, address indexed wallet);
@@ -61,9 +61,11 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Event for tracking wallet unlocks.
+    * @param validator - ID of the validator wallet is assigned to.
     * @param wallet - address of the unlocked wallet.
+    * @param usersBalance - users balance at unlock time.
     */
-    event WalletUnlocked(bytes32 validator, address indexed wallet, uint256 balance);
+    event WalletUnlocked(bytes32 validator, address indexed wallet, uint256 usersBalance);
 
     /**
     * Constructor for initializing the WalletsRegistry contract.
@@ -133,13 +135,13 @@ contract WalletsRegistry is Initializable {
     * Can only be called by Withdrawals contract.
     * Users will be able to withdraw their shares from unlocked wallet.
     * @param _wallet - Address of the wallet to unlock.
-    * @param _balance - Wallet balance at unlock time.
+    * @param _usersBalance - Users balance at unlock time.
     */
-    function unlockWallet(address payable _wallet, uint256 _balance) external {
+    function unlockWallet(address payable _wallet, uint256 _usersBalance) external {
         require(msg.sender == address(withdrawals), "Permission denied.");
         require(!wallets[_wallet].unlocked, "Wallet is already unlocked.");
 
         wallets[_wallet].unlocked = true;
-        emit WalletUnlocked(wallets[_wallet].validator, _wallet, _balance);
+        emit WalletUnlocked(wallets[_wallet].validator, _wallet, _usersBalance);
     }
 }
