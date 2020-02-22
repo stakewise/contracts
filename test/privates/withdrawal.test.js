@@ -15,7 +15,8 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   registerValidator,
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
+  getCollectorEntityId
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
@@ -108,14 +109,19 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: walletBalance
+          usersBalance: walletBalance.sub(maintainerReward)
         }
+      );
+
+      let collectorEntityId = getCollectorEntityId(
+        privates.address,
+        new BN(testCaseN + 1)
       );
 
       // Maintainer has withdrawn correct fee
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
-        wallet,
+        collectorEntityId,
         amount: maintainerReward
       });
       walletBalance.isub(maintainerReward);
@@ -129,11 +135,11 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        wallet,
+        collectorEntityId,
         sender: sender,
         withdrawer: otherAccounts[0],
-        deposit: userDeposit,
-        reward: userReward
+        depositAmount: userDeposit,
+        rewardAmount: userReward
       });
 
       // User's balance has changed
@@ -186,7 +192,7 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: walletBalance
+          usersBalance: walletBalance
         }
       );
 
@@ -199,11 +205,14 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        wallet,
+        collectorEntityId: getCollectorEntityId(
+          privates.address,
+          new BN(testCaseN + 1)
+        ),
         sender: sender,
         withdrawer: otherAccounts[0],
-        deposit: userPenalisedReturn,
-        reward: new BN(0)
+        depositAmount: userPenalisedReturn,
+        rewardAmount: new BN(0)
       });
 
       // User's balance has changed

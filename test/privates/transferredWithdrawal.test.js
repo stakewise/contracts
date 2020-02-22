@@ -142,11 +142,11 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender: sender,
         withdrawer: otherAccounts[0],
-        deposit: userDeposit,
-        reward: new BN(0)
+        depositAmount: userDeposit,
+        rewardAmount: new BN(0)
       });
 
       // User's balance has changed
@@ -178,11 +178,11 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender: sender,
         withdrawer: otherAccounts[0],
-        deposit: new BN(0),
-        reward: userReward
+        depositAmount: new BN(0),
+        rewardAmount: userReward
       });
 
       // User's balance has changed

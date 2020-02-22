@@ -202,11 +202,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender,
         withdrawer,
-        deposit: validatorDepositAmount,
-        reward: new BN(0)
+        depositAmount: validatorDepositAmount,
+        rewardAmount: new BN(0)
       });
 
       // assign wallet
@@ -230,11 +230,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender,
         withdrawer,
-        deposit: new BN(0),
-        reward: userReward
+        depositAmount: new BN(0),
+        rewardAmount: userReward
       });
 
       // user performs withdrawal second time
@@ -279,11 +279,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender,
         withdrawer,
-        deposit: validatorDepositAmount,
-        reward: userReward
+        depositAmount: validatorDepositAmount,
+        rewardAmount: userReward
       });
 
       // user performs withdrawal second time
@@ -316,11 +316,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        validatorId,
+        collectorEntityId,
         sender,
         withdrawer,
-        deposit: validatorDepositAmount,
-        reward: new BN(0)
+        depositAmount: validatorDepositAmount,
+        rewardAmount: new BN(0)
       });
 
       // debt was not resolved yet

@@ -18,7 +18,8 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   registerValidator,
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
+  getCollectorEntityId
 } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -125,7 +126,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validator: validatorId,
       wallet,
-      balance: initialSettings.validatorDepositAmount
+      usersBalance: initialSettings.validatorDepositAmount
     });
   });
 
@@ -174,7 +175,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: withdrawalReturn
+          usersBalance: withdrawalReturn
         }
       );
       expect(
@@ -210,7 +211,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validator: validatorId,
       wallet,
-      balance: initialSettings.validatorDepositAmount
+      usersBalance: initialSettings.validatorDepositAmount
     });
 
     // maintainer's balance hasn't changed
@@ -283,14 +284,16 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: validatorDepositAmount.add(new BN(validatorReward))
+          usersBalance: validatorDepositAmount
+            .add(new BN(validatorReward))
+            .sub(new BN(expectedMaintainerReward))
         }
       );
 
       // maintainer's reward calculated properly
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer,
-        wallet,
+        collectorEntityId: getCollectorEntityId(proxies.pools, new BN(i + 2)),
         amount: expectedMaintainerReward
       });
 

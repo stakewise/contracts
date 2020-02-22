@@ -16,7 +16,8 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getDepositAmount
+  getDepositAmount,
+  getCollectorEntityId
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
@@ -108,7 +109,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: walletBalance
+          usersBalance: walletBalance
         }
       );
 
@@ -122,11 +123,14 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         });
 
         expectEvent(receipt, 'UserWithdrawn', {
-          wallet,
+          collectorEntityId: getCollectorEntityId(
+            pools.address,
+            new BN(testCaseN + 1)
+          ),
           sender: sender,
           withdrawer: otherAccounts[j],
-          deposit: users[j].penalisedReturn,
-          reward: new BN(0)
+          depositAmount: users[j].penalisedReturn,
+          rewardAmount: new BN(0)
         });
 
         // User's balance has changed
@@ -169,6 +173,11 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         operator
       });
 
+      let collectorEntityId = getCollectorEntityId(
+        pools.address,
+        new BN(testCaseN + 1)
+      );
+
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
         from: walletsManager
@@ -190,14 +199,14 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         {
           validator: validatorId,
           wallet,
-          balance: walletBalance
+          usersBalance: walletBalance.sub(maintainerReward)
         }
       );
 
       // Maintainer has withdrawn correct fee
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
-        wallet,
+        collectorEntityId,
         amount: maintainerReward
       });
       walletBalance.isub(maintainerReward);
@@ -212,11 +221,11 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         });
 
         expectEvent(receipt, 'UserWithdrawn', {
-          wallet,
+          collectorEntityId,
           sender: sender,
           withdrawer: otherAccounts[j],
-          deposit: users[j].deposit,
-          reward: users[j].reward
+          depositAmount: users[j].deposit,
+          rewardAmount: users[j].reward
         });
 
         // User's balance has changed
@@ -281,10 +290,13 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     let wallet = receipt.logs[0].args.wallet;
 
     // Withdrawal performed, deposit and rewards returned
-    const walletBalance = getDepositAmount({
-      min: validatorDepositAmount
-    });
-    await send.ether(other, wallet, walletBalance);
+    await send.ether(
+      other,
+      wallet,
+      getDepositAmount({
+        min: validatorDepositAmount
+      })
+    );
 
     // Enable withdrawals
     let { tx } = await withdrawals.enableWithdrawals(wallet, {
@@ -293,8 +305,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validator: validatorId,
-      wallet,
-      balance: walletBalance
+      wallet
     });
 
     for (let i = 0; i < deposits.length; i++) {
@@ -305,10 +316,10 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         from: sender
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        wallet,
+        collectorEntityId: getCollectorEntityId(pools.address, new BN(1)),
         sender,
         withdrawer,
-        deposit: deposits[i]
+        depositAmount: deposits[i]
       });
     }
 
