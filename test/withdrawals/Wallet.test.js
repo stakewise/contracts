@@ -9,7 +9,7 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, createValidator } = require('../utils');
+const { removeNetworkFile, registerValidator } = require('../common/utils');
 
 const Wallet = artifacts.require('Wallet');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -17,10 +17,9 @@ const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('Wallet', ([_, ...accounts]) => {
-  let networkConfig;
-  let wallet;
-  let [admin, operator, sender, withdrawer, manager, anyone] = accounts;
-  let users = [admin, operator, sender, withdrawer, manager, anyone];
+  let networkConfig, wallet;
+  let [admin, operator, sender, withdrawer, walletsManager, anyone] = accounts;
+  let users = [admin, operator, sender, withdrawer, walletsManager, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -35,9 +34,9 @@ contract('Wallet', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(manager, { from: admin });
+    await walletsManagers.addManager(walletsManager, { from: admin });
 
-    let validatorId = await createValidator({
+    let validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,
@@ -46,7 +45,7 @@ contract('Wallet', ([_, ...accounts]) => {
 
     let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: manager
+      from: walletsManager
     });
     wallet = await Wallet.at(logs[0].args.wallet);
   });

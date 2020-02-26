@@ -1,18 +1,22 @@
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../deployments');
+const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
   deployLogicContracts
-} = require('../deployments/common');
-const { deployVRC } = require('../deployments/vrc');
-const { removeNetworkFile } = require('./utils');
+} = require('../../deployments/common');
+const { deployVRC } = require('../../deployments/vrc');
+const {
+  validatorRegistrationArgs
+} = require('../common/validatorRegistrationArgs');
+const { removeNetworkFile } = require('../common/utils');
 
 const Operators = artifacts.require('Operators');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
-contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
+contract('ValidatorsRegistry', ([_, ...accounts]) => {
   let networkConfig;
   let validatorsRegistry;
+  let [admin, operator, anyone] = accounts;
   let users = [admin, operator, anyone];
 
   before(async () => {
@@ -41,6 +45,21 @@ contract('ValidatorsRegistry', ([_, admin, operator, anyone]) => {
       await expectRevert(
         validatorsRegistry.register(
           web3.utils.fromAscii('\x11'.repeat(48)),
+          web3.utils.soliditySha3('collector', 1),
+          {
+            from: users[i]
+          }
+        ),
+        'Permission denied.'
+      );
+    }
+  });
+
+  it('only collectors can update validators', async () => {
+    for (let i = 0; i < users.length; i++) {
+      await expectRevert(
+        validatorsRegistry.update(
+          web3.utils.soliditySha3(validatorRegistrationArgs[0].pubKey),
           web3.utils.soliditySha3('collector', 1),
           {
             from: users[i]

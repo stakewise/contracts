@@ -12,14 +12,15 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
-const { removeNetworkFile } = require('../utils');
+const { removeNetworkFile } = require('../common/utils');
 
 const Operators = artifacts.require('Operators');
 
-contract('Operators', ([_, admin, operator, anotherOperator, anyone]) => {
+contract('Operators', ([_, ...accounts]) => {
   let networkConfig;
   let adminsProxy;
   let operators;
+  let [admin, operator, anotherOperator, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();

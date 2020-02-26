@@ -31,6 +31,7 @@ async function deployWithdrawalsProxy({
   depositsProxy,
   settingsProxy,
   validatorsRegistryProxy,
+  validatorTransfersProxy,
   walletsRegistryProxy,
   salt,
   networkConfig
@@ -43,6 +44,7 @@ async function deployWithdrawalsProxy({
       depositsProxy,
       settingsProxy,
       validatorsRegistryProxy,
+      validatorTransfersProxy,
       walletsRegistryProxy
     ],
     salt,

@@ -19,7 +19,7 @@ const {
   checkUserTotalAmount,
   checkCollectorBalance,
   checkDepositCanceled
-} = require('../utils');
+} = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
 const Pools = artifacts.require('Pools');
@@ -27,13 +27,9 @@ const Pools = artifacts.require('Pools');
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
-contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
-  let networkConfig;
-  let deposits;
-  let vrc;
-  let pools;
-  let amount1, amount2;
-  let poolsBalance;
+contract('Pools (cancel deposit)', ([_, ...accounts]) => {
+  let networkConfig, deposits, vrc, pools, amount1, amount2, poolsBalance;
+  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();

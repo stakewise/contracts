@@ -1,6 +1,7 @@
 const {
   expectRevert,
   expectEvent,
+  ether,
   constants
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
@@ -11,21 +12,17 @@ const {
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
-  createValidator,
+  registerValidator,
   validatorRegistrationArgs
-} = require('../utils');
+} = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('WalletsRegistry', ([_, ...accounts]) => {
-  let walletsRegistry;
-  let validatorId;
-  let proxies;
-  let networkConfig;
-  let vrc;
-  let [admin, operator, sender, withdrawer, manager] = accounts;
+  let walletsRegistry, proxies, validatorId, networkConfig, vrc;
+  let [admin, operator, sender, withdrawer, walletsManager] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -47,9 +44,9 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(manager, { from: admin });
+    await walletsManagers.addManager(walletsManager, { from: admin });
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
-    validatorId = await createValidator({
+    validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender,
@@ -71,12 +68,12 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('cannot assign wallet to the same validator more than once', async () => {
       await walletsRegistry.assignWallet(validatorId, {
-        from: manager
+        from: walletsManager
       });
 
       await expectRevert(
         walletsRegistry.assignWallet(validatorId, {
-          from: manager
+          from: walletsManager
         }),
         'Validator has already wallet assigned.'
       );
@@ -87,7 +84,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
         walletsRegistry.assignWallet(
           web3.utils.soliditySha3('invalidValidator'),
           {
-            from: manager
+            from: walletsManager
           }
         ),
         'Validator does not have deposit amount.'
@@ -96,7 +93,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('creates a new wallet', async () => {
       const receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: manager
+        from: walletsManager
       });
       const wallet = receipt.logs[0].args.wallet;
 
@@ -112,7 +109,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('re-uses existing available wallet', async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: manager
+        from: walletsManager
       });
 
       // reset wallet
@@ -122,7 +119,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       });
 
       // Deploy next validator
-      let newValidatorId = await createValidator({
+      let newValidatorId = await registerValidator({
         args: validatorRegistrationArgs[1],
         privatesProxy: proxies.privates,
         operator,
@@ -131,7 +128,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       });
 
       let receipt = await walletsRegistry.assignWallet(newValidatorId, {
-        from: manager
+        from: walletsManager
       });
 
       // must assign the same wallet to the next validator
@@ -152,7 +149,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: manager
+        from: walletsManager
       });
       wallet = logs[0].args.wallet;
     });
@@ -160,7 +157,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     it('user without admin role cannot reset wallets', async () => {
       await expectRevert(
         walletsRegistry.resetWallet(wallet, {
-          from: manager
+          from: walletsManager
         }),
         'Permission denied.'
       );
@@ -198,11 +195,11 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
   // More unlocking tests are in Withdrawals.test.js
   describe('unlocking wallet', () => {
     let wallet;
-    let users = [admin, operator, manager, sender];
+    let users = [admin, operator, walletsManager, sender];
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: manager
+        from: walletsManager
       });
       wallet = logs[0].args.wallet;
     });
@@ -210,7 +207,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     it('only withdrawals contract can unlock wallets', async () => {
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
-          walletsRegistry.unlockWallet(wallet, {
+          walletsRegistry.unlockWallet(wallet, ether('1'), {
             from: users[i]
           }),
           'Permission denied.'

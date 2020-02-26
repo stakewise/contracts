@@ -13,7 +13,7 @@ contract Settings is Initializable {
     // The address of the application owner, where the fee will be paid.
     address payable public maintainer;
 
-    // The percentage fee users pay from their income for using the service.
+    // The percentage fee users pay from their reward for using the service.
     uint16 public maintainerFee;
 
     // The minimal staking duration of the Validator.

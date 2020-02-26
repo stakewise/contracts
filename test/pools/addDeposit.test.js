@@ -16,7 +16,7 @@ const {
   checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance
-} = require('../utils');
+} = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
 const Pools = artifacts.require('Pools');
@@ -24,12 +24,9 @@ const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Pools', ([_, admin, sender1, withdrawer1, sender2, withdrawer2]) => {
-  let networkConfig;
-  let deposits;
-  let vrc;
-  let pools;
-  let settings;
+contract('Pools (add deposit)', ([_, ...accounts]) => {
+  let networkConfig, deposits, vrc, pools, settings;
+  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
