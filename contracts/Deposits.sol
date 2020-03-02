@@ -63,8 +63,19 @@ contract Deposits is Initializable {
     }
 
     /**
+    * Function for retrieving user deposit.
+    * @param _collector - an address of the collector contract.
+    * @param _entityId - the ID of the collector entity, the deposit belongs to.
+    * @param _sender - the address of the deposit sender account.
+    * @param _withdrawer - the address of the deposit withdrawer account.
+    */
+    function getDeposit(address _collector, uint256 _entityId, address _sender, address _withdrawer) public view returns (uint256) {
+        return amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(_collector, _entityId)), _sender, _withdrawer))];
+    }
+
+    /**
     * Function for adding deposit.
-    * @param _entityId - the ID of the collector's entity, the deposit belongs to.
+    * @param _entityId - the ID of the collector entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount deposited.
@@ -84,7 +95,7 @@ contract Deposits is Initializable {
 
     /**
     * Function for canceling deposit.
-    * @param _entityId - the ID of the collector's entity, the deposit belongs to.
+    * @param _entityId - the ID of the collector entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount canceled.

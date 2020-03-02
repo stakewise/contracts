@@ -69,7 +69,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         from: sender1,
         value: ether('0')
       }),
-      'Deposit amount cannot be zero.'
+      'Invalid deposit amount.'
     );
     await checkCollectorBalance(pools, new BN(0));
   });
@@ -80,7 +80,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         from: sender1,
         value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
       }),
-      'Invalid deposit amount unit.'
+      'Invalid deposit amount.'
     );
     await checkCollectorBalance(pools, new BN(0));
   });

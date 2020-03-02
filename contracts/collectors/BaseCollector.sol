@@ -21,7 +21,7 @@ contract BaseCollector is Initializable {
     uint256 public nextEntityId;
 
     // List of entity IDs which are ready to be registered as validators.
-    uint256[] internal readyEntities;
+    uint256[] public readyEntities;
 
     // Address of the Deposits contract.
     Deposits internal deposits;
@@ -30,16 +30,16 @@ contract BaseCollector is Initializable {
     Settings internal settings;
 
     // Address of the Operators contract.
-    Operators private operators;
+    Operators internal operators;
 
     // Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration private validatorRegistration;
+    IValidatorRegistration internal validatorRegistration;
 
     // Address of the Validators Registry contract.
-    ValidatorsRegistry private validatorsRegistry;
+    ValidatorsRegistry internal validatorsRegistry;
 
     // Address of the Validator Transfers contract.
-    ValidatorTransfers private validatorTransfers;
+    ValidatorTransfers internal validatorTransfers;
 
     // Checks whether collector has ready entities.
     modifier hasReadyEntities() {

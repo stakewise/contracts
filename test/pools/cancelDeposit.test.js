@@ -73,7 +73,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('fails to cancel a deposit with invalid cancel amount', async () => {
     await expectRevert(
       pools.cancelDeposit(withdrawer1, ether('0'), { from: sender1 }),
-      'Cancel amount cannot be zero.'
+      'Invalid deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -91,7 +91,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       pools.cancelDeposit(constants.ZERO_ADDRESS, ether('1'), {
         from: sender1
       }),
-      'User does not have specified cancel amount.'
+      'The user does not have a specified deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -109,7 +109,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       pools.cancelDeposit(withdrawer1, constants.MAX_UINT256, {
         from: sender1
       }),
-      'Invalid cancel amount unit.'
+      'Invalid deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -125,7 +125,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('fails to cancel a deposit for other user account', async () => {
     await expectRevert(
       pools.cancelDeposit(withdrawer2, ether('1'), { from: sender1 }),
-      'User does not have specified cancel amount.'
+      'The user does not have a specified deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -143,7 +143,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       pools.cancelDeposit(withdrawer1, amount1.add(ether('1')), {
         from: sender1
       }),
-      'User does not have specified cancel amount.'
+      'The user does not have a specified deposit cancel amount.'
     );
     await checkCollectorBalance(pools, poolsBalance);
   });
@@ -158,7 +158,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       pools.cancelDeposit(withdrawer1, cancelAmount, {
         from: sender1
       }),
-      'User does not have specified cancel amount.'
+      'The user does not have a specified deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -177,7 +177,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       pools.cancelDeposit(withdrawer1, cancelAmount, {
         from: sender1
       }),
-      'Invalid cancel amount unit.'
+      'Invalid deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,

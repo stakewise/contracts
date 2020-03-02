@@ -55,8 +55,7 @@ contract Pools is BaseCollector {
     */
     function addDeposit(address _withdrawer) external payable {
         require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
-        require(msg.value > 0, "Deposit amount cannot be zero.");
-        require(msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount unit.");
+        require(msg.value > 0 && msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount.");
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         require(
@@ -93,13 +92,15 @@ contract Pools is BaseCollector {
     /**
     * Function for canceling deposits in current pool.
     * The deposits can only be canceled from the pool which has less than `settings.validatorDepositAmount`.
-    * @param _withdrawer - an account where the canceled amount will
-      be transferred (must be the same as when the deposit was made).
+    * @param _withdrawer - an account where the canceled amount will be transferred (must be the same as when the deposit was made).
     * @param _amount - the amount of ether to cancel from the active pool.
     */
     function cancelDeposit(address payable _withdrawer, uint256 _amount) external {
-        require(_amount > 0, "Cancel amount cannot be zero.");
-        require(_amount % settings.userDepositMinUnit() == 0, "Invalid cancel amount unit.");
+        require(_amount > 0 && _amount % settings.userDepositMinUnit() == 0, "Invalid deposit cancel amount.");
+        require(
+            deposits.getDeposit(address(this), nextEntityId, msg.sender, _withdrawer) >= _amount,
+            "The user does not have a specified deposit cancel amount."
+        );
         require(
             deposits.amounts(keccak256(abi.encodePacked(keccak256(abi.encodePacked(address(this), nextEntityId)), msg.sender, _withdrawer))) >= _amount,
             "User does not have specified cancel amount."
@@ -108,6 +109,11 @@ contract Pools is BaseCollector {
         deposits.cancelDeposit(nextEntityId, msg.sender, _withdrawer, _amount);
         totalSupply -= _amount;
 
-        _withdrawer.transfer(_amount);
+        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
+        // solhint-disable avoid-call-value
+        // solium-disable-next-line security/no-call-value
+        (bool success,) = _withdrawer.call.value(_amount)("");
+        // solhint-enable avoid-call-value
+        require(success, "Transfer has failed.");
     }
 }
