@@ -10,7 +10,6 @@ import "./BaseCollector.sol";
 
 /**
  * @title Groups
- *
  * Groups contract allows users to create groups and invite other users to stake together.
  * The group is sent for staking as soon as it collects the validator deposit amount.
  */
@@ -26,7 +25,7 @@ contract Groups is BaseCollector {
     }
 
     // Maps ID of the group to its information.
-    mapping(uint256 => Group) public groups;
+    mapping(bytes32 => Group) public groups;
 
     // Indicates whether a user is a member of the group or not.
     mapping(bytes32 => bool) public registeredMembers;
@@ -34,9 +33,10 @@ contract Groups is BaseCollector {
     /**
     * Event for tracking new groups.
     * @param creator - an address of the group creator.
+    * @param groupId - an ID of the created group.
     * @param members - a list of group members.
     */
-    event GroupCreated(address creator, address[] members);
+    event GroupCreated(address creator, bytes32 groupId, address[] members);
 
     /**
     * Constructor for initializing the Groups contract.
@@ -76,17 +76,18 @@ contract Groups is BaseCollector {
         require(!settings.pausedCollectors(address(this)), "New groups creation is currently disabled.");
 
         // register group members
+        bytes32 groupId = keccak256(abi.encodePacked(address(this), entitiesCount));
         for (uint i = 0; i < _members.length; i++) {
-            registeredMembers[keccak256(abi.encodePacked(nextEntityId, _members[i]))] = true;
+            registeredMembers[keccak256(abi.encodePacked(groupId, _members[i]))] = true;
         }
 
         // register sender as a member
-        registeredMembers[keccak256(abi.encodePacked(nextEntityId, msg.sender))] = true;
+        registeredMembers[keccak256(abi.encodePacked(groupId, msg.sender))] = true;
 
         // Increase entity ID for the next group
-        nextEntityId++;
+        entitiesCount++;
 
-        emit GroupCreated(msg.sender, _members);
+        emit GroupCreated(msg.sender, groupId, _members);
     }
 
     /**
@@ -95,10 +96,10 @@ contract Groups is BaseCollector {
     * @param _groupId - an ID of the group the user would like to deposit to.
     * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
     */
-    function addDeposit(uint256 _groupId, address _withdrawer) external payable {
+    function addDeposit(bytes32 _groupId, address _withdrawer) external payable {
         require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
         require(msg.value > 0 && msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount.");
-        require(registeredMembers[keccak256(abi.encodePacked(_groupId, msg.sender))], "The user is not a member of the group with such ID.");
+        require(registeredMembers[keccak256(abi.encodePacked(_groupId, msg.sender))], "The user is not a member of the group with the specified ID.");
 
         Group storage group = groups[_groupId];
         require(!group.targetAmountCollected, "The group has already collected a validator deposit amount.");
@@ -114,7 +115,7 @@ contract Groups is BaseCollector {
         group.collectedAmount += msg.value;
         if (group.collectedAmount == validatorDepositAmount) {
             group.targetAmountCollected = true;
-            readyEntities.push(_groupId);
+            readyEntityIds.push(_groupId);
         }
     }
 
@@ -125,17 +126,17 @@ contract Groups is BaseCollector {
     * @param _withdrawer - an account where the canceled amount will be transferred (must be the same as when the deposit was made).
     * @param _amount - the amount of ether to cancel from the deposit.
     */
-    function cancelDeposit(uint256 _groupId, address payable _withdrawer, uint256 _amount) external {
+    function cancelDeposit(bytes32 _groupId, address payable _withdrawer, uint256 _amount) external {
         require(_amount > 0 && _amount % settings.userDepositMinUnit() == 0, "Invalid deposit cancel amount.");
         require(
-            deposits.getDeposit(address(this), _groupId, msg.sender, _withdrawer) >= _amount,
+            deposits.getDeposit(_groupId, msg.sender, _withdrawer) >= _amount,
             "The user does not have a specified deposit cancel amount."
         );
 
         Group storage group = groups[_groupId];
         require(!group.targetAmountCollected, "Cannot cancel the deposit amount of the group which has collected a validator deposit amount.");
 
-        deposits.cancelDeposit(nextEntityId, msg.sender, _withdrawer, _amount);
+        deposits.cancelDeposit(_groupId, msg.sender, _withdrawer, _amount);
         totalSupply -= _amount;
         group.collectedAmount -= _amount;
 
