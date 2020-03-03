@@ -16,7 +16,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getCollectorEntityId
+  getEntityId
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
@@ -107,21 +107,18 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: walletBalance.sub(maintainerReward)
         }
       );
 
-      let collectorEntityId = getCollectorEntityId(
-        privates.address,
-        new BN(testCaseN + 1)
-      );
+      let entityId = getEntityId(privates.address, new BN(testCaseN + 1));
 
       // Maintainer has withdrawn correct fee
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
-        collectorEntityId,
+        entityId,
         amount: maintainerReward
       });
       walletBalance.isub(maintainerReward);
@@ -135,7 +132,7 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: userDeposit,
@@ -190,7 +187,7 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: walletBalance
         }
@@ -205,10 +202,7 @@ contract('Privates (withdrawal)', ([_, ...accounts]) => {
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId: getCollectorEntityId(
-          privates.address,
-          new BN(testCaseN + 1)
-        ),
+        entityId: getEntityId(privates.address, new BN(testCaseN + 1)),
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: userPenalisedReturn,

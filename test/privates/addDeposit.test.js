@@ -14,7 +14,8 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   checkDepositAdded,
   removeNetworkFile,
-  checkCollectorBalance
+  checkCollectorBalance,
+  getEntityId
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -96,7 +97,7 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: privates.address,
-      entityId: new BN(1),
+      entityId: getEntityId(privates.address, new BN(1)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       addedAmount: validatorDepositAmount,
@@ -119,7 +120,7 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: privates.address,
-      entityId: new BN(1),
+      entityId: getEntityId(privates.address, new BN(1)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       addedAmount: validatorDepositAmount,
@@ -135,7 +136,7 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: privates.address,
-      entityId: new BN(2),
+      entityId: getEntityId(privates.address, new BN(2)),
       senderAddress: sender2,
       withdrawerAddress: withdrawer2,
       addedAmount: validatorDepositAmount,
@@ -161,7 +162,7 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: privates.address,
-      entityId: new BN(1),
+      entityId: getEntityId(privates.address, new BN(1)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       addedAmount: validatorDepositAmount,
@@ -177,7 +178,7 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: privates.address,
-      entityId: new BN(2),
+      entityId: getEntityId(privates.address, new BN(2)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       addedAmount: validatorDepositAmount,

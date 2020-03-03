@@ -10,7 +10,6 @@ import "./BaseCollector.sol";
 
 /**
  * @title Privates
- *
  * Privates contract requires users to deposit the full amount required to become a Validator.
  * As soon as the Validator's deposit amount is added, the entity will be sent for the registration.
  */
@@ -57,11 +56,12 @@ contract Privates is BaseCollector {
         require(!settings.pausedCollectors(address(this)), "Depositing is currently disabled.");
 
         // Register new deposit
-        deposits.addDeposit(nextEntityId, msg.sender, _withdrawer, msg.value);
+        bytes32 entityId = keccak256(abi.encodePacked(address(this), entitiesCount));
+        deposits.addDeposit(entityId, msg.sender, _withdrawer, msg.value);
         totalSupply += msg.value;
 
-        // Add it to the queue of ready entities
-        readyEntities.push(nextEntityId);
-        nextEntityId++;
+        // Add entity ID to the queue
+        readyEntityIds.push(entityId);
+        entitiesCount++;
     }
 }

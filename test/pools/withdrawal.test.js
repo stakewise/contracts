@@ -17,7 +17,7 @@ const {
   registerValidator,
   validatorRegistrationArgs,
   getDepositAmount,
-  getCollectorEntityId
+  getEntityId
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
@@ -107,7 +107,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: walletBalance
         }
@@ -123,10 +123,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         });
 
         expectEvent(receipt, 'UserWithdrawn', {
-          collectorEntityId: getCollectorEntityId(
-            pools.address,
-            new BN(testCaseN + 1)
-          ),
+          entityId: getEntityId(pools.address, new BN(testCaseN + 1)),
           sender: sender,
           withdrawer: otherAccounts[j],
           depositAmount: users[j].penalisedReturn,
@@ -173,10 +170,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         operator
       });
 
-      let collectorEntityId = getCollectorEntityId(
-        pools.address,
-        new BN(testCaseN + 1)
-      );
+      let entityId = getEntityId(pools.address, new BN(testCaseN + 1));
 
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
@@ -197,7 +191,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: walletBalance.sub(maintainerReward)
         }
@@ -206,7 +200,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
       // Maintainer has withdrawn correct fee
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
-        collectorEntityId,
+        entityId,
         amount: maintainerReward
       });
       walletBalance.isub(maintainerReward);
@@ -221,7 +215,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         });
 
         expectEvent(receipt, 'UserWithdrawn', {
-          collectorEntityId,
+          entityId,
           sender: sender,
           withdrawer: otherAccounts[j],
           depositAmount: users[j].deposit,
@@ -304,7 +298,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     });
 
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validator: validatorId,
+      validatorId,
       wallet
     });
 
@@ -316,7 +310,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         from: sender
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId: getCollectorEntityId(pools.address, new BN(1)),
+        entityId: getEntityId(pools.address, new BN(1)),
         sender,
         withdrawer,
         depositAmount: deposits[i]

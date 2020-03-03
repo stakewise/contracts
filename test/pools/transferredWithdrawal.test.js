@@ -17,7 +17,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getCollectorEntityId
+  getEntityId
 } = require('../common/utils');
 const { testCases } = require('./withdrawalTestCases');
 
@@ -153,7 +153,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
       new BN(testCases.length)
     );
     for (const [testCaseN, { users }] of testCases.entries()) {
-      let collectorEntityId = getCollectorEntityId(
+      let entityId = getEntityId(
         pools.address,
         // +2 because there is one extra entity which holds current validator
         new BN(testCaseN + 2)
@@ -166,14 +166,14 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
 
         // User withdraws deposit
         let receipt = await validatorTransfers.withdraw(
-          collectorEntityId,
+          entityId,
           otherAccounts[j],
           {
             from: sender
           }
         );
         expectEvent(receipt, 'UserWithdrawn', {
-          collectorEntityId,
+          entityId,
           sender: sender,
           withdrawer: otherAccounts[j],
           depositAmount: users[j].deposit,
@@ -224,7 +224,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
 
     // users withdraw their rewards
     for (const [testCaseN, { users }] of testCases.entries()) {
-      let collectorEntityId = getCollectorEntityId(
+      let entityId = getEntityId(
         pools.address,
         // +2 because there is one extra entity which holds current validator
         new BN(testCaseN + 2)
@@ -237,14 +237,14 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
 
         // User withdraws reward
         let receipt = await validatorTransfers.withdraw(
-          collectorEntityId,
+          entityId,
           otherAccounts[j],
           {
             from: sender
           }
         );
         expectEvent(receipt, 'UserWithdrawn', {
-          collectorEntityId,
+          entityId,
           sender: sender,
           withdrawer: otherAccounts[j],
           depositAmount: new BN(0),

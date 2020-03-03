@@ -17,7 +17,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getCollectorEntityId
+  getEntityId
 } = require('../common/utils');
 const { testCases } = require('./withdrawalTestCases');
 
@@ -125,24 +125,21 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
           from: operator
         }
       );
-      let collectorEntityId = getCollectorEntityId(
-        privates.address,
-        testCaseN + 1
-      );
+      let entityId = getEntityId(privates.address, testCaseN + 1);
 
       // track user's balance
       let userBalance = await balance.tracker(otherAccounts[0]);
 
       // User withdraws deposit
       let receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
+        entityId,
         otherAccounts[0],
         {
           from: sender
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: userDeposit,
@@ -170,15 +167,11 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       });
 
       // User withdraws reward
-      receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
-        otherAccounts[0],
-        {
-          from: sender
-        }
-      );
+      receipt = await validatorTransfers.withdraw(entityId, otherAccounts[0], {
+        from: sender
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: new BN(0),

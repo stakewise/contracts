@@ -47,7 +47,7 @@ contract ValidatorTransfers is Initializable {
     // Maps validator ID to its debt information.
     mapping(bytes32 => ValidatorDebt) public validatorDebts;
 
-    // Maps collector entity ID to the rewards it owns from the validator.
+    // Maps entity ID to the rewards it owns from the validator.
     mapping(bytes32 => EntityReward) public entityRewards;
 
     // Tracks whether user has withdrawn its deposit.
@@ -86,8 +86,8 @@ contract ValidatorTransfers is Initializable {
     /**
     * Event for tracking validator transfers.
     * @param validatorId - ID of the transferred validator.
-    * @param prevCollectorEntityId - ID of the previous collector entity, the validator was transferred from.
-    * @param newCollectorEntityId - ID of the new collector entity, the validator was transferred to.
+    * @param prevEntityId - ID of the previous entity, the validator was transferred from.
+    * @param newEntityId - ID of the new entity, the validator was transferred to.
     * @param userDebt - Validator debt to the users of previous entity.
     * @param maintainerDebt - Validator debt to the maintainer of the previous entity.
     * @param newMaintainerFee - The new fee to pay to the maintainer after new entity transfer or withdrawal.
@@ -96,8 +96,8 @@ contract ValidatorTransfers is Initializable {
     */
     event ValidatorTransferred(
         bytes32 validatorId,
-        bytes32 prevCollectorEntityId,
-        bytes32 newCollectorEntityId,
+        bytes32 prevEntityId,
+        bytes32 newEntityId,
         uint256 userDebt,
         uint256 maintainerDebt,
         uint256 newMaintainerFee,
@@ -115,14 +115,14 @@ contract ValidatorTransfers is Initializable {
     * Event for tracking user withdrawals.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
-    * @param collectorEntityId - ID of the transferred collector entity, the user withdrawn from.
+    * @param entityId - ID of the transferred entity, the user withdrawn from.
     * @param depositAmount - withdrawn deposit amount.
     * @param rewardAmount - withdrawn reward amount.
     */
     event UserWithdrawn(
         address sender,
         address withdrawer,
-        bytes32 collectorEntityId,
+        bytes32 entityId,
         uint256 depositAmount,
         uint256 rewardAmount
     );
@@ -168,13 +168,13 @@ contract ValidatorTransfers is Initializable {
     * Function for registering validator transfers.
     * Only Pools collector entities can send transfers as they have predefined staking time.
     * @param _validatorId - ID of the transferred validator.
-    * @param _collectorEntityId - ID of the collector's entity, the validator was transferred from.
+    * @param _prevEntityId - ID of the entity, the validator was transferred from.
     * @param _userDebt - validator rewards debt to the user(s).
     * @param _maintainerDebt - validator rewards debt to the maintainer.
     */
     function registerTransfer(
         bytes32 _validatorId,
-        bytes32 _collectorEntityId,
+        bytes32 _prevEntityId,
         uint256 _userDebt,
         uint256 _maintainerDebt
     )
@@ -188,7 +188,7 @@ contract ValidatorTransfers is Initializable {
         require(msg.sender == address(pools), "Permission denied.");
 
         // register entity reward for later withdrawals
-        entityRewards[_collectorEntityId] = EntityReward(_validatorId, _userDebt);
+        entityRewards[_prevEntityId] = EntityReward(_validatorId, _userDebt);
 
         // Increment validator debts
         ValidatorDebt storage validatorDebt = validatorDebts[_validatorId];
@@ -196,11 +196,11 @@ contract ValidatorTransfers is Initializable {
         validatorDebt.maintainerDebt = (validatorDebt.maintainerDebt).add(_maintainerDebt);
 
         // emit transfer event
-        (, uint256 newMaintainerFee, bytes32 newCollectorEntityId) = validatorsRegistry.validators(_validatorId);
+        (, uint256 newMaintainerFee, bytes32 newEntityId) = validatorsRegistry.validators(_validatorId);
         emit ValidatorTransferred(
             _validatorId,
-            _collectorEntityId,
-            newCollectorEntityId,
+            _prevEntityId,
+            newEntityId,
             _userDebt,
             _maintainerDebt,
             newMaintainerFee,
@@ -234,17 +234,17 @@ contract ValidatorTransfers is Initializable {
     /**
     * Function for withdrawing deposits and rewards to the withdrawer address.
     * User reward is calculated based on the deposit amount.
-    * @param _collectorEntityId - An ID of the collector entity, the deposit belongs to.
+    * @param _entityId - An ID of the entity, the deposit belongs to.
     * @param _withdrawer - An address of the account where reward + deposit will be transferred.
     * Must be the same as specified during deposit creation.
     */
-    function withdraw(bytes32 _collectorEntityId, address payable _withdrawer) external {
-        EntityReward memory entityReward = entityRewards[_collectorEntityId];
-        require(entityReward.validatorId != "", "Collector entity is not registered.");
+    function withdraw(bytes32 _entityId, address payable _withdrawer) external {
+        EntityReward memory entityReward = entityRewards[_entityId];
+        require(entityReward.validatorId != "", "An entity with such ID is not registered.");
 
-        bytes32 userId = keccak256(abi.encodePacked(_collectorEntityId, msg.sender, _withdrawer));
+        bytes32 userId = keccak256(abi.encodePacked(_entityId, msg.sender, _withdrawer));
         uint256 userDeposit = deposits.amounts(userId);
-        require(userDeposit > 0, "User does not have a share in this collector entity.");
+        require(userDeposit > 0, "User does not have a share in this entity.");
 
         uint256 depositWithdrawal;
         if (!withdrawnDeposits[userId]) {
@@ -263,7 +263,7 @@ contract ValidatorTransfers is Initializable {
         uint256 withdrawalAmount = depositWithdrawal.add(rewardWithdrawal);
         require(withdrawalAmount > 0, "Nothing to withdraw.");
 
-        emit UserWithdrawn(msg.sender, _withdrawer, _collectorEntityId, depositWithdrawal, rewardWithdrawal);
+        emit UserWithdrawn(msg.sender, _withdrawer, _entityId, depositWithdrawal, rewardWithdrawal);
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value

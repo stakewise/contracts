@@ -17,11 +17,11 @@ contract WalletsRegistry is Initializable {
     /**
     * Structure to store information about the wallet assignment.
     * @param unlocked - indicates whether users can withdraw from the wallet.
-    * @param validator - the validator wallet is attached to.
+    * @param validatorId - ID of the validator wallet is attached to.
     */
     struct WalletAssignment {
         bool unlocked;
-        bytes32 validator;
+        bytes32 validatorId;
     }
 
     // Determines whether validator ID (public key hash) has been assigned any wallet.
@@ -48,10 +48,10 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Event for tracking wallet new assignment.
-    * @param validator - ID (public key hash) of the validator wallet is assigned to.
+    * @param validatorId - ID (public key hash) of the validator wallet is assigned to.
     * @param wallet - address of the wallet the deposits and rewards will be withdrawn to.
     */
-    event WalletAssigned(bytes32 validator, address indexed wallet);
+    event WalletAssigned(bytes32 validatorId, address indexed wallet);
 
     /**
     * Event for tracking wallet resets.
@@ -61,11 +61,11 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Event for tracking wallet unlocks.
-    * @param validator - ID of the validator wallet is assigned to.
+    * @param validatorId - ID of the validator wallet is assigned to.
     * @param wallet - address of the unlocked wallet.
     * @param usersBalance - users balance at unlock time.
     */
-    event WalletUnlocked(bytes32 validator, address indexed wallet, uint256 usersBalance);
+    event WalletUnlocked(bytes32 validatorId, address indexed wallet, uint256 usersBalance);
 
     /**
     * Constructor for initializing the WalletsRegistry contract.
@@ -91,12 +91,12 @@ contract WalletsRegistry is Initializable {
     /**
     * Function for assigning wallets to validators.
     * Can only be called by users with a wallets manager role.
-    * @param _validator - ID (public key hash) of the validator wallet should be assigned to.
+    * @param _validatorId - ID (public key hash) of the validator wallet should be assigned to.
     */
-    function assignWallet(bytes32 _validator) external {
-        require(!assignedValidators[_validator], "Validator has already wallet assigned.");
+    function assignWallet(bytes32 _validatorId) external {
+        require(!assignedValidators[_validatorId], "Validator has already wallet assigned.");
 
-        (uint256 validatorAmount, ,) = validatorsRegistry.validators(_validator);
+        (uint256 validatorAmount, ,) = validatorsRegistry.validators(_validatorId);
         require(validatorAmount != 0, "Validator does not have deposit amount.");
         require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
@@ -109,10 +109,10 @@ contract WalletsRegistry is Initializable {
             wallet = address(new Wallet(withdrawals));
         }
 
-        wallets[wallet].validator = _validator;
-        assignedValidators[_validator] = true;
+        wallets[wallet].validatorId = _validatorId;
+        assignedValidators[_validatorId] = true;
 
-        emit WalletAssigned(_validator, wallet);
+        emit WalletAssigned(_validatorId, wallet);
     }
 
     /**
@@ -123,7 +123,7 @@ contract WalletsRegistry is Initializable {
     */
     function resetWallet(address _wallet) external {
         require(admins.isAdmin(msg.sender), "Permission denied.");
-        require(wallets[_wallet].validator != "", "Wallet has been already reset.");
+        require(wallets[_wallet].validatorId != "", "Wallet has been already reset.");
 
         delete wallets[_wallet];
         availableWallets.push(_wallet);
@@ -142,6 +142,6 @@ contract WalletsRegistry is Initializable {
         require(!wallets[_wallet].unlocked, "Wallet is already unlocked.");
 
         wallets[_wallet].unlocked = true;
-        emit WalletUnlocked(wallets[_wallet].validator, _wallet, _usersBalance);
+        emit WalletUnlocked(wallets[_wallet].validatorId, _wallet, _usersBalance);
     }
 }

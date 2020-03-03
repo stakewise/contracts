@@ -18,7 +18,8 @@ const {
   removeNetworkFile,
   checkUserTotalAmount,
   checkCollectorBalance,
-  checkDepositCanceled
+  checkDepositCanceled,
+  getEntityId
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -78,7 +79,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: amount1,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender1,
       withdrawerAddress: withdrawer1
@@ -96,7 +97,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: amount1,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender1,
       withdrawerAddress: withdrawer1
@@ -114,7 +115,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: amount1,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender1,
       withdrawerAddress: withdrawer1
@@ -130,7 +131,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: amount2,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender2,
       withdrawerAddress: withdrawer2
@@ -163,7 +164,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: validatorDepositAmount.sub(amount2),
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender1,
       withdrawerAddress: withdrawer1
@@ -182,7 +183,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: amount1,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender1,
       withdrawerAddress: withdrawer1
@@ -199,7 +200,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       canceledAmount: amount1,
@@ -223,7 +224,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: new BN(1),
+      entityId: getEntityId(pools.address, new BN(1)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       canceledAmount: cancelAmount,
@@ -254,7 +255,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: new BN(2),
+      entityId: getEntityId(pools.address, new BN(2)),
       senderAddress: sender1,
       withdrawerAddress: withdrawer1,
       canceledAmount: cancelAmount,

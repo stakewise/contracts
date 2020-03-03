@@ -16,7 +16,7 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkValidatorTransferred,
-  getCollectorEntityId,
+  getEntityId,
   registerValidator
 } = require('../common/utils');
 
@@ -43,7 +43,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     settings,
     walletsRegistry,
     validatorId,
-    prevCollectorEntityId;
+    prevEntityId;
   let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
@@ -90,10 +90,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       sender: other,
       withdrawer: other
     });
-    prevCollectorEntityId = await getCollectorEntityId(
-      proxies.privates,
-      new BN(1)
-    );
+    prevEntityId = await getEntityId(proxies.privates, new BN(1));
   });
 
   it('fails to transfer validator if there are no ready entities', async () => {
@@ -245,13 +242,8 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     await checkValidatorTransferred({
       transaction: tx,
       validatorId,
-      prevCollectorEntityId,
-      newCollectorEntityId: await getCollectorEntityId(
-        pools.address,
-        new BN(1)
-      ),
-      prevEntityId: new BN(1),
-      newEntityId: new BN(2),
+      prevEntityId,
+      newEntityId: await getEntityId(pools.address, new BN(1)),
       newStakingDuration: stakingDuration,
       collectorAddress: pools.address,
       validatorsRegistry,
@@ -300,11 +292,8 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       transaction: tx,
       validatorId,
       newMaintainerFee,
-      prevCollectorEntityId,
-      newCollectorEntityId: await getCollectorEntityId(
-        pools.address,
-        new BN(1)
-      ),
+      prevEntityId,
+      newEntityId: await getEntityId(pools.address, new BN(1)),
       newStakingDuration: stakingDuration,
       collectorAddress: pools.address,
       validatorsRegistry,
@@ -392,17 +381,14 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       totalMaintainerDebt.iadd(test.maintainerDebt);
       entityCounter.iadd(new BN(1));
 
-      let newCollectorEntityId = getCollectorEntityId(
-        pools.address,
-        entityCounter
-      );
+      let newEntityId = getEntityId(pools.address, entityCounter);
       // check validator transferred
       await checkValidatorTransferred({
         transaction: tx,
         validatorId,
         newMaintainerFee: test.newMaintainerFee,
-        prevCollectorEntityId,
-        newCollectorEntityId,
+        prevEntityId,
+        newEntityId,
         newStakingDuration: stakingDuration,
         collectorAddress: privates.address,
         validatorsRegistry,
@@ -417,7 +403,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(expectedBalance);
-      prevCollectorEntityId = newCollectorEntityId;
+      prevEntityId = newEntityId;
     }
   });
 });

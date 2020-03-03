@@ -4,6 +4,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./access/Admins.sol";
 import "./collectors/Privates.sol";
 import "./collectors/Pools.sol";
+import "./collectors/Groups.sol";
 
 /**
  * @title Deposits
@@ -11,7 +12,7 @@ import "./collectors/Pools.sol";
  * Can only be modified by collectors.
  */
 contract Deposits is Initializable {
-    // A mapping between user ID (hash of collector entity ID, sender, withdrawer addresses) and the amount.
+    // A mapping between user ID (hash of entity ID, sender, withdrawer) and the amount.
     mapping(bytes32 => uint256) public amounts;
 
     // Address of the Pools contract.
@@ -19,6 +20,9 @@ contract Deposits is Initializable {
 
     // Address of the Privates contract.
     Privates private privates;
+
+    // Address of the Groups contract.
+    Groups private groups;
 
     /**
     * Event for tracking added deposits.
@@ -30,7 +34,7 @@ contract Deposits is Initializable {
     */
     event DepositAdded(
         address collector,
-        uint256 entityId,
+        bytes32 entityId,
         address sender,
         address withdrawer,
         uint256 amount
@@ -46,7 +50,7 @@ contract Deposits is Initializable {
     */
     event DepositCanceled(
         address collector,
-        uint256 entityId,
+        bytes32 entityId,
         address sender,
         address withdrawer,
         uint256 amount
@@ -56,52 +60,53 @@ contract Deposits is Initializable {
     * Constructor for initializing the Deposits contract.
     * @param _pools - An address of the Pools contract.
     * @param _privates - An address of the Privates contract.
+    * @param _groups - An address of the Groups contract.
     */
-    function initialize(Pools _pools, Privates _privates) public initializer {
+    function initialize(Pools _pools, Privates _privates, Groups _groups) public initializer {
         pools = _pools;
         privates = _privates;
+        groups = _groups;
     }
 
     /**
     * Function for retrieving user deposit.
-    * @param _collector - an address of the collector contract.
-    * @param _entityId - the ID of the collector entity, the deposit belongs to.
+    * @param _entityId - an ID of the entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     */
-    function getDeposit(address _collector, uint256 _entityId, address _sender, address _withdrawer) public view returns (uint256) {
-        return amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(_collector, _entityId)), _sender, _withdrawer))];
+    function getDeposit(bytes32 _entityId, address _sender, address _withdrawer) public view returns (uint256) {
+        return amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))];
     }
 
     /**
     * Function for adding deposit.
-    * @param _entityId - the ID of the collector entity, the deposit belongs to.
+    * @param _entityId - an ID of the entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount deposited.
     */
     function addDeposit(
-        uint256 _entityId,
+        bytes32 _entityId,
         address _sender,
         address _withdrawer,
         uint256 _amount
     )
         external
     {
-        require(msg.sender == address(pools) || msg.sender == address(privates), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(msg.sender, _entityId)), _sender, _withdrawer))] += _amount;
+        require(msg.sender == address(pools) || msg.sender == address(privates) || msg.sender == address(groups), "Permission denied.");
+        amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))] += _amount;
         emit DepositAdded(msg.sender, _entityId, _sender, _withdrawer, _amount);
     }
 
     /**
     * Function for canceling deposit.
-    * @param _entityId - the ID of the collector entity, the deposit belongs to.
+    * @param _entityId - an ID of the entity, the deposit belongs to.
     * @param _sender - the address of the deposit sender account.
     * @param _withdrawer - the address of the deposit withdrawer account.
     * @param _amount - the amount canceled.
     */
     function cancelDeposit(
-        uint256 _entityId,
+        bytes32 _entityId,
         address _sender,
         address _withdrawer,
         uint256 _amount
@@ -109,8 +114,8 @@ contract Deposits is Initializable {
     )
         external
     {
-        require(msg.sender == address(pools), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(keccak256(abi.encodePacked(msg.sender, _entityId)), _sender, _withdrawer))] -= _amount;
+        require(msg.sender == address(pools) || msg.sender == address(groups), "Permission denied.");
+        amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))] -= _amount;
         emit DepositCanceled(msg.sender, _entityId, _sender, _withdrawer, _amount);
     }
 }

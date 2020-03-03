@@ -10,7 +10,8 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkValidatorRegistered,
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
+  getEntityId
 } = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
@@ -135,7 +136,10 @@ contract('BaseCollector (register validator)', ([_, ...accounts]) => {
         vrc,
         stakingDuration,
         transaction: tx,
-        entityId: new BN(validatorRegistrationArgs.length - i),
+        entityId: getEntityId(
+          pools.address,
+          new BN(validatorRegistrationArgs.length - i)
+        ),
         pubKey: validatorRegistrationArgs[i].pubKey,
         collectorAddress: pools.address,
         validatorsRegistry: validatorsRegistry,
