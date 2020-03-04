@@ -70,10 +70,11 @@ contract Groups is BaseCollector {
     /**
     * Function for creating new groups.
     * It will not be possible to create new groups in case `Groups` collector is paused in the `Settings` contract.
-    * @param _members - a list of group members. Only accounts in array + the group creator can deposit to the group.
+    * @param _members - a list of group members. Only accounts in the list + the group creator can deposit to the group.
     */
     function createGroup(address[] calldata _members) external {
         require(!settings.pausedCollectors(address(this)), "New groups creation is currently disabled.");
+        require(_members.length > 0, "The group members list cannot be empty.");
 
         // register group members
         bytes32 groupId = keccak256(abi.encodePacked(address(this), entitiesCount));
