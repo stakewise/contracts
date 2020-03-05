@@ -21,7 +21,7 @@ contract BaseCollector is Initializable {
     uint256 public entitiesCount;
 
     // List of entity IDs which are ready to be registered as validators.
-    bytes32[] public readyEntityIds;
+    bytes32[] internal readyEntityIds;
 
     // Address of the Deposits contract.
     Deposits internal deposits;
@@ -74,6 +74,13 @@ contract BaseCollector is Initializable {
         validatorsRegistry = _validatorsRegistry;
         validatorTransfers = _validatorTransfers;
         entitiesCount = 1;
+    }
+
+    /**
+    * Function for counting the number of ready entities.
+    */
+    function countReadyEntities() public view returns (uint256) {
+        return readyEntityIds.length;
     }
 
     /**

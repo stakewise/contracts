@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -103,6 +104,19 @@ contract('BaseCollector (register validator)', ([_, ...accounts]) => {
         from: operator
       }),
       'Public key has been already used.'
+    );
+  });
+
+  it('users can retrieve number of ready entities', async () => {
+    for (let i = 0; i < validatorRegistrationArgs.length; i++) {
+      await pools.addDeposit(withdrawer, {
+        from: otherAccounts[i],
+        value: validatorDepositAmount
+      });
+    }
+
+    expect(await pools.countReadyEntities()).to.be.bignumber.equal(
+      new BN(validatorRegistrationArgs.length)
     );
   });
 
