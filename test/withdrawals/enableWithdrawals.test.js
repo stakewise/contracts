@@ -19,7 +19,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getCollectorEntityId
+  getEntityId
 } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -124,7 +124,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       from: walletsManager
     });
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validator: validatorId,
+      validatorId,
       wallet,
       usersBalance: initialSettings.validatorDepositAmount
     });
@@ -173,7 +173,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: withdrawalReturn
         }
@@ -209,7 +209,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     });
 
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validator: validatorId,
+      validatorId,
       wallet,
       usersBalance: initialSettings.validatorDepositAmount
     });
@@ -282,7 +282,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         walletsRegistry,
         'WalletUnlocked',
         {
-          validator: validatorId,
+          validatorId,
           wallet,
           usersBalance: validatorDepositAmount
             .add(new BN(validatorReward))
@@ -293,7 +293,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       // maintainer's reward calculated properly
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer,
-        collectorEntityId: getCollectorEntityId(proxies.pools, new BN(i + 2)),
+        entityId: getEntityId(proxies.pools, new BN(i + 2)),
         amount: expectedMaintainerReward
       });
 

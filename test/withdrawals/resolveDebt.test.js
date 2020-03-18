@@ -128,7 +128,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // Wallet unlocked
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validator: validatorId,
+      validatorId,
       wallet,
       usersBalance: validatorBalance
         .sub(prevEntityReward)
@@ -168,7 +168,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // Wallet unlocked
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validator: validatorId,
+      validatorId,
       wallet,
       usersBalance: validatorBalance.sub(prevEntityReward)
     });

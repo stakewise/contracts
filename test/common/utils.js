@@ -24,16 +24,12 @@ function getDepositAmount({
   );
 }
 
-function getCollectorEntityId(collectorAddress, entityId) {
-  return web3.utils.soliditySha3(collectorAddress, entityId);
+function getEntityId(collectorAddress, entitiesCount) {
+  return web3.utils.soliditySha3(collectorAddress, entitiesCount);
 }
 
-function getUserId(collectorAddress, entityId, sender, withdrawer) {
-  return web3.utils.soliditySha3(
-    getCollectorEntityId(collectorAddress, entityId),
-    sender,
-    withdrawer
-  );
+function getUserId(entityId, sender, withdrawer) {
+  return web3.utils.soliditySha3(entityId, sender, withdrawer);
 }
 
 function removeNetworkFile(network) {
@@ -53,7 +49,6 @@ async function checkCollectorBalance(collectorContract, correctBalance) {
 
 async function checkUserTotalAmount({
   depositsContract,
-  collectorAddress,
   entityId,
   senderAddress,
   withdrawerAddress,
@@ -61,7 +56,7 @@ async function checkUserTotalAmount({
 }) {
   expect(
     await depositsContract.amounts(
-      getUserId(collectorAddress, entityId, senderAddress, withdrawerAddress)
+      getUserId(entityId, senderAddress, withdrawerAddress)
     )
   ).to.be.bignumber.equal(expectedAmount);
 }
@@ -142,7 +137,6 @@ async function checkValidatorRegistered({
   pubKey,
   entityId,
   signature,
-  collectorAddress,
   validatorsRegistry,
   stakingDuration,
   maintainerFee = new BN(initialSettings.maintainerFee),
@@ -163,10 +157,6 @@ async function checkValidatorRegistered({
     signature: signature
   });
 
-  let collectorEntityId = await getCollectorEntityId(
-    collectorAddress,
-    entityId
-  );
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
     transaction,
@@ -174,7 +164,7 @@ async function checkValidatorRegistered({
     'ValidatorRegistered',
     {
       pubKey: pubKey,
-      collectorEntityId,
+      entityId,
       withdrawalCredentials,
       stakingDuration,
       depositAmount: validatorDepositAmount,
@@ -189,14 +179,14 @@ async function checkValidatorRegistered({
   );
   expect(validator.depositAmount).to.be.bignumber.equal(validatorDepositAmount);
   expect(validator.maintainerFee).to.be.bignumber.equal(maintainerFee);
-  expect(validator.collectorEntityId).equal(collectorEntityId);
+  expect(validator.entityId).equal(entityId);
 }
 
 async function checkValidatorTransferred({
   transaction,
   validatorId,
-  newCollectorEntityId,
-  prevCollectorEntityId,
+  newEntityId,
+  prevEntityId,
   validatorsRegistry,
   validatorTransfers,
   userDebt,
@@ -214,8 +204,8 @@ async function checkValidatorTransferred({
     'ValidatorTransferred',
     {
       validatorId,
-      prevCollectorEntityId,
-      newCollectorEntityId,
+      prevEntityId,
+      newEntityId,
       userDebt,
       maintainerDebt,
       newMaintainerFee,
@@ -227,7 +217,7 @@ async function checkValidatorTransferred({
   // Check validator entry update
   let validator = await validatorsRegistry.validators(validatorId);
   expect(validator.maintainerFee).to.be.bignumber.equal(newMaintainerFee);
-  expect(validator.collectorEntityId).equal(newCollectorEntityId);
+  expect(validator.entityId).equal(newEntityId);
 
   // check debt entry created
   let validatorDebt = await validatorTransfers.validatorDebts(validatorId);
@@ -236,10 +226,8 @@ async function checkValidatorTransferred({
     totalMaintainerDebt
   );
 
-  // check previous collector entity rewards recorded
-  let entityReward = await validatorTransfers.entityRewards(
-    prevCollectorEntityId
-  );
+  // check previous entity rewards recorded
+  let entityReward = await validatorTransfers.entityRewards(prevEntityId);
   expect(entityReward.validatorId).to.equal(validatorId);
   expect(entityReward.amount).to.be.bignumber.equal(userDebt);
 }
@@ -290,7 +278,7 @@ module.exports = {
   removeNetworkFile,
   getDepositAmount,
   getUserId,
-  getCollectorEntityId,
+  getEntityId,
   checkUserTotalAmount,
   checkDepositAdded,
   checkDepositCanceled

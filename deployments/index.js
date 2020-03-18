@@ -7,7 +7,8 @@ const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
 const {
   deployPoolsProxy,
-  deployPrivatesProxy
+  deployPrivatesProxy,
+  deployGroupsProxy
 } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
@@ -67,6 +68,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     contractAddress: privatesCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
+  // Calculate Groups proxy address via create2
+  let {
+    salt: groupsSalt,
+    contractAddress: groupsCalcProxy
+  } = await calculateContractAddress({ networkConfig });
+
   // Calculate Validator Transfers proxy address via create2
   let {
     salt: validatorTransfersSalt,
@@ -77,6 +84,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
     privatesProxy: privatesCalcProxy,
+    groupsProxy: groupsCalcProxy,
     salt: depositsSalt,
     networkConfig
   });
@@ -90,6 +98,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   let validatorsRegistryProxy = await deployValidatorsRegistryProxy({
     poolsProxy: poolsCalcProxy,
     privatesProxy: privatesCalcProxy,
+    groupsProxy: groupsCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
     networkConfig
@@ -131,6 +140,23 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   if (privatesProxy !== privatesCalcProxy) {
     throw new Error(
       `Privates contract actual address "${privatesProxy}" does not match expected "${privatesCalcProxy}"`
+    );
+  }
+
+  // Deploy Groups proxy
+  let groupsProxy = await deployGroupsProxy({
+    vrc,
+    salt: groupsSalt,
+    depositsProxy,
+    settingsProxy,
+    operatorsProxy,
+    validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy,
+    networkConfig
+  });
+  if (groupsProxy !== groupsCalcProxy) {
+    throw new Error(
+      `Groups contract actual address "${groupsProxy}" does not match expected "${groupsCalcProxy}"`
     );
   }
 
@@ -206,6 +232,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     validatorTransfers: validatorTransfersProxy,
     pools: poolsProxy,
     privates: privatesProxy,
+    groups: groupsProxy,
     walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy
   };

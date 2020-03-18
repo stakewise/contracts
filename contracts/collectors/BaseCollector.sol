@@ -17,11 +17,11 @@ contract BaseCollector is Initializable {
     // Tracks accumulated contract ether.
     uint256 public totalSupply;
 
-    // The ID of the next entity which has to accumulate validator deposit amount.
-    uint256 public nextEntityId;
+    // The total number of collector entities.
+    uint256 public entitiesCount;
 
     // List of entity IDs which are ready to be registered as validators.
-    uint256[] internal readyEntities;
+    bytes32[] internal readyEntityIds;
 
     // Address of the Deposits contract.
     Deposits internal deposits;
@@ -30,20 +30,20 @@ contract BaseCollector is Initializable {
     Settings internal settings;
 
     // Address of the Operators contract.
-    Operators private operators;
+    Operators internal operators;
 
     // Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration private validatorRegistration;
+    IValidatorRegistration internal validatorRegistration;
 
     // Address of the Validators Registry contract.
-    ValidatorsRegistry private validatorsRegistry;
+    ValidatorsRegistry internal validatorsRegistry;
 
     // Address of the Validator Transfers contract.
-    ValidatorTransfers private validatorTransfers;
+    ValidatorTransfers internal validatorTransfers;
 
     // Checks whether collector has ready entities.
     modifier hasReadyEntities() {
-        require(readyEntities.length > 0, "There are no ready entities.");
+        require(readyEntityIds.length > 0, "There are no ready entities.");
         _;
     }
 
@@ -73,7 +73,14 @@ contract BaseCollector is Initializable {
         validatorRegistration = _validatorRegistration;
         validatorsRegistry = _validatorsRegistry;
         validatorTransfers = _validatorTransfers;
-        nextEntityId = 1;
+        entitiesCount = 1;
+    }
+
+    /**
+    * Function for counting the number of ready entities.
+    */
+    function countReadyEntities() public view returns (uint256) {
+        return readyEntityIds.length;
     }
 
     /**
@@ -91,8 +98,8 @@ contract BaseCollector is Initializable {
     {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        uint256 entityId = readyEntities[readyEntities.length - 1];
-        readyEntities.pop();
+        bytes32 entityId = readyEntityIds[readyEntityIds.length - 1];
+        readyEntityIds.pop();
 
         validatorsRegistry.register(_pubKey, entityId);
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
@@ -113,19 +120,18 @@ contract BaseCollector is Initializable {
     function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        (uint256 prevDepositAmount, uint256 prevMaintainerFee, bytes32 prevCollectorEntityId) = validatorsRegistry.validators(_validatorId);
-        require(prevCollectorEntityId != "", "Validator with such ID is not registered.");
-        require(prevDepositAmount == settings.validatorDepositAmount(), "Validator deposit amount cannot be updated.");
+        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
+        require(prevEntityId != "", "Validator with such ID is not registered.");
 
-        uint256 entityId = readyEntities[readyEntities.length - 1];
-        readyEntities.pop();
-        validatorsRegistry.update(_validatorId, entityId);
+        bytes32 newEntityId = readyEntityIds[readyEntityIds.length - 1];
+        readyEntityIds.pop();
+        validatorsRegistry.update(_validatorId, newEntityId);
 
         uint256 maintainerDebt = (_currentReward * prevMaintainerFee) / 10000;
-        totalSupply -= prevDepositAmount;
-        validatorTransfers.registerTransfer.value(prevDepositAmount)(
+        totalSupply -= depositAmount;
+        validatorTransfers.registerTransfer.value(depositAmount)(
             _validatorId,
-            prevCollectorEntityId,
+            prevEntityId,
             _currentReward - maintainerDebt,
             maintainerDebt
         );

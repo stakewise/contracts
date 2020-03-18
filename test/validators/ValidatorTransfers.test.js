@@ -14,7 +14,7 @@ const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
-  getCollectorEntityId,
+  getEntityId,
   registerValidator
 } = require('../common/utils');
 
@@ -40,7 +40,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     validatorTransfers,
     walletsRegistry,
     validatorId,
-    collectorEntityId;
+    entityId;
   let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
 
   before(async () => {
@@ -83,14 +83,14 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       sender,
       withdrawer
     });
-    collectorEntityId = getCollectorEntityId(pools.address, new BN(1));
+    entityId = getEntityId(pools.address, new BN(1));
   });
 
   it('only Pools collector can register transfers', async () => {
     await expectRevert(
       validatorTransfers.registerTransfer(
         validatorId,
-        collectorEntityId,
+        entityId,
         userReward,
         new BN(0),
         {
@@ -127,13 +127,13 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     it('user cannot withdraw from unknown collector entity', async () => {
       await expectRevert(
         validatorTransfers.withdraw(
-          getCollectorEntityId(pools.address, new BN(5)),
+          getEntityId(pools.address, new BN(5)),
           withdrawer,
           {
             from: sender
           }
         ),
-        'Collector entity is not registered.'
+        'An entity with such ID is not registered.'
       );
     });
 
@@ -150,10 +150,10 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       await expectRevert(
-        validatorTransfers.withdraw(collectorEntityId, other, {
+        validatorTransfers.withdraw(entityId, other, {
           from: other
         }),
-        'User does not have a share in this collector entity.'
+        'User does not have a share in this entity.'
       );
     });
 
@@ -169,12 +169,12 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         from: operator
       });
 
-      await validatorTransfers.withdraw(collectorEntityId, withdrawer, {
+      await validatorTransfers.withdraw(entityId, withdrawer, {
         from: sender
       });
 
       await expectRevert(
-        validatorTransfers.withdraw(collectorEntityId, withdrawer, {
+        validatorTransfers.withdraw(entityId, withdrawer, {
           from: sender
         }),
         'Nothing to withdraw.'
@@ -194,15 +194,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user withdraws deposit
-      let receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
-        withdrawer,
-        {
-          from: sender
-        }
-      );
+      let receipt = await validatorTransfers.withdraw(entityId, withdrawer, {
+        from: sender
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender,
         withdrawer,
         depositAmount: validatorDepositAmount,
@@ -222,15 +218,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user performs rewards withdrawal first time
-      receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
-        withdrawer,
-        {
-          from: sender
-        }
-      );
+      receipt = await validatorTransfers.withdraw(entityId, withdrawer, {
+        from: sender
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender,
         withdrawer,
         depositAmount: new BN(0),
@@ -239,7 +231,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // user performs withdrawal second time
       await expectRevert(
-        validatorTransfers.withdraw(collectorEntityId, withdrawer, {
+        validatorTransfers.withdraw(entityId, withdrawer, {
           from: sender
         }),
         'Nothing to withdraw.'
@@ -271,15 +263,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user performs deposit + rewards withdrawal first time
-      let receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
-        withdrawer,
-        {
-          from: sender
-        }
-      );
+      let receipt = await validatorTransfers.withdraw(entityId, withdrawer, {
+        from: sender
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender,
         withdrawer,
         depositAmount: validatorDepositAmount,
@@ -288,7 +276,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // user performs withdrawal second time
       await expectRevert(
-        validatorTransfers.withdraw(collectorEntityId, withdrawer, {
+        validatorTransfers.withdraw(entityId, withdrawer, {
           from: sender
         }),
         'Nothing to withdraw.'
@@ -308,15 +296,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user withdraws deposit
-      let receipt = await validatorTransfers.withdraw(
-        collectorEntityId,
-        withdrawer,
-        {
-          from: sender
-        }
-      );
+      let receipt = await validatorTransfers.withdraw(entityId, withdrawer, {
+        from: sender
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        collectorEntityId,
+        entityId,
         sender,
         withdrawer,
         depositAmount: validatorDepositAmount,
@@ -325,7 +309,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // debt was not resolved yet
       await expectRevert(
-        validatorTransfers.withdraw(collectorEntityId, withdrawer, {
+        validatorTransfers.withdraw(entityId, withdrawer, {
           from: sender
         }),
         'Nothing to withdraw.'

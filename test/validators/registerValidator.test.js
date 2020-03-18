@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -10,7 +11,8 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkValidatorRegistered,
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
+  getEntityId
 } = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
@@ -105,6 +107,19 @@ contract('BaseCollector (register validator)', ([_, ...accounts]) => {
     );
   });
 
+  it('users can retrieve number of ready entities', async () => {
+    for (let i = 0; i < validatorRegistrationArgs.length; i++) {
+      await pools.addDeposit(withdrawer, {
+        from: otherAccounts[i],
+        value: validatorDepositAmount
+      });
+    }
+
+    expect(await pools.countReadyEntities()).to.be.bignumber.equal(
+      new BN(validatorRegistrationArgs.length)
+    );
+  });
+
   it('succeeds to register Validators for ready entities', async () => {
     const totalAmount = new BN(0);
     // Create ready pools
@@ -135,7 +150,10 @@ contract('BaseCollector (register validator)', ([_, ...accounts]) => {
         vrc,
         stakingDuration,
         transaction: tx,
-        entityId: new BN(validatorRegistrationArgs.length - i),
+        entityId: getEntityId(
+          pools.address,
+          new BN(validatorRegistrationArgs.length - i)
+        ),
         pubKey: validatorRegistrationArgs[i].pubKey,
         collectorAddress: pools.address,
         validatorsRegistry: validatorsRegistry,

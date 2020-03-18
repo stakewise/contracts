@@ -50,12 +50,12 @@ contract Withdrawals is Initializable {
     /**
     * Event for tracking fees paid to the maintainer.
     * @param maintainer - an address of the maintainer.
-    * @param collectorEntityId - ID of the collector entity, the maintainer withdrawn from.
+    * @param entityId - ID of the entity, the maintainer withdrawn from.
     * @param amount - fee transferred to the maintainer's address.
     */
     event MaintainerWithdrawn(
         address maintainer,
-        bytes32 collectorEntityId,
+        bytes32 entityId,
         uint256 amount
     );
 
@@ -63,14 +63,14 @@ contract Withdrawals is Initializable {
     * Event for tracking user withdrawals.
     * @param sender - an address of the deposit sender.
     * @param withdrawer - an address of the deposit withdrawer.
-    * @param collectorEntityId - ID of the collector entity, the user withdrawn from.
+    * @param entityId - ID of the entity, the user withdrawn from.
     * @param depositAmount - an amount deposited.
     * @param rewardAmount - a reward generated.
     */
     event UserWithdrawn(
         address sender,
         address withdrawer,
-        bytes32 collectorEntityId,
+        bytes32 entityId,
         uint256 depositAmount,
         uint256 rewardAmount
     );
@@ -114,7 +114,7 @@ contract Withdrawals is Initializable {
         require(validatorId != "", "Wallet is not assigned to any validator.");
         require(walletsManagers.isManager(msg.sender), "Permission denied.");
 
-        (uint256 depositAmount, uint256 maintainerFee, bytes32 collectorEntityId) = validatorsRegistry.validators(validatorId);
+        (uint256 depositAmount, uint256 maintainerFee, bytes32 entityId) = validatorsRegistry.validators(validatorId);
         (uint256 userDebt, uint256 maintainerDebt,) = validatorTransfers.validatorDebts(validatorId);
         uint256 entityBalance = (_wallet.balance).sub(userDebt).sub(maintainerDebt);
         require(entityBalance > 0, "Wallet has not enough ether in it.");
@@ -142,7 +142,7 @@ contract Withdrawals is Initializable {
         }
 
         if (maintainerReward.add(maintainerDebt) > 0) {
-            emit MaintainerWithdrawn(settings.maintainer(), collectorEntityId, maintainerReward);
+            emit MaintainerWithdrawn(settings.maintainer(), entityId, maintainerReward);
             Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward.add(maintainerDebt));
         }
     }
@@ -156,30 +156,30 @@ contract Withdrawals is Initializable {
       Must be the same as specified during the deposit.
     */
     function withdraw(address payable _wallet, address payable _withdrawer) external {
-        (bool unlocked, bytes32 validator) = walletsRegistry.wallets(_wallet);
+        (bool unlocked, bytes32 validatorId) = walletsRegistry.wallets(_wallet);
         require(unlocked, "Wallet withdrawals are not enabled.");
 
-        (, , bytes32 collectorEntityId) = validatorsRegistry.validators(validator);
-        bytes32 userId = keccak256(abi.encodePacked(collectorEntityId, msg.sender, _withdrawer));
+        (, , bytes32 entityId) = validatorsRegistry.validators(validatorId);
+        bytes32 userId = keccak256(abi.encodePacked(entityId, msg.sender, _withdrawer));
         require(!withdrawnUsers[userId], "The withdrawal has already been performed.");
 
         uint256 userDeposit = deposits.amounts(userId);
         require(userDeposit > 0, "User does not have a share in this wallet.");
 
-        uint256 penalty = validatorPenalties[validator];
+        uint256 penalty = validatorPenalties[validatorId];
         uint256 userReward;
         if (penalty > 0) {
             userDeposit = (userDeposit.mul(penalty)).div(1 ether);
         } else {
-            uint256 validatorLeftDeposit = validatorLeftDeposits[validator];
+            uint256 validatorLeftDeposit = validatorLeftDeposits[validatorId];
             // XXX: optimize for the case of reward size smaller than gas required to execute.
             uint256 totalReward = (_wallet.balance).sub(validatorLeftDeposit);
             userReward = totalReward.mul(userDeposit).div(validatorLeftDeposit);
-            validatorLeftDeposits[validator] = validatorLeftDeposit.sub(userDeposit);
+            validatorLeftDeposits[validatorId] = validatorLeftDeposit.sub(userDeposit);
         }
 
         withdrawnUsers[userId] = true;
-        emit UserWithdrawn(msg.sender, _withdrawer, collectorEntityId, userDeposit, userReward);
+        emit UserWithdrawn(msg.sender, _withdrawer, entityId, userDeposit, userReward);
 
         Wallet(_wallet).withdraw(_withdrawer, userDeposit.add(userReward));
     }

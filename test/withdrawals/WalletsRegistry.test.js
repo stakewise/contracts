@@ -100,7 +100,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       // Wallet assigned to validator
       expectEvent(receipt, 'WalletAssigned', {
         wallet,
-        validator: validatorId
+        validatorId
       });
 
       // Validator is marked as assigned
@@ -134,7 +134,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       // must assign the same wallet to the next validator
       expectEvent(receipt, 'WalletAssigned', {
         wallet,
-        validator: newValidatorId
+        validatorId: newValidatorId
       });
 
       // Validator is marked as assigned
@@ -184,9 +184,9 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       expectEvent(receipt, 'WalletReset', {
         wallet
       });
-      let { unlocked, validator } = await walletsRegistry.wallets(wallet);
+      let { unlocked, validatorId } = await walletsRegistry.wallets(wallet);
       expect(unlocked).equal(false);
-      expect(validator).to.satisfy(val =>
+      expect(validatorId).to.satisfy(val =>
         val.startsWith(constants.ZERO_ADDRESS)
       );
     });
