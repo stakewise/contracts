@@ -1,7 +1,7 @@
-pragma solidity 0.6.2;
+pragma solidity 0.6.4;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../libraries/SafeMath.sol";
 import "../access/WalletsManagers.sol";
 import "../Deposits.sol";
 import "../Settings.sol";

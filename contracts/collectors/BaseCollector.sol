@@ -1,4 +1,4 @@
-pragma solidity 0.6.2;
+pragma solidity 0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -104,7 +104,7 @@ contract BaseCollector is Initializable {
         validatorsRegistry.register(_pubKey, entityId);
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
         totalSupply -= validatorDepositAmount;
-        validatorRegistration.deposit.value(validatorDepositAmount)(
+        validatorRegistration.deposit{value: validatorDepositAmount}(
             _pubKey,
             settings.withdrawalCredentials(),
             _signature,
@@ -129,7 +129,7 @@ contract BaseCollector is Initializable {
 
         uint256 maintainerDebt = (_currentReward * prevMaintainerFee) / 10000;
         totalSupply -= depositAmount;
-        validatorTransfers.registerTransfer.value(depositAmount)(
+        validatorTransfers.registerTransfer{value: depositAmount}(
             _validatorId,
             prevEntityId,
             _currentReward - maintainerDebt,

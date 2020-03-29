@@ -1,7 +1,7 @@
-pragma solidity 0.6.2;
+pragma solidity 0.6.4;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../libraries/SafeMath.sol";
 import "../access/Admins.sol";
 import "../access/Operators.sol";
 import "../collectors/Privates.sol";
@@ -267,13 +267,13 @@ contract ValidatorTransfers is Initializable {
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value
-        (bool success,) = _withdrawer.call.value(withdrawalAmount)("");
+        (bool success,) = _withdrawer.call{value: withdrawalAmount}("");
         // solhint-enable avoid-call-value
         require(success, "Transfer has failed.");
     }
 
     /**
-    * A fallback function to receive transfers.
+    * A function to receive transfers.
     */
-    function() external payable {}
+    receive() external payable {}
 }

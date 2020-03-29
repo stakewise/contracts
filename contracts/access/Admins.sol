@@ -1,7 +1,7 @@
-pragma solidity 0.6.2;
+pragma solidity 0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../libraries/Roles.sol";
+import "./Roles.sol";
 
 /**
  * @title Admins

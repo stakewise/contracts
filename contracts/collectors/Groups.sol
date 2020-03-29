@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.6.4;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
@@ -55,7 +55,7 @@ contract Groups is BaseCollector {
         ValidatorsRegistry _validatorsRegistry,
         ValidatorTransfers _validatorTransfers
     )
-        public initializer
+        public override initializer
     {
         BaseCollector.initialize(
             _deposits,
@@ -144,7 +144,7 @@ contract Groups is BaseCollector {
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value
-        (bool success,) = _withdrawer.call.value(_amount)("");
+        (bool success,) = _withdrawer.call{value: _amount}("");
         // solhint-enable avoid-call-value
         require(success, "Transfer has failed.");
     }
