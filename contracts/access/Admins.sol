@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
