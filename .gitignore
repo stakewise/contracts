@@ -25,7 +25,6 @@ build
 
 # Zeppelin SDK
 .openzeppelin/.session
-.openzeppelin/dev-*.json
 
 # macOS
 .DS_Store
