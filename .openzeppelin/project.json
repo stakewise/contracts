@@ -15,7 +15,7 @@
     "Groups": "Groups"
   },
   "dependencies": {},
-  "name": "shared-validator",
+  "name": "contracts",
   "version": "0.1.0",
   "compiler": {
     "manager": "openzeppelin",

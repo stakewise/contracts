@@ -1,16 +1,16 @@
-# Shared Validator
+# StakeWise smart contracts
 
-[![CircleCI](https://circleci.com/gh/stakewise/shared-validator.svg?style=svg)](https://circleci.com/gh/stakewise/shared-validator)
-[![CodeCov](https://codecov.io/gh/stakewise/shared-validator/branch/master/graph/badge.svg)](https://codecov.io/gh/stakewise/shared-validator)
+[![CircleCI](https://circleci.com/gh/stakewise/contracts.svg?style=svg)](https://circleci.com/gh/stakewise/contracts)
+[![CodeCov](https://codecov.io/gh/stakewise/contracts/branch/master/graph/badge.svg)](https://codecov.io/gh/stakewise/contracts)
 [![Gitter](https://badges.gitter.im/stakewise/community.svg)](https://gitter.im/stakewise/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Discord](https://user-images.githubusercontent.com/7288322/34471967-1df7808a-efbb-11e7-9088-ed0b04151291.png)](https://discord.gg/2BSdr2g)
 
-A decentralized application which allows multiple accounts to share the same Ethereum 2.0 validator.
+The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
 
-- **Extensible:** Abstracts away the logic of sending deposits to Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract), and withdrawing them. By extending the [Base Collector](./contracts/collectors/BaseCollector.sol) contract, it's possible to create your own contract with logic for accumulating validator's deposit amount.
-- **Upgradable:** By using [OpenZeppelin SDK](https://github.com/OpenZeppelin/openzeppelin-sdk), it's possible to fix bugs and issues even when the contracts are deployed to the production network.
-- **Role-based access:** By having [Operators](./contracts/access/Operators.sol) and [Admins](./contracts/access/Admins.sol) contracts, it is possible to define a set of users capable of registering validators, assigning wallets to finished validators, changing settings, etc.
-- **Application friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
+- **Extensible:** Abstracts away the logic of sending deposits to Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract). By extending the [Base Collector](./contracts/collectors/BaseCollector.sol) contract, it's possible to create your own contract with logic for accumulating the validator's deposit amount.
+- **Upgradable:** By using [OpenZeppelin SDK](https://github.com/OpenZeppelin/openzeppelin-sdk), it's possible to fix bugs and critical issues when the contracts are deployed to the production network.
+- **Role-based access:** By having [Operators](./contracts/access/Operators.sol), [Admins](./contracts/access/Admins.sol), and [Wallets Managers](./contracts/access/WalletsManagers.sol) contracts, it is possible to restrict user capabilities.
+- **Integration friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
 - **Configurable:** Any global setting can be managed through the separate [Settings](./contracts/Settings.sol) contract.
 
 ## Deployment
