@@ -2,7 +2,6 @@
 
 [![CircleCI](https://circleci.com/gh/stakewise/contracts.svg?style=svg)](https://circleci.com/gh/stakewise/contracts)
 [![CodeCov](https://codecov.io/gh/stakewise/contracts/branch/master/graph/badge.svg)](https://codecov.io/gh/stakewise/contracts)
-[![Gitter](https://badges.gitter.im/stakewise/community.svg)](https://gitter.im/stakewise/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Discord](https://user-images.githubusercontent.com/7288322/34471967-1df7808a-efbb-11e7-9088-ed0b04151291.png)](https://discord.gg/2BSdr2g)
 
 The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
