@@ -1,8 +1,8 @@
 {
-  "name": "shared-validator",
+  "name": "contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "Ethereum 2.0 shared validator",
+  "description": "StakeWise smart contracts",
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "npm run compile && node scripts/deploy.js",
@@ -32,12 +32,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/stakewise/shared-validator"
+    "url": "https://github.com/stakewise/contracts"
   },
   "author": "Dmitri Tsumak <tsumak.dmitri@gmail.com>",
   "license": "GNU GPLv3",
   "bugs": {
-    "url": "https://github.com/stakewise/shared-validator/issues"
+    "url": "https://github.com/stakewise/contracts/issues"
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.10",
