@@ -58,7 +58,7 @@ contract Privates is BaseCollector {
         // Register new deposit
         bytes32 entityId = keccak256(abi.encodePacked(address(this), entitiesCount));
         deposits.addDeposit(entityId, msg.sender, _withdrawer, msg.value);
-        totalSupply += msg.value;
+        totalSupply = totalSupply.add(msg.value);
 
         // Add entity ID to the queue
         readyEntityIds.push(entityId);

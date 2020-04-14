@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
@@ -14,6 +15,8 @@ import "../Settings.sol";
  * Implements functionality for registering validators.
  */
 contract BaseCollector is Initializable {
+    using SafeMath for uint256;
+
     // Tracks accumulated contract ether.
     uint256 public totalSupply;
 
@@ -115,24 +118,31 @@ contract BaseCollector is Initializable {
     /**
     * Function for transferring Validator ownership to another entity.
     * @param _validatorId - ID of the validator to transfer.
-    * @param _currentReward - Validator's current reward to register as debt.
+    * @param _validatorReward - Validator current reward.
     */
-    function transferValidator(bytes32 _validatorId, uint256 _currentReward) external hasReadyEntities {
+    function transferValidator(bytes32 _validatorId, uint256 _validatorReward) external hasReadyEntities {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
         require(prevEntityId != "", "Validator with such ID is not registered.");
 
+        (uint256 prevUserDebt, uint256 prevMaintainerDebt, bool resolved) = validatorTransfers.validatorDebts(_validatorId);
+        require(!resolved, "Cannot transfer validator with resolved debt.");
+
+        // transfer validator to the registration ready entity
         bytes32 newEntityId = readyEntityIds[readyEntityIds.length - 1];
         readyEntityIds.pop();
         validatorsRegistry.update(_validatorId, newEntityId);
 
-        uint256 maintainerDebt = (_currentReward * prevMaintainerFee) / 10000;
+        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
+        require(!resolved, "Cannot transfer validator with resolved debt.");
+
+        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
         totalSupply -= depositAmount;
         validatorTransfers.registerTransfer.value(depositAmount)(
             _validatorId,
             prevEntityId,
-            _currentReward - maintainerDebt,
+            prevEntityReward.sub(maintainerDebt),
             maintainerDebt
         );
     }

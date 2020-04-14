@@ -55,14 +55,14 @@ contract Pools is BaseCollector {
     */
     function addDeposit(address _withdrawer) external payable {
         require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
-        require(msg.value > 0 && msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount.");
+        require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         require(
             !settings.pausedCollectors(address(this)) ||
         (
-            totalSupply % validatorTargetAmount != 0 &&
-            msg.value <= validatorTargetAmount - (totalSupply % validatorTargetAmount)
+            totalSupply.mod(validatorTargetAmount) != 0 &&
+            msg.value <= validatorTargetAmount.sub(totalSupply.mod(validatorTargetAmount))
         ),
             "Deposit amount cannot be larger than required to finish current pool."
         );
@@ -71,12 +71,12 @@ contract Pools is BaseCollector {
         uint256 toProcess = msg.value;
         do {
             entityId = keccak256(abi.encodePacked(address(this), entitiesCount));
-            toCollect = validatorTargetAmount - (totalSupply % validatorTargetAmount);
+            toCollect = validatorTargetAmount.sub(totalSupply.mod(validatorTargetAmount));
             if (toProcess >= toCollect) {
                 // Deposit has filled up current pool
                 deposits.addDeposit(entityId, msg.sender, _withdrawer, toCollect);
-                totalSupply += toCollect;
-                toProcess -= toCollect;
+                totalSupply = totalSupply.add(toCollect);
+                toProcess = toProcess.sub(toCollect);
 
                 // It was the last deposit for the current pool, add entity ID to the queue
                 readyEntityIds.push(entityId);
@@ -84,7 +84,7 @@ contract Pools is BaseCollector {
             } else {
                 // Deposit fits in current pool
                 deposits.addDeposit(entityId, msg.sender, _withdrawer, toProcess);
-                totalSupply += toProcess;
+                totalSupply = totalSupply.add(toProcess);
                 break;
             }
         } while (toProcess != 0);
@@ -97,7 +97,7 @@ contract Pools is BaseCollector {
     * @param _amount - the amount of ether to cancel from the active pool.
     */
     function cancelDeposit(address payable _withdrawer, uint256 _amount) external {
-        require(_amount > 0 && _amount % settings.userDepositMinUnit() == 0, "Invalid deposit cancel amount.");
+        require(_amount > 0 && _amount.mod(settings.userDepositMinUnit()) == 0, "Invalid deposit cancel amount.");
         bytes32 poolId = keccak256(abi.encodePacked(address(this), entitiesCount));
         require(
             deposits.getDeposit(poolId, msg.sender, _withdrawer) >= _amount,
@@ -105,7 +105,7 @@ contract Pools is BaseCollector {
         );
 
         deposits.cancelDeposit(poolId, msg.sender, _withdrawer, _amount);
-        totalSupply -= _amount;
+        totalSupply = totalSupply.sub(_amount);
 
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value

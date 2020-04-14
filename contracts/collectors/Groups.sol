@@ -99,21 +99,21 @@ contract Groups is BaseCollector {
     */
     function addDeposit(bytes32 _groupId, address _withdrawer) external payable {
         require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
-        require(msg.value > 0 && msg.value % settings.userDepositMinUnit() == 0, "Invalid deposit amount.");
+        require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
         require(registeredMembers[keccak256(abi.encodePacked(_groupId, msg.sender))], "The user is not a member of the group with the specified ID.");
 
         Group storage group = groups[_groupId];
         require(!group.targetAmountCollected, "The group has already collected a validator deposit amount.");
 
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
-        require(group.collectedAmount + msg.value <= validatorDepositAmount, "The deposit amount is bigger than the amount required to collect.");
+        require((group.collectedAmount).add(msg.value) <= validatorDepositAmount, "The deposit amount is bigger than the amount required to collect.");
 
         // register user deposit
         deposits.addDeposit(_groupId, msg.sender, _withdrawer, msg.value);
-        totalSupply += msg.value;
+        totalSupply = totalSupply.add(msg.value);
 
         // update group progress
-        group.collectedAmount += msg.value;
+        group.collectedAmount = (group.collectedAmount).add(msg.value);
         if (group.collectedAmount == validatorDepositAmount) {
             group.targetAmountCollected = true;
             readyEntityIds.push(_groupId);
@@ -128,7 +128,7 @@ contract Groups is BaseCollector {
     * @param _amount - the amount of ether to cancel from the deposit.
     */
     function cancelDeposit(bytes32 _groupId, address payable _withdrawer, uint256 _amount) external {
-        require(_amount > 0 && _amount % settings.userDepositMinUnit() == 0, "Invalid deposit cancel amount.");
+        require(_amount > 0 && (_amount).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit cancel amount.");
         require(
             deposits.getDeposit(_groupId, msg.sender, _withdrawer) >= _amount,
             "The user does not have a specified deposit cancel amount."
@@ -138,8 +138,8 @@ contract Groups is BaseCollector {
         require(!group.targetAmountCollected, "Cannot cancel the deposit amount of the group which has collected a validator deposit amount.");
 
         deposits.cancelDeposit(_groupId, msg.sender, _withdrawer, _amount);
-        totalSupply -= _amount;
-        group.collectedAmount -= _amount;
+        totalSupply = totalSupply.sub(_amount);
+        group.collectedAmount = (group.collectedAmount).sub(_amount);
 
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
