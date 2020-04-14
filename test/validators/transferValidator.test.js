@@ -31,7 +31,7 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
-const currentReward = ether('0.034871228');
+const validatorReward = ether('0.034871228');
 
 contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
@@ -95,7 +95,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
 
   it('fails to transfer validator if there are no ready entities', async () => {
     await expectRevert(
-      pools.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, validatorReward, {
         from: operator
       }),
       'There are no ready entities.'
@@ -110,7 +110,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      pools.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, validatorReward, {
         from: other
       }),
       'Permission denied.'
@@ -131,7 +131,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      pools.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, validatorReward, {
         from: operator
       }),
       'Validator transfers are paused.'
@@ -153,7 +153,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      pools.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, validatorReward, {
         from: operator
       }),
       'Validator deposit amount cannot be updated.'
@@ -170,7 +170,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      pools.transferValidator('0x0', currentReward, {
+      pools.transferValidator('0x0', validatorReward, {
         from: operator
       }),
       'Validator with such ID is not registered.'
@@ -191,7 +191,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      pools.transferValidator(validatorId, currentReward, {
+      pools.transferValidator(validatorId, validatorReward, {
         from: operator
       }),
       'Cannot register transfer for validator with assigned wallet.'
@@ -208,7 +208,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
     // transfer validator to the new entity
     await expectRevert(
-      privates.transferValidator(validatorId, currentReward, {
+      privates.transferValidator(validatorId, validatorReward, {
         from: operator
       }),
       'Permission denied.'
@@ -225,7 +225,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
 
     // transfer validator to the new entity
-    let { tx } = await pools.transferValidator(validatorId, currentReward, {
+    let { tx } = await pools.transferValidator(validatorId, validatorReward, {
       from: operator
     });
 
@@ -233,10 +233,10 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(pools, new BN(0));
 
     // calculate debts
-    let maintainerDebt = currentReward
+    let maintainerDebt = validatorReward
       .mul(new BN(initialSettings.maintainerFee))
       .div(new BN(10000));
-    let userDebt = currentReward.sub(maintainerDebt);
+    let userDebt = validatorReward.sub(maintainerDebt);
 
     // check validator transferred
     await checkValidatorTransferred({
@@ -274,7 +274,7 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     });
 
     // transfer validator to the new entity
-    let { tx } = await pools.transferValidator(validatorId, currentReward, {
+    let { tx } = await pools.transferValidator(validatorId, validatorReward, {
       from: operator
     });
 
@@ -282,10 +282,10 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(pools, new BN(0));
 
     // calculate debts
-    let maintainerDebt = currentReward
+    let maintainerDebt = validatorReward
       .mul(new BN(initialSettings.maintainerFee))
       .div(new BN(10000));
-    let userDebt = currentReward.sub(maintainerDebt);
+    let userDebt = validatorReward.sub(maintainerDebt);
 
     // check validator transferred
     await checkValidatorTransferred({
@@ -314,38 +314,42 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
     let tests = [
       {
         newMaintainerFee: new BN(500),
-        currentReward: ether('0.442236112'),
+        validatorReward: ether('0.442236112'),
         // debts are based on initialSettings.maintainerFee
         userDebt: ether('0.4191071633424'),
         maintainerDebt: ether('0.0231289486576')
       },
       {
         newMaintainerFee: new BN(2000),
-        currentReward: ether('0.5901925'),
+        // subtracts previous test validatorReward
+        validatorReward: ether('0.5901925'),
         // debts are based on previous test newMaintainerFee
-        userDebt: ether('0.560682875'),
-        maintainerDebt: ether('0.029509625')
+        userDebt: ether('0.1405585686'),
+        maintainerDebt: ether('0.00739781940')
       },
       {
         newMaintainerFee: new BN(1),
-        currentReward: ether('0.802677173'),
+        // subtracts previous test validatorReward
+        validatorReward: ether('0.802677173'),
         // debts are based on previous test newMaintainerFee
-        userDebt: ether('0.6421417384'),
-        maintainerDebt: ether('0.1605354346')
+        userDebt: ether('0.1699877384'),
+        maintainerDebt: ether('0.0424969346')
       },
       {
         newMaintainerFee: new BN(4999),
-        currentReward: ether('7.278412149'),
+        // subtracts previous test validatorReward
+        validatorReward: ether('7.278412149'),
         // debts are based on previous test newMaintainerFee
-        userDebt: ether('7.2776843077851'),
-        maintainerDebt: ether('0.0007278412149')
+        userDebt: ether('6.4750874025024'),
+        maintainerDebt: ether('0.0006475734976')
       },
       {
         newMaintainerFee: new BN(9999),
-        currentReward: ether('0.017862337'),
+        // subtracts previous test validatorReward
+        validatorReward: ether('8.017862337'),
         // debts are based on previous test newMaintainerFee
-        userDebt: ether('0.0089329547337'),
-        maintainerDebt: ether('0.0089293822663')
+        userDebt: ether('0.3697990390188'),
+        maintainerDebt: ether('0.3696511489812')
       }
     ];
 
@@ -368,9 +372,13 @@ contract('BaseCollector (transfer validator)', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      ({ tx } = await pools.transferValidator(validatorId, test.currentReward, {
-        from: operator
-      }));
+      ({ tx } = await pools.transferValidator(
+        validatorId,
+        test.validatorReward,
+        {
+          from: operator
+        }
+      ));
 
       // check balance updated
       await checkCollectorBalance(pools, new BN(0));

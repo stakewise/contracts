@@ -126,19 +126,15 @@ contract BaseCollector is Initializable {
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
         require(prevEntityId != "", "Validator with such ID is not registered.");
 
-        (uint256 prevUserDebt, uint256 prevMaintainerDebt, bool resolved) = validatorTransfers.validatorDebts(_validatorId);
-        require(!resolved, "Cannot transfer validator with resolved debt.");
-
+        (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
         // transfer validator to the registration ready entity
         bytes32 newEntityId = readyEntityIds[readyEntityIds.length - 1];
         readyEntityIds.pop();
         validatorsRegistry.update(_validatorId, newEntityId);
 
         uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
-        require(!resolved, "Cannot transfer validator with resolved debt.");
-
         uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
-        totalSupply -= depositAmount;
+        totalSupply = totalSupply.sub(depositAmount);
         validatorTransfers.registerTransfer.value(depositAmount)(
             _validatorId,
             prevEntityId,
