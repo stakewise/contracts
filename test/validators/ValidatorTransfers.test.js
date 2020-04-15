@@ -27,7 +27,7 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const currentReward = ether('0.034871228');
+const validatorReward = ether('0.034871228');
 const userReward = ether('0.0278969824');
 const maintainerFee = new BN('2000');
 
@@ -145,7 +145,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, currentReward, {
+      await pools.transferValidator(validatorId, validatorReward, {
         from: operator
       });
 
@@ -165,7 +165,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, currentReward, {
+      await pools.transferValidator(validatorId, validatorReward, {
         from: operator
       });
 
@@ -189,7 +189,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, currentReward, {
+      await pools.transferValidator(validatorId, validatorReward, {
         from: operator
       });
 
@@ -246,7 +246,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, currentReward, {
+      await pools.transferValidator(validatorId, validatorReward, {
         from: operator
       });
 
@@ -291,7 +291,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, currentReward, {
+      await pools.transferValidator(validatorId, validatorReward, {
         from: operator
       });
 

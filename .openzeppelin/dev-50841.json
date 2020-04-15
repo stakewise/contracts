@@ -248,11 +248,11 @@
       }
     },
     "WalletsRegistry": {
-      "address": "0x944DD4468c64c3bd554E1f35aDEF7303Dc4E8d40",
+      "address": "0x8526E30143D065bF03cf5016a3ED0c8de8C67e1A",
       "constructorCode": "608060405234801561001057600080fd5b50610f36806100206000396000f3fe",
-      "bodyBytecodeHash": "be8fd885e3cb58ec8ce5fef309cdbc3f0f61a5ec5b28eecb26da5c9a2a5709d6",
-      "localBytecodeHash": "bbb34b5de926e82a995289c81a4fc4bc2da4acc163a3b004e87a3a31c4c639af",
-      "deployedBytecodeHash": "bbb34b5de926e82a995289c81a4fc4bc2da4acc163a3b004e87a3a31c4c639af",
+      "bodyBytecodeHash": "0ad098c7d652b271ad9ef4b1fbd3a73af537141904d8e260fe47a7ff1b92599f",
+      "localBytecodeHash": "97d8164e1c88f3b6c93157332c05190f421e836f4d4c381566667d2c6fa7d13f",
+      "deployedBytecodeHash": "97d8164e1c88f3b6c93157332c05190f421e836f4d4c381566667d2c6fa7d13f",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -284,13 +284,13 @@
           "members": [
             {
               "label": "unlocked",
-              "astId": 2896,
+              "astId": 2968,
               "type": "t_bool",
               "src": "895:13:16"
             },
             {
               "label": "validatorId",
-              "astId": 2898,
+              "astId": 2970,
               "type": "t_bytes32",
               "src": "918:19:16"
             }
@@ -349,7 +349,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "assignedValidators",
-          "astId": 2903,
+          "astId": 2975,
           "type": "t_mapping<t_bool>",
           "src": "1114:50:16"
         },
@@ -357,7 +357,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "wallets",
-          "astId": 2907,
+          "astId": 2979,
           "type": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
           "src": "1239:51:16"
         },
@@ -365,7 +365,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "availableWallets",
-          "astId": 2910,
+          "astId": 2982,
           "type": "t_array:dyn<t_address>",
           "src": "1338:34:16"
         },
@@ -373,7 +373,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "admins",
-          "astId": 2912,
+          "astId": 2984,
           "type": "t_address",
           "src": "1418:21:16"
         },
@@ -381,7 +381,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "walletsManagers",
-          "astId": 2914,
+          "astId": 2986,
           "type": "t_address",
           "src": "1494:39:16"
         },
@@ -389,7 +389,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "validatorsRegistry",
-          "astId": 2916,
+          "astId": 2988,
           "type": "t_address",
           "src": "1591:45:16"
         },
@@ -397,7 +397,7 @@
           "contract": "WalletsRegistry",
           "path": "contracts/withdrawals/WalletsRegistry.sol",
           "label": "withdrawals",
-          "astId": 2918,
+          "astId": 2990,
           "type": "t_address",
           "src": "1687:31:16"
         }
@@ -407,7 +407,18 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "WalletsRegistry",
+            "path": "contracts/withdrawals/WalletsRegistry.sol",
+            "label": "wallets",
+            "astId": 2979,
+            "type": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
+            "src": "1239:51:16"
+          }
+        ],
+        "storageDiff": []
       }
     },
     "Operators": {
@@ -510,11 +521,11 @@
       }
     },
     "Privates": {
-      "address": "0x04BcaeB8Fb2B2b2AA5e6d6fB536a8EdcC64f9A10",
-      "constructorCode": "608060405234801561001057600080fd5b50611423806100206000396000f3fe",
-      "bodyBytecodeHash": "3e396ec6550fee01bbd9d3b8b1e4aff90dfcd37115af832db84aecf68dca220e",
-      "localBytecodeHash": "b4cb919197df440bb621b751d271cfabba7221fb3d9c453671c1a59ffc08b6a6",
-      "deployedBytecodeHash": "b4cb919197df440bb621b751d271cfabba7221fb3d9c453671c1a59ffc08b6a6",
+      "address": "0x549c10F5299755e9d028b676204a9bC21ceB6D42",
+      "constructorCode": "608060405234801561001057600080fd5b50611697806100206000396000f3fe",
+      "bodyBytecodeHash": "e341101a0f24b6f7e621a4a44d0c0d23da5d3cea46cf1e54ece86524f31eaa18",
+      "localBytecodeHash": "b7eaacfa6e558c80644fa87542cef62693f8fee1bd90d733928934a96931dceb",
+      "deployedBytecodeHash": "b7eaacfa6e558c80644fa87542cef62693f8fee1bd90d733928934a96931dceb",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -580,73 +591,73 @@
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "totalSupply",
-          "astId": 1153,
+          "astId": 1157,
           "type": "t_uint256",
-          "src": "593:26:8"
+          "src": "678:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "entitiesCount",
-          "astId": 1155,
+          "astId": 1159,
           "type": "t_uint256",
-          "src": "673:28:8"
+          "src": "758:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "readyEntityIds",
-          "astId": 1158,
+          "astId": 1162,
           "type": "t_array:dyn<t_bytes32>",
-          "src": "782:33:8"
+          "src": "867:33:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "deposits",
-          "astId": 1160,
+          "astId": 1164,
           "type": "t_address",
-          "src": "863:26:8"
+          "src": "948:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "settings",
-          "astId": 1162,
+          "astId": 1166,
           "type": "t_address",
-          "src": "937:26:8"
+          "src": "1022:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "operators",
-          "astId": 1164,
+          "astId": 1168,
           "type": "t_address",
-          "src": "1012:28:8"
+          "src": "1097:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorRegistration",
-          "astId": 1166,
+          "astId": 1170,
           "type": "t_address",
-          "src": "1097:53:8"
+          "src": "1182:53:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorsRegistry",
-          "astId": 1168,
+          "astId": 1172,
           "type": "t_address",
-          "src": "1209:46:8"
+          "src": "1294:46:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorTransfers",
-          "astId": 1170,
+          "astId": 1174,
           "type": "t_address",
-          "src": "1314:46:8"
+          "src": "1399:46:8"
         }
       ],
       "warnings": {
@@ -654,15 +665,17 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "Pools": {
-      "address": "0xBB1E1595D1422c9630c96bd5c69721b16A050873",
-      "constructorCode": "608060405234801561001057600080fd5b5061190e806100206000396000f3fe",
-      "bodyBytecodeHash": "a3086f14e98b6f9011de92bd3d6be2f0c19b7466fc5bc09eb12baf34410b2648",
-      "localBytecodeHash": "b61a08b11cc5ecf61c1adf8add1b973c434e3459e97b9f3e08794dbb76d9e317",
-      "deployedBytecodeHash": "b61a08b11cc5ecf61c1adf8add1b973c434e3459e97b9f3e08794dbb76d9e317",
+      "address": "0x41cc69EacaB4062cE97cA9E95132069fA1b68D70",
+      "constructorCode": "608060405234801561001057600080fd5b50611d97806100206000396000f3fe",
+      "bodyBytecodeHash": "69d11736e0a8328fda73aa87ef41f4cfe024a4ac188f97bab7643697a05d2bc1",
+      "localBytecodeHash": "ffd26e7fea0719a00bd23ff389f743825de0e456c54d08d93207a806c09536ac",
+      "deployedBytecodeHash": "ffd26e7fea0719a00bd23ff389f743825de0e456c54d08d93207a806c09536ac",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -728,73 +741,73 @@
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "totalSupply",
-          "astId": 1153,
+          "astId": 1157,
           "type": "t_uint256",
-          "src": "593:26:8"
+          "src": "678:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "entitiesCount",
-          "astId": 1155,
+          "astId": 1159,
           "type": "t_uint256",
-          "src": "673:28:8"
+          "src": "758:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "readyEntityIds",
-          "astId": 1158,
+          "astId": 1162,
           "type": "t_array:dyn<t_bytes32>",
-          "src": "782:33:8"
+          "src": "867:33:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "deposits",
-          "astId": 1160,
+          "astId": 1164,
           "type": "t_address",
-          "src": "863:26:8"
+          "src": "948:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "settings",
-          "astId": 1162,
+          "astId": 1166,
           "type": "t_address",
-          "src": "937:26:8"
+          "src": "1022:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "operators",
-          "astId": 1164,
+          "astId": 1168,
           "type": "t_address",
-          "src": "1012:28:8"
+          "src": "1097:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorRegistration",
-          "astId": 1166,
+          "astId": 1170,
           "type": "t_address",
-          "src": "1097:53:8"
+          "src": "1182:53:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorsRegistry",
-          "astId": 1168,
+          "astId": 1172,
           "type": "t_address",
-          "src": "1209:46:8"
+          "src": "1294:46:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorTransfers",
-          "astId": 1170,
+          "astId": 1174,
           "type": "t_address",
-          "src": "1314:46:8"
+          "src": "1399:46:8"
         }
       ],
       "warnings": {
@@ -802,7 +815,9 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": []
       }
     },
     "ValidatorsRegistry": {
@@ -1032,11 +1047,11 @@
       }
     },
     "Groups": {
-      "address": "0x5F7224119280161EA492648D798E35a1362Ca4B2",
-      "constructorCode": "608060405234801561001057600080fd5b50611e07806100206000396000f3fe",
-      "bodyBytecodeHash": "501d16042cb2ef6245c1e403602feae76b045856d99c3a6a9dad801792875ddd",
-      "localBytecodeHash": "4e17d3456722273b1e60f06967c86640582f7c424d08ff87577a70248a3e5b71",
-      "deployedBytecodeHash": "4e17d3456722273b1e60f06967c86640582f7c424d08ff87577a70248a3e5b71",
+      "address": "0x0D299705E818Ce5057c654A3c792ef22D6265d67",
+      "constructorCode": "608060405234801561001057600080fd5b50612267806100206000396000f3fe",
+      "bodyBytecodeHash": "6d0f6f690c859d131ce3d7795f4a7c9aeecf6386dcd24fcd4e626da83c849ff8",
+      "localBytecodeHash": "9d374e555e2eb34d3a22d4e4b9a0540c2c3b19fa3d087b255a84f95b071aa928",
+      "deployedBytecodeHash": "9d374e555e2eb34d3a22d4e4b9a0540c2c3b19fa3d087b255a84f95b071aa928",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1079,13 +1094,13 @@
           "members": [
             {
               "label": "collectedAmount",
-              "astId": 1404,
+              "astId": 1433,
               "type": "t_uint256",
               "src": "833:23:9"
             },
             {
               "label": "targetAmountCollected",
-              "astId": 1406,
+              "astId": 1435,
               "type": "t_bool",
               "src": "866:26:9"
             }
@@ -1133,79 +1148,79 @@
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "totalSupply",
-          "astId": 1153,
+          "astId": 1157,
           "type": "t_uint256",
-          "src": "593:26:8"
+          "src": "678:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "entitiesCount",
-          "astId": 1155,
+          "astId": 1159,
           "type": "t_uint256",
-          "src": "673:28:8"
+          "src": "758:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "readyEntityIds",
-          "astId": 1158,
+          "astId": 1162,
           "type": "t_array:dyn<t_bytes32>",
-          "src": "782:33:8"
+          "src": "867:33:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "deposits",
-          "astId": 1160,
+          "astId": 1164,
           "type": "t_address",
-          "src": "863:26:8"
+          "src": "948:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "settings",
-          "astId": 1162,
+          "astId": 1166,
           "type": "t_address",
-          "src": "937:26:8"
+          "src": "1022:26:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "operators",
-          "astId": 1164,
+          "astId": 1168,
           "type": "t_address",
-          "src": "1012:28:8"
+          "src": "1097:28:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorRegistration",
-          "astId": 1166,
+          "astId": 1170,
           "type": "t_address",
-          "src": "1097:53:8"
+          "src": "1182:53:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorsRegistry",
-          "astId": 1168,
+          "astId": 1172,
           "type": "t_address",
-          "src": "1209:46:8"
+          "src": "1294:46:8"
         },
         {
           "contract": "BaseCollector",
           "path": "contracts/collectors/BaseCollector.sol",
           "label": "validatorTransfers",
-          "astId": 1170,
+          "astId": 1174,
           "type": "t_address",
-          "src": "1314:46:8"
+          "src": "1399:46:8"
         },
         {
           "contract": "Groups",
           "path": "contracts/collectors/Groups.sol",
           "label": "groups",
-          "astId": 1411,
+          "astId": 1440,
           "type": "t_mapping<t_struct<Groups.Group>>",
           "src": "953:39:9"
         },
@@ -1213,7 +1228,7 @@
           "contract": "Groups",
           "path": "contracts/collectors/Groups.sol",
           "label": "registeredMembers",
-          "astId": 1415,
+          "astId": 1444,
           "type": "t_mapping<t_bool>",
           "src": "1064:49:9"
         }
@@ -1223,7 +1238,18 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "Groups",
+            "path": "contracts/collectors/Groups.sol",
+            "label": "groups",
+            "astId": 1440,
+            "type": "t_mapping<t_struct<Groups.Group>>",
+            "src": "953:39:9"
+          }
+        ],
+        "storageDiff": []
       }
     },
     "Settings": {
@@ -1810,7 +1836,7 @@
       {
         "address": "0xD3714Fe46B924969132Dc58E8F457Bcf63eF93b8",
         "version": "0.1.0",
-        "implementation": "0xBB1E1595D1422c9630c96bd5c69721b16A050873",
+        "implementation": "0x41cc69EacaB4062cE97cA9E95132069fA1b68D70",
         "admin": "0x14c18C756df20EBD308A43cEeF976cC03A8B8E91",
         "kind": "Upgradeable"
       }
@@ -1819,7 +1845,7 @@
       {
         "address": "0xF4c963028c8176309a512f64b85Fa6515E6b8bfD",
         "version": "0.1.0",
-        "implementation": "0x04BcaeB8Fb2B2b2AA5e6d6fB536a8EdcC64f9A10",
+        "implementation": "0x549c10F5299755e9d028b676204a9bC21ceB6D42",
         "admin": "0x14c18C756df20EBD308A43cEeF976cC03A8B8E91",
         "kind": "Upgradeable"
       }
@@ -1828,7 +1854,7 @@
       {
         "address": "0x5955b976Ffe7B984ff6Cd012572140589B38E66E",
         "version": "0.1.0",
-        "implementation": "0x5F7224119280161EA492648D798E35a1362Ca4B2",
+        "implementation": "0x0D299705E818Ce5057c654A3c792ef22D6265d67",
         "admin": "0x14c18C756df20EBD308A43cEeF976cC03A8B8E91",
         "kind": "Upgradeable"
       }
@@ -1837,7 +1863,7 @@
       {
         "address": "0x83e6aC75f263Dd76d12860c2d8bf041F3D841059",
         "version": "0.1.0",
-        "implementation": "0x944DD4468c64c3bd554E1f35aDEF7303Dc4E8d40",
+        "implementation": "0x8526E30143D065bF03cf5016a3ED0c8de8C67e1A",
         "admin": "0x14c18C756df20EBD308A43cEeF976cC03A8B8E91",
         "kind": "Upgradeable"
       }
