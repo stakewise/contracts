@@ -142,8 +142,9 @@ contract Withdrawals is Initializable {
         }
 
         if (maintainerReward.add(maintainerDebt) > 0) {
-            emit MaintainerWithdrawn(settings.maintainer(), entityId, maintainerReward);
-            Wallet(_wallet).withdraw(settings.maintainer(), maintainerReward.add(maintainerDebt));
+            address payable maintainer = settings.maintainer();
+            emit MaintainerWithdrawn(maintainer, entityId, maintainerReward);
+            Wallet(_wallet).withdraw(maintainer, maintainerReward.add(maintainerDebt));
         }
     }
 

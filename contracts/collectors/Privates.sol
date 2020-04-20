@@ -47,13 +47,13 @@ contract Privates is BaseCollector {
     * Function for adding private deposits.
     * User must transfer ether amount together with calling the function.
     * The deposit amount must be the same as Validator's deposit amount.
-    * The depositing will be disallowed in case `Privates` collector is paused in `Settings` contract.
+    * The depositing will be disallowed in case `Privates` contract is paused in `Settings` contract.
     * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
     */
     function addDeposit(address _withdrawer) external payable {
         require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
         require(msg.value == settings.validatorDepositAmount(), "Invalid deposit amount.");
-        require(!settings.pausedCollectors(address(this)), "Depositing is currently disabled.");
+        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
 
         // Register new deposit
         bytes32 entityId = keccak256(abi.encodePacked(address(this), entitiesCount));

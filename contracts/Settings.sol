@@ -31,8 +31,8 @@ contract Settings is Initializable {
     // The mapping between collector and its staking duration.
     mapping(address => uint256) public stakingDurations;
 
-    // The mapping between collector and whether its new entities creation is paused or not.
-    mapping(address => bool) public pausedCollectors;
+    // The mapping between the managed contract and whether it is paused or not.
+    mapping(address => bool) public pausedContracts;
 
     // Address of the Admins contract.
     Admins private admins;
@@ -159,14 +159,14 @@ contract Settings is Initializable {
     }
 
     /**
-    * Function for pausing or resuming collector deposits.
-    * @param collector - the address of the collector.
-    * @param isPaused - defines whether collector is paused or not.
+    * Function for pausing or resuming managed contracts.
+    * @param _contract - the address of the managed contract.
+    * @param isPaused - defines whether contract is paused or not.
     */
-    function setCollectorPaused(address collector, bool isPaused) external {
+    function setContractPaused(address _contract, bool isPaused) external {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
 
-        pausedCollectors[collector] = isPaused;
-        emit SettingChanged("pausedCollectors");
+        pausedContracts[_contract] = isPaused;
+        emit SettingChanged("pausedContracts");
     }
 }
