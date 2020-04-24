@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./access/Admins.sol";
-import "./collectors/Privates.sol";
+import "./collectors/Individuals.sol";
 import "./collectors/Pools.sol";
 import "./collectors/Groups.sol";
 
@@ -12,110 +12,110 @@ import "./collectors/Groups.sol";
  * Can only be modified by collectors.
  */
 contract Deposits is Initializable {
-    // A mapping between user ID (hash of entity ID, sender, withdrawer) and the amount.
+    // mapping between user ID (hash of entity ID, sender, recipient) and the amount.
     mapping(bytes32 => uint256) public amounts;
 
-    // Address of the Pools contract.
+    // address of the Pools contract.
     Pools private pools;
 
-    // Address of the Privates contract.
-    Privates private privates;
+    // address of the Individuals contract.
+    Individuals private individuals;
 
-    // Address of the Groups contract.
+    // address of the Groups contract.
     Groups private groups;
 
     /**
     * Event for tracking added deposits.
-    * @param collector - an address of the collector, the deposit was received from.
-    * @param entityId - an ID of the entity, the deposit was collected in.
-    * @param sender - an account which has sent the deposit.
-    * @param withdrawer - an account where deposit + rewards will be sent after withdrawal.
-    * @param amount - amount deposited (in Wei).
+    * @param collector - address of the collector, the deposit was received from.
+    * @param entityId - ID of the collector entity, the deposit was collected in.
+    * @param sender - address which has sent the deposit.
+    * @param recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
+    * @param amount - amount deposited.
     */
     event DepositAdded(
         address collector,
         bytes32 entityId,
         address sender,
-        address withdrawer,
+        address recipient,
         uint256 amount
     );
 
     /**
     * Event for tracking canceled deposits.
-    * @param collector - an address of the collector, the deposit cancel was received from.
-    * @param entityId - an ID of the entity, the deposit was collected in.
-    * @param sender - an account which has sent the deposit.
-    * @param withdrawer - an account where canceled deposit will be sent.
-    * @param amount - amount canceled (in Wei).
+    * @param collector - address of the collector, the deposit was canceled from.
+    * @param entityId - ID of the collector entity, the deposit was collected in.
+    * @param sender - address which has sent the deposit.
+    * @param recipient - address where canceled deposit will be sent.
+    * @param amount - amount canceled.
     */
     event DepositCanceled(
         address collector,
         bytes32 entityId,
         address sender,
-        address withdrawer,
+        address recipient,
         uint256 amount
     );
 
     /**
     * Constructor for initializing the Deposits contract.
-    * @param _pools - An address of the Pools contract.
-    * @param _privates - An address of the Privates contract.
-    * @param _groups - An address of the Groups contract.
+    * @param _pools - address of the Pools contract.
+    * @param _individuals - address of the Individuals contract.
+    * @param _groups - address of the Groups contract.
     */
-    function initialize(Pools _pools, Privates _privates, Groups _groups) public initializer {
+    function initialize(Pools _pools, Individuals _individuals, Groups _groups) public initializer {
         pools = _pools;
-        privates = _privates;
+        individuals = _individuals;
         groups = _groups;
     }
 
     /**
     * Function for retrieving user deposit.
-    * @param _entityId - an ID of the entity, the deposit belongs to.
-    * @param _sender - the address of the deposit sender account.
-    * @param _withdrawer - the address of the deposit withdrawer account.
+    * @param _entityId - ID of the collector entity, the deposit was collected in.
+    * @param _sender - address of the deposit sender.
+    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     */
-    function getDeposit(bytes32 _entityId, address _sender, address _withdrawer) public view returns (uint256) {
-        return amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))];
+    function getDeposit(bytes32 _entityId, address _sender, address _recipient) public view returns (uint256) {
+        return amounts[keccak256(abi.encodePacked(_entityId, _sender, _recipient))];
     }
 
     /**
     * Function for adding deposit.
-    * @param _entityId - an ID of the entity, the deposit belongs to.
-    * @param _sender - the address of the deposit sender account.
-    * @param _withdrawer - the address of the deposit withdrawer account.
-    * @param _amount - the amount deposited.
+    * @param _entityId - ID of the collector entity, the deposit was collected in.
+    * @param _sender - address of the deposit sender account.
+    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
+    * @param _amount - amount deposited.
     */
     function addDeposit(
         bytes32 _entityId,
         address _sender,
-        address _withdrawer,
+        address _recipient,
         uint256 _amount
     )
         external
     {
-        require(msg.sender == address(pools) || msg.sender == address(privates) || msg.sender == address(groups), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))] += _amount;
-        emit DepositAdded(msg.sender, _entityId, _sender, _withdrawer, _amount);
+        require(msg.sender == address(pools) || msg.sender == address(individuals) || msg.sender == address(groups), "Permission denied.");
+        amounts[keccak256(abi.encodePacked(_entityId, _sender, _recipient))] += _amount;
+        emit DepositAdded(msg.sender, _entityId, _sender, _recipient, _amount);
     }
 
     /**
     * Function for canceling deposit.
-    * @param _entityId - an ID of the entity, the deposit belongs to.
-    * @param _sender - the address of the deposit sender account.
-    * @param _withdrawer - the address of the deposit withdrawer account.
-    * @param _amount - the amount canceled.
+    * @param _entityId - ID of the collector entity, the deposit was collected in.
+    * @param _sender - address of the deposit sender.
+    * @param _recipient - address where canceled deposit amount will be sent.
+    * @param _amount - amount canceled.
     */
     function cancelDeposit(
         bytes32 _entityId,
         address _sender,
-        address _withdrawer,
+        address _recipient,
         uint256 _amount
 
     )
         external
     {
         require(msg.sender == address(pools) || msg.sender == address(groups), "Permission denied.");
-        amounts[keccak256(abi.encodePacked(_entityId, _sender, _withdrawer))] -= _amount;
-        emit DepositCanceled(msg.sender, _entityId, _sender, _withdrawer, _amount);
+        amounts[keccak256(abi.encodePacked(_entityId, _sender, _recipient))] -= _amount;
+        emit DepositCanceled(msg.sender, _entityId, _sender, _recipient, _amount);
     }
 }
