@@ -1,9 +1,11 @@
+const { expect } = require('chai');
 const { BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
+const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, getEntityId } = require('../common/utils');
 
@@ -60,39 +62,17 @@ contract('Groups (create group)', ([_, ...accounts]) => {
       from: groupCreator
     });
 
-    const entityId = getEntityId(groups.address, new BN(1));
+    const groupId = getEntityId(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
       creator: groupCreator,
-      groupId: entityId
+      groupId
     });
+    expect(receipt.logs[0].args.members).to.have.members(groupMembers);
 
-    for (let i = 0; i < groupMembers.length; i++) {
-      let userId = web3.utils.soliditySha3(entityId, groupMembers[i]);
-      expect(await groups.registeredMembers(userId)).equal(true);
-    }
-    let creatorId = web3.utils.soliditySha3(entityId, groupCreator);
-    expect(await groups.registeredMembers(creatorId)).equal(true);
-  });
-
-  it('increases entities count for every new group', async () => {
-    let receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator
-    });
-
-    let entityId = getEntityId(groups.address, new BN(1));
-    expectEvent(receipt, 'GroupCreated', {
-      creator: groupCreator,
-      groupId: entityId
-    });
-
-    receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator
-    });
-
-    entityId = getEntityId(groups.address, new BN(2));
-    expectEvent(receipt, 'GroupCreated', {
-      creator: groupCreator,
-      groupId: entityId
-    });
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.maintainerFee).to.be.bignumber.equal(
+      new BN(initialSettings.maintainerFee)
+    );
+    expect(pendingGroup.collectedAmount).to.be.bignumber.equal(new BN(0));
   });
 });

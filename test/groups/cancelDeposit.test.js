@@ -19,12 +19,15 @@ const {
   checkUserTotalAmount,
   checkCollectorBalance,
   checkDepositCanceled,
-  getEntityId
+  getEntityId,
+  validatorRegistrationArgs
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
 const Groups = artifacts.require('Groups');
+const Operators = artifacts.require('Operators');
 
+const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const userDepositMinUnit = new BN(initialSettings.userDepositMinUnit);
 
@@ -39,11 +42,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     groupId;
   let [
     admin,
+    operator,
     groupCreator,
     sender1,
-    withdrawer1,
+    recipient1,
     sender2,
-    withdrawer2
+    recipient2
   ] = accounts;
   let groupMembers = [sender1, sender2];
 
@@ -60,7 +64,8 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       deposits: depositsProxy,
-      groups: groupsProxy
+      groups: groupsProxy,
+      operators: operatorsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
@@ -68,6 +73,9 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     });
     groups = await Groups.at(groupsProxy);
     deposits = await Deposits.at(depositsProxy);
+
+    let operators = await Operators.at(operatorsProxy);
+    await operators.addOperator(operator, { from: admin });
 
     // create new group
     await groups.createGroup(groupMembers, {
@@ -79,7 +87,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     amount1 = getDepositAmount({
       max: validatorDepositAmount.div(new BN(2))
     });
-    await groups.addDeposit(groupId, withdrawer1, {
+    await groups.addDeposit(groupId, recipient1, {
       from: sender1,
       value: amount1
     });
@@ -87,7 +95,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     amount2 = getDepositAmount({
       max: validatorDepositAmount.div(new BN(2))
     });
-    await groups.addDeposit(groupId, withdrawer2, {
+    await groups.addDeposit(groupId, recipient2, {
       from: sender2,
       value: amount2
     });
@@ -96,7 +104,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
 
   it('fails to cancel a deposit with invalid cancel amount', async () => {
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer1, ether('0'), { from: sender1 }),
+      groups.cancelDeposit(groupId, recipient1, ether('0'), { from: sender1 }),
       'Invalid deposit cancel amount.'
     );
     await checkUserTotalAmount({
@@ -105,17 +113,17 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1
+      recipientAddress: recipient1
     });
     await checkCollectorBalance(groups, groupsBalance);
   });
 
-  it('fails to cancel a deposit with invalid withdrawer address', async () => {
+  it('fails to cancel a deposit with invalid recipient address', async () => {
     await expectRevert(
       groups.cancelDeposit(groupId, constants.ZERO_ADDRESS, ether('1'), {
         from: sender1
       }),
-      'The user does not have a specified deposit cancel amount.'
+      'The user does not have specified deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -123,14 +131,14 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1
+      recipientAddress: recipient1
     });
     await checkCollectorBalance(groups, groupsBalance);
   });
 
   it('fails to cancel a deposit with maximal uint value', async () => {
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer1, constants.MAX_UINT256, {
+      groups.cancelDeposit(groupId, recipient1, constants.MAX_UINT256, {
         from: sender1
       }),
       'Invalid deposit cancel amount.'
@@ -141,15 +149,15 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1
+      recipientAddress: recipient1
     });
     await checkCollectorBalance(groups, groupsBalance);
   });
 
   it('fails to cancel a deposit for other user account', async () => {
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer2, ether('1'), { from: sender1 }),
-      'The user does not have a specified deposit cancel amount.'
+      groups.cancelDeposit(groupId, recipient2, ether('1'), { from: sender1 }),
+      'The user does not have specified deposit cancel amount.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -157,32 +165,37 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender2,
-      withdrawerAddress: withdrawer2
+      recipientAddress: recipient2
     });
     await checkCollectorBalance(groups, groupsBalance);
   });
 
   it('fails to cancel a deposit with amount bigger than deposit', async () => {
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer1, amount1.add(ether('1')), {
+      groups.cancelDeposit(groupId, recipient1, amount1.add(ether('1')), {
         from: sender1
       }),
-      'The user does not have a specified deposit cancel amount.'
+      'The user does not have specified deposit cancel amount.'
     );
     await checkCollectorBalance(groups, groupsBalance);
   });
 
-  it('fails to cancel a deposit located in the ready group', async () => {
+  it('fails to cancel a deposit from group with registered validator', async () => {
     const cancelAmount = validatorDepositAmount.sub(groupsBalance);
-    await groups.addDeposit(groupId, withdrawer1, {
+    await groups.addDeposit(groupId, recipient1, {
       from: sender1,
       value: cancelAmount
     });
+
+    await groups.registerValidator(pubKey, signature, hashTreeRoot, groupId, {
+      from: operator
+    });
+
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer1, cancelAmount, {
+      groups.cancelDeposit(groupId, recipient1, cancelAmount, {
         from: sender1
       }),
-      'Cannot cancel the deposit amount of the group which has collected a validator deposit amount.'
+      'Cannot cancel deposit amount for group which started staking.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
@@ -190,19 +203,18 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1
+      recipientAddress: recipient1
     });
-    await checkCollectorBalance(groups, validatorDepositAmount);
+    await checkCollectorBalance(groups, new BN(0));
 
-    let group = await groups.groups(groupId);
-    expect(group.collectedAmount).to.be.bignumber.equal(validatorDepositAmount);
-    expect(group.targetAmountCollected).to.be.equal(true);
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(new BN(0));
   });
 
   it('fails to cancel a deposit with too small unit', async () => {
     const cancelAmount = amount1.sub(userDepositMinUnit.sub(new BN(1)));
     await expectRevert(
-      groups.cancelDeposit(groupId, withdrawer1, cancelAmount, {
+      groups.cancelDeposit(groupId, recipient1, cancelAmount, {
         from: sender1
       }),
       'Invalid deposit cancel amount.'
@@ -213,14 +225,14 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       entityId: groupId,
       collectorAddress: groups.address,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1
+      recipientAddress: recipient1
     });
     await checkCollectorBalance(groups, groupsBalance);
   });
 
   it('cancels deposit in full amount', async () => {
-    const withdrawerBalance = await balance.tracker(withdrawer1);
-    const { tx } = await groups.cancelDeposit(groupId, withdrawer1, amount1, {
+    const recipientBalance = await balance.tracker(recipient1);
+    const { tx } = await groups.cancelDeposit(groupId, recipient1, amount1, {
       from: sender1
     });
     await checkDepositCanceled({
@@ -229,30 +241,29 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       collectorAddress: groups.address,
       entityId: groupId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       canceledAmount: amount1,
       totalAmount: ether('0')
     });
 
-    // Check withdrawer balance changed
-    expect(await withdrawerBalance.delta()).to.be.bignumber.equal(amount1);
+    // Check recipient balance changed
+    expect(await recipientBalance.delta()).to.be.bignumber.equal(amount1);
 
     // Check Groups balance
     await checkCollectorBalance(groups, groupsBalance.sub(amount1));
 
-    let group = await groups.groups(groupId);
-    expect(group.collectedAmount).to.be.bignumber.equal(
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(
       groupsBalance.sub(amount1)
     );
-    expect(group.targetAmountCollected).to.be.equal(false);
   });
 
   it('cancels deposit in partial amount', async () => {
-    const withdrawerBalance = await balance.tracker(withdrawer1);
+    const recipientBalance = await balance.tracker(recipient1);
     const cancelAmount = amount1.sub(userDepositMinUnit);
     const { tx } = await groups.cancelDeposit(
       groupId,
-      withdrawer1,
+      recipient1,
       cancelAmount,
       {
         from: sender1
@@ -264,21 +275,20 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       collectorAddress: groups.address,
       entityId: groupId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       canceledAmount: cancelAmount,
       totalAmount: amount1.sub(cancelAmount)
     });
 
-    // Check withdrawer balance changed
-    expect(await withdrawerBalance.delta()).to.be.bignumber.equal(cancelAmount);
+    // Check recipient balance changed
+    expect(await recipientBalance.delta()).to.be.bignumber.equal(cancelAmount);
 
     // Check Groups balance
     await checkCollectorBalance(groups, groupsBalance.sub(cancelAmount));
 
-    let group = await groups.groups(groupId);
-    expect(group.collectedAmount).to.be.bignumber.equal(
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(
       groupsBalance.sub(cancelAmount)
     );
-    expect(group.targetAmountCollected).to.be.equal(false);
   });
 });

@@ -31,9 +31,9 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     admin,
     groupCreator,
     sender1,
-    withdrawer1,
+    recipient1,
     sender2,
-    withdrawer2
+    recipient2
   ] = accounts;
   let groupMembers = [sender1, sender2];
 
@@ -65,19 +65,30 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     groupId = getEntityId(groups.address, new BN(1));
   });
 
-  it('fails to add a deposit with zero withdrawer address', async () => {
+  it('fails to add a deposit with invalid recipient address', async () => {
     await expectRevert(
       groups.addDeposit(groupId, constants.ZERO_ADDRESS, {
         from: sender1
       }),
-      'Withdrawer address cannot be zero address.'
+      'Invalid recipient address.'
+    );
+    await checkCollectorBalance(groups, new BN(0));
+  });
+
+  it('fails to add a deposit with invalid group ID', async () => {
+    await expectRevert(
+      groups.addDeposit(constants.ZERO_BYTES32, recipient1, {
+        from: sender1,
+        value: ether('1')
+      }),
+      'The sender is not a member of the group with the specified ID.'
     );
     await checkCollectorBalance(groups, new BN(0));
   });
 
   it('fails to add a deposit without any amount', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, withdrawer1, {
+      groups.addDeposit(groupId, recipient1, {
         from: sender1,
         value: ether('0')
       }),
@@ -88,7 +99,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
 
   it('fails to add a deposit with unit less than minimal', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, withdrawer1, {
+      groups.addDeposit(groupId, recipient1, {
         from: sender1,
         value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
       }),
@@ -99,34 +110,39 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
 
   it('not registered group member cannot add deposit', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, withdrawer1, {
-        from: withdrawer1,
+      groups.addDeposit(groupId, recipient1, {
+        from: recipient1,
         value: ether('1')
       }),
-      'The user is not a member of the group with the specified ID.'
+      'The sender is not a member of the group with the specified ID.'
     );
     await checkCollectorBalance(groups, new BN(0));
   });
 
   it('cannot deposit to group which has already collected validator deposit amount', async () => {
-    await groups.addDeposit(groupId, withdrawer1, {
+    await groups.addDeposit(groupId, recipient1, {
       from: sender1,
       value: validatorDepositAmount
     });
 
     await expectRevert(
-      groups.addDeposit(groupId, withdrawer1, {
+      groups.addDeposit(groupId, recipient1, {
         from: sender1,
         value: ether('1')
       }),
-      'The group has already collected a validator deposit amount.'
+      'The deposit amount is bigger than the amount required to collect.'
     );
     await checkCollectorBalance(groups, validatorDepositAmount);
+
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(
+      validatorDepositAmount
+    );
   });
 
   it('cannot deposit amount bigger than validator deposit amount', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, withdrawer1, {
+      groups.addDeposit(groupId, recipient1, {
         from: sender1,
         value: validatorDepositAmount.add(ether('1'))
       }),
@@ -140,7 +156,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       max: validatorDepositAmount
     });
     // Send a deposit
-    const { tx } = await groups.addDeposit(groupId, withdrawer1, {
+    const { tx } = await groups.addDeposit(groupId, recipient1, {
       from: sender1,
       value: depositAmount
     });
@@ -152,7 +168,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       collectorAddress: groups.address,
       entityId: groupId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
@@ -160,18 +176,17 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     // Check groups balance
     await checkCollectorBalance(groups, depositAmount);
 
-    let group = await groups.groups(groupId);
-    expect(group.collectedAmount).to.be.bignumber.equal(depositAmount);
-    expect(group.targetAmountCollected).to.be.equal(false);
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(depositAmount);
   });
 
-  it('marks group as ready when validator deposit amount collected', async () => {
+  it('group creator can add deposit to the group', async () => {
     // Send a first deposit
     const depositAmount1 = getDepositAmount({
       max: validatorDepositAmount
     });
-    const { tx: tx1 } = await groups.addDeposit(groupId, withdrawer1, {
-      from: sender1,
+    const { tx: tx1 } = await groups.addDeposit(groupId, recipient1, {
+      from: groupCreator,
       value: depositAmount1
     });
 
@@ -181,15 +196,15 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       depositsContract: deposits,
       collectorAddress: groups.address,
       entityId: groupId,
-      senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      senderAddress: groupCreator,
+      recipientAddress: recipient1,
       addedAmount: depositAmount1,
       totalAmount: depositAmount1
     });
 
     // Send a second deposit
     const depositAmount2 = validatorDepositAmount.sub(depositAmount1);
-    const { tx: tx2 } = await groups.addDeposit(groupId, withdrawer2, {
+    const { tx: tx2 } = await groups.addDeposit(groupId, recipient2, {
       from: sender2,
       value: depositAmount2
     });
@@ -201,7 +216,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       collectorAddress: groups.address,
       entityId: groupId,
       senderAddress: sender2,
-      withdrawerAddress: withdrawer2,
+      recipientAddress: recipient2,
       addedAmount: depositAmount2,
       totalAmount: depositAmount2
     });
@@ -209,8 +224,9 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     // Check groups balance
     await checkCollectorBalance(groups, validatorDepositAmount);
 
-    let group = await groups.groups(groupId);
-    expect(group.collectedAmount).to.be.bignumber.equal(validatorDepositAmount);
-    expect(group.targetAmountCollected).to.be.equal(true);
+    let pendingGroup = await groups.pendingGroups(groupId);
+    expect(pendingGroup.collectedAmount).to.bignumber.equal(
+      validatorDepositAmount
+    );
   });
 });
