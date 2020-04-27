@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const {
   BN,
   ether,
@@ -19,14 +20,15 @@ const {
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
-const Privates = artifacts.require('Privates');
+const Individuals = artifacts.require('Individuals');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const maintainerFee = new BN(initialSettings.maintainerFee);
 
-contract('Privates (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, privates, settings;
-  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
+contract('Individuals (add deposit)', ([_, ...accounts]) => {
+  let networkConfig, deposits, vrc, individuals, settings;
+  let [admin, sender1, recipient1, sender2, recipient2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -41,111 +43,131 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       deposits: depositsProxy,
-      privates: privatesProxy,
+      individuals: individualsProxy,
       settings: settingsProxy
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address
     });
-    privates = await Privates.at(privatesProxy);
+    individuals = await Individuals.at(individualsProxy);
     deposits = await Deposits.at(depositsProxy);
     settings = await Settings.at(settingsProxy);
   });
 
-  it('fails to add a deposit with zero withdrawer address', async () => {
+  it('fails to add a deposit with an invalid recipient address', async () => {
     await expectRevert(
-      privates.addDeposit(constants.ZERO_ADDRESS, {
+      individuals.addDeposit(constants.ZERO_ADDRESS, {
         from: sender1
       }),
-      'Withdrawer address cannot be zero address.'
+      'Invalid recipient address.'
     );
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(individuals, new BN(0));
   });
 
   it('fails to add a deposit smaller than validator deposit amount', async () => {
     await expectRevert(
-      privates.addDeposit(withdrawer1, {
+      individuals.addDeposit(recipient1, {
         from: sender1,
         value: new BN(initialSettings.validatorDepositAmount).sub(ether('1'))
       }),
       'Invalid deposit amount.'
     );
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(individuals, new BN(0));
   });
 
   it('fails to add a deposit bigger than validator deposit amount', async () => {
     await expectRevert(
-      privates.addDeposit(withdrawer1, {
+      individuals.addDeposit(recipient1, {
         from: sender1,
         value: new BN(initialSettings.validatorDepositAmount).add(ether('1'))
       }),
       'Invalid deposit amount.'
     );
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(individuals, new BN(0));
   });
 
   it('adds a deposit equal to validator deposit amount', async () => {
     // Send a deposit
-    const { tx } = await privates.addDeposit(withdrawer1, {
+    const { tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
       value: validatorDepositAmount
     });
 
-    // Check private deposit added
+    // Check individual deposit added
+    let individualId = getEntityId(individuals.address, new BN(1));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: privates.address,
-      entityId: getEntityId(privates.address, new BN(1)),
+      collectorAddress: individuals.address,
+      entityId: individualId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
 
+    let pendingIndividual = await individuals.pendingIndividuals(individualId);
+    expect(pendingIndividual.depositAmount).to.bignumber.equal(
+      validatorDepositAmount
+    );
+    expect(pendingIndividual.maintainerFee).to.bignumber.equal(maintainerFee);
+
     // Check contract balance
-    await checkCollectorBalance(privates, validatorDepositAmount);
+    await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
   it('adds deposits for different users', async () => {
     let tx;
 
     // User 1 creates a deposit
-    ({ tx } = await privates.addDeposit(withdrawer1, {
+    ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
       value: validatorDepositAmount
     }));
+    let individualId = getEntityId(individuals.address, new BN(1));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: privates.address,
-      entityId: getEntityId(privates.address, new BN(1)),
+      collectorAddress: individuals.address,
+      entityId: individualId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
 
+    let pendingIndividual = await individuals.pendingIndividuals(individualId);
+    expect(pendingIndividual.depositAmount).to.bignumber.equal(
+      validatorDepositAmount
+    );
+    expect(pendingIndividual.maintainerFee).to.bignumber.equal(maintainerFee);
+
     // User 2 creates a deposit
-    ({ tx } = await privates.addDeposit(withdrawer2, {
+    ({ tx } = await individuals.addDeposit(recipient2, {
       from: sender2,
       value: validatorDepositAmount
     }));
+    individualId = getEntityId(individuals.address, new BN(2));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: privates.address,
-      entityId: getEntityId(privates.address, new BN(2)),
+      collectorAddress: individuals.address,
+      entityId: individualId,
       senderAddress: sender2,
-      withdrawerAddress: withdrawer2,
+      recipientAddress: recipient2,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
+    pendingIndividual = await individuals.pendingIndividuals(individualId);
+    expect(pendingIndividual.depositAmount).to.bignumber.equal(
+      validatorDepositAmount
+    );
+    expect(pendingIndividual.maintainerFee).to.bignumber.equal(maintainerFee);
 
     // Check contract balance
     await checkCollectorBalance(
-      privates,
+      individuals,
       validatorDepositAmount.mul(new BN(2))
     );
   });
@@ -154,57 +176,57 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
     let tx;
 
     // User 1 creates a first deposit
-    ({ tx } = await privates.addDeposit(withdrawer1, {
+    ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
       value: validatorDepositAmount
     }));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: privates.address,
-      entityId: getEntityId(privates.address, new BN(1)),
+      collectorAddress: individuals.address,
+      entityId: getEntityId(individuals.address, new BN(1)),
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
 
     // User 1 creates a second deposit
-    ({ tx } = await privates.addDeposit(withdrawer1, {
+    ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
       value: validatorDepositAmount
     }));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: privates.address,
-      entityId: getEntityId(privates.address, new BN(2)),
+      collectorAddress: individuals.address,
+      entityId: getEntityId(individuals.address, new BN(2)),
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
 
     // Check contract balance
     await checkCollectorBalance(
-      privates,
+      individuals,
       validatorDepositAmount.mul(new BN(2))
     );
   });
 
   it('fails to add a deposit to paused contract', async () => {
-    await settings.setContractPaused(privates.address, true, {
+    await settings.setContractPaused(individuals.address, true, {
       from: admin
     });
-    expect(await settings.pausedContracts(privates.address)).equal(true);
+    expect(await settings.pausedContracts(individuals.address)).equal(true);
 
     await expectRevert(
-      privates.addDeposit(withdrawer1, {
+      individuals.addDeposit(recipient1, {
         from: sender1,
         value: validatorDepositAmount
       }),
       'Depositing is currently disabled.'
     );
-    await checkCollectorBalance(privates, new BN(0));
+    await checkCollectorBalance(individuals, new BN(0));
   });
 });

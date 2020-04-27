@@ -7,7 +7,7 @@ const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
 const {
   deployPoolsProxy,
-  deployPrivatesProxy,
+  deployIndividualsProxy,
   deployGroupsProxy
 } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
@@ -62,10 +62,10 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     contractAddress: poolsCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Privates proxy address via create2
+  // Calculate Individuals proxy address via create2
   let {
-    salt: privatesSalt,
-    contractAddress: privatesCalcProxy
+    salt: individualsSalt,
+    contractAddress: individualsCalcProxy
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Groups proxy address via create2
@@ -83,7 +83,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy Deposits proxy
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
-    privatesProxy: privatesCalcProxy,
+    individualsProxy: individualsCalcProxy,
     groupsProxy: groupsCalcProxy,
     salt: depositsSalt,
     networkConfig
@@ -97,7 +97,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy Validators Registry proxy
   let validatorsRegistryProxy = await deployValidatorsRegistryProxy({
     poolsProxy: poolsCalcProxy,
-    privatesProxy: privatesCalcProxy,
+    individualsProxy: individualsCalcProxy,
     groupsProxy: groupsCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
@@ -126,20 +126,19 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     );
   }
 
-  // Deploy Privates proxy
-  let privatesProxy = await deployPrivatesProxy({
+  // Deploy Individuals proxy
+  let individualsProxy = await deployIndividualsProxy({
     vrc,
-    salt: privatesSalt,
+    salt: individualsSalt,
     depositsProxy,
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig
   });
-  if (privatesProxy !== privatesCalcProxy) {
+  if (individualsProxy !== individualsCalcProxy) {
     throw new Error(
-      `Privates contract actual address "${privatesProxy}" does not match expected "${privatesCalcProxy}"`
+      `Individuals contract actual address "${individualsProxy}" does not match expected "${individualsCalcProxy}"`
     );
   }
 
@@ -151,7 +150,6 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig
   });
   if (groupsProxy !== groupsCalcProxy) {
@@ -231,7 +229,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     validatorsRegistry: validatorsRegistryProxy,
     validatorTransfers: validatorTransfersProxy,
     pools: poolsProxy,
-    privates: privatesProxy,
+    individuals: individualsProxy,
     groups: groupsProxy,
     walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy

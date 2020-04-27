@@ -27,15 +27,15 @@ const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-const Privates = artifacts.require('Privates');
+const Individuals = artifacts.require('Individuals');
 const Pools = artifacts.require('Pools');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
 
-contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
+contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
   let networkConfig,
-    privates,
+    individuals,
     pools,
     settings,
     walletsRegistry,
@@ -75,14 +75,14 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
-    await settings.setStakingDuration(proxies.privates, stakingDuration, {
+    await settings.setStakingDuration(proxies.individuals, stakingDuration, {
       from: admin
     });
 
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
     );
-    privates = await Privates.at(proxies.privates);
+    individuals = await Individuals.at(proxies.individuals);
     pools = await Pools.at(proxies.pools);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
@@ -96,22 +96,27 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       // set maintainer's fee
       await settings.setMaintainerFee(maintainerFee, { from: admin });
 
-      // User performs deposit equal to validator deposit amount
-      await privates.addDeposit(otherAccounts[0], {
+      // user performs deposit equal to validator deposit amount
+      await individuals.addDeposit(otherAccounts[0], {
         from: sender,
         value: userDeposit
       });
 
-      // Register validator
+      // register validator
+      let individualId = getEntityId(
+        individuals.address,
+        new BN(testCaseN + 1)
+      );
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        hasReadyEntity: true,
-        privatesProxy: privates.address,
+        entityId: individualId,
+        individualsProxy: individuals.address,
         operator
       });
 
       // add new entity for transfer
       // can only transfer to pool collector
+      let newPoolId = getEntityId(pools.address, new BN(testCaseN + 1));
       await pools.addDeposit(other, {
         from: other,
         value: validatorDepositAmount
@@ -121,32 +126,32 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
       await pools.transferValidator(
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
+        newPoolId,
         {
           from: operator
         }
       );
-      let entityId = getEntityId(privates.address, testCaseN + 1);
 
       // track user's balance
       let userBalance = await balance.tracker(otherAccounts[0]);
 
       // User withdraws deposit
       let receipt = await validatorTransfers.withdraw(
-        entityId,
+        individualId,
         otherAccounts[0],
         {
           from: sender
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: individualId,
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: userDeposit,
         rewardAmount: new BN(0)
       });
 
-      // User's balance has changed
+      // user's balance has changed
       expect(await userBalance.delta()).to.be.bignumber.equal(userDeposit);
 
       // ValidatorTransfers is empty
@@ -166,22 +171,26 @@ contract('Privates (transferred withdrawal)', ([_, ...accounts]) => {
         from: walletsManager
       });
 
-      // User withdraws reward
-      receipt = await validatorTransfers.withdraw(entityId, otherAccounts[0], {
-        from: sender
-      });
+      // user withdraws reward
+      receipt = await validatorTransfers.withdraw(
+        individualId,
+        otherAccounts[0],
+        {
+          from: sender
+        }
+      );
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: individualId,
         sender: sender,
         withdrawer: otherAccounts[0],
         depositAmount: new BN(0),
         rewardAmount: userReward
       });
 
-      // User's balance has changed
+      // user's balance has changed
       expect(await userBalance.delta()).to.be.bignumber.equal(userReward);
 
-      // ValidatorTransfers is empty
+      // validatorTransfers is empty
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(new BN(0));

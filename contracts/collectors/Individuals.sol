@@ -1,0 +1,153 @@
+pragma solidity 0.5.17;
+
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "../access/Operators.sol";
+import "../validators/IValidatorRegistration.sol";
+import "../validators/ValidatorsRegistry.sol";
+import "../Deposits.sol";
+import "../Settings.sol";
+
+/**
+ * @title Individuals
+ * Individuals contract allows users to deposit the amount required to become a standalone validator.
+ * The validator can be registered as soon as deposit is added.
+ */
+contract Individuals is Initializable {
+    using SafeMath for uint256;
+
+    /**
+    * Structure for storing information about the individual which was not yet sent for staking.
+    * @param maintainerFee - tracks the maintainer fee at the time of individual creation.
+    * @param depositAmount - validator deposit amount.
+    */
+    struct PendingIndividual {
+        uint256 maintainerFee;
+        uint256 depositAmount;
+    }
+
+    // maps IDs of the individuals which were not yet sent for staking to the information about them.
+    mapping(bytes32 => PendingIndividual) public pendingIndividuals;
+
+    // total number of individuals created.
+    uint256 private individualsCount;
+
+    // address of the Deposits contract.
+    Deposits private deposits;
+
+    // address of the Settings contract.
+    Settings private settings;
+
+    // address of the Operators contract.
+    Operators private operators;
+
+    // address of the VRC (deployed by Ethereum).
+    IValidatorRegistration private validatorRegistration;
+
+    // address of the Validators Registry contract.
+    ValidatorsRegistry private validatorsRegistry;
+
+    /**
+    * Constructor for initializing the Individuals contract.
+    * @param _deposits - address of the Deposits contract.
+    * @param _settings - address of the Settings contract.
+    * @param _operators - address of the Operators contract.
+    * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
+    * @param _validatorsRegistry - address of the Validators Registry contract.
+    */
+    function initialize(
+        Deposits _deposits,
+        Settings _settings,
+        Operators _operators,
+        IValidatorRegistration _validatorRegistration,
+        ValidatorsRegistry _validatorsRegistry
+    )
+        public initializer
+    {
+        deposits = _deposits;
+        settings = _settings;
+        operators = _operators;
+        validatorRegistration = _validatorRegistration;
+        validatorsRegistry = _validatorsRegistry;
+    }
+
+    /**
+    * Function for adding individual deposits.
+    * The deposit amount must be the same as target validator deposit amount.
+    * The depositing will be disallowed in case `Individuals` contract is paused in `Settings` contract.
+    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
+    */
+    function addDeposit(address _recipient) external payable {
+        require(_recipient != address(0), "Invalid recipient address.");
+        require(msg.value == settings.validatorDepositAmount(), "Invalid deposit amount.");
+        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
+
+        // Register new individual
+        individualsCount++;
+        bytes32 individualId = keccak256(abi.encodePacked(address(this), individualsCount));
+        pendingIndividuals[individualId] = PendingIndividual(settings.maintainerFee(), msg.value);
+        deposits.addDeposit(individualId, msg.sender, _recipient, msg.value);
+    }
+
+    /**
+    * Function for canceling individual deposits.
+    * The deposit can only be canceled before it will be registered as a validator.
+    * @param _individualId - ID of the individual the deposit belongs to.
+    * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
+    */
+    function cancelDeposit(bytes32 _individualId, address payable _recipient) external {
+        uint256 depositAmount = deposits.getDeposit(_individualId, msg.sender, _recipient);
+        require(depositAmount > 0, "The user does not have a deposit.");
+
+        require(pendingIndividuals[_individualId].depositAmount > 0, "Cannot cancel deposit which has started staking.");
+
+        // cancel individual deposit
+        deposits.cancelDeposit(_individualId, msg.sender, _recipient, depositAmount);
+        delete pendingIndividuals[_individualId];
+
+        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
+        // solhint-disable avoid-call-value
+        // solium-disable-next-line security/no-call-value
+        (bool success,) = _recipient.call.value(depositAmount)("");
+        // solhint-enable avoid-call-value
+        require(success, "Transfer has failed.");
+    }
+
+    /**
+    * Function for registering validators for the individuals which are ready to start staking.
+    * @param _pubKey - BLS public key of the validator, generated by the operator.
+    * @param _signature - BLS signature of the validator, generated by the operator.
+    * @param _depositDataRoot - hash tree root of the deposit data, generated by the operator.
+    * @param _individualId - ID of the individual to register validator for.
+    */
+    function registerValidator(
+        bytes calldata _pubKey,
+        bytes calldata _signature,
+        bytes32 _depositDataRoot,
+        bytes32 _individualId
+    )
+        external
+    {
+        PendingIndividual memory pendingIndividual = pendingIndividuals[_individualId];
+        require(pendingIndividual.depositAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
+        require(operators.isOperator(msg.sender), "Permission denied.");
+
+        // cleanup pending individual
+        delete pendingIndividuals[_individualId];
+
+        // register validator
+        bytes memory withdrawalCredentials = settings.withdrawalCredentials();
+        validatorsRegistry.register(
+            _pubKey,
+            withdrawalCredentials,
+            _individualId,
+            pendingIndividual.depositAmount,
+            pendingIndividual.maintainerFee
+        );
+        validatorRegistration.deposit.value(pendingIndividual.depositAmount)(
+            _pubKey,
+            withdrawalCredentials,
+            _signature,
+            _depositDataRoot
+        );
+    }
+}

@@ -114,7 +114,7 @@ contract Deposits is Initializable {
     )
         external
     {
-        require(msg.sender == address(pools) || msg.sender == address(groups), "Permission denied.");
+        require(msg.sender == address(pools) || msg.sender == address(individuals) || msg.sender == address(groups), "Permission denied.");
         amounts[keccak256(abi.encodePacked(_entityId, _sender, _recipient))] -= _amount;
         emit DepositCanceled(msg.sender, _entityId, _sender, _recipient, _amount);
     }

@@ -10,7 +10,7 @@
     "ValidatorsRegistry": "ValidatorsRegistry",
     "WalletsRegistry": "WalletsRegistry",
     "Withdrawals": "Withdrawals",
-    "Privates": "Privates",
+    "Individuals": "Individuals",
     "ValidatorTransfers": "ValidatorTransfers",
     "Groups": "Groups"
   },

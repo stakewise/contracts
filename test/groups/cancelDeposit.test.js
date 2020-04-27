@@ -180,6 +180,19 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkCollectorBalance(groups, groupsBalance);
   });
 
+  it('fails to cancel deposit amount twice', async () => {
+    await groups.cancelDeposit(groupId, recipient1, amount1, {
+      from: sender1
+    });
+    await expectRevert(
+      groups.cancelDeposit(groupId, recipient1, amount1, {
+        from: sender1
+      }),
+      'The user does not have specified deposit cancel amount.'
+    );
+    await checkCollectorBalance(groups, groupsBalance.sub(amount1));
+  });
+
   it('fails to cancel a deposit from group with registered validator', async () => {
     const cancelAmount = validatorDepositAmount.sub(groupsBalance);
     await groups.addDeposit(groupId, recipient1, {
@@ -195,7 +208,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       groups.cancelDeposit(groupId, recipient1, cancelAmount, {
         from: sender1
       }),
-      'Cannot cancel deposit amount for group which started staking.'
+      'Cannot cancel deposit from group which has started staking.'
     );
     await checkUserTotalAmount({
       depositsContract: deposits,
