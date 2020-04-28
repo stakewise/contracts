@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const {
   BN,
   expectRevert,
@@ -15,6 +14,7 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
+  checkPendingGroup,
   checkValidatorRegistered,
   validatorRegistrationArgs,
   getEntityId
@@ -90,6 +90,8 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       ),
       'Invalid validator deposit amount.'
     );
+    await checkPendingGroup(groups, groupId, validatorDepositAmount);
+    await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
   it('fails to register validator with callers other than operator', async () => {
@@ -99,6 +101,8 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       }),
       'Permission denied.'
     );
+    await checkPendingGroup(groups, groupId, validatorDepositAmount);
+    await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
   it('fails to register validator with used public key', async () => {
@@ -106,6 +110,8 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     await groups.registerValidator(pubKey, signature, hashTreeRoot, groupId, {
       from: operator
     });
+    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkCollectorBalance(groups, new BN(0));
 
     // create new group
     await groups.createGroup(groupMembers, {
@@ -124,23 +130,23 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       }),
       'Public key has been already used.'
     );
+    await checkPendingGroup(groups, groupId, validatorDepositAmount);
+    await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
   it('fails to register validator for group which did not collect validator deposit amount', async () => {
-    await groups.cancelDeposit(
-      groupId,
-      recipient,
-      validatorDepositAmount.sub(ether('1')),
-      {
-        from: sender
-      }
-    );
+    let newBalance = validatorDepositAmount.sub(ether('1'));
+    await groups.cancelDeposit(groupId, recipient, newBalance, {
+      from: sender
+    });
     await expectRevert(
       groups.registerValidator(pubKey, signature, hashTreeRoot, groupId, {
         from: operator
       }),
       'Invalid validator deposit amount.'
     );
+    await checkPendingGroup(groups, groupId, ether('1'));
+    await checkCollectorBalance(groups, ether('1'));
   });
 
   it('fails to register validator for the same group twice', async () => {
@@ -148,6 +154,8 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     await groups.registerValidator(pubKey, signature, hashTreeRoot, groupId, {
       from: operator
     });
+    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkCollectorBalance(groups, new BN(0));
 
     // Register validator second time
     await expectRevert(
@@ -156,6 +164,8 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       }),
       'Invalid validator deposit amount.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkCollectorBalance(groups, new BN(0));
   });
 
   it('registers validators for groups with validator deposit amount collected', async () => {
@@ -175,6 +185,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
         from: sender,
         value: validatorDepositAmount
       });
+      await checkPendingGroup(groups, groupId, validatorDepositAmount);
       totalAmount = totalAmount.add(validatorDepositAmount);
     }
 
@@ -194,10 +205,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       );
       totalAmount = totalAmount.sub(validatorDepositAmount);
 
-      let pendingGroup = await groups.pendingGroups(groupIds[i]);
-      expect(pendingGroup.maintainerFee).to.be.bignumber.equal(new BN(0));
-      expect(pendingGroup.collectedAmount).to.be.bignumber.equal(new BN(0));
-
+      await checkPendingGroup(groups, groupIds[i], new BN(0));
       await checkValidatorRegistered({
         vrc,
         stakingDuration,

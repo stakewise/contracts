@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const {
   BN,
   ether,
@@ -17,6 +16,7 @@ const {
   checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance,
+  checkPendingGroup,
   getEntityId
 } = require('../common/utils');
 
@@ -72,6 +72,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid recipient address.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -83,6 +84,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The sender is not a member of the group with the specified ID.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -94,6 +96,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -105,6 +108,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -116,6 +120,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The sender is not a member of the group with the specified ID.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -132,12 +137,8 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The deposit amount is bigger than the amount required to collect.'
     );
+    await checkPendingGroup(groups, groupId, validatorDepositAmount);
     await checkCollectorBalance(groups, validatorDepositAmount);
-
-    let pendingGroup = await groups.pendingGroups(groupId);
-    expect(pendingGroup.collectedAmount).to.bignumber.equal(
-      validatorDepositAmount
-    );
   });
 
   it('cannot deposit amount bigger than validator deposit amount', async () => {
@@ -148,6 +149,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The deposit amount is bigger than the amount required to collect.'
     );
+    await checkPendingGroup(groups, groupId, new BN(0));
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -173,11 +175,8 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       totalAmount: depositAmount
     });
 
-    // Check groups balance
+    await checkPendingGroup(groups, groupId, depositAmount);
     await checkCollectorBalance(groups, depositAmount);
-
-    let pendingGroup = await groups.pendingGroups(groupId);
-    expect(pendingGroup.collectedAmount).to.bignumber.equal(depositAmount);
   });
 
   it('group creator can add deposit to the group', async () => {
@@ -221,12 +220,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       totalAmount: depositAmount2
     });
 
-    // Check groups balance
+    await checkPendingGroup(groups, groupId, validatorDepositAmount);
     await checkCollectorBalance(groups, validatorDepositAmount);
-
-    let pendingGroup = await groups.pendingGroups(groupId);
-    expect(pendingGroup.collectedAmount).to.bignumber.equal(
-      validatorDepositAmount
-    );
   });
 });

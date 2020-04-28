@@ -18,12 +18,10 @@ contract Groups is Initializable {
 
     /**
     * Structure for storing information about the group which was not yet sent for staking.
-    * @param maintainerFee - tracks the maintainer fee at the time of group creation.
     * @param collectedAmount - total amount collected by the group members.
     * @param members - mapping for users memberships in a group.
     */
     struct PendingGroup {
-        uint256 maintainerFee;
         uint256 collectedAmount;
         mapping(address => bool) members;
     }
@@ -94,7 +92,6 @@ contract Groups is Initializable {
         groupsCount++;
         bytes32 groupId = keccak256(abi.encodePacked(address(this), groupsCount));
         PendingGroup storage pendingGroup = pendingGroups[groupId];
-        pendingGroup.maintainerFee = settings.maintainerFee();
 
         // register group members
         for (uint i = 0; i < _members.length; i++) {
@@ -190,7 +187,7 @@ contract Groups is Initializable {
             withdrawalCredentials,
             _groupId,
             pendingGroup.collectedAmount,
-            pendingGroup.maintainerFee
+            settings.maintainerFee()
         );
         validatorRegistration.deposit.value(pendingGroup.collectedAmount)(
             _pubKey,

@@ -5,9 +5,12 @@ const {
   getNetworkConfig,
   deployLogicContracts
 } = require('../../deployments/common');
-const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, getEntityId } = require('../common/utils');
+const {
+  removeNetworkFile,
+  getEntityId,
+  checkPendingGroup
+} = require('../common/utils');
 
 const Groups = artifacts.require('Groups');
 const Settings = artifacts.require('Settings');
@@ -68,11 +71,6 @@ contract('Groups (create group)', ([_, ...accounts]) => {
       groupId
     });
     expect(receipt.logs[0].args.members).to.have.members(groupMembers);
-
-    let pendingGroup = await groups.pendingGroups(groupId);
-    expect(pendingGroup.maintainerFee).to.be.bignumber.equal(
-      new BN(initialSettings.maintainerFee)
-    );
-    expect(pendingGroup.collectedAmount).to.be.bignumber.equal(new BN(0));
+    await checkPendingGroup(groups, groupId, new BN(0));
   });
 });
