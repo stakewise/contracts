@@ -4,25 +4,54 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
 import "../validators/ValidatorsRegistry.sol";
+import "../validators/ValidatorTransfers.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
-import "./BaseCollector.sol";
 
 /**
  * @title Pools
- * Pools contract collects deposits from anyone.
+ * Pools contract collects deposits from any user.
  * It accumulates deposits, distributes them among pools and registers as validators.
- * All the deposits of the pool which hasn't accumulated validator deposit amount are cancelable.
+ * The deposits are cancelable until new pool or validator is created.
  */
-contract Pools is BaseCollector {
+contract Pools is Initializable {
+    using SafeMath for uint256;
+
+    // maps pool ID to whether validator can be registered for it.
+    mapping(bytes32 => bool) public pendingPools;
+
+    // total amount collected for the new pool.
+    uint256 public collectedAmount;
+
+    // total number of pools created.
+    uint256 public poolsCount;
+
+    // address of the Deposits contract.
+    Deposits private deposits;
+
+    // address of the Settings contract.
+    Settings private settings;
+
+    // address of the Operators contract.
+    Operators private operators;
+
+    // address of the VRC (deployed by Ethereum).
+    IValidatorRegistration private validatorRegistration;
+
+    // address of the Validators Registry contract.
+    ValidatorsRegistry private validatorsRegistry;
+
+    // address of the Validator Transfers contract.
+    ValidatorTransfers private validatorTransfers;
+
     /**
     * Constructor for initializing the Pools contract.
-    * @param _deposits - Address of the Deposits contract.
-    * @param _settings - Address of the Settings contract.
-    * @param _operators - Address of the Operators contract.
-    * @param _validatorRegistration - Address of the VRC (deployed by Ethereum).
-    * @param _validatorsRegistry - Address of the Validators Registry contract.
-    * @param _validatorTransfers - Address of the Validator Transfers contract.
+    * @param _deposits - address of the Deposits contract.
+    * @param _settings - address of the Settings contract.
+    * @param _operators - address of the Operators contract.
+    * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
+    * @param _validatorsRegistry - address of the Validators Registry contract.
+    * @param _validatorTransfers - address of the Validator Transfers contract.
     */
     function initialize(
         Deposits _deposits,
@@ -34,84 +63,160 @@ contract Pools is BaseCollector {
     )
         public initializer
     {
-        BaseCollector.initialize(
-            _deposits,
-            _settings,
-            _operators,
-            _validatorRegistration,
-            _validatorsRegistry,
-            _validatorTransfers
-        );
+        deposits = _deposits;
+        settings = _settings;
+        operators = _operators;
+        validatorRegistration = _validatorRegistration;
+        validatorsRegistry = _validatorsRegistry;
+        validatorTransfers = _validatorTransfers;
+        poolsCount = 1;
     }
 
     /**
-    * Function for adding deposits to pools.
-    * User must transfer ether amount together with calling the function.
-    * The amount will be added to the unfilled pool.
-    * If the transferred amount makes the current pool exceed `settings.validatorDepositAmount`,
+    * Function for adding deposits to pools. If added amount makes the current pool exceed validator deposit amount,
     * it will be split between the current pool and the next one. If Pools contract is paused in `Settings` contract,
-    * the maximum deposit size is the amount required to send current pool for staking.
-    * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
+    * the maximum deposit size is the amount required to send the last pool for staking.
+    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     */
-    function addDeposit(address _withdrawer) external payable {
-        require(_withdrawer != address(0), "Withdrawer address cannot be zero address.");
+    function addDeposit(address _recipient) external payable {
+        require(_recipient != address(0), "Invalid recipient address.");
         require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
+        uint256 toCollect = validatorTargetAmount.sub(collectedAmount);
         require(
-            !settings.pausedContracts(address(this)) ||
-        (
-            totalSupply.mod(validatorTargetAmount) != 0 &&
-            msg.value <= validatorTargetAmount.sub(totalSupply.mod(validatorTargetAmount))
-        ),
-            "Deposit amount cannot be larger than required to finish current pool."
+            !settings.pausedContracts(address(this)) || (collectedAmount != 0 && msg.value <= toCollect),
+            "Deposit amount cannot be larger than amount required to finish the last pool."
         );
-        uint256 toCollect;
-        bytes32 entityId;
-        uint256 toProcess = msg.value;
-        do {
-            entityId = keccak256(abi.encodePacked(address(this), entitiesCount));
-            toCollect = validatorTargetAmount.sub(totalSupply.mod(validatorTargetAmount));
-            if (toProcess >= toCollect) {
-                // Deposit has filled up current pool
-                deposits.addDeposit(entityId, msg.sender, _withdrawer, toCollect);
-                totalSupply = totalSupply.add(toCollect);
+
+        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+        if (msg.value > toCollect) {
+            // the deposit is bigger than the amount required to collect
+            uint256 toProcess = msg.value;
+            do {
+                deposits.addDeposit(poolId, msg.sender, _recipient, toCollect);
                 toProcess = toProcess.sub(toCollect);
 
-                // It was the last deposit for the current pool, add entity ID to the queue
-                readyEntityIds.push(entityId);
-                entitiesCount++;
-            } else {
-                // Deposit fits in current pool
-                deposits.addDeposit(entityId, msg.sender, _withdrawer, toProcess);
-                totalSupply = totalSupply.add(toProcess);
-                break;
-            }
-        } while (toProcess != 0);
+                // it was the last deposit for the current pool
+                pendingPools[poolId] = true;
+
+                // create new pool
+                poolsCount++;
+                poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+                toCollect = validatorTargetAmount;
+            } while (toProcess > toCollect);
+            deposits.addDeposit(poolId, msg.sender, _recipient, toProcess);
+            collectedAmount = toProcess;
+        } else {
+            // deposit fits in the current pool
+            deposits.addDeposit(poolId, msg.sender, _recipient, msg.value);
+            collectedAmount = collectedAmount.add(msg.value);
+        }
+
+        if (collectedAmount == validatorTargetAmount) {
+            pendingPools[poolId] = true;
+            poolsCount++;
+            collectedAmount = 0;
+        }
     }
 
     /**
-    * Function for canceling deposits in current pool.
-    * The deposits can only be canceled from the pool which has less than `settings.validatorDepositAmount`.
-    * @param _withdrawer - an account where the canceled amount will be transferred (must be the same as when the deposit was made).
-    * @param _amount - the amount of ether to cancel from the active pool.
+    * Function for canceling deposits in new pool.
+    * The deposits are cancelable until new pool or validator is created.
+    * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
+    * @param _amount - amount to cancel from the deposit.
     */
-    function cancelDeposit(address payable _withdrawer, uint256 _amount) external {
+    function cancelDeposit(address payable _recipient, uint256 _amount) external {
         require(_amount > 0 && _amount.mod(settings.userDepositMinUnit()) == 0, "Invalid deposit cancel amount.");
-        bytes32 poolId = keccak256(abi.encodePacked(address(this), entitiesCount));
+        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCount));
         require(
-            deposits.getDeposit(poolId, msg.sender, _withdrawer) >= _amount,
-            "The user does not have a specified deposit cancel amount."
+            deposits.getDeposit(poolId, msg.sender, _recipient) >= _amount,
+            "The user does not have specified deposit cancel amount."
         );
 
-        deposits.cancelDeposit(poolId, msg.sender, _withdrawer, _amount);
-        totalSupply = totalSupply.sub(_amount);
+        // cancel deposit
+        deposits.cancelDeposit(poolId, msg.sender, _recipient, _amount);
+        collectedAmount = collectedAmount.sub(_amount);
 
         // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
         // solhint-disable avoid-call-value
         // solium-disable-next-line security/no-call-value
-        (bool success,) = _withdrawer.call.value(_amount)("");
+        (bool success,) = _recipient.call.value(_amount)("");
         // solhint-enable avoid-call-value
         require(success, "Transfer has failed.");
+    }
+
+    /**
+    * Function for registering validators for the pools which are ready to start staking.
+    * @param _pubKey - BLS public key of the validator, generated by the operator.
+    * @param _signature - BLS signature of the validator, generated by the operator.
+    * @param _depositDataRoot - hash tree root of the deposit data, generated by the operator.
+    * @param _poolId - ID of the pool to register validator for.
+    */
+    function registerValidator(
+        bytes calldata _pubKey,
+        bytes calldata _signature,
+        bytes32 _depositDataRoot,
+        bytes32 _poolId
+    )
+        external
+    {
+        require(pendingPools[_poolId], "Invalid pool ID.");
+        require(operators.isOperator(msg.sender), "Permission denied.");
+
+        // cleanup pending pool
+        delete pendingPools[_poolId];
+
+        // register validator
+        bytes memory withdrawalCredentials = settings.withdrawalCredentials();
+        uint256 depositAmount = settings.validatorDepositAmount();
+        validatorsRegistry.register(
+            _pubKey,
+            withdrawalCredentials,
+            _poolId,
+            depositAmount,
+            settings.maintainerFee()
+        );
+        validatorRegistration.deposit.value(depositAmount)(
+            _pubKey,
+            withdrawalCredentials,
+            _signature,
+            _depositDataRoot
+        );
+    }
+
+    /**
+    * Function for transferring validator ownership to the new pool.
+    * @param _validatorId - ID of the validator to transfer.
+    * @param _validatorReward - validator current reward.
+    * @param _poolId - ID of the pool to register validator for.
+    */
+    function transferValidator(
+        bytes32 _validatorId,
+        uint256 _validatorReward,
+        bytes32 _poolId
+    )
+        external
+    {
+        require(pendingPools[_poolId], "Invalid pool ID.");
+        require(operators.isOperator(msg.sender), "Permission denied.");
+
+        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
+        require(prevEntityId != "", "Validator with such ID is not registered.");
+
+        (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
+
+        // transfer validator to the new pool
+        delete pendingPools[_poolId];
+        validatorsRegistry.update(_validatorId, _poolId, settings.maintainerFee());
+
+        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
+        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
+        validatorTransfers.registerTransfer.value(depositAmount)(
+            _validatorId,
+            prevEntityId,
+            prevEntityReward.sub(maintainerDebt),
+            maintainerDebt
+        );
     }
 }
