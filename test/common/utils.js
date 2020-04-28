@@ -38,10 +38,38 @@ function removeNetworkFile(network) {
   }
 }
 
+async function checkPendingPool(poolsContract, poolId, expectedPending) {
+  let isPending = await poolsContract.pendingPools(poolId);
+  expect(isPending).to.equal(expectedPending);
+  if (expectedPending) {
+    let poolsCount = await poolsContract.poolsCount();
+    expect(poolId).to.not.equal(getEntityId(poolsContract.address, poolsCount));
+  }
+}
+
+async function checkPendingGroup(groupsContract, groupId, expectedAmount) {
+  let collectedAmount = await groupsContract.pendingGroups(groupId);
+  expect(collectedAmount).to.bignumber.equal(expectedAmount);
+}
+
+async function checkPendingIndividual(
+  individualsContract,
+  individualId,
+  expectedPending
+) {
+  let isPending = await individualsContract.pendingIndividuals(individualId);
+  expect(isPending).to.equal(expectedPending);
+}
+
 async function checkCollectorBalance(collectorContract, correctBalance) {
   expect(
     await balance.current(collectorContract.address)
   ).to.be.bignumber.equal(correctBalance);
+}
+
+async function checkNewPoolCollectedAmount(poolsContract, correctAmount) {
+  let collectedAmount = await poolsContract.collectedAmount();
+  expect(collectedAmount).to.be.bignumber.equal(correctAmount);
 }
 
 async function checkUserTotalAmount({
@@ -249,6 +277,8 @@ async function registerValidator({
       from: sender,
       value: initialSettings.validatorDepositAmount
     });
+    // FIXME: invalid if not the first entity created
+    entityId = getEntityId(collector.address, new BN(1));
   }
 
   // register validator for the entity
@@ -268,6 +298,10 @@ async function registerValidator({
 module.exports = {
   validatorRegistrationArgs,
   registerValidator,
+  checkPendingPool,
+  checkPendingGroup,
+  checkPendingIndividual,
+  checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,
   checkValidatorTransferred,

@@ -17,6 +17,7 @@ const {
   removeNetworkFile,
   checkUserTotalAmount,
   checkCollectorBalance,
+  checkPendingIndividual,
   checkDepositCanceled,
   getEntityId,
   validatorRegistrationArgs
@@ -82,6 +83,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1
     });
+    await checkPendingIndividual(individuals, individualId, true);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -100,6 +102,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1
     });
+    await checkPendingIndividual(individuals, individualId, true);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -128,11 +131,8 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1
     });
+    await checkPendingIndividual(individuals, individualId, false);
     await checkCollectorBalance(individuals, new BN(0));
-
-    let pendingIndividual = await individuals.pendingIndividuals(individualId);
-    expect(pendingIndividual.depositAmount).to.bignumber.equal(new BN(0));
-    expect(pendingIndividual.maintainerFee).to.bignumber.equal(new BN(0));
   });
 
   it('fails to cancel deposit amount twice', async () => {
@@ -145,6 +145,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       }),
       'The user does not have a deposit.'
     );
+    await checkPendingIndividual(individuals, individualId, false);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -168,12 +169,8 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(
       validatorDepositAmount
     );
-
     // Check balance
-    await checkCollectorBalance(individuals, ether('0'));
-
-    let pendingIndividual = await individuals.pendingIndividuals(individualId);
-    expect(pendingIndividual.depositAmount).to.bignumber.equal(new BN(0));
-    expect(pendingIndividual.maintainerFee).to.bignumber.equal(new BN(0));
+    await checkPendingIndividual(individuals, individualId, false);
+    await checkCollectorBalance(individuals, new BN(0));
   });
 });

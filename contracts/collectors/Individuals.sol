@@ -15,18 +15,8 @@ import "../Settings.sol";
 contract Individuals is Initializable {
     using SafeMath for uint256;
 
-    /**
-    * Structure for storing information about the individual which was not yet sent for staking.
-    * @param maintainerFee - tracks the maintainer fee at the time of individual creation.
-    * @param depositAmount - validator deposit amount.
-    */
-    struct PendingIndividual {
-        uint256 maintainerFee;
-        uint256 depositAmount;
-    }
-
-    // maps IDs of the individuals which were not yet sent for staking to the information about them.
-    mapping(bytes32 => PendingIndividual) public pendingIndividuals;
+    // maps individual ID to whether validator can be registered for it.
+    mapping(bytes32 => bool) public pendingIndividuals;
 
     // total number of individuals created.
     uint256 private individualsCount;
@@ -84,7 +74,7 @@ contract Individuals is Initializable {
         // Register new individual
         individualsCount++;
         bytes32 individualId = keccak256(abi.encodePacked(address(this), individualsCount));
-        pendingIndividuals[individualId] = PendingIndividual(settings.maintainerFee(), msg.value);
+        pendingIndividuals[individualId] = true;
         deposits.addDeposit(individualId, msg.sender, _recipient, msg.value);
     }
 
@@ -97,8 +87,7 @@ contract Individuals is Initializable {
     function cancelDeposit(bytes32 _individualId, address payable _recipient) external {
         uint256 depositAmount = deposits.getDeposit(_individualId, msg.sender, _recipient);
         require(depositAmount > 0, "The user does not have a deposit.");
-
-        require(pendingIndividuals[_individualId].depositAmount > 0, "Cannot cancel deposit which has started staking.");
+        require(pendingIndividuals[_individualId], "Cannot cancel deposit which has started staking.");
 
         // cancel individual deposit
         deposits.cancelDeposit(_individualId, msg.sender, _recipient, depositAmount);
@@ -127,8 +116,7 @@ contract Individuals is Initializable {
     )
         external
     {
-        PendingIndividual memory pendingIndividual = pendingIndividuals[_individualId];
-        require(pendingIndividual.depositAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
+        require(pendingIndividuals[_individualId], "Invalid individual ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
         // cleanup pending individual
@@ -136,14 +124,15 @@ contract Individuals is Initializable {
 
         // register validator
         bytes memory withdrawalCredentials = settings.withdrawalCredentials();
+        uint256 depositAmount = settings.validatorDepositAmount();
         validatorsRegistry.register(
             _pubKey,
             withdrawalCredentials,
             _individualId,
-            pendingIndividual.depositAmount,
-            pendingIndividual.maintainerFee
+            depositAmount,
+            settings.maintainerFee()
         );
-        validatorRegistration.deposit.value(pendingIndividual.depositAmount)(
+        validatorRegistration.deposit.value(depositAmount)(
             _pubKey,
             withdrawalCredentials,
             _signature,

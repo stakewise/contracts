@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const { BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -10,6 +9,7 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
+  checkPendingIndividual,
   checkValidatorRegistered,
   validatorRegistrationArgs,
   getEntityId
@@ -80,8 +80,10 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
           from: operator
         }
       ),
-      'Invalid validator deposit amount.'
+      'Invalid individual ID.'
     );
+    await checkPendingIndividual(individuals, individualId, true);
+    await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
   it('fails to register validator with callers other than operator', async () => {
@@ -97,6 +99,8 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Permission denied.'
     );
+    await checkPendingIndividual(individuals, individualId, true);
+    await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
   it('fails to register validator with used public key', async () => {
@@ -110,7 +114,8 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         from: operator
       }
     );
-
+    await checkPendingIndividual(individuals, individualId, false);
+    await checkCollectorBalance(individuals, new BN(0));
     // Register validator 2 with the same validator public key
     await individuals.addDeposit(recipient, {
       from: sender,
@@ -129,6 +134,8 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Public key has been already used.'
     );
+    await checkPendingIndividual(individuals, individualId, true);
+    await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
   it('fails to register validator for the same individual twice', async () => {
@@ -142,6 +149,8 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         from: operator
       }
     );
+    await checkPendingIndividual(individuals, individualId, false);
+    await checkCollectorBalance(individuals, new BN(0));
 
     // Register validator second time
     await expectRevert(
@@ -154,8 +163,10 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
           from: operator
         }
       ),
-      'Invalid validator deposit amount.'
+      'Invalid individual ID.'
     );
+    await checkPendingIndividual(individuals, individualId, false);
+    await checkCollectorBalance(individuals, new BN(0));
   });
 
   it('registers validators for individuals with validator deposit amount collected', async () => {
@@ -170,6 +181,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         value: validatorDepositAmount
       });
       individualId = getEntityId(individuals.address, new BN(i + 1));
+      await checkPendingIndividual(individuals, individualId, true);
       individualIds.push(individualId);
       totalAmount = totalAmount.add(validatorDepositAmount);
     }
@@ -190,12 +202,6 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       );
       totalAmount = totalAmount.sub(validatorDepositAmount);
 
-      let pendingIndividual = await individuals.pendingIndividuals(
-        individualIds[i]
-      );
-      expect(pendingIndividual.maintainerFee).to.be.bignumber.equal(new BN(0));
-      expect(pendingIndividual.depositAmount).to.be.bignumber.equal(new BN(0));
-
       await checkValidatorRegistered({
         vrc,
         stakingDuration,
@@ -207,6 +213,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         signature: validatorRegistrationArgs[i].signature
       });
     }
+    await checkPendingIndividual(individuals, individualId, false);
     await checkCollectorBalance(individuals, new BN(0));
   });
 });
