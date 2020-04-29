@@ -193,10 +193,10 @@ contract('Privates (add deposit)', ([_, ...accounts]) => {
   });
 
   it('fails to add a deposit to paused contract', async () => {
-    await settings.setCollectorPaused(privates.address, true, {
+    await settings.setContractPaused(privates.address, true, {
       from: admin
     });
-    expect(await settings.pausedCollectors(privates.address)).equal(true);
+    expect(await settings.pausedContracts(privates.address)).equal(true);
 
     await expectRevert(
       privates.addDeposit(withdrawer1, {

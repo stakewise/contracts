@@ -49,7 +49,7 @@ contract Pools is BaseCollector {
     * User must transfer ether amount together with calling the function.
     * The amount will be added to the unfilled pool.
     * If the transferred amount makes the current pool exceed `settings.validatorDepositAmount`,
-    * it will be split between the current pool and the next one. If Pools collector is paused in `Settings` contract,
+    * it will be split between the current pool and the next one. If Pools contract is paused in `Settings` contract,
     * the maximum deposit size is the amount required to send current pool for staking.
     * @param _withdrawer - an account where deposit + rewards will be sent after the withdrawal.
     */
@@ -59,7 +59,7 @@ contract Pools is BaseCollector {
 
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         require(
-            !settings.pausedCollectors(address(this)) ||
+            !settings.pausedContracts(address(this)) ||
         (
             totalSupply.mod(validatorTargetAmount) != 0 &&
             msg.value <= validatorTargetAmount.sub(totalSupply.mod(validatorTargetAmount))

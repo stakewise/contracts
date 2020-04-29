@@ -27,7 +27,7 @@ const newValues = [
   ['maintainerFee', new BN(100)],
   ['minStakingDuration', new BN(1209600)],
   ['stakingDuration', new BN(31556952)],
-  ['collectorPaused', true]
+  ['contractPaused', true]
 ];
 
 function getSetMethod(setting) {
@@ -97,15 +97,15 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
         expect(
           await settings.stakingDurations(collector)
         ).to.be.bignumber.equal(newValue);
-      } else if (setting === 'collectorPaused') {
-        expect(await settings.pausedCollectors(collector)).equal(false);
-        const receipt = await settings.setCollectorPaused(collector, newValue, {
+      } else if (setting === 'contractPaused') {
+        expect(await settings.pausedContracts(collector)).equal(false);
+        const receipt = await settings.setContractPaused(collector, newValue, {
           from: admin
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('pausedCollectors').padEnd(66, '0')
+          settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0')
         });
-        expect(await settings.pausedCollectors(collector)).equal(newValue);
+        expect(await settings.pausedContracts(collector)).equal(newValue);
       } else {
         await assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -135,15 +135,15 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
         expect(
           await settings.stakingDurations(collector)
         ).to.be.bignumber.equal(new BN(0));
-      } else if (setting === 'collectorPaused') {
-        expect(await settings.pausedCollectors(collector)).equal(false);
+      } else if (setting === 'contractPaused') {
+        expect(await settings.pausedContracts(collector)).equal(false);
         await expectRevert(
-          settings.setCollectorPaused(collector, newValue, {
+          settings.setContractPaused(collector, newValue, {
             from: anyone
           }),
           'Permission denied.'
         );
-        expect(await settings.pausedCollectors(collector)).equal(false);
+        expect(await settings.pausedContracts(collector)).equal(false);
       } else {
         assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -158,15 +158,15 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     }
   });
 
-  it('operators can pause collectors', async () => {
-    expect(await settings.pausedCollectors(collector)).equal(false);
-    const receipt = await settings.setCollectorPaused(collector, true, {
+  it('operators can pause contracts', async () => {
+    expect(await settings.pausedContracts(collector)).equal(false);
+    const receipt = await settings.setContractPaused(collector, true, {
       from: operator
     });
     expectEvent(receipt, 'SettingChanged', {
-      settingName: web3.utils.fromAscii('pausedCollectors').padEnd(66, '0')
+      settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0')
     });
-    expect(await settings.pausedCollectors(collector)).equal(true);
+    expect(await settings.pausedContracts(collector)).equal(true);
   });
 
   it("checks that maintainer's fee is less than 100%", async () => {

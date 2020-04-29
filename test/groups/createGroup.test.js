@@ -39,8 +39,8 @@ contract('Groups (create group)', ([_, ...accounts]) => {
   });
 
   it('fails to create a group if paused', async () => {
-    await settings.setCollectorPaused(groups.address, true, { from: admin });
-    expect(await settings.pausedCollectors(groups.address)).equal(true);
+    await settings.setContractPaused(groups.address, true, { from: admin });
+    expect(await settings.pausedContracts(groups.address)).equal(true);
 
     await expectRevert(
       groups.createGroup(groupMembers, { from: groupCreator }),
