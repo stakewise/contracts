@@ -246,6 +246,7 @@ contract ValidatorTransfers is Initializable {
         require(withdrawalAmount > 0, "Nothing to withdraw.");
 
         // transfer withdrawal amount to the recipient
+        emit UserWithdrawn(msg.sender, _recipient, _entityId, depositWithdrawal, rewardWithdrawal);
         _recipient.sendValue(withdrawalAmount);
     }
 
