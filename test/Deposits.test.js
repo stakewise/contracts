@@ -2,7 +2,7 @@ const { expectRevert, ether, BN } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../deployments/common');
 const { deployVRC } = require('../deployments/vrc');
 const { getEntityId, removeNetworkFile } = require('./common/utils');
@@ -22,11 +22,11 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
     let {
       pools: poolsProxy,
       deposits: depositsProxy,
-      operators: operatorsProxy
+      operators: operatorsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     deposits = await Deposits.at(depositsProxy);
     pools = await Pools.at(poolsProxy);
@@ -47,7 +47,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
           users[i],
           ether('3'),
           {
-            from: users[i]
+            from: users[i],
           }
         ),
         'Permission denied.'
@@ -64,7 +64,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
           users[i],
           ether('3'),
           {
-            from: users[i]
+            from: users[i],
           }
         ),
         'Permission denied.'

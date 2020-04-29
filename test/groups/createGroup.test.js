@@ -3,13 +3,13 @@ const { BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   getEntityId,
-  checkPendingGroup
+  checkPendingGroup,
 } = require('../common/utils');
 
 const Groups = artifacts.require('Groups');
@@ -33,11 +33,11 @@ contract('Groups (create group)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       groups: groupsProxy,
-      settings: settingsProxy
+      settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     groups = await Groups.at(groupsProxy);
     settings = await Settings.at(settingsProxy);
@@ -62,13 +62,13 @@ contract('Groups (create group)', ([_, ...accounts]) => {
 
   it('any user can create a new staking group', async () => {
     const receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator
+      from: groupCreator,
     });
 
     const groupId = getEntityId(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
       creator: groupCreator,
-      groupId
+      groupId,
     });
     expect(receipt.logs[0].args.members).to.have.members(groupMembers);
     await checkPendingGroup(groups, groupId, new BN(0));

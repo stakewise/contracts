@@ -2,7 +2,7 @@ const { stdout } = require('@openzeppelin/cli');
 const { Loggy } = require('@openzeppelin/upgrades');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../deployments/common');
 const { deployAllProxies } = require('../deployments');
 
@@ -20,6 +20,6 @@ Loggy.silent(true);
   await deployAllProxies({
     initialAdmin: process.env.INITIAL_ADMIN,
     vrc: process.env.VRC,
-    networkConfig
+    networkConfig,
   });
 })();

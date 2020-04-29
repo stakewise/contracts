@@ -5,19 +5,19 @@ const {
   expectEvent,
   expectRevert,
   ether,
-  balance
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   registerValidator,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
@@ -63,7 +63,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     pools = await Pools.at(proxies.pools);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
@@ -87,24 +87,24 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      recipient: other
+      recipient: other,
     });
 
     // register new ready entity
     await pools.addDeposit(recipient, {
       from: sender,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
 
     // transfer validator to the new entity
     let poolId = getEntityId(pools.address, new BN(2));
     await pools.transferValidator(validatorId, prevEntityReward, poolId, {
-      from: operator
+      from: operator,
     });
 
     // assign wallet to transferred validator
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager
+      from: walletsManager,
     });
     wallet = logs[0].args.wallet;
   });
@@ -112,7 +112,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
   it('only Withdrawals contract can resolve debts', async () => {
     await expectRevert(
       validatorTransfers.resolveDebt(validatorId, {
-        from: admin
+        from: admin,
       }),
       'Permission denied.'
     );
@@ -128,7 +128,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // enable withdrawals
     const { tx } = await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // Wallet unlocked
@@ -137,7 +137,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       wallet,
       usersBalance: validatorBalance
         .sub(prevEntityReward)
-        .sub(curEntityMaintainerReward)
+        .sub(curEntityMaintainerReward),
     });
 
     // debts and maintainer reward transferred
@@ -147,7 +147,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // Debt resolved
     await expectEvent.inTransaction(tx, validatorTransfers, 'DebtResolved', {
-      validatorId
+      validatorId,
     });
     let validatorDebt = await validatorTransfers.validatorDebts(validatorId);
     expect(validatorDebt.userDebt).to.be.bignumber.equal(prevEntityUserReward);
@@ -168,14 +168,14 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // enable withdrawals
     const { tx } = await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // Wallet unlocked
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validatorId,
       wallet,
-      usersBalance: validatorBalance.sub(prevEntityReward)
+      usersBalance: validatorBalance.sub(prevEntityReward),
     });
 
     // debts and maintainer reward transferred
@@ -185,7 +185,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // Debt resolved
     await expectEvent.inTransaction(tx, validatorTransfers, 'DebtResolved', {
-      validatorId
+      validatorId,
     });
     let validatorDebt = await validatorTransfers.validatorDebts(validatorId);
     expect(validatorDebt.userDebt).to.be.bignumber.equal(prevEntityUserReward);
@@ -208,13 +208,13 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // enable withdrawals first time
     await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // enable withdrawals second time
     await expectRevert(
       withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       }),
       'Wallet is already unlocked.'
     );

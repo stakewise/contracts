@@ -9,7 +9,7 @@ async function deployPoolsProxy({
   validatorsRegistryProxy,
   validatorTransfersProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Pools',
@@ -20,10 +20,10 @@ async function deployPoolsProxy({
       operatorsProxy,
       vrc,
       validatorsRegistryProxy,
-      validatorTransfersProxy
+      validatorTransfersProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Pools contract: ${proxy.address}`);
@@ -37,7 +37,7 @@ async function deployIndividualsProxy({
   vrc,
   validatorsRegistryProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Individuals',
@@ -47,10 +47,10 @@ async function deployIndividualsProxy({
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy
+      validatorsRegistryProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Individuals contract: ${proxy.address}`);
@@ -64,7 +64,7 @@ async function deployGroupsProxy({
   vrc,
   validatorsRegistryProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Groups',
@@ -74,10 +74,10 @@ async function deployGroupsProxy({
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy
+      validatorsRegistryProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Groups contract: ${proxy.address}`);
@@ -87,5 +87,5 @@ async function deployGroupsProxy({
 module.exports = {
   deployPoolsProxy,
   deployIndividualsProxy,
-  deployGroupsProxy
+  deployGroupsProxy,
 };

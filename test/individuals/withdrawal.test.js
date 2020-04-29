@@ -3,12 +3,12 @@ const {
   BN,
   send,
   balance,
-  expectEvent
+  expectEvent,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -16,7 +16,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
@@ -52,7 +52,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -69,7 +69,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
   it('can withdraw individual deposit and reward from validator', async () => {
     for (const [
       testCaseN,
-      { maintainerFee, maintainerReward, userDeposit, userReward }
+      { maintainerFee, maintainerReward, userDeposit, userReward },
     ] of testCases.entries()) {
       // set maintainer's fee
       await settings.setMaintainerFee(maintainerFee, { from: admin });
@@ -77,7 +77,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       // user performs deposit equal to validator deposit amount
       await individuals.addDeposit(otherAccounts[0], {
         from: sender,
-        value: userDeposit
+        value: userDeposit,
       });
 
       // register validator
@@ -89,12 +89,12 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         args: validatorRegistrationArgs[testCaseN],
         entityId: individualId,
         individualsProxy: individuals.address,
-        operator
+        operator,
       });
 
       // time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -104,7 +104,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -113,7 +113,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         {
           validatorId,
           wallet,
-          usersBalance: walletBalance.sub(maintainerReward)
+          usersBalance: walletBalance.sub(maintainerReward),
         }
       );
 
@@ -121,7 +121,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
         entityId: individualId,
-        amount: maintainerReward
+        amount: maintainerReward,
       });
       walletBalance.isub(maintainerReward);
 
@@ -130,7 +130,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // user withdraws his deposit and reward
       receipt = await withdrawals.withdraw(wallet, otherAccounts[0], {
-        from: sender
+        from: sender,
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
@@ -138,7 +138,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: userDeposit,
-        rewardAmount: userReward
+        rewardAmount: userReward,
       });
 
       // User's balance has changed
@@ -154,12 +154,12 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
   it('can withdraw individual deposit from penalised validator', async () => {
     for (const [
       testCaseN,
-      { userDeposit, userPenalisedReturn }
+      { userDeposit, userPenalisedReturn },
     ] of penalisedTestCases.entries()) {
       // user performs deposit equal to validator deposit amount
       await individuals.addDeposit(otherAccounts[0], {
         from: sender,
-        value: userDeposit
+        value: userDeposit,
       });
 
       // register validator
@@ -171,12 +171,12 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         args: validatorRegistrationArgs[testCaseN],
         entityId: individualId,
         individualsProxy: individuals.address,
-        operator
+        operator,
       });
 
       // time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -186,7 +186,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -195,7 +195,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         {
           validatorId,
           wallet,
-          usersBalance: walletBalance
+          usersBalance: walletBalance,
         }
       );
 
@@ -204,7 +204,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // user withdraws his deposit and reward
       receipt = await withdrawals.withdraw(wallet, otherAccounts[0], {
-        from: sender
+        from: sender,
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
@@ -212,7 +212,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: userPenalisedReturn,
-        rewardAmount: new BN(0)
+        rewardAmount: new BN(0),
       });
 
       // user's balance has changed

@@ -6,14 +6,14 @@ async function deployDepositsProxy({
   individualsProxy,
   groupsProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Deposits',
     methodName: 'initialize',
     methodArgs: [poolsProxy, individualsProxy, groupsProxy],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Deposits contract: ${proxy.address}`);
@@ -21,5 +21,5 @@ async function deployDepositsProxy({
 }
 
 module.exports = {
-  deployDepositsProxy
+  deployDepositsProxy,
 };

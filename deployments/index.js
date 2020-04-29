@@ -1,83 +1,83 @@
 const {
   deployAdminsProxy,
   deployOperatorsProxy,
-  deployWalletsManagersProxy
+  deployWalletsManagersProxy,
 } = require('../deployments/access');
 const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
 const {
   deployPoolsProxy,
   deployIndividualsProxy,
-  deployGroupsProxy
+  deployGroupsProxy,
 } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
 const {
   deployWalletsRegistryProxy,
-  deployWithdrawalsProxy
+  deployWithdrawalsProxy,
 } = require('../deployments/withdrawals');
 const {
-  deployValidatorsRegistryProxy
+  deployValidatorsRegistryProxy,
 } = require('../deployments/validatorsRegistry');
 const {
-  deployValidatorTransfersProxy
+  deployValidatorTransfersProxy,
 } = require('../deployments/validatorTransfers');
 
 async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy admins, operators, managers proxies
   let adminsProxy = await deployAdminsProxy({
     networkConfig,
-    initialAdmin
+    initialAdmin,
   });
   let operatorsProxy = await deployOperatorsProxy({
     networkConfig,
-    adminsProxy
+    adminsProxy,
   });
   let walletsManagersProxy = await deployWalletsManagersProxy({
     networkConfig,
-    adminsProxy
+    adminsProxy,
   });
 
   // Deploy global settings
   let settingsProxy = await deploySettingsProxy({
     networkConfig,
     adminsProxy,
-    operatorsProxy
+    operatorsProxy,
   });
 
   // Calculate Deposits proxy address via create2
   let {
     salt: depositsSalt,
-    contractAddress: depositsCalcProxy
+    contractAddress: depositsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Validators Registry proxy address via create2
   let {
     salt: validatorsRegistrySalt,
-    contractAddress: validatorsRegistryCalcProxy
+    contractAddress: validatorsRegistryCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Pools proxy address via create2
   let {
     salt: poolsSalt,
-    contractAddress: poolsCalcProxy
+    contractAddress: poolsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Individuals proxy address via create2
   let {
     salt: individualsSalt,
-    contractAddress: individualsCalcProxy
+    contractAddress: individualsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Groups proxy address via create2
   let {
     salt: groupsSalt,
-    contractAddress: groupsCalcProxy
+    contractAddress: groupsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Validator Transfers proxy address via create2
   let {
     salt: validatorTransfersSalt,
-    contractAddress: validatorTransfersCalcProxy
+    contractAddress: validatorTransfersCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Deploy Deposits proxy
@@ -86,7 +86,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     individualsProxy: individualsCalcProxy,
     groupsProxy: groupsCalcProxy,
     salt: depositsSalt,
-    networkConfig
+    networkConfig,
   });
   if (depositsProxy !== depositsCalcProxy) {
     throw new Error(
@@ -101,7 +101,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     groupsProxy: groupsCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
-    networkConfig
+    networkConfig,
   });
   if (validatorsRegistryProxy !== validatorsRegistryCalcProxy) {
     throw new Error(
@@ -118,7 +118,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     operatorsProxy,
     validatorsRegistryProxy,
     validatorTransfersProxy: validatorTransfersCalcProxy,
-    networkConfig
+    networkConfig,
   });
   if (poolsProxy !== poolsCalcProxy) {
     throw new Error(
@@ -134,7 +134,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
-    networkConfig
+    networkConfig,
   });
   if (individualsProxy !== individualsCalcProxy) {
     throw new Error(
@@ -150,7 +150,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
-    networkConfig
+    networkConfig,
   });
   if (groupsProxy !== groupsCalcProxy) {
     throw new Error(
@@ -161,13 +161,13 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Calculate Wallets Registry proxy addresses via create2
   let {
     salt: walletsRegistrySalt,
-    contractAddress: walletsRegistryCalcProxy
+    contractAddress: walletsRegistryCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Withdrawals proxy addresses via create2
   let {
     salt: withdrawalsSalt,
-    contractAddress: withdrawalsCalcProxy
+    contractAddress: withdrawalsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Deploy Wallets Registry proxy
@@ -177,7 +177,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     validatorsRegistryProxy,
     networkConfig,
     adminsProxy,
-    walletsManagersProxy
+    walletsManagersProxy,
   });
   if (walletsRegistryProxy !== walletsRegistryCalcProxy) {
     throw new Error(
@@ -194,7 +194,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     networkConfig,
     walletsRegistryProxy,
     validatorsRegistryProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy
+    validatorTransfersProxy: validatorTransfersCalcProxy,
   });
   if (withdrawalsProxy !== withdrawalsCalcProxy) {
     throw new Error(
@@ -212,7 +212,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     validatorsRegistryProxy,
     walletsRegistryProxy,
     withdrawalsProxy,
-    networkConfig
+    networkConfig,
   });
   if (validatorTransfersProxy !== validatorTransfersCalcProxy) {
     throw new Error(
@@ -232,10 +232,10 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     individuals: individualsProxy,
     groups: groupsProxy,
     walletsRegistry: walletsRegistryProxy,
-    withdrawals: withdrawalsProxy
+    withdrawals: withdrawalsProxy,
   };
 }
 
 module.exports = {
-  deployAllProxies
+  deployAllProxies,
 };

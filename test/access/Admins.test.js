@@ -2,12 +2,12 @@ const { expect } = require('chai');
 const {
   constants,
   expectEvent,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAdminsProxy } = require('../../deployments/access');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { removeNetworkFile } = require('../common/utils');
 
@@ -38,7 +38,7 @@ contract('Admins', ([_, ...accounts]) => {
     const receipt = await admins.initialize(admin);
     expect(await admins.isAdmin(admin)).equal(true);
     expectEvent(receipt, 'AdminAdded', {
-      account: admin
+      account: admin,
     });
   });
 
@@ -46,7 +46,7 @@ contract('Admins', ([_, ...accounts]) => {
     it('admins can assign admin role to another account', async () => {
       const receipt = await admins.addAdmin(otherAdmin, { from: admin });
       expectEvent(receipt, 'AdminAdded', {
-        account: otherAdmin
+        account: otherAdmin,
       });
       expect(await admins.isAdmin(otherAdmin)).equal(true);
       expect(await admins.isAdmin(anyone)).equal(false);
@@ -84,7 +84,7 @@ contract('Admins', ([_, ...accounts]) => {
     it('admin can renounce himself', async () => {
       const receipt = await admins.renounceAdmin({ from: admin });
       expectEvent(receipt, 'AdminRemoved', {
-        account: admin
+        account: admin,
       });
       expect(await admins.isAdmin(admin)).equal(false);
     });

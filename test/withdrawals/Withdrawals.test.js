@@ -2,7 +2,7 @@ const { send, expectRevert, constants } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -37,7 +37,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
     proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -51,10 +51,10 @@ contract('Withdrawals', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      recipient: other
+      recipient: other,
     });
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager
+      from: walletsManager,
     });
     wallet = logs[0].args.wallet;
   });
@@ -62,7 +62,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
   it('user cannot withdraw from unknown wallet', async () => {
     await expectRevert(
       withdrawals.withdraw(constants.ZERO_ADDRESS, other, {
-        from: other
+        from: other,
       }),
       'Wallet withdrawals are not enabled.'
     );
@@ -71,7 +71,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
   it('user cannot withdraw from locked wallet', async () => {
     await expectRevert(
       withdrawals.withdraw(wallet, other, {
-        from: other
+        from: other,
       }),
       'Wallet withdrawals are not enabled.'
     );
@@ -81,12 +81,12 @@ contract('Withdrawals', ([_, ...accounts]) => {
     // enable withdrawals
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
     await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     await expectRevert(
       withdrawals.withdraw(wallet, other, {
-        from: otherAccounts[0]
+        from: otherAccounts[0],
       }),
       'User does not have a share in this wallet.'
     );
@@ -96,18 +96,18 @@ contract('Withdrawals', ([_, ...accounts]) => {
     // enable withdrawals
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
     await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // user performs withdrawal first time
     await withdrawals.withdraw(wallet, other, {
-      from: other
+      from: other,
     });
 
     // user performs withdrawal second time
     await expectRevert(
       withdrawals.withdraw(wallet, other, {
-        from: other
+        from: other,
       }),
       'The withdrawal has already been performed.'
     );

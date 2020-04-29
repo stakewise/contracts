@@ -9,13 +9,13 @@ const initialSettings = {
   minStakingDuration: '864000',
   maintainer: '0xCbfad58eF43Ce8E9bD571f6913b701Ba27D1D3aC',
   withdrawalCredentials:
-    '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4'
+    '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4',
 };
 
 async function deploySettingsProxy({
   networkConfig,
   adminsProxy,
-  operatorsProxy
+  operatorsProxy,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Settings',
@@ -28,9 +28,9 @@ async function deploySettingsProxy({
       initialSettings.validatorDepositAmount,
       initialSettings.withdrawalCredentials,
       adminsProxy,
-      operatorsProxy
+      operatorsProxy,
     ],
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Settings contract: ${proxy.address}`);
@@ -39,5 +39,5 @@ async function deploySettingsProxy({
 
 module.exports = {
   deploySettingsProxy,
-  initialSettings
+  initialSettings,
 };

@@ -12,7 +12,7 @@ const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 function getDepositAmount({
   min = new BN(initialSettings.userDepositMinUnit),
-  max = ether('320')
+  max = ether('320'),
 } = {}) {
   let randomDeposit = ether(Math.random().toFixed(8))
     .mul(max.sub(min))
@@ -77,7 +77,7 @@ async function checkUserTotalAmount({
   entityId,
   senderAddress,
   recipientAddress,
-  expectedAmount
+  expectedAmount,
 }) {
   expect(
     await depositsContract.amounts(
@@ -94,7 +94,7 @@ async function checkDepositAdded({
   senderAddress,
   recipientAddress,
   addedAmount,
-  totalAmount
+  totalAmount,
 }) {
   // Check event log
   await expectEvent.inTransaction(
@@ -106,7 +106,7 @@ async function checkDepositAdded({
       entityId,
       sender: senderAddress,
       recipient: recipientAddress,
-      amount: addedAmount
+      amount: addedAmount,
     }
   );
 
@@ -116,7 +116,7 @@ async function checkDepositAdded({
     entityId,
     senderAddress,
     recipientAddress,
-    expectedAmount: totalAmount
+    expectedAmount: totalAmount,
   });
 }
 
@@ -128,7 +128,7 @@ async function checkDepositCanceled({
   senderAddress,
   recipientAddress,
   canceledAmount,
-  totalAmount
+  totalAmount,
 }) {
   // Check event log
   await expectEvent.inTransaction(
@@ -140,7 +140,7 @@ async function checkDepositCanceled({
       entityId,
       sender: senderAddress,
       recipient: recipientAddress,
-      amount: canceledAmount
+      amount: canceledAmount,
     }
   );
 
@@ -150,7 +150,7 @@ async function checkDepositCanceled({
     entityId,
     senderAddress,
     recipientAddress,
-    expectedAmount: totalAmount
+    expectedAmount: totalAmount,
   });
 }
 
@@ -165,7 +165,7 @@ async function checkValidatorRegistered({
   maintainerFee = new BN(initialSettings.maintainerFee),
   minStakingDuration = new BN(initialSettings.minStakingDuration),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
-  validatorDepositAmount = new BN(initialSettings.validatorDepositAmount)
+  validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
 }) {
   // Check VRC record created
   await expectEvent.inTransaction(transaction, vrc, 'DepositEvent', {
@@ -177,7 +177,7 @@ async function checkValidatorRegistered({
         8
       )
     ),
-    signature: signature
+    signature: signature,
   });
 
   // Check ValidatorsRegistry log emitted
@@ -192,7 +192,7 @@ async function checkValidatorRegistered({
       stakingDuration,
       depositAmount: validatorDepositAmount,
       maintainerFee,
-      minStakingDuration
+      minStakingDuration,
     }
   );
 
@@ -218,7 +218,7 @@ async function checkValidatorTransferred({
   totalMaintainerDebt,
   newStakingDuration,
   newMaintainerFee = new BN(initialSettings.maintainerFee),
-  newMinStakingDuration = new BN(initialSettings.minStakingDuration)
+  newMinStakingDuration = new BN(initialSettings.minStakingDuration),
 }) {
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
@@ -233,7 +233,7 @@ async function checkValidatorTransferred({
       maintainerDebt,
       newMaintainerFee,
       newMinStakingDuration,
-      newStakingDuration
+      newStakingDuration,
     }
   );
 
@@ -262,7 +262,7 @@ async function registerValidator({
   individualsProxy,
   operator,
   sender,
-  recipient
+  recipient,
 }) {
   let collector;
   if (individualsProxy) {
@@ -275,7 +275,7 @@ async function registerValidator({
     // add deposit
     await collector.addDeposit(recipient, {
       from: sender,
-      value: initialSettings.validatorDepositAmount
+      value: initialSettings.validatorDepositAmount,
     });
     // FIXME: invalid if not the first entity created
     entityId = getEntityId(collector.address, new BN(1));
@@ -288,7 +288,7 @@ async function registerValidator({
     args.hashTreeRoot,
     entityId,
     {
-      from: operator
+      from: operator,
     }
   );
 
@@ -311,5 +311,5 @@ module.exports = {
   getEntityId,
   checkUserTotalAmount,
   checkDepositAdded,
-  checkDepositCanceled
+  checkDepositCanceled,
 };

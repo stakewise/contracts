@@ -2,12 +2,12 @@ const {
   BN,
   expectRevert,
   constants,
-  ether
+  ether,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -19,7 +19,7 @@ const {
   getDepositAmount,
   validatorRegistrationArgs,
   checkNewPoolCollectedAmount,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
@@ -40,7 +40,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     recipient1,
     sender2,
     recipient2,
-    other
+    other,
   ] = accounts;
 
   before(async () => {
@@ -58,11 +58,11 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       pools: poolsProxy,
       operators: operatorsProxy,
       validatorsRegistry: validatorsRegistryProxy,
-      settings: settingsProxy
+      settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     pools = await Pools.at(poolsProxy);
     validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
@@ -73,22 +73,22 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     // set staking duration
     let settings = await Settings.at(settingsProxy);
     await settings.setStakingDuration(pools.address, stakingDuration, {
-      from: admin
+      from: admin,
     });
 
     // register pool
     let amount1 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: amount1
+      value: amount1,
     });
 
     let amount2 = validatorDepositAmount.sub(amount1);
     await pools.addDeposit(recipient2, {
       from: sender2,
-      value: amount2
+      value: amount2,
     });
     poolId = getEntityId(pools.address, new BN(1));
   });
@@ -101,7 +101,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
         hashTreeRoot,
         constants.ZERO_BYTES32,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Invalid pool ID.'
@@ -114,7 +114,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
   it('fails to register validator with callers other than operator', async () => {
     await expectRevert(
       pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-        from: other
+        from: other,
       }),
       'Permission denied.'
     );
@@ -126,7 +126,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
   it('fails to register validator with used public key', async () => {
     // Register validator 1
     await pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-      from: operator
+      from: operator,
     });
     await checkPendingPool(pools, poolId, false);
     await checkCollectorBalance(pools, new BN(0));
@@ -134,14 +134,14 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     // create new pool
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
     poolId = getEntityId(pools.address, new BN(2));
 
     // Register validator 2 with the same validator public key
     await expectRevert(
       pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-        from: operator
+        from: operator,
       }),
       'Public key has been already used.'
     );
@@ -154,12 +154,12 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     let depositAmount = validatorDepositAmount.sub(ether('1'));
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     });
     poolId = getEntityId(pools.address, new BN(2));
     await expectRevert(
       pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-        from: operator
+        from: operator,
       }),
       'Invalid pool ID.'
     );
@@ -175,7 +175,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
   it('fails to register validator for the same pool twice', async () => {
     // Register validator first time
     await pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-      from: operator
+      from: operator,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, new BN(0));
@@ -184,7 +184,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     // Register validator second time
     await expectRevert(
       pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
-        from: operator
+        from: operator,
       }),
       'Invalid pool ID.'
     );
@@ -202,7 +202,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     for (let i = 1; i < validatorRegistrationArgs.length; i++) {
       await pools.addDeposit(recipient1, {
         from: sender1,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
       poolId = getEntityId(pools.address, new BN(i + 1));
       await checkPendingPool(pools, poolId, true);
@@ -222,7 +222,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
         validatorRegistrationArgs[i].hashTreeRoot,
         poolIds[i],
         {
-          from: operator
+          from: operator,
         }
       );
       totalAmount = totalAmount.sub(validatorDepositAmount);
@@ -236,7 +236,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
         pubKey: validatorRegistrationArgs[i].pubKey,
         collectorAddress: pools.address,
         validatorsRegistry: validatorsRegistry,
-        signature: validatorRegistrationArgs[i].signature
+        signature: validatorRegistrationArgs[i].signature,
       });
     }
     await checkCollectorBalance(pools, new BN(0));

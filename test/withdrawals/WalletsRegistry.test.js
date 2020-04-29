@@ -2,18 +2,18 @@ const {
   expectRevert,
   expectEvent,
   ether,
-  constants
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   registerValidator,
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
 } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -38,7 +38,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -50,7 +50,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender,
-      recipient
+      recipient,
     });
   });
 
@@ -59,7 +59,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       for (const user of [admin, operator, sender]) {
         await expectRevert(
           walletsRegistry.assignWallet(validatorId, {
-            from: user
+            from: user,
           }),
           'Permission denied.'
         );
@@ -68,12 +68,12 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('cannot assign wallet to the same validator more than once', async () => {
       await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
 
       await expectRevert(
         walletsRegistry.assignWallet(validatorId, {
-          from: walletsManager
+          from: walletsManager,
         }),
         'Validator has already wallet assigned.'
       );
@@ -84,7 +84,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
         walletsRegistry.assignWallet(
           web3.utils.soliditySha3('invalidValidator'),
           {
-            from: walletsManager
+            from: walletsManager,
           }
         ),
         'Validator does not have deposit amount.'
@@ -93,14 +93,14 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('creates a new wallet', async () => {
       const receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       const wallet = receipt.logs[0].args.wallet;
 
       // Wallet assigned to validator
       expectEvent(receipt, 'WalletAssigned', {
         wallet,
-        validatorId
+        validatorId,
       });
 
       // Validator is marked as assigned
@@ -109,13 +109,13 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('re-uses existing available wallet', async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
 
       // reset wallet
       const wallet = logs[0].args.wallet;
       await walletsRegistry.resetWallet(wallet, {
-        from: admin
+        from: admin,
       });
 
       // Deploy next validator
@@ -124,17 +124,17 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
         individualsProxy: proxies.individuals,
         operator,
         sender,
-        recipient
+        recipient,
       });
 
       let receipt = await walletsRegistry.assignWallet(newValidatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
 
       // must assign the same wallet to the next validator
       expectEvent(receipt, 'WalletAssigned', {
         wallet,
-        validatorId: newValidatorId
+        validatorId: newValidatorId,
       });
 
       // Validator is marked as assigned
@@ -149,7 +149,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       wallet = logs[0].args.wallet;
     });
@@ -157,7 +157,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     it('user without admin role cannot reset wallets', async () => {
       await expectRevert(
         walletsRegistry.resetWallet(wallet, {
-          from: walletsManager
+          from: walletsManager,
         }),
         'Permission denied.'
       );
@@ -165,12 +165,12 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('cannot reset the same wallet more than once', async () => {
       await walletsRegistry.resetWallet(wallet, {
-        from: admin
+        from: admin,
       });
 
       await expectRevert(
         walletsRegistry.resetWallet(wallet, {
-          from: admin
+          from: admin,
         }),
         'Wallet has been already reset.'
       );
@@ -178,15 +178,15 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('admin user can reset wallet', async () => {
       let receipt = await walletsRegistry.resetWallet(wallet, {
-        from: admin
+        from: admin,
       });
 
       expectEvent(receipt, 'WalletReset', {
-        wallet
+        wallet,
       });
       let { unlocked, validatorId } = await walletsRegistry.wallets(wallet);
       expect(unlocked).equal(false);
-      expect(validatorId).to.satisfy(val =>
+      expect(validatorId).to.satisfy((val) =>
         val.startsWith(constants.ZERO_ADDRESS)
       );
     });
@@ -199,7 +199,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       wallet = logs[0].args.wallet;
     });
@@ -208,7 +208,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
           walletsRegistry.unlockWallet(wallet, ether('1'), {
-            from: users[i]
+            from: users[i],
           }),
           'Permission denied.'
         );
