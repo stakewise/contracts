@@ -190,7 +190,7 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
       // user's balance has changed
       expect(await userBalance.delta()).to.be.bignumber.equal(userReward);
 
-      // validatorTransfers is empty
+      // ValidatorTransfers is empty
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(new BN(0));

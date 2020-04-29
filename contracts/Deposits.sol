@@ -28,7 +28,7 @@ contract Deposits is Initializable {
     * Event for tracking added deposits.
     * @param collector - address of the collector, the deposit was received from.
     * @param entityId - ID of the collector entity, the deposit was collected in.
-    * @param sender - address which has sent the deposit.
+    * @param sender - address of the deposit sender.
     * @param recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     * @param amount - amount deposited.
     */
@@ -44,7 +44,7 @@ contract Deposits is Initializable {
     * Event for tracking canceled deposits.
     * @param collector - address of the collector, the deposit was canceled from.
     * @param entityId - ID of the collector entity, the deposit was collected in.
-    * @param sender - address which has sent the deposit.
+    * @param sender - address of the deposit sender.
     * @param recipient - address where canceled deposit will be sent.
     * @param amount - amount canceled.
     */
@@ -81,7 +81,7 @@ contract Deposits is Initializable {
     /**
     * Function for adding deposit.
     * @param _entityId - ID of the collector entity, the deposit was collected in.
-    * @param _sender - address of the deposit sender account.
+    * @param _sender - address of the deposit sender.
     * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     * @param _amount - amount deposited.
     */

@@ -110,7 +110,7 @@ contract ValidatorTransfers is Initializable {
 
     /**
     * Event for tracking user withdrawals.
-    * @param sender - address which has sent the deposit.
+    * @param sender - address of the deposit sender.
     * @param recipient - address where withdrawn funds will be sent.
     * @param entityId - ID of the collector entity, the deposit was collected in.
     * @param depositAmount - withdrawn deposit amount.
