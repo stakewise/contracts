@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Admins.sol";
 import "../access/Operators.sol";
@@ -20,6 +21,7 @@ import "../withdrawals/Withdrawals.sol";
  * It will be used up to Phase 2 release.
  */
 contract ValidatorTransfers is Initializable {
+    using Address for address payable;
     using SafeMath for uint256;
 
     /**
@@ -243,13 +245,8 @@ contract ValidatorTransfers is Initializable {
         uint256 withdrawalAmount = depositWithdrawal.add(rewardWithdrawal);
         require(withdrawalAmount > 0, "Nothing to withdraw.");
 
-        emit UserWithdrawn(msg.sender, _recipient, _entityId, depositWithdrawal, rewardWithdrawal);
-        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
-        // solhint-disable avoid-call-value
-        // solium-disable-next-line security/no-call-value
-        (bool success,) = _recipient.call.value(withdrawalAmount)("");
-        // solhint-enable avoid-call-value
-        require(success, "Transfer has failed.");
+        // transfer withdrawal amount to the recipient
+        _recipient.sendValue(withdrawalAmount);
     }
 
     /**

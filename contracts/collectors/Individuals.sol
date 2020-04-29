@@ -1,5 +1,7 @@
 pragma solidity 0.5.17;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
@@ -13,6 +15,7 @@ import "../Settings.sol";
  * The validator can be registered as soon as deposit is added.
  */
 contract Individuals is Initializable {
+    using Address for address payable;
     using SafeMath for uint256;
 
     // maps individual ID to whether validator can be registered for it.
@@ -93,12 +96,8 @@ contract Individuals is Initializable {
         deposits.cancelDeposit(_individualId, msg.sender, _recipient, depositAmount);
         delete pendingIndividuals[_individualId];
 
-        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
-        // solhint-disable avoid-call-value
-        // solium-disable-next-line security/no-call-value
-        (bool success,) = _recipient.call.value(depositAmount)("");
-        // solhint-enable avoid-call-value
-        require(success, "Transfer has failed.");
+        // transfer canceled amount to the recipient
+        _recipient.sendValue(depositAmount);
     }
 
     /**

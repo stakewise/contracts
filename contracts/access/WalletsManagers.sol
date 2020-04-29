@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import "@openzeppelin/contracts/access/Roles.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Admins.sol";
 

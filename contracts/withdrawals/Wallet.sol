@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
 
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "./Withdrawals.sol";
 
 /**
@@ -8,6 +9,8 @@ import "./Withdrawals.sol";
  * The withdrawals can only be performed from the Withdrawals contract.
  */
 contract Wallet {
+    using Address for address payable;
+
     // address of the Withdrawals contract.
     Withdrawals private withdrawals;
 
@@ -41,11 +44,8 @@ contract Wallet {
     */
     function withdraw(address payable _recipient, uint256 _amount) external {
         require(msg.sender == address(withdrawals), "Permission denied.");
-        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
-        // solhint-disable avoid-call-value
-        // solium-disable-next-line security/no-call-value
-        (bool success,) = _recipient.call.value(_amount)("");
-        // solhint-enable avoid-call-value
-        require(success, "Transfer has failed.");
+
+        // transfer withdrawal amount to the recipient
+        _recipient.sendValue(_amount);
     }
 }
