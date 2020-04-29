@@ -3,7 +3,7 @@ version: 2.1
 executors:
   default:
     docker:
-      - image: circleci/node:10.5
+      - image: circleci/node:12
     working_directory: /tmp/workspace
 
 jobs:
@@ -12,17 +12,19 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: npm-deps-{{ checksum "package-lock.json" }}
+          name: Restore package cache
+          key: yarn-deps-{{ checksum "yarn.lock" }}
       - run:
-          name: Install npm dependencies
+          name: Install dependencies
           command: |
             if [ ! -d /tmp/workspace/node_modules ]; then
-              npm ci
+              yarn install --frozen-lockfile
             fi
       - save_cache:
+          name: Save package cache
           paths:
             - /tmp/workspace/node_modules
-          key: npm-deps-{{ checksum "package-lock.json" }}
+          key: yarn-deps-{{ checksum "yarn.lock" }}
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
