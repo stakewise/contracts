@@ -18,8 +18,8 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('Wallet', ([_, ...accounts]) => {
   let networkConfig, wallet;
-  let [admin, operator, sender, withdrawer, walletsManager, anyone] = accounts;
-  let users = [admin, operator, sender, withdrawer, walletsManager, anyone];
+  let [admin, operator, sender, recipient, walletsManager, anyone] = accounts;
+  let users = [admin, operator, sender, recipient, walletsManager, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -40,7 +40,7 @@ contract('Wallet', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender,
-      withdrawer
+      recipient
     });
 
     let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);

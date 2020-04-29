@@ -223,6 +223,26 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
+  it('fails to transfer validator when transfers are paused', async () => {
+    await settings.setContractPaused(validatorTransfers.address, true, {
+      from: admin
+    });
+    expect(await settings.pausedContracts(validatorTransfers.address)).equal(
+      true
+    );
+
+    await expectRevert(
+      pools.transferValidator(validatorId, validatorReward, newPoolId, {
+        from: operator
+      }),
+      'Validator transfers are paused.'
+    );
+
+    // check balance didn't change
+    await checkPendingPool(pools, newPoolId, true);
+    await checkCollectorBalance(pools, validatorDepositAmount);
+  });
+
   it('can transfer validator to the new pool', async () => {
     // transfer validator to the new pool
     let { tx } = await pools.transferValidator(

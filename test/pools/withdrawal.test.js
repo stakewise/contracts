@@ -125,7 +125,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId: getEntityId(pools.address, new BN(testCaseN + 1)),
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].penalisedReturn,
           rewardAmount: new BN(0)
         });
@@ -216,7 +216,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].deposit,
           rewardAmount: users[j].reward
         });
@@ -303,16 +303,16 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     });
 
     for (let i = 0; i < deposits.length; i++) {
-      let withdrawer = otherAccounts[i];
+      let recipient = otherAccounts[i];
 
       // User withdraws his deposit and rewards
-      let receipt = await withdrawals.withdraw(wallet, withdrawer, {
+      let receipt = await withdrawals.withdraw(wallet, recipient, {
         from: sender
       });
       expectEvent(receipt, 'UserWithdrawn', {
         entityId,
         sender,
-        withdrawer,
+        recipient,
         depositAmount: deposits[i]
       });
     }

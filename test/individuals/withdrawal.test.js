@@ -136,7 +136,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       expectEvent(receipt, 'UserWithdrawn', {
         entityId: individualId,
         sender: sender,
-        withdrawer: otherAccounts[0],
+        recipient: otherAccounts[0],
         depositAmount: userDeposit,
         rewardAmount: userReward
       });
@@ -210,7 +210,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       expectEvent(receipt, 'UserWithdrawn', {
         entityId: individualId,
         sender: sender,
-        withdrawer: otherAccounts[0],
+        recipient: otherAccounts[0],
         depositAmount: userPenalisedReturn,
         rewardAmount: new BN(0)
       });

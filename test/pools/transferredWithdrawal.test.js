@@ -161,7 +161,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].deposit,
           rewardAmount: new BN(0)
         });
@@ -237,7 +237,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: new BN(0),
           rewardAmount: users[j].reward
         });

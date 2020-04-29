@@ -22,7 +22,7 @@ const WalletsManagers = artifacts.require('WalletsManagers');
 
 contract('WalletsRegistry', ([_, ...accounts]) => {
   let walletsRegistry, proxies, validatorId, networkConfig, vrc;
-  let [admin, operator, sender, withdrawer, walletsManager] = accounts;
+  let [admin, operator, sender, recipient, walletsManager] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -50,7 +50,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender,
-      withdrawer
+      recipient
     });
   });
 
@@ -121,10 +121,10 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
       // Deploy next validator
       let newValidatorId = await registerValidator({
         args: validatorRegistrationArgs[1],
-        privatesProxy: proxies.privates,
+        individualsProxy: proxies.individuals,
         operator,
         sender,
-        withdrawer
+        recipient
       });
 
       let receipt = await walletsRegistry.assignWallet(newValidatorId, {

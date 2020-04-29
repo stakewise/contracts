@@ -27,6 +27,7 @@ const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const WalletsManagers = artifacts.require('WalletsManagers');
 const Settings = artifacts.require('Settings');
+const Pools = artifacts.require('Pools');
 
 contract('Withdrawals (enable)', ([_, ...accounts]) => {
   let networkConfig,
@@ -36,7 +37,8 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     wallet,
     withdrawals,
     validatorId,
-    vrc;
+    vrc,
+    pools;
 
   let [admin, operator, walletsManager, other] = accounts;
 
@@ -65,11 +67,12 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     settings = await Settings.at(proxies.settings);
+    pools = await Pools.at(proxies.pools);
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      withdrawer: other
+      recipient: other
     });
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
       from: walletsManager
@@ -144,13 +147,18 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     ];
 
     for (let i = 0; i < tests.length; i++) {
+      await pools.addDeposit(other, {
+        from: other,
+        value: initialSettings.validatorDepositAmount
+      });
+      let entityId = getEntityId(pools.address, new BN(i + 2));
+
       // Collect deposits, create validator
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[i + 1],
-        poolsProxy: proxies.pools,
+        poolsProxy: pools.address,
         operator,
-        sender: other,
-        withdrawer: other
+        entityId
       });
 
       // Time for withdrawal, assign wallet
@@ -251,13 +259,18 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       // set maintainer's fee
       await settings.setMaintainerFee(maintainerFee, { from: admin });
 
+      await pools.addDeposit(other, {
+        from: other,
+        value: initialSettings.validatorDepositAmount
+      });
+      let entityId = getEntityId(pools.address, new BN(i + 2));
+
       // collect deposits, create validator
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[i + 1],
-        poolsProxy: proxies.pools,
+        poolsProxy: pools.address,
         operator,
-        sender: other,
-        withdrawer: other
+        entityId
       });
 
       // time for withdrawal, assign wallet
@@ -293,7 +306,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       // maintainer's reward calculated properly
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer,
-        entityId: getEntityId(proxies.pools, new BN(i + 2)),
+        entityId,
         amount: expectedMaintainerReward
       });
 

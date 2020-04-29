@@ -51,7 +51,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      withdrawer: other
+      recipient: other
     });
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
       from: walletsManager
