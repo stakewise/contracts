@@ -17,13 +17,13 @@ The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
 1. Install dependencies:
 
    ```shell script
-   npm install --prod
+   yarn install --prod
    ```
 
 2. Compile contracts:
 
    ```shell script
-   npm run compile
+   yarn run compile
    ```
 
 3. Define network parameters in `truffle-config.js`. For example:
@@ -32,29 +32,29 @@ The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
    module.exports = {
      networks: {
        ropsten: {
-         provider: function() {
+         provider: function () {
            return new HDWalletProvider(
              mnemonic,
              'https://ropsten.infura.io/v3/YOUR-PROJECT-ID'
            );
          },
-         network_id: '3'
-       }
-     }
+         network_id: '3',
+       },
+     },
    };
    ```
 
 4. If you are deploying to the network without `VRC`, run the following commands:
 
    ```shell script
-   npm install
-   node_modules/.bin/truffle exec scripts/deployVRC.js --network ropsten
+   yarn install
+   truffle exec scripts/deployVRC.js --network ropsten
    ```
 
 5. Deploy contracts to the selected network:
 
    ```shell script
-   NETWORK=ropsten INITIAL_ADMIN=<address> VRC=<address> npm run deploy
+   NETWORK=ropsten INITIAL_ADMIN=<address> VRC=<address> yarn deploy
    ```
 
    where `NETWORK` is the name of the network from `truffle-config.js`,

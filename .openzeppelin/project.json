@@ -15,7 +15,7 @@
     "Groups": "Groups"
   },
   "dependencies": {},
-  "name": "contracts",
+  "name": "stakewise",
   "version": "0.1.0",
   "compiler": {
     "manager": "openzeppelin",
@@ -25,7 +25,12 @@
         "runs": "10000"
       }
     },
-    "solcVersion": "0.5.17"
+    "solcVersion": "0.5.17",
+    "typechain": {
+      "enabled": false
+    },
+    "artifactsDir": "build/contracts",
+    "contractsDir": "contracts"
   },
   "telemetryOptIn": false
 }
