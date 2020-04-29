@@ -2,7 +2,7 @@ const { BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -12,7 +12,7 @@ const {
   checkPendingIndividual,
   checkValidatorRegistered,
   validatorRegistrationArgs,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Individual = artifacts.require('Individuals');
@@ -43,11 +43,11 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       individuals: individualsProxy,
       operators: operatorsProxy,
       validatorsRegistry: validatorsRegistryProxy,
-      settings: settingsProxy
+      settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     individuals = await Individual.at(individualsProxy);
     validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
@@ -58,13 +58,13 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
     // set staking duration
     let settings = await Settings.at(settingsProxy);
     await settings.setStakingDuration(individuals.address, stakingDuration, {
-      from: admin
+      from: admin,
     });
 
     // create new individual
     await individuals.addDeposit(recipient, {
       from: sender,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
     individualId = getEntityId(individuals.address, new BN(1));
   });
@@ -77,7 +77,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         hashTreeRoot,
         constants.ZERO_BYTES32,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Invalid individual ID.'
@@ -94,7 +94,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         hashTreeRoot,
         individualId,
         {
-          from: other
+          from: other,
         }
       ),
       'Permission denied.'
@@ -111,7 +111,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       hashTreeRoot,
       individualId,
       {
-        from: operator
+        from: operator,
       }
     );
     await checkPendingIndividual(individuals, individualId, false);
@@ -119,7 +119,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
     // Register validator 2 with the same validator public key
     await individuals.addDeposit(recipient, {
       from: sender,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
     individualId = getEntityId(individuals.address, new BN(2));
     await expectRevert(
@@ -129,7 +129,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         hashTreeRoot,
         individualId,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Public key has been already used.'
@@ -146,7 +146,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       hashTreeRoot,
       individualId,
       {
-        from: operator
+        from: operator,
       }
     );
     await checkPendingIndividual(individuals, individualId, false);
@@ -160,7 +160,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         hashTreeRoot,
         individualId,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Invalid individual ID.'
@@ -178,7 +178,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
     for (let i = 1; i < validatorRegistrationArgs.length; i++) {
       await individuals.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
       individualId = getEntityId(individuals.address, new BN(i + 1));
       await checkPendingIndividual(individuals, individualId, true);
@@ -197,7 +197,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         validatorRegistrationArgs[i].hashTreeRoot,
         individualIds[i],
         {
-          from: operator
+          from: operator,
         }
       );
       totalAmount = totalAmount.sub(validatorDepositAmount);
@@ -210,7 +210,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         pubKey: validatorRegistrationArgs[i].pubKey,
         collectorAddress: individuals.address,
         validatorsRegistry: validatorsRegistry,
-        signature: validatorRegistrationArgs[i].signature
+        signature: validatorRegistrationArgs[i].signature,
       });
     }
     await checkPendingIndividual(individuals, individualId, false);

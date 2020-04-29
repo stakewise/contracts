@@ -1,12 +1,12 @@
 const {
   expectRevert,
   ether,
-  expectEvent
+  expectEvent,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
@@ -28,7 +28,7 @@ contract('Wallet', ([_, ...accounts]) => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -40,12 +40,12 @@ contract('Wallet', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender,
-      recipient
+      recipient,
     });
 
     let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager
+      from: walletsManager,
     });
     wallet = await Wallet.at(logs[0].args.wallet);
   });
@@ -58,7 +58,7 @@ contract('Wallet', ([_, ...accounts]) => {
     for (let i = 0; i < users.length; i++) {
       await expectRevert(
         wallet.withdraw(users[i], ether('1'), {
-          from: users[i]
+          from: users[i],
         }),
         'Permission denied.'
       );
@@ -70,7 +70,7 @@ contract('Wallet', ([_, ...accounts]) => {
     const receipt = await wallet.send(amount, { from: anyone });
     expectEvent(receipt, 'EtherAdded', {
       amount,
-      sender: anyone
+      sender: anyone,
     });
   });
 });

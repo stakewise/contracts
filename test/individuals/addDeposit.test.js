@@ -3,12 +3,12 @@ const {
   BN,
   ether,
   constants,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -17,7 +17,7 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingIndividual,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -44,11 +44,11 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     let {
       deposits: depositsProxy,
       individuals: individualsProxy,
-      settings: settingsProxy
+      settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     individuals = await Individuals.at(individualsProxy);
     deposits = await Deposits.at(depositsProxy);
@@ -60,7 +60,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
   it('fails to add a deposit with an invalid recipient address', async () => {
     await expectRevert(
       individuals.addDeposit(constants.ZERO_ADDRESS, {
-        from: sender1
+        from: sender1,
       }),
       'Invalid recipient address.'
     );
@@ -72,7 +72,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       individuals.addDeposit(recipient1, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).sub(ether('1'))
+        value: new BN(initialSettings.validatorDepositAmount).sub(ether('1')),
       }),
       'Invalid deposit amount.'
     );
@@ -84,7 +84,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       individuals.addDeposit(recipient1, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).add(ether('1'))
+        value: new BN(initialSettings.validatorDepositAmount).add(ether('1')),
       }),
       'Invalid deposit amount.'
     );
@@ -96,7 +96,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     // Send a deposit
     const { tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
 
     // Check individual deposit added
@@ -109,7 +109,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
 
     // Check contract balance
@@ -123,7 +123,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     // User 1 creates a deposit
     ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     }));
     let individualId = getEntityId(individuals.address, new BN(1));
     await checkDepositAdded({
@@ -134,14 +134,14 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
     await checkPendingIndividual(individuals, individualId, true);
 
     // User 2 creates a deposit
     ({ tx } = await individuals.addDeposit(recipient2, {
       from: sender2,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     }));
     individualId = getEntityId(individuals.address, new BN(2));
     await checkDepositAdded({
@@ -152,7 +152,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender2,
       recipientAddress: recipient2,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
     await checkPendingIndividual(individuals, individualId, true);
 
@@ -169,7 +169,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     // User 1 creates a first deposit
     ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     }));
     let individualId = getEntityId(individuals.address, new BN(1));
     await checkDepositAdded({
@@ -180,7 +180,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
     await checkPendingIndividual(individuals, individualId, true);
 
@@ -188,7 +188,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
     individualId = getEntityId(individuals.address, new BN(2));
     ({ tx } = await individuals.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     }));
     await checkDepositAdded({
       transaction: tx,
@@ -198,7 +198,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
     await checkPendingIndividual(individuals, individualId, true);
 
@@ -211,14 +211,14 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
 
   it('fails to add a deposit to paused contract', async () => {
     await settings.setContractPaused(individuals.address, true, {
-      from: admin
+      from: admin,
     });
     expect(await settings.pausedContracts(individuals.address)).equal(true);
 
     await expectRevert(
       individuals.addDeposit(recipient1, {
         from: sender1,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       }),
       'Depositing is currently disabled.'
     );

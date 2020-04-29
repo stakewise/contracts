@@ -6,7 +6,7 @@ async function deployAdminsProxy({ networkConfig, initialAdmin }) {
     contractAlias: 'Admins',
     methodName: 'initialize',
     methodArgs: [initialAdmin],
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Admins contract: ${proxy.address}`);
@@ -18,7 +18,7 @@ async function deployOperatorsProxy({ networkConfig, adminsProxy }) {
     contractAlias: 'Operators',
     methodName: 'initialize',
     methodArgs: [adminsProxy],
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Operators contract: ${proxy.address}`);
@@ -30,7 +30,7 @@ async function deployWalletsManagersProxy({ networkConfig, adminsProxy }) {
     contractAlias: 'WalletsManagers',
     methodName: 'initialize',
     methodArgs: [adminsProxy],
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`WalletsManagers contract: ${proxy.address}`);
@@ -40,5 +40,5 @@ async function deployWalletsManagersProxy({ networkConfig, adminsProxy }) {
 module.exports = {
   deployAdminsProxy,
   deployOperatorsProxy,
-  deployWalletsManagersProxy
+  deployWalletsManagersProxy,
 };

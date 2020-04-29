@@ -1,6 +1,6 @@
 const { abi, bytecode } = require('../deployments/vrc');
 
-module.exports = async function(callback) {
+module.exports = async function (callback) {
   try {
     let vrc = new web3.eth.Contract(abi);
     vrc.setProvider(web3.currentProvider);

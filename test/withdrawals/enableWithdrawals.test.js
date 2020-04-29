@@ -6,12 +6,12 @@ const {
   balance,
   ether,
   expectEvent,
-  constants
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -19,7 +19,7 @@ const {
   removeNetworkFile,
   registerValidator,
   validatorRegistrationArgs,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -56,7 +56,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -72,10 +72,10 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      recipient: other
+      recipient: other,
     });
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager
+      from: walletsManager,
     });
     wallet = logs[0].args.wallet;
   });
@@ -84,7 +84,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
     await expectRevert(
       withdrawals.enableWithdrawals(wallet, {
-        from: operator
+        from: operator,
       }),
       'Permission denied.'
     );
@@ -93,7 +93,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
   it('cannot enable withdrawals for wallet not assigned to any validator', async () => {
     await expectRevert(
       withdrawals.enableWithdrawals(constants.ZERO_ADDRESS, {
-        from: walletsManager
+        from: walletsManager,
       }),
       'Wallet is not assigned to any validator.'
     );
@@ -102,7 +102,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
   it('cannot enable withdrawals for wallet with zero balance', async () => {
     await expectRevert(
       withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       }),
       'Wallet has not enough ether in it.'
     );
@@ -111,11 +111,11 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
   it('cannot enable withdrawals for already unlocked wallet', async () => {
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
     await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
     await expectRevert(
       withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       }),
       'Wallet is already unlocked.'
     );
@@ -124,12 +124,12 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
   it("penalty is not applied if balance is not less than validator's deposit", async () => {
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
     const { tx } = await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validatorId,
       wallet,
-      usersBalance: initialSettings.validatorDepositAmount
+      usersBalance: initialSettings.validatorDepositAmount,
     });
   });
 
@@ -143,13 +143,13 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       [ether('26.037398137005555372'), ether('0.813668691781423605')],
       [ether('18.345'), ether('0.57328125')],
       [ether('16.00145'), ether('0.5000453125')],
-      [ether('31.987654321'), ether('0.99961419753125')]
+      [ether('31.987654321'), ether('0.99961419753125')],
     ];
 
     for (let i = 0; i < tests.length; i++) {
       await pools.addDeposit(other, {
         from: other,
-        value: initialSettings.validatorDepositAmount
+        value: initialSettings.validatorDepositAmount,
       });
       let entityId = getEntityId(pools.address, new BN(i + 2));
 
@@ -158,12 +158,12 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         args: validatorRegistrationArgs[i + 1],
         poolsProxy: pools.address,
         operator,
-        entityId
+        entityId,
       });
 
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -174,7 +174,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
 
       // Enable withdrawals, check whether penalty calculated properly
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -183,7 +183,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         {
           validatorId,
           wallet,
-          usersBalance: withdrawalReturn
+          usersBalance: withdrawalReturn,
         }
       );
       expect(
@@ -199,7 +199,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
 
     // enable withdrawals
     await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // wallet must be unlocked
@@ -213,13 +213,13 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
 
     // enable withdrawals
     const { tx } = await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
       validatorId,
       wallet,
-      usersBalance: initialSettings.validatorDepositAmount
+      usersBalance: initialSettings.validatorDepositAmount,
     });
 
     // maintainer's balance hasn't changed
@@ -238,7 +238,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       ['98340000673116247278', '65', '639210004375255607'],
       ['28044828751583387617', '453', '1270430742446727459'],
       ['57667042368295430137', '8', '46133633894636344'],
-      ['31626521340343186340', '9876', '31234352475722930829']
+      ['31626521340343186340', '9876', '31234352475722930829'],
     ];
 
     // start tracking maintainer's balance
@@ -261,7 +261,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
 
       await pools.addDeposit(other, {
         from: other,
-        value: initialSettings.validatorDepositAmount
+        value: initialSettings.validatorDepositAmount,
       });
       let entityId = getEntityId(pools.address, new BN(i + 2));
 
@@ -270,12 +270,12 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
         args: validatorRegistrationArgs[i + 1],
         poolsProxy: pools.address,
         operator,
-        entityId
+        entityId,
       });
 
       // time for withdrawal, assign wallet
       receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -288,7 +288,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
 
       // enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -299,7 +299,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
           wallet,
           usersBalance: validatorDepositAmount
             .add(new BN(validatorReward))
-            .sub(new BN(expectedMaintainerReward))
+            .sub(new BN(expectedMaintainerReward)),
         }
       );
 
@@ -307,7 +307,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer,
         entityId,
-        amount: expectedMaintainerReward
+        amount: expectedMaintainerReward,
       });
 
       // maintainer's balance changed

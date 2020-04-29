@@ -8,17 +8,17 @@ let abi = [
       { type: 'bytes', name: 'withdrawal_credentials', indexed: false },
       { type: 'bytes', name: 'amount', indexed: false },
       { type: 'bytes', name: 'signature', indexed: false },
-      { type: 'bytes', name: 'index', indexed: false }
+      { type: 'bytes', name: 'index', indexed: false },
     ],
     anonymous: false,
-    type: 'event'
+    type: 'event',
   },
   {
     outputs: [],
     inputs: [],
     constant: false,
     payable: false,
-    type: 'constructor'
+    type: 'constructor',
   },
   {
     name: 'get_deposit_root',
@@ -27,7 +27,7 @@ let abi = [
     constant: true,
     payable: false,
     type: 'function',
-    gas: 95628
+    gas: 95628,
   },
   {
     name: 'get_deposit_count',
@@ -36,7 +36,7 @@ let abi = [
     constant: true,
     payable: false,
     type: 'function',
-    gas: 18231
+    gas: 18231,
   },
   {
     name: 'deposit',
@@ -45,13 +45,13 @@ let abi = [
       { type: 'bytes', name: 'pubkey' },
       { type: 'bytes', name: 'withdrawal_credentials' },
       { type: 'bytes', name: 'signature' },
-      { type: 'bytes32', name: 'deposit_data_root' }
+      { type: 'bytes32', name: 'deposit_data_root' },
     ],
     constant: false,
     payable: true,
     type: 'function',
-    gas: 1342274
-  }
+    gas: 1342274,
+  },
 ];
 
 let bytecode =
@@ -67,5 +67,5 @@ async function deployVRC(params = {}) {
 module.exports = {
   deployVRC,
   abi,
-  bytecode
+  bytecode,
 };

@@ -4,12 +4,12 @@ const {
   ether,
   expectRevert,
   constants,
-  balance
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -21,7 +21,7 @@ const {
   checkPendingPool,
   checkDepositCanceled,
   checkNewPoolCollectedAmount,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -56,26 +56,26 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       {
         initialAdmin: admin,
         networkConfig,
-        vrc: vrc.options.address
+        vrc: vrc.options.address,
       }
     );
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
 
     amount1 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: amount1
+      value: amount1,
     });
 
     amount2 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     await pools.addDeposit(recipient2, {
       from: sender2,
-      value: amount2
+      value: amount2,
     });
     poolsBalance = amount1.add(amount2);
     poolId = getEntityId(pools.address, new BN(1));
@@ -92,7 +92,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: poolId,
       collectorAddress: pools.address,
       senderAddress: sender1,
-      recipientAddress: recipient1
+      recipientAddress: recipient1,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -102,7 +102,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('fails to cancel a deposit with invalid recipient address', async () => {
     await expectRevert(
       pools.cancelDeposit(constants.ZERO_ADDRESS, ether('1'), {
-        from: sender1
+        from: sender1,
       }),
       'The user does not have specified deposit cancel amount.'
     );
@@ -112,7 +112,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: poolId,
       collectorAddress: pools.address,
       senderAddress: sender1,
-      recipientAddress: recipient1
+      recipientAddress: recipient1,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -122,7 +122,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('fails to cancel a deposit with maximal uint value', async () => {
     await expectRevert(
       pools.cancelDeposit(recipient1, constants.MAX_UINT256, {
-        from: sender1
+        from: sender1,
       }),
       'Invalid deposit cancel amount.'
     );
@@ -132,7 +132,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: poolId,
       collectorAddress: pools.address,
       senderAddress: sender1,
-      recipientAddress: recipient1
+      recipientAddress: recipient1,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -151,7 +151,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: getEntityId(pools.address, new BN(1)),
       collectorAddress: pools.address,
       senderAddress: sender2,
-      recipientAddress: recipient2
+      recipientAddress: recipient2,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -161,7 +161,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('fails to cancel a deposit with amount bigger than deposit', async () => {
     await expectRevert(
       pools.cancelDeposit(recipient1, amount1.add(ether('1')), {
-        from: sender1
+        from: sender1,
       }),
       'The user does not have specified deposit cancel amount.'
     );
@@ -174,11 +174,11 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     const cancelAmount = validatorDepositAmount;
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: cancelAmount
+      value: cancelAmount,
     });
     await expectRevert(
       pools.cancelDeposit(recipient1, cancelAmount, {
-        from: sender1
+        from: sender1,
       }),
       'The user does not have specified deposit cancel amount.'
     );
@@ -188,7 +188,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: poolId,
       collectorAddress: pools.address,
       senderAddress: sender1,
-      recipientAddress: recipient1
+      recipientAddress: recipient1,
     });
     await checkPendingPool(pools, poolId, true);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -199,7 +199,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     const cancelAmount = amount1.sub(userDepositMinUnit.sub(new BN(1)));
     await expectRevert(
       pools.cancelDeposit(recipient1, cancelAmount, {
-        from: sender1
+        from: sender1,
       }),
       'Invalid deposit cancel amount.'
     );
@@ -209,7 +209,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       entityId: poolId,
       collectorAddress: pools.address,
       senderAddress: sender1,
-      recipientAddress: recipient1
+      recipientAddress: recipient1,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, poolsBalance);
@@ -219,7 +219,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   it('cancels deposit in full amount', async () => {
     const recipientBalance = await balance.tracker(recipient1);
     const { tx } = await pools.cancelDeposit(recipient1, amount1, {
-      from: sender1
+      from: sender1,
     });
     await checkDepositCanceled({
       transaction: tx,
@@ -229,7 +229,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       canceledAmount: amount1,
-      totalAmount: ether('0')
+      totalAmount: ether('0'),
     });
 
     // Check recipient balance changed
@@ -246,7 +246,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     const recipientBalance = await balance.tracker(recipient1);
     const cancelAmount = amount1.sub(userDepositMinUnit);
     const { tx } = await pools.cancelDeposit(recipient1, cancelAmount, {
-      from: sender1
+      from: sender1,
     });
     await checkDepositCanceled({
       transaction: tx,
@@ -256,7 +256,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       canceledAmount: cancelAmount,
-      totalAmount: amount1.sub(cancelAmount)
+      totalAmount: amount1.sub(cancelAmount),
     });
 
     // Check recipient balance changed
@@ -273,12 +273,12 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     const recipientBalance = await balance.tracker(recipient1);
     await pools.addDeposit(recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
 
     const cancelAmount = poolsBalance;
     const { tx } = await pools.cancelDeposit(recipient1, cancelAmount, {
-      from: sender1
+      from: sender1,
     });
     await checkDepositCanceled({
       transaction: tx,
@@ -288,7 +288,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       canceledAmount: cancelAmount,
-      totalAmount: new BN(0)
+      totalAmount: new BN(0),
     });
 
     // Check recipient balance changed

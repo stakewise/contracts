@@ -3,11 +3,11 @@ const { deployAllProxies } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
 const {
-  validatorRegistrationArgs
+  validatorRegistrationArgs,
 } = require('../common/validatorRegistrationArgs');
 const { removeNetworkFile } = require('../common/utils');
 
@@ -26,11 +26,11 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
     let vrc = await deployVRC({ from: admin });
     let {
       validatorsRegistry: validatorsRegistryProxy,
-      operators: operatorsProxy
+      operators: operatorsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
     let operators = await Operators.at(operatorsProxy);
@@ -51,7 +51,7 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
           initialSettings.validatorDepositAmount,
           initialSettings.maintainerFee,
           {
-            from: users[i]
+            from: users[i],
           }
         ),
         'Permission denied.'
@@ -67,7 +67,7 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
           web3.utils.soliditySha3('collector', 1),
           initialSettings.maintainerFee,
           {
-            from: users[i]
+            from: users[i],
           }
         ),
         'Permission denied.'

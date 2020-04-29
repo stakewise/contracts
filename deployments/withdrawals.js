@@ -7,7 +7,7 @@ async function deployWalletsRegistryProxy({
   validatorsRegistryProxy,
   withdrawalsProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'WalletsRegistry',
@@ -16,10 +16,10 @@ async function deployWalletsRegistryProxy({
       adminsProxy,
       walletsManagersProxy,
       validatorsRegistryProxy,
-      withdrawalsProxy
+      withdrawalsProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Wallets Registry contract: ${proxy.address}`);
@@ -34,7 +34,7 @@ async function deployWithdrawalsProxy({
   validatorTransfersProxy,
   walletsRegistryProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Withdrawals',
@@ -45,10 +45,10 @@ async function deployWithdrawalsProxy({
       settingsProxy,
       validatorsRegistryProxy,
       validatorTransfersProxy,
-      walletsRegistryProxy
+      walletsRegistryProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Withdrawals contract: ${proxy.address}`);
@@ -57,5 +57,5 @@ async function deployWithdrawalsProxy({
 
 module.exports = {
   deployWalletsRegistryProxy,
-  deployWithdrawalsProxy
+  deployWithdrawalsProxy,
 };

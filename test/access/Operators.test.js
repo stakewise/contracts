@@ -2,15 +2,15 @@ const { expect } = require('chai');
 const {
   constants,
   expectEvent,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
-  deployOperatorsProxy
+  deployOperatorsProxy,
 } = require('../../deployments/access');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { removeNetworkFile } = require('../common/utils');
 
@@ -27,7 +27,7 @@ contract('Operators', ([_, ...accounts]) => {
     await deployLogicContracts({ networkConfig });
     adminsProxy = await deployAdminsProxy({
       networkConfig,
-      initialAdmin: admin
+      initialAdmin: admin,
     });
   });
 
@@ -46,7 +46,7 @@ contract('Operators', ([_, ...accounts]) => {
       const receipt = await operators.addOperator(operator, { from: admin });
       expectEvent(receipt, 'OperatorAdded', {
         account: operator,
-        issuer: admin
+        issuer: admin,
       });
       expect(await operators.isOperator(operator)).equal(true);
       expect(await operators.isOperator(admin)).equal(false);
@@ -124,11 +124,11 @@ contract('Operators', ([_, ...accounts]) => {
 
     it('admins can remove operators', async () => {
       const receipt = await operators.removeOperator(operator, {
-        from: admin
+        from: admin,
       });
       expectEvent(receipt, 'OperatorRemoved', {
         account: operator,
-        issuer: admin
+        issuer: admin,
       });
       expect(await operators.isOperator(operator)).equal(false);
       expect(await operators.isOperator(anotherOperator)).equal(true);

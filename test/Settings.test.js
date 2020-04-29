@@ -3,19 +3,19 @@ const {
   BN,
   ether,
   expectEvent,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
-  deployOperatorsProxy
+  deployOperatorsProxy,
 } = require('../deployments/access');
 const {
   deploySettingsProxy,
-  initialSettings
+  initialSettings,
 } = require('../deployments/settings');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../deployments/common');
 const { removeNetworkFile } = require('./common/utils');
 
@@ -27,7 +27,7 @@ const newValues = [
   ['maintainerFee', new BN(100)],
   ['minStakingDuration', new BN(1209600)],
   ['stakingDuration', new BN(31556952)],
-  ['contractPaused', true]
+  ['contractPaused', true],
 ];
 
 function getSetMethod(setting) {
@@ -56,11 +56,11 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     await deployLogicContracts({ networkConfig });
     adminsProxy = await deployAdminsProxy({
       networkConfig,
-      initialAdmin: admin
+      initialAdmin: admin,
     });
     operatorsProxy = await deployOperatorsProxy({
       networkConfig,
-      adminsProxy
+      adminsProxy,
     });
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });
@@ -89,10 +89,10 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
           await settings.stakingDurations(collector)
         ).to.be.bignumber.equal(new BN(0));
         const receipt = await settings.setStakingDuration(collector, newValue, {
-          from: admin
+          from: admin,
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('stakingDurations').padEnd(66, '0')
+          settingName: web3.utils.fromAscii('stakingDurations').padEnd(66, '0'),
         });
         expect(
           await settings.stakingDurations(collector)
@@ -100,20 +100,20 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
       } else if (setting === 'contractPaused') {
         expect(await settings.pausedContracts(collector)).equal(false);
         const receipt = await settings.setContractPaused(collector, newValue, {
-          from: admin
+          from: admin,
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0')
+          settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0'),
         });
         expect(await settings.pausedContracts(collector)).equal(newValue);
       } else {
         await assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
         const receipt = await settings[setMethod](newValue, {
-          from: admin
+          from: admin,
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii(setting).padEnd(66, '0')
+          settingName: web3.utils.fromAscii(setting).padEnd(66, '0'),
         });
         assertEqual(await settings[setting](), newValue);
       }
@@ -128,7 +128,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
         ).to.be.bignumber.equal(new BN(0));
         await expectRevert(
           settings.setStakingDuration(collector, newValue, {
-            from: anyone
+            from: anyone,
           }),
           'Permission denied.'
         );
@@ -139,7 +139,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
         expect(await settings.pausedContracts(collector)).equal(false);
         await expectRevert(
           settings.setContractPaused(collector, newValue, {
-            from: anyone
+            from: anyone,
           }),
           'Permission denied.'
         );
@@ -149,7 +149,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
         const setMethod = getSetMethod(setting);
         await expectRevert(
           settings[setMethod](newValue, {
-            from: anyone
+            from: anyone,
           }),
           'Permission denied.'
         );
@@ -161,10 +161,10 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
   it('operators can pause contracts', async () => {
     expect(await settings.pausedContracts(collector)).equal(false);
     const receipt = await settings.setContractPaused(collector, true, {
-      from: operator
+      from: operator,
     });
     expectEvent(receipt, 'SettingChanged', {
-      settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0')
+      settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0'),
     });
     expect(await settings.pausedContracts(collector)).equal(true);
   });
@@ -172,7 +172,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
   it("checks that maintainer's fee is less than 100%", async () => {
     await expectRevert(
       settings.setMaintainerFee(new BN(10000), {
-        from: admin
+        from: admin,
       }),
       'Invalid value.'
     );

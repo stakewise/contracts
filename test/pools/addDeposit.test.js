@@ -3,12 +3,12 @@ const {
   BN,
   ether,
   constants,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -19,7 +19,7 @@ const {
   checkCollectorBalance,
   checkPendingPool,
   checkNewPoolCollectedAmount,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -46,11 +46,11 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     let {
       deposits: depositsProxy,
       pools: poolsProxy,
-      settings: settingsProxy
+      settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
@@ -60,7 +60,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
   it('fails to add a deposit with zero recipient address', async () => {
     await expectRevert(
       pools.addDeposit(constants.ZERO_ADDRESS, {
-        from: sender1
+        from: sender1,
       }),
       'Invalid recipient address.'
     );
@@ -72,7 +72,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       pools.addDeposit(recipient1, {
         from: sender1,
-        value: ether('0')
+        value: ether('0'),
       }),
       'Invalid deposit amount.'
     );
@@ -84,7 +84,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       pools.addDeposit(recipient1, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
+        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1)),
       }),
       'Invalid deposit amount.'
     );
@@ -94,12 +94,12 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
   it('adds a deposit smaller than validator deposit amount', async () => {
     const depositAmount = getDepositAmount({
-      max: validatorDepositAmount
+      max: validatorDepositAmount,
     });
     // Send a deposit
     const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     });
 
     // Check deposit added to Deposits contract
@@ -112,7 +112,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount,
-      totalAmount: depositAmount
+      totalAmount: depositAmount,
     });
 
     await checkNewPoolCollectedAmount(pools, depositAmount);
@@ -123,13 +123,13 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
   it('adds a deposit bigger than validator deposit amount', async () => {
     const depositAmount = getDepositAmount({
       min: validatorDepositAmount,
-      max: validatorDepositAmount.mul(new BN(2))
+      max: validatorDepositAmount.mul(new BN(2)),
     });
 
     // Send a deposit
     const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     });
 
     // Check added to the pool 1
@@ -142,7 +142,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount
+      totalAmount: validatorDepositAmount,
     });
     await checkPendingPool(pools, poolId, true);
 
@@ -157,7 +157,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: expectedAmount,
-      totalAmount: expectedAmount
+      totalAmount: expectedAmount,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, expectedAmount);
@@ -172,11 +172,11 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
     // User 1 creates a deposit
     let depositAmount1 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount1
+      value: depositAmount1,
     }));
     await checkDepositAdded({
       transaction: tx,
@@ -186,7 +186,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount1,
-      totalAmount: depositAmount1
+      totalAmount: depositAmount1,
     });
     await checkPendingPool(pools, poolId, false);
     await checkNewPoolCollectedAmount(pools, depositAmount1);
@@ -195,7 +195,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     let depositAmount2 = validatorDepositAmount.sub(depositAmount1);
     ({ tx } = await pools.addDeposit(recipient2, {
       from: sender2,
-      value: depositAmount2
+      value: depositAmount2,
     }));
     await checkDepositAdded({
       transaction: tx,
@@ -205,7 +205,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender2,
       recipientAddress: recipient2,
       addedAmount: depositAmount2,
-      totalAmount: depositAmount2
+      totalAmount: depositAmount2,
     });
 
     // check contract balance
@@ -220,11 +220,11 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     for (let i = 0; i < 16; i++) {
       // User creates a deposit
       let depositAmount = getDepositAmount({
-        max: validatorDepositAmount.div(new BN(16))
+        max: validatorDepositAmount.div(new BN(16)),
       });
       let { tx } = await pools.addDeposit(recipient1, {
         from: sender1,
-        value: depositAmount
+        value: depositAmount,
       });
       userBalance.iadd(depositAmount);
       await checkDepositAdded({
@@ -235,7 +235,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         senderAddress: sender1,
         recipientAddress: recipient1,
         addedAmount: depositAmount,
-        totalAmount: userBalance
+        totalAmount: userBalance,
       });
       // Check contract balance updated
       await checkCollectorBalance(pools, userBalance);
@@ -260,11 +260,11 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       // Create a deposit
       let depositAmount = getDepositAmount({
         min: validatorDepositAmount.div(new BN(16)).add(new BN(1)),
-        max: validatorDepositAmount.div(new BN(8))
+        max: validatorDepositAmount.div(new BN(8)),
       });
       const { tx } = await pools.addDeposit(recipient1, {
         from: sender1,
-        value: depositAmount
+        value: depositAmount,
       });
 
       if (balance1.add(depositAmount).lte(validatorDepositAmount)) {
@@ -278,7 +278,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           senderAddress: sender1,
           recipientAddress: recipient1,
           addedAmount: depositAmount,
-          totalAmount: balance1
+          totalAmount: balance1,
         });
 
         // check pending pools registry
@@ -300,7 +300,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           senderAddress: sender1,
           recipientAddress: recipient1,
           addedAmount: depositAmount,
-          totalAmount: balance2
+          totalAmount: balance2,
         });
 
         // check pending pools registry
@@ -324,7 +324,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           senderAddress: sender1,
           recipientAddress: recipient1,
           addedAmount: toPool1,
-          totalAmount: balance1
+          totalAmount: balance1,
         });
 
         const toPool2 = depositAmount.sub(toPool1);
@@ -337,7 +337,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           senderAddress: sender1,
           recipientAddress: recipient1,
           addedAmount: toPool2,
-          totalAmount: balance2
+          totalAmount: balance2,
         });
 
         // check pending pools registry
@@ -358,14 +358,14 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
   it('fails to add a deposit to paused empty pool', async () => {
     await settings.setContractPaused(pools.address, true, {
-      from: admin
+      from: admin,
     });
     expect(await settings.pausedContracts(pools.address)).equal(true);
 
     await expectRevert(
       pools.addDeposit(recipient1, {
         from: sender1,
-        value: ether('1')
+        value: ether('1'),
       }),
       'Deposit amount cannot be larger than amount required to finish the last pool.'
     );
@@ -375,12 +375,12 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
   it('fails to add a deposit to paused pool with amount bigger than required to finish round', async () => {
     const depositAmount = getDepositAmount({
-      max: validatorDepositAmount
+      max: validatorDepositAmount,
     });
     // Send a deposit
     const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     });
     let poolId = getEntityId(pools.address, new BN(1));
 
@@ -393,7 +393,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount,
-      totalAmount: depositAmount
+      totalAmount: depositAmount,
     });
 
     // Check pools balance
@@ -401,7 +401,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
     // Pause Pools contract
     await settings.setContractPaused(pools.address, true, {
-      from: admin
+      from: admin,
     });
     expect(await settings.pausedContracts(pools.address)).equal(true);
 
@@ -409,7 +409,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       pools.addDeposit(recipient1, {
         from: sender1,
-        value: initialSettings.validatorDepositAmount
+        value: initialSettings.validatorDepositAmount,
       }),
       'Deposit amount cannot be larger than amount required to finish the last pool.'
     );
@@ -421,12 +421,12 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
   it('adds a deposit to paused pool with amount required to finish current round', async () => {
     let tx;
     let depositAmount = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     // Send a deposit
     ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     }));
     let poolId = getEntityId(pools.address, new BN(1));
 
@@ -439,7 +439,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount,
-      totalAmount: depositAmount
+      totalAmount: depositAmount,
     });
 
     // Check pools balance
@@ -449,7 +449,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
     // Pause Pools contract
     await settings.setContractPaused(pools.address, true, {
-      from: admin
+      from: admin,
     });
     expect(await settings.pausedContracts(pools.address)).equal(true);
 
@@ -459,7 +459,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     );
     ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     }));
 
     // Check deposit added to Deposits contract
@@ -471,7 +471,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount,
-      totalAmount: initialSettings.validatorDepositAmount
+      totalAmount: initialSettings.validatorDepositAmount,
     });
     await checkPendingPool(pools, poolId, true);
     await checkCollectorBalance(pools, initialSettings.validatorDepositAmount);

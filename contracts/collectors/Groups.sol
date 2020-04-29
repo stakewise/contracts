@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
@@ -14,6 +15,7 @@ import "../Settings.sol";
  * The validator can be registered for the group as soon as it collects the validator deposit amount.
  */
 contract Groups is Initializable {
+    using Address for address payable;
     using SafeMath for uint256;
 
     /**
@@ -149,12 +151,8 @@ contract Groups is Initializable {
         // update group progress
         pendingGroup.collectedAmount = (pendingGroup.collectedAmount).sub(_amount);
 
-        // https://diligence.consensys.net/posts/2019/09/stop-using-soliditys-transfer-now/
-        // solhint-disable avoid-call-value
-        // solium-disable-next-line security/no-call-value
-        (bool success,) = _recipient.call.value(_amount)("");
-        // solhint-enable avoid-call-value
-        require(success, "Transfer has failed.");
+        // transfer canceled amount to the recipient
+        _recipient.sendValue(_amount);
     }
 
     /**

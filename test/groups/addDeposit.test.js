@@ -2,12 +2,12 @@ const {
   BN,
   ether,
   constants,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -17,7 +17,7 @@ const {
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingGroup,
-  getEntityId
+  getEntityId,
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -33,7 +33,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     sender1,
     recipient1,
     sender2,
-    recipient2
+    recipient2,
   ] = accounts;
   let groupMembers = [sender1, sender2];
 
@@ -50,17 +50,17 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       deposits: depositsProxy,
-      groups: groupsProxy
+      groups: groupsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     groups = await Groups.at(groupsProxy);
     deposits = await Deposits.at(depositsProxy);
 
     await groups.createGroup(groupMembers, {
-      from: groupCreator
+      from: groupCreator,
     });
     groupId = getEntityId(groups.address, new BN(1));
   });
@@ -68,7 +68,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
   it('fails to add a deposit with invalid recipient address', async () => {
     await expectRevert(
       groups.addDeposit(groupId, constants.ZERO_ADDRESS, {
-        from: sender1
+        from: sender1,
       }),
       'Invalid recipient address.'
     );
@@ -80,7 +80,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       groups.addDeposit(constants.ZERO_BYTES32, recipient1, {
         from: sender1,
-        value: ether('1')
+        value: ether('1'),
       }),
       'The sender is not a member of the group with the specified ID.'
     );
@@ -92,7 +92,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       groups.addDeposit(groupId, recipient1, {
         from: sender1,
-        value: ether('0')
+        value: ether('0'),
       }),
       'Invalid deposit amount.'
     );
@@ -104,7 +104,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       groups.addDeposit(groupId, recipient1, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
+        value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1)),
       }),
       'Invalid deposit amount.'
     );
@@ -116,7 +116,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       groups.addDeposit(groupId, recipient1, {
         from: recipient1,
-        value: ether('1')
+        value: ether('1'),
       }),
       'The sender is not a member of the group with the specified ID.'
     );
@@ -127,13 +127,13 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
   it('cannot deposit to group which has already collected validator deposit amount', async () => {
     await groups.addDeposit(groupId, recipient1, {
       from: sender1,
-      value: validatorDepositAmount
+      value: validatorDepositAmount,
     });
 
     await expectRevert(
       groups.addDeposit(groupId, recipient1, {
         from: sender1,
-        value: ether('1')
+        value: ether('1'),
       }),
       'The deposit amount is bigger than the amount required to collect.'
     );
@@ -145,7 +145,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       groups.addDeposit(groupId, recipient1, {
         from: sender1,
-        value: validatorDepositAmount.add(ether('1'))
+        value: validatorDepositAmount.add(ether('1')),
       }),
       'The deposit amount is bigger than the amount required to collect.'
     );
@@ -155,12 +155,12 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
 
   it('adds a deposit smaller than validator deposit amount', async () => {
     const depositAmount = getDepositAmount({
-      max: validatorDepositAmount
+      max: validatorDepositAmount,
     });
     // Send a deposit
     const { tx } = await groups.addDeposit(groupId, recipient1, {
       from: sender1,
-      value: depositAmount
+      value: depositAmount,
     });
 
     // Check deposit added to Deposits contract
@@ -172,7 +172,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
       addedAmount: depositAmount,
-      totalAmount: depositAmount
+      totalAmount: depositAmount,
     });
 
     await checkPendingGroup(groups, groupId, depositAmount);
@@ -182,11 +182,11 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
   it('group creator can add deposit to the group', async () => {
     // Send a first deposit
     const depositAmount1 = getDepositAmount({
-      max: validatorDepositAmount
+      max: validatorDepositAmount,
     });
     const { tx: tx1 } = await groups.addDeposit(groupId, recipient1, {
       from: groupCreator,
-      value: depositAmount1
+      value: depositAmount1,
     });
 
     // Check deposit added to Deposits contract
@@ -198,14 +198,14 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       senderAddress: groupCreator,
       recipientAddress: recipient1,
       addedAmount: depositAmount1,
-      totalAmount: depositAmount1
+      totalAmount: depositAmount1,
     });
 
     // Send a second deposit
     const depositAmount2 = validatorDepositAmount.sub(depositAmount1);
     const { tx: tx2 } = await groups.addDeposit(groupId, recipient2, {
       from: sender2,
-      value: depositAmount2
+      value: depositAmount2,
     });
 
     // Check deposit added to Deposits contract
@@ -217,7 +217,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       senderAddress: sender2,
       recipientAddress: recipient2,
       addedAmount: depositAmount2,
-      totalAmount: depositAmount2
+      totalAmount: depositAmount2,
     });
 
     await checkPendingGroup(groups, groupId, validatorDepositAmount);

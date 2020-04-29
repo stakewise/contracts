@@ -4,12 +4,12 @@ const {
   expectRevert,
   constants,
   ether,
-  balance
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
@@ -20,7 +20,7 @@ const {
   checkValidatorTransferred,
   getEntityId,
   registerValidator,
-  getDepositAmount
+  getDepositAmount,
 } = require('../common/utils');
 
 const Individuals = artifacts.require('Individuals');
@@ -64,7 +64,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     individuals = await Individuals.at(proxies.individuals);
     pools = await Pools.at(proxies.pools);
@@ -85,7 +85,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     // set staking duration
     settings = await Settings.at(proxies.settings);
     await settings.setStakingDuration(pools.address, stakingDuration, {
-      from: admin
+      from: admin,
     });
 
     // register validator to transfer
@@ -93,23 +93,23 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       individualsProxy: proxies.individuals,
       operator,
       sender: other,
-      recipient: other
+      recipient: other,
     });
     prevEntityId = getEntityId(proxies.individuals, new BN(1));
 
     // register new pool
     let amount1 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
+      max: validatorDepositAmount.div(new BN(2)),
     });
     await pools.addDeposit(sender1, {
       from: sender1,
-      value: amount1
+      value: amount1,
     });
 
     let amount2 = validatorDepositAmount.sub(amount1);
     await pools.addDeposit(sender2, {
       from: sender2,
-      value: amount2
+      value: amount2,
     });
     newPoolId = getEntityId(pools.address, new BN(1));
   });
@@ -121,7 +121,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward,
         constants.ZERO_BYTES32,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Invalid pool ID.'
@@ -135,7 +135,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward,
         newPoolId,
         {
-          from: operator
+          from: operator,
         }
       ),
       'Validator with such ID is not registered.'
@@ -147,7 +147,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
   it('fails to transfer validator with caller other than operator', async () => {
     await expectRevert(
       pools.transferValidator(validatorId, validatorReward, newPoolId, {
-        from: other
+        from: other,
       }),
       'Permission denied.'
     );
@@ -158,13 +158,13 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
   it('fails to transfer validator if transferring is paused', async () => {
     // pause validator transfers
     await settings.setContractPaused(validatorTransfers.address, true, {
-      from: admin
+      from: admin,
     });
 
     // transfer validator to the new pool
     await expectRevert(
       pools.transferValidator(validatorId, validatorReward, newPoolId, {
-        from: operator
+        from: operator,
       }),
       'Validator transfers are paused.'
     );
@@ -178,20 +178,20 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     // change validator deposit amount
     let newValidatorDepositAmount = validatorDepositAmount.add(ether('1'));
     await settings.setValidatorDepositAmount(newValidatorDepositAmount, {
-      from: admin
+      from: admin,
     });
 
     // register new pool
     await pools.addDeposit(sender1, {
       from: sender1,
-      value: newValidatorDepositAmount
+      value: newValidatorDepositAmount,
     });
     newPoolId = getEntityId(pools.address, new BN(2));
 
     // transfer validator to the new pool
     await expectRevert(
       pools.transferValidator(validatorId, validatorReward, newPoolId, {
-        from: operator
+        from: operator,
       }),
       'Validator deposit amount cannot be updated.'
     );
@@ -207,13 +207,13 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
   it('fails to transfer validator with assigned wallet', async () => {
     // assign wallet to the validator
     await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager
+      from: walletsManager,
     });
 
     // transfer validator to the new pool
     await expectRevert(
       pools.transferValidator(validatorId, validatorReward, newPoolId, {
-        from: operator
+        from: operator,
       }),
       'Cannot register transfer for validator with assigned wallet.'
     );
@@ -225,7 +225,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
 
   it('fails to transfer validator when transfers are paused', async () => {
     await settings.setContractPaused(validatorTransfers.address, true, {
-      from: admin
+      from: admin,
     });
     expect(await settings.pausedContracts(validatorTransfers.address)).equal(
       true
@@ -233,7 +233,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
 
     await expectRevert(
       pools.transferValidator(validatorId, validatorReward, newPoolId, {
-        from: operator
+        from: operator,
       }),
       'Validator transfers are paused.'
     );
@@ -250,7 +250,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       validatorReward,
       newPoolId,
       {
-        from: operator
+        from: operator,
       }
     );
 
@@ -277,7 +277,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       userDebt,
       maintainerDebt,
       totalUserDebt: userDebt,
-      totalMaintainerDebt: maintainerDebt
+      totalMaintainerDebt: maintainerDebt,
     });
 
     // check ValidatorTransfers balance
@@ -290,7 +290,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     // update maintainer fee
     let newMaintainerFee = new BN(2234);
     await settings.setMaintainerFee(newMaintainerFee, {
-      from: admin
+      from: admin,
     });
     // transfer validator to the new pool
     let { tx } = await pools.transferValidator(
@@ -298,7 +298,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       validatorReward,
       newPoolId,
       {
-        from: operator
+        from: operator,
       }
     );
 
@@ -326,7 +326,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       userDebt,
       maintainerDebt,
       totalUserDebt: userDebt,
-      totalMaintainerDebt: maintainerDebt
+      totalMaintainerDebt: maintainerDebt,
     });
 
     // check Validator Transfers balance
@@ -342,7 +342,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward: ether('0.442236112'),
         // debts are based on initialSettings.maintainerFee
         userDebt: ether('0.4191071633424'),
-        maintainerDebt: ether('0.0231289486576')
+        maintainerDebt: ether('0.0231289486576'),
       },
       {
         newMaintainerFee: new BN(2000),
@@ -350,7 +350,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward: ether('0.5901925'),
         // debts are based on previous test newMaintainerFee
         userDebt: ether('0.1405585686'),
-        maintainerDebt: ether('0.00739781940')
+        maintainerDebt: ether('0.00739781940'),
       },
       {
         newMaintainerFee: new BN(1),
@@ -358,7 +358,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward: ether('0.802677173'),
         // debts are based on previous test newMaintainerFee
         userDebt: ether('0.1699877384'),
-        maintainerDebt: ether('0.0424969346')
+        maintainerDebt: ether('0.0424969346'),
       },
       {
         newMaintainerFee: new BN(4999),
@@ -366,7 +366,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward: ether('7.278412149'),
         // debts are based on previous test newMaintainerFee
         userDebt: ether('6.4750874025024'),
-        maintainerDebt: ether('0.0006475734976')
+        maintainerDebt: ether('0.0006475734976'),
       },
       {
         newMaintainerFee: new BN(9999),
@@ -374,8 +374,8 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorReward: ether('8.017862337'),
         // debts are based on previous test newMaintainerFee
         userDebt: ether('0.3697990390188'),
-        maintainerDebt: ether('0.3696511489812')
-      }
+        maintainerDebt: ether('0.3696511489812'),
+      },
     ];
 
     let tx;
@@ -387,7 +387,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     for (const test of tests) {
       // update maintainer fee
       await settings.setMaintainerFee(test.newMaintainerFee, {
-        from: admin
+        from: admin,
       });
 
       // transfer validator to the new pool
@@ -396,7 +396,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         test.validatorReward,
         newPoolId,
         {
-          from: operator
+          from: operator,
         }
       ));
 
@@ -424,7 +424,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         userDebt: test.userDebt,
         maintainerDebt: test.maintainerDebt,
         totalUserDebt: totalUserDebt,
-        totalMaintainerDebt: totalMaintainerDebt
+        totalMaintainerDebt: totalMaintainerDebt,
       });
 
       // check Validator Transfers balance
@@ -437,7 +437,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       // add deposit for the next pool
       await pools.addDeposit(sender1, {
         from: sender1,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
     }
   });

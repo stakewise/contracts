@@ -7,14 +7,14 @@ async function deployValidatorsRegistryProxy({
   poolsProxy,
   individualsProxy,
   groupsProxy,
-  salt
+  salt,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'ValidatorsRegistry',
     methodName: 'initialize',
     methodArgs: [poolsProxy, individualsProxy, groupsProxy, settingsProxy],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Validators Registry contract: ${proxy.address}`);
@@ -22,5 +22,5 @@ async function deployValidatorsRegistryProxy({
 }
 
 module.exports = {
-  deployValidatorsRegistryProxy
+  deployValidatorsRegistryProxy,
 };

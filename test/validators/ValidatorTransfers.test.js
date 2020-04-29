@@ -3,19 +3,19 @@ const {
   expectRevert,
   expectEvent,
   ether,
-  send
+  send,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   getEntityId,
-  registerValidator
+  registerValidator,
 } = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
@@ -57,7 +57,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address
+      vrc: vrc.options.address,
     });
     pools = await Pools.at(proxies.pools);
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
@@ -81,7 +81,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender,
-      recipient
+      recipient,
     });
     entityId = getEntityId(pools.address, new BN(1));
   });
@@ -94,7 +94,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
         userReward,
         new BN(0),
         {
-          from: admin
+          from: admin,
         }
       ),
       'Permission denied.'
@@ -108,7 +108,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
           getEntityId(pools.address, new BN(5)),
           recipient,
           {
-            from: sender
+            from: sender,
           }
         ),
         'An entity with such ID is not registered.'
@@ -120,17 +120,17 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       let poolId = getEntityId(pools.address, new BN(2));
       await pools.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
 
       // transfer validator to the new entity
       await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator
+        from: operator,
       });
 
       await expectRevert(
         validatorTransfers.withdraw(entityId, other, {
-          from: other
+          from: other,
         }),
         'User does not have a share in this entity.'
       );
@@ -141,21 +141,21 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       let poolId = getEntityId(pools.address, new BN(2));
       await pools.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
 
       // transfer validator to the new entity
       await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator
+        from: operator,
       });
 
       await validatorTransfers.withdraw(entityId, recipient, {
-        from: sender
+        from: sender,
       });
 
       await expectRevert(
         validatorTransfers.withdraw(entityId, recipient, {
-          from: sender
+          from: sender,
         }),
         'Nothing to withdraw.'
       );
@@ -166,54 +166,54 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       let poolId = getEntityId(pools.address, new BN(2));
       await pools.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
 
       // transfer validator to the new entity
       await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator
+        from: operator,
       });
 
       // user withdraws deposit
       let receipt = await validatorTransfers.withdraw(entityId, recipient, {
-        from: sender
+        from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
         entityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
-        rewardAmount: new BN(0)
+        rewardAmount: new BN(0),
       });
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = logs[0].args.wallet;
 
       // enable withdrawals
       await send.ether(other, wallet, validatorDepositAmount);
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
 
       // user performs rewards withdrawal first time
       receipt = await validatorTransfers.withdraw(entityId, recipient, {
-        from: sender
+        from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
         entityId,
         sender,
         recipient,
         depositAmount: new BN(0),
-        rewardAmount: userReward
+        rewardAmount: userReward,
       });
 
       // user performs withdrawal second time
       await expectRevert(
         validatorTransfers.withdraw(entityId, recipient, {
-          from: sender
+          from: sender,
         }),
         'Nothing to withdraw.'
       );
@@ -224,42 +224,42 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       let poolId = getEntityId(pools.address, new BN(2));
       await pools.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
 
       // transfer validator to the new entity
       await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator
+        from: operator,
       });
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager
+        from: walletsManager,
       });
       let wallet = logs[0].args.wallet;
 
       // enable withdrawals
       await send.ether(other, wallet, validatorDepositAmount);
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager
+        from: walletsManager,
       });
 
       // user performs deposit + rewards withdrawal first time
       let receipt = await validatorTransfers.withdraw(entityId, recipient, {
-        from: sender
+        from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
         entityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
-        rewardAmount: userReward
+        rewardAmount: userReward,
       });
 
       // user performs withdrawal second time
       await expectRevert(
         validatorTransfers.withdraw(entityId, recipient, {
-          from: sender
+          from: sender,
         }),
         'Nothing to withdraw.'
       );
@@ -270,30 +270,30 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       let poolId = getEntityId(pools.address, new BN(2));
       await pools.addDeposit(recipient, {
         from: sender,
-        value: validatorDepositAmount
+        value: validatorDepositAmount,
       });
 
       // transfer validator to the new entity
       await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator
+        from: operator,
       });
 
       // user withdraws deposit
       let receipt = await validatorTransfers.withdraw(entityId, recipient, {
-        from: sender
+        from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
         entityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
-        rewardAmount: new BN(0)
+        rewardAmount: new BN(0),
       });
 
       // debt was not resolved yet
       await expectRevert(
         validatorTransfers.withdraw(entityId, recipient, {
-          from: sender
+          from: sender,
         }),
         'Nothing to withdraw.'
       );

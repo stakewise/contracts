@@ -1,8 +1,8 @@
 {
   "extends": "solhint:recommended",
   "rules": {
-    "indent": ["error", 4],
-    "two-lines-top-level-separator": "off",
-    "mark-callable-contracts": "off"
+    "compiler-version": ["error", "0.5.17"],
+    "mark-callable-contracts": "off",
+    "no-empty-blocks": "off"
   }
 }

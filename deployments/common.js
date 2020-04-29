@@ -8,7 +8,7 @@ function log(message) {
 
 async function getNetworkConfig({ network = 'development' } = {}) {
   let networkConfig = await ConfigManager.initNetworkConfiguration({
-    network: process.env.NETWORK || network
+    network: process.env.NETWORK || network,
   });
 
   log(`Initialized session on network "${networkConfig.network}"`);
@@ -18,7 +18,7 @@ async function getNetworkConfig({ network = 'development' } = {}) {
 async function deployLogicContracts({ networkConfig }) {
   await scripts.push({
     deployProxyAdmin: true,
-    ...networkConfig
+    ...networkConfig,
   });
 }
 
@@ -26,13 +26,13 @@ async function calculateContractAddress({ networkConfig }) {
   let salt = Math.round(Math.random() * 100000);
   let contractAddress = await scripts.queryDeployment({
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
-  while ((await ZWeb3.getCode(contractAddress)) !== '0x') {
+  while ((await ZWeb3.eth.getCode(contractAddress)) !== '0x') {
     salt = Math.round(Math.random() * 100000);
     contractAddress = await scripts.queryDeployment({
       salt,
-      ...networkConfig
+      ...networkConfig,
     });
   }
 
@@ -43,5 +43,5 @@ module.exports = {
   log,
   getNetworkConfig,
   deployLogicContracts,
-  calculateContractAddress
+  calculateContractAddress,
 };

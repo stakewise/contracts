@@ -19,8 +19,8 @@ let testCases = [
       { deposit: ether('0.991'), reward: ether('0.009202827820447925') },
       { deposit: ether('3.043'), reward: ether('0.028258531844221025') },
       { deposit: ether('4.382'), reward: ether('0.04069302876811585') },
-      { deposit: ether('0.237'), reward: ether('0.002200878096312975') }
-    ]
+      { deposit: ether('0.237'), reward: ether('0.002200878096312975') },
+    ],
   },
   {
     validatorReturn: validatorDepositAmount.add(ether('2.343368659')),
@@ -28,15 +28,15 @@ let testCases = [
     maintainerReward: ether('0.4121985471181'),
     users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
       deposit: ether('1'),
-      reward: ether('0.060349065996309375')
-    })
+      reward: ether('0.060349065996309375'),
+    }),
   },
   {
     validatorReturn: validatorDepositAmount.add(ether('1.32400577')),
     maintainerFee: new BN(1928),
     maintainerReward: ether('0.255268312456'),
-    users: [{ deposit: ether('32.0'), reward: ether('1.0687374575440') }]
-  }
+    users: [{ deposit: ether('32.0'), reward: ether('1.0687374575440') }],
+  },
 ];
 
 let penalisedTestCases = [
@@ -56,23 +56,25 @@ let penalisedTestCases = [
       { deposit: ether('4.506'), penalisedReturn: ether('4.417622348538') },
       { deposit: ether('3.04'), penalisedReturn: ether('2.98037548592') },
       { deposit: ether('4.618'), penalisedReturn: ether('4.527425655914') },
-      { deposit: ether('0.194'), penalisedReturn: ether('0.190195014562') }
-    ]
+      { deposit: ether('0.194'), penalisedReturn: ether('0.190195014562') },
+    ],
   },
   {
     validatorReturn: validatorDepositAmount.sub(ether('0.243422652')),
     users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
       deposit: ether('1'),
-      penalisedReturn: ether('0.992393042125')
-    })
+      penalisedReturn: ether('0.992393042125'),
+    }),
   },
   {
     validatorReturn: validatorDepositAmount.sub(ether('2.001935196')),
-    users: [{ deposit: ether('32'), penalisedReturn: ether('29.998064804000') }]
-  }
+    users: [
+      { deposit: ether('32'), penalisedReturn: ether('29.998064804000') },
+    ],
+  },
 ];
 
 module.exports = {
   testCases,
-  penalisedTestCases
+  penalisedTestCases,
 };

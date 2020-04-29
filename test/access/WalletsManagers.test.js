@@ -2,15 +2,15 @@ const { expect } = require('chai');
 const {
   constants,
   expectEvent,
-  expectRevert
+  expectRevert,
 } = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
-  deployWalletsManagersProxy
+  deployWalletsManagersProxy,
 } = require('../../deployments/access');
 const {
   getNetworkConfig,
-  deployLogicContracts
+  deployLogicContracts,
 } = require('../../deployments/common');
 const { removeNetworkFile } = require('../common/utils');
 
@@ -27,7 +27,7 @@ contract('WalletsManagers', ([_, ...accounts]) => {
     await deployLogicContracts({ networkConfig });
     adminsProxy = await deployAdminsProxy({
       networkConfig,
-      initialAdmin: admin
+      initialAdmin: admin,
     });
   });
 
@@ -44,11 +44,11 @@ contract('WalletsManagers', ([_, ...accounts]) => {
   describe('assigning', () => {
     it('admin can assign manager role to another account', async () => {
       const receipt = await walletsManagers.addManager(manager, {
-        from: admin
+        from: admin,
       });
       expectEvent(receipt, 'ManagerAdded', {
         account: manager,
-        issuer: admin
+        issuer: admin,
       });
       expect(await walletsManagers.isManager(manager)).equal(true);
       expect(await walletsManagers.isManager(admin)).equal(false);
@@ -126,11 +126,11 @@ contract('WalletsManagers', ([_, ...accounts]) => {
 
     it('admins can remove managers', async () => {
       const receipt = await walletsManagers.removeManager(manager, {
-        from: admin
+        from: admin,
       });
       expectEvent(receipt, 'ManagerRemoved', {
         account: manager,
-        issuer: admin
+        issuer: admin,
       });
       expect(await walletsManagers.isManager(manager)).equal(false);
       expect(await walletsManagers.isManager(anotherManager)).equal(true);

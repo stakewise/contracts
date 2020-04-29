@@ -10,7 +10,7 @@ async function deployValidatorTransfersProxy({
   walletsRegistryProxy,
   withdrawalsProxy,
   salt,
-  networkConfig
+  networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'ValidatorTransfers',
@@ -22,10 +22,10 @@ async function deployValidatorTransfersProxy({
       settingsProxy,
       validatorsRegistryProxy,
       walletsRegistryProxy,
-      withdrawalsProxy
+      withdrawalsProxy,
     ],
     salt,
-    ...networkConfig
+    ...networkConfig,
   });
 
   log(`Validator Transfers contract: ${proxy.address}`);
@@ -33,5 +33,5 @@ async function deployValidatorTransfersProxy({
 }
 
 module.exports = {
-  deployValidatorTransfersProxy
+  deployValidatorTransfersProxy,
 };
