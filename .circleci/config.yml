@@ -38,7 +38,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Compile
-          command: npm run compile
+          command: yarn compile
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
@@ -52,7 +52,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Lint
-          command: npm run lint
+          command: yarn lint
 
   test:
     executor: default
@@ -62,7 +62,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Run tests
-          command: npm run test
+          command: yarn test
 #      - run:
 #          name: Report gas changes
 #          command: npx codechecks
@@ -75,7 +75,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Run coverage tests
-          command: npm run coverage
+          command: yarn coverage
       - run:
           name: Upload coverage
           command: |
