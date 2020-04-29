@@ -83,7 +83,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
       // Register validator
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        hasReadyEntity: true,
+        entityId: getEntityId(pools.address, new BN(testCaseN + 1)),
         poolsProxy: pools.address,
         operator
       });
@@ -125,7 +125,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId: getEntityId(pools.address, new BN(testCaseN + 1)),
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].penalisedReturn,
           rewardAmount: new BN(0)
         });
@@ -163,14 +163,13 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
       }
 
       // Register validator
+      let entityId = getEntityId(pools.address, new BN(testCaseN + 1));
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        hasReadyEntity: true,
+        entityId,
         poolsProxy: pools.address,
         operator
       });
-
-      let entityId = getEntityId(pools.address, new BN(testCaseN + 1));
 
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
@@ -217,7 +216,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].deposit,
           rewardAmount: users[j].reward
         });
@@ -270,9 +269,10 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     }
 
     // Start validator
+    let entityId = getEntityId(pools.address, new BN(1));
     let validatorId = await registerValidator({
       args: validatorRegistrationArgs[1],
-      hasReadyEntity: true,
+      entityId,
       poolsProxy: pools.address,
       operator
     });
@@ -303,16 +303,16 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     });
 
     for (let i = 0; i < deposits.length; i++) {
-      let withdrawer = otherAccounts[i];
+      let recipient = otherAccounts[i];
 
       // User withdraws his deposit and rewards
-      let receipt = await withdrawals.withdraw(wallet, withdrawer, {
+      let receipt = await withdrawals.withdraw(wallet, recipient, {
         from: sender
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId: getEntityId(pools.address, new BN(1)),
+        entityId,
         sender,
-        withdrawer,
+        recipient,
         depositAmount: deposits[i]
       });
     }

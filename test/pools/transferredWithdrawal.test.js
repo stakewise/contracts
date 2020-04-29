@@ -102,16 +102,18 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
           value: users[j].deposit
         });
       }
+      let prevEntityId = getEntityId(pools.address, new BN(i * 2 + 1));
 
       // register new validator
       validatorIds.push(
         await registerValidator({
           args: validatorRegistrationArgs[i + 1],
-          hasReadyEntity: true,
+          entityId: prevEntityId,
           poolsProxy: pools.address,
           operator
         })
       );
+      let newEntityId = getEntityId(pools.address, new BN(i * 2 + 2));
 
       // add new pool to transfer to
       await pools.addDeposit(other, {
@@ -123,6 +125,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
       await pools.transferValidator(
         validatorIds[i],
         validatorReturn.sub(validatorDepositAmount),
+        newEntityId,
         {
           from: operator
         }
@@ -158,7 +161,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: users[j].deposit,
           rewardAmount: new BN(0)
         });
@@ -234,7 +237,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         expectEvent(receipt, 'UserWithdrawn', {
           entityId,
           sender: sender,
-          withdrawer: otherAccounts[j],
+          recipient: otherAccounts[j],
           depositAmount: new BN(0),
           rewardAmount: users[j].reward
         });

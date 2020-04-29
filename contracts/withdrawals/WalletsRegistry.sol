@@ -24,26 +24,25 @@ contract WalletsRegistry is Initializable {
         bytes32 validatorId;
     }
 
-    // Determines whether validator ID (public key hash) has been assigned any wallet.
-    // Required to prevent assigning multiple wallets to the same validator.
+    // determines whether validator ID (public key hash) has been assigned any wallet.
     mapping(bytes32 => bool) public assignedValidators;
 
-    // Maps wallet address to the information about its assignment.
+    // maps wallet address to the information about its assignment.
     mapping(address => WalletAssignment) public wallets;
 
-    // Stores list of available wallets.
+    // stores list of available wallets.
     address[] private availableWallets;
 
-    // Address of the Admins contract.
+    // address of the Admins contract.
     Admins private admins;
 
-    // Address of the WalletsManagers contract.
+    // address of the WalletsManagers contract.
     WalletsManagers private walletsManagers;
 
-    // Address of the ValidatorsRegistry contract.
+    // address of the ValidatorsRegistry contract.
     ValidatorsRegistry private validatorsRegistry;
 
-    // Address of the Withdrawals contract.
+    // address of the Withdrawals contract.
     Withdrawals private withdrawals;
 
     /**
@@ -69,10 +68,10 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Constructor for initializing the WalletsRegistry contract.
-    * @param _admins - Address of the Admins contract.
-    * @param _walletsManagers - Address of the WalletsManagers contract.
-    * @param _validatorsRegistry - Address of the Validators Registry contract.
-    * @param _withdrawals - Address of the Withdrawals contract.
+    * @param _admins - address of the Admins contract.
+    * @param _walletsManagers - address of the WalletsManagers contract.
+    * @param _validatorsRegistry - address of the Validators Registry contract.
+    * @param _withdrawals - address of the Withdrawals contract.
     */
     function initialize(
         Admins _admins,
@@ -119,7 +118,7 @@ contract WalletsRegistry is Initializable {
     * Function for resetting wallets.
     * Can only be called by users with an admin role.
     * Must be called only when all the users have withdrawn their shares.
-    * @param _wallet - Address of the wallet to reset.
+    * @param _wallet - address of the wallet to reset.
     */
     function resetWallet(address _wallet) external {
         require(admins.isAdmin(msg.sender), "Permission denied.");
@@ -134,8 +133,8 @@ contract WalletsRegistry is Initializable {
     * Function for unlocking wallets.
     * Can only be called by Withdrawals contract.
     * Users will be able to withdraw their shares from unlocked wallet.
-    * @param _wallet - Address of the wallet to unlock.
-    * @param _usersBalance - Users balance at unlock time.
+    * @param _wallet - address of the wallet to unlock.
+    * @param _usersBalance - users balance at unlock time.
     */
     function unlockWallet(address payable _wallet, uint256 _usersBalance) external {
         require(msg.sender == address(withdrawals), "Permission denied.");

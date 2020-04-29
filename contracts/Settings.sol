@@ -136,7 +136,7 @@ contract Settings is Initializable {
     }
 
     /**
-    * Function for changing Validator's minimal staking duration.
+    * Function for changing validator minimal staking duration.
     * @param newValue - new minimal duration.
     */
     function setMinStakingDuration(uint48 newValue) external {

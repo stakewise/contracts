@@ -14,7 +14,11 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, registerValidator } = require('../common/utils');
+const {
+  removeNetworkFile,
+  registerValidator,
+  getEntityId
+} = require('../common/utils');
 
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
@@ -43,7 +47,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     validatorTransfers,
     walletsRegistry,
     validatorId;
-  let [admin, operator, walletsManager, sender, withdrawer, other] = accounts;
+  let [admin, operator, walletsManager, sender, recipient, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -83,17 +87,18 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       poolsProxy: proxies.pools,
       operator,
       sender: other,
-      withdrawer: other
+      recipient: other
     });
 
     // register new ready entity
-    await pools.addDeposit(withdrawer, {
+    await pools.addDeposit(recipient, {
       from: sender,
       value: validatorDepositAmount
     });
 
     // transfer validator to the new entity
-    await pools.transferValidator(validatorId, prevEntityReward, {
+    let poolId = getEntityId(pools.address, new BN(2));
+    await pools.transferValidator(validatorId, prevEntityReward, poolId, {
       from: operator
     });
 

@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@codechecks/client": "^0.1.10",
-    "@openzeppelin/test-helpers": "^0.5.4",
+    "@openzeppelin/test-helpers": "^0.5.5",
     "chai": "^4.2.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.0",

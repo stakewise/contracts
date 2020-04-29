@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const {
   BN,
   ether,
@@ -16,6 +17,8 @@ const {
   checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance,
+  checkPendingPool,
+  checkNewPoolCollectedAmount,
   getEntityId
 } = require('../common/utils');
 
@@ -27,7 +30,7 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Pools (add deposit)', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, pools, settings;
-  let [admin, sender1, withdrawer1, sender2, withdrawer2] = accounts;
+  let [admin, sender1, recipient1, sender2, recipient2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -54,35 +57,38 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     settings = await Settings.at(settingsProxy);
   });
 
-  it('fails to add a deposit with zero withdrawer address', async () => {
+  it('fails to add a deposit with zero recipient address', async () => {
     await expectRevert(
       pools.addDeposit(constants.ZERO_ADDRESS, {
         from: sender1
       }),
-      'Withdrawer address cannot be zero address.'
+      'Invalid recipient address.'
     );
+    await checkNewPoolCollectedAmount(pools, new BN(0));
     await checkCollectorBalance(pools, new BN(0));
   });
 
-  it('fails to add a deposit without any amount', async () => {
+  it('fails to add a deposit with zero amount', async () => {
     await expectRevert(
-      pools.addDeposit(withdrawer1, {
+      pools.addDeposit(recipient1, {
         from: sender1,
         value: ether('0')
       }),
       'Invalid deposit amount.'
     );
+    await checkNewPoolCollectedAmount(pools, new BN(0));
     await checkCollectorBalance(pools, new BN(0));
   });
 
   it('fails to add a deposit with unit less than minimal', async () => {
     await expectRevert(
-      pools.addDeposit(withdrawer1, {
+      pools.addDeposit(recipient1, {
         from: sender1,
         value: new BN(initialSettings.validatorDepositAmount).sub(new BN(1))
       }),
       'Invalid deposit amount.'
     );
+    await checkNewPoolCollectedAmount(pools, new BN(0));
     await checkCollectorBalance(pools, new BN(0));
   });
 
@@ -91,24 +97,26 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       max: validatorDepositAmount
     });
     // Send a deposit
-    const { tx } = await pools.addDeposit(withdrawer1, {
+    const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount
     });
 
     // Check deposit added to Deposits contract
+    let poolId = getEntityId(pools.address, new BN(1));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
 
-    // Check pools balance
+    await checkNewPoolCollectedAmount(pools, depositAmount);
+    await checkPendingPool(pools, poolId, false);
     await checkCollectorBalance(pools, depositAmount);
   });
 
@@ -119,34 +127,40 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     });
 
     // Send a deposit
-    const { tx } = await pools.addDeposit(withdrawer1, {
+    const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount
     });
 
     // Check added to the pool 1
+    let poolId = getEntityId(pools.address, new BN(1));
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount
     });
+    await checkPendingPool(pools, poolId, true);
 
     // Check added to the pool 2
+    poolId = getEntityId(pools.address, new BN(2));
+    let expectedAmount = depositAmount.sub(validatorDepositAmount);
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(2)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
-      addedAmount: depositAmount.sub(validatorDepositAmount),
-      totalAmount: depositAmount.sub(validatorDepositAmount)
+      recipientAddress: recipient1,
+      addedAmount: expectedAmount,
+      totalAmount: expectedAmount
     });
+    await checkPendingPool(pools, poolId, false);
+    await checkNewPoolCollectedAmount(pools, expectedAmount);
 
     // Check contract balance
     await checkCollectorBalance(pools, depositAmount);
@@ -154,12 +168,13 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
   it('adds deposits for different users', async () => {
     let tx;
+    let poolId = getEntityId(pools.address, new BN(1));
 
     // User 1 creates a deposit
     let depositAmount1 = getDepositAmount({
       max: validatorDepositAmount.div(new BN(2))
     });
-    ({ tx } = await pools.addDeposit(withdrawer1, {
+    ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount1
     }));
@@ -167,18 +182,18 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount1,
       totalAmount: depositAmount1
     });
+    await checkPendingPool(pools, poolId, false);
+    await checkNewPoolCollectedAmount(pools, depositAmount1);
 
     // User 2 creates a deposit
-    let depositAmount2 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2))
-    });
-    ({ tx } = await pools.addDeposit(withdrawer2, {
+    let depositAmount2 = validatorDepositAmount.sub(depositAmount1);
+    ({ tx } = await pools.addDeposit(recipient2, {
       from: sender2,
       value: depositAmount2
     }));
@@ -186,25 +201,28 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender2,
-      withdrawerAddress: withdrawer2,
+      recipientAddress: recipient2,
       addedAmount: depositAmount2,
       totalAmount: depositAmount2
     });
 
-    // Check contract balance
-    await checkCollectorBalance(pools, depositAmount1.add(depositAmount2));
+    // check contract balance
+    await checkPendingPool(pools, poolId, true);
+    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
   it('increases deposit amount in pool', async () => {
     let userBalance = new BN(0);
+    let poolId = getEntityId(pools.address, new BN(1));
     for (let i = 0; i < 16; i++) {
       // User creates a deposit
       let depositAmount = getDepositAmount({
         max: validatorDepositAmount.div(new BN(16))
       });
-      let { tx } = await pools.addDeposit(withdrawer1, {
+      let { tx } = await pools.addDeposit(recipient1, {
         from: sender1,
         value: depositAmount
       });
@@ -213,20 +231,29 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         transaction: tx,
         depositsContract: deposits,
         collectorAddress: pools.address,
-        entityId: getEntityId(pools.address, new BN(1)),
+        entityId: poolId,
         senderAddress: sender1,
-        withdrawerAddress: withdrawer1,
+        recipientAddress: recipient1,
         addedAmount: depositAmount,
         totalAmount: userBalance
       });
-
       // Check contract balance updated
       await checkCollectorBalance(pools, userBalance);
+    }
+    if (userBalance.eq(validatorDepositAmount)) {
+      await checkPendingPool(pools, poolId, true);
+      await checkNewPoolCollectedAmount(pools, new BN(0));
+    } else {
+      await checkPendingPool(pools, poolId, false);
+      await checkNewPoolCollectedAmount(pools, userBalance);
     }
   });
 
   it('splits deposit amount if it goes to different pools', async () => {
+    let poolId1 = getEntityId(pools.address, new BN(1));
     let balance1 = new BN(0);
+
+    let poolId2 = getEntityId(pools.address, new BN(2));
     let balance2 = new BN(0);
 
     for (let i = 0; i < 16; i++) {
@@ -235,7 +262,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         min: validatorDepositAmount.div(new BN(16)).add(new BN(1)),
         max: validatorDepositAmount.div(new BN(8))
       });
-      const { tx } = await pools.addDeposit(withdrawer1, {
+      const { tx } = await pools.addDeposit(recipient1, {
         from: sender1,
         value: depositAmount
       });
@@ -247,12 +274,21 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           transaction: tx,
           depositsContract: deposits,
           collectorAddress: pools.address,
-          entityId: getEntityId(pools.address, new BN(1)),
+          entityId: poolId1,
           senderAddress: sender1,
-          withdrawerAddress: withdrawer1,
+          recipientAddress: recipient1,
           addedAmount: depositAmount,
           totalAmount: balance1
         });
+
+        // check pending pools registry
+        if (balance1.eq(validatorDepositAmount)) {
+          await checkPendingPool(pools, poolId1, true);
+          await checkNewPoolCollectedAmount(pools, new BN(0));
+        } else {
+          await checkPendingPool(pools, poolId1, false);
+          await checkNewPoolCollectedAmount(pools, balance1);
+        }
       } else if (balance1.eq(validatorDepositAmount)) {
         // Deposit goes to pool 2
         balance2.iadd(depositAmount);
@@ -260,12 +296,22 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           transaction: tx,
           depositsContract: deposits,
           collectorAddress: pools.address,
-          entityId: getEntityId(pools.address, new BN(2)),
+          entityId: poolId2,
           senderAddress: sender1,
-          withdrawerAddress: withdrawer1,
+          recipientAddress: recipient1,
           addedAmount: depositAmount,
           totalAmount: balance2
         });
+
+        // check pending pools registry
+        await checkPendingPool(pools, poolId1, true);
+        if (balance2.eq(validatorDepositAmount)) {
+          await checkPendingPool(pools, poolId2, true);
+          await checkNewPoolCollectedAmount(pools, new BN(0));
+        } else {
+          await checkPendingPool(pools, poolId2, false);
+          await checkNewPoolCollectedAmount(pools, balance2);
+        }
       } else {
         // Deposit was split between pool 1 and 2
         const toPool1 = validatorDepositAmount.sub(balance1);
@@ -276,7 +322,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           collectorAddress: pools.address,
           entityId: getEntityId(pools.address, new BN(1)),
           senderAddress: sender1,
-          withdrawerAddress: withdrawer1,
+          recipientAddress: recipient1,
           addedAmount: toPool1,
           totalAmount: balance1
         });
@@ -289,10 +335,20 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
           collectorAddress: pools.address,
           entityId: getEntityId(pools.address, new BN(2)),
           senderAddress: sender1,
-          withdrawerAddress: withdrawer1,
+          recipientAddress: recipient1,
           addedAmount: toPool2,
           totalAmount: balance2
         });
+
+        // check pending pools registry
+        await checkPendingPool(pools, poolId1, true);
+        if (balance2.eq(validatorDepositAmount)) {
+          await checkPendingPool(pools, poolId2, true);
+          await checkNewPoolCollectedAmount(pools, new BN(0));
+        } else {
+          await checkPendingPool(pools, poolId2, false);
+          await checkNewPoolCollectedAmount(pools, balance2);
+        }
       }
 
       // Check contract balance
@@ -307,13 +363,14 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     expect(await settings.pausedContracts(pools.address)).equal(true);
 
     await expectRevert(
-      pools.addDeposit(withdrawer1, {
+      pools.addDeposit(recipient1, {
         from: sender1,
         value: ether('1')
       }),
-      'Deposit amount cannot be larger than required to finish current pool.'
+      'Deposit amount cannot be larger than amount required to finish the last pool.'
     );
     await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools, new BN(0));
   });
 
   it('fails to add a deposit to paused pool with amount bigger than required to finish round', async () => {
@@ -321,19 +378,20 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       max: validatorDepositAmount
     });
     // Send a deposit
-    const { tx } = await pools.addDeposit(withdrawer1, {
+    const { tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount
     });
+    let poolId = getEntityId(pools.address, new BN(1));
 
     // Check deposit added to Deposits contract
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
@@ -349,13 +407,15 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
     // Add deposit bigger than required to finish current round
     await expectRevert(
-      pools.addDeposit(withdrawer1, {
+      pools.addDeposit(recipient1, {
         from: sender1,
         value: initialSettings.validatorDepositAmount
       }),
-      'Deposit amount cannot be larger than required to finish current pool.'
+      'Deposit amount cannot be larger than amount required to finish the last pool.'
     );
     await checkCollectorBalance(pools, depositAmount);
+    await checkNewPoolCollectedAmount(pools, depositAmount);
+    await checkPendingPool(pools, poolId, false);
   });
 
   it('adds a deposit to paused pool with amount required to finish current round', async () => {
@@ -364,25 +424,28 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       max: validatorDepositAmount.div(new BN(2))
     });
     // Send a deposit
-    ({ tx } = await pools.addDeposit(withdrawer1, {
+    ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount
     }));
+    let poolId = getEntityId(pools.address, new BN(1));
 
     // Check deposit added to Deposits contract
     await checkDepositAdded({
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount,
       totalAmount: depositAmount
     });
 
     // Check pools balance
     await checkCollectorBalance(pools, depositAmount);
+    await checkPendingPool(pools, poolId, false);
+    await checkNewPoolCollectedAmount(pools, depositAmount);
 
     // Pause Pools contract
     await settings.setContractPaused(pools.address, true, {
@@ -394,7 +457,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     depositAmount = new BN(initialSettings.validatorDepositAmount).sub(
       depositAmount
     );
-    ({ tx } = await pools.addDeposit(withdrawer1, {
+    ({ tx } = await pools.addDeposit(recipient1, {
       from: sender1,
       value: depositAmount
     }));
@@ -404,12 +467,14 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       transaction: tx,
       depositsContract: deposits,
       collectorAddress: pools.address,
-      entityId: getEntityId(pools.address, new BN(1)),
+      entityId: poolId,
       senderAddress: sender1,
-      withdrawerAddress: withdrawer1,
+      recipientAddress: recipient1,
       addedAmount: depositAmount,
       totalAmount: initialSettings.validatorDepositAmount
     });
+    await checkPendingPool(pools, poolId, true);
     await checkCollectorBalance(pools, initialSettings.validatorDepositAmount);
+    await checkNewPoolCollectedAmount(pools, new BN(0));
   });
 });

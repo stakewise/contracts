@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const { BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -5,7 +6,11 @@ const {
   deployLogicContracts
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const { removeNetworkFile, getEntityId } = require('../common/utils');
+const {
+  removeNetworkFile,
+  getEntityId,
+  checkPendingGroup
+} = require('../common/utils');
 
 const Groups = artifacts.require('Groups');
 const Settings = artifacts.require('Settings');
@@ -60,39 +65,12 @@ contract('Groups (create group)', ([_, ...accounts]) => {
       from: groupCreator
     });
 
-    const entityId = getEntityId(groups.address, new BN(1));
+    const groupId = getEntityId(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
       creator: groupCreator,
-      groupId: entityId
+      groupId
     });
-
-    for (let i = 0; i < groupMembers.length; i++) {
-      let userId = web3.utils.soliditySha3(entityId, groupMembers[i]);
-      expect(await groups.registeredMembers(userId)).equal(true);
-    }
-    let creatorId = web3.utils.soliditySha3(entityId, groupCreator);
-    expect(await groups.registeredMembers(creatorId)).equal(true);
-  });
-
-  it('increases entities count for every new group', async () => {
-    let receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator
-    });
-
-    let entityId = getEntityId(groups.address, new BN(1));
-    expectEvent(receipt, 'GroupCreated', {
-      creator: groupCreator,
-      groupId: entityId
-    });
-
-    receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator
-    });
-
-    entityId = getEntityId(groups.address, new BN(2));
-    expectEvent(receipt, 'GroupCreated', {
-      creator: groupCreator,
-      groupId: entityId
-    });
+    expect(receipt.logs[0].args.members).to.have.members(groupMembers);
+    await checkPendingGroup(groups, groupId, new BN(0));
   });
 });

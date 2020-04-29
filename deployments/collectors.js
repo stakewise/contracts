@@ -30,32 +30,30 @@ async function deployPoolsProxy({
   return proxy.address;
 }
 
-async function deployPrivatesProxy({
+async function deployIndividualsProxy({
   depositsProxy,
   settingsProxy,
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
-  validatorTransfersProxy,
   salt,
   networkConfig
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Privates',
+    contractAlias: 'Individuals',
     methodName: 'initialize',
     methodArgs: [
       depositsProxy,
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy,
-      validatorTransfersProxy
+      validatorsRegistryProxy
     ],
     salt,
     ...networkConfig
   });
 
-  log(`Privates contract: ${proxy.address}`);
+  log(`Individuals contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -65,7 +63,6 @@ async function deployGroupsProxy({
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
-  validatorTransfersProxy,
   salt,
   networkConfig
 }) {
@@ -77,8 +74,7 @@ async function deployGroupsProxy({
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy,
-      validatorTransfersProxy
+      validatorsRegistryProxy
     ],
     salt,
     ...networkConfig
@@ -88,4 +84,8 @@ async function deployGroupsProxy({
   return proxy.address;
 }
 
-module.exports = { deployPoolsProxy, deployPrivatesProxy, deployGroupsProxy };
+module.exports = {
+  deployPoolsProxy,
+  deployIndividualsProxy,
+  deployGroupsProxy
+};

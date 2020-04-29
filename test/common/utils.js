@@ -6,7 +6,7 @@ const { initialSettings } = require('../../deployments/settings');
 const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');
-const Privates = artifacts.require('Privates');
+const Individuals = artifacts.require('Individuals');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
@@ -28,8 +28,8 @@ function getEntityId(collectorAddress, entitiesCount) {
   return web3.utils.soliditySha3(collectorAddress, entitiesCount);
 }
 
-function getUserId(entityId, sender, withdrawer) {
-  return web3.utils.soliditySha3(entityId, sender, withdrawer);
+function getUserId(entityId, sender, recipient) {
+  return web3.utils.soliditySha3(entityId, sender, recipient);
 }
 
 function removeNetworkFile(network) {
@@ -38,25 +38,50 @@ function removeNetworkFile(network) {
   }
 }
 
+async function checkPendingPool(poolsContract, poolId, expectedPending) {
+  let isPending = await poolsContract.pendingPools(poolId);
+  expect(isPending).to.equal(expectedPending);
+  if (expectedPending) {
+    let poolsCount = await poolsContract.poolsCount();
+    expect(poolId).to.not.equal(getEntityId(poolsContract.address, poolsCount));
+  }
+}
+
+async function checkPendingGroup(groupsContract, groupId, expectedAmount) {
+  let collectedAmount = await groupsContract.pendingGroups(groupId);
+  expect(collectedAmount).to.bignumber.equal(expectedAmount);
+}
+
+async function checkPendingIndividual(
+  individualsContract,
+  individualId,
+  expectedPending
+) {
+  let isPending = await individualsContract.pendingIndividuals(individualId);
+  expect(isPending).to.equal(expectedPending);
+}
+
 async function checkCollectorBalance(collectorContract, correctBalance) {
-  expect(await collectorContract.totalSupply()).to.be.bignumber.equal(
-    correctBalance
-  );
   expect(
     await balance.current(collectorContract.address)
   ).to.be.bignumber.equal(correctBalance);
+}
+
+async function checkNewPoolCollectedAmount(poolsContract, correctAmount) {
+  let collectedAmount = await poolsContract.collectedAmount();
+  expect(collectedAmount).to.be.bignumber.equal(correctAmount);
 }
 
 async function checkUserTotalAmount({
   depositsContract,
   entityId,
   senderAddress,
-  withdrawerAddress,
+  recipientAddress,
   expectedAmount
 }) {
   expect(
     await depositsContract.amounts(
-      getUserId(entityId, senderAddress, withdrawerAddress)
+      getUserId(entityId, senderAddress, recipientAddress)
     )
   ).to.be.bignumber.equal(expectedAmount);
 }
@@ -67,7 +92,7 @@ async function checkDepositAdded({
   collectorAddress,
   entityId,
   senderAddress,
-  withdrawerAddress,
+  recipientAddress,
   addedAmount,
   totalAmount
 }) {
@@ -80,7 +105,7 @@ async function checkDepositAdded({
       collector: collectorAddress,
       entityId,
       sender: senderAddress,
-      withdrawer: withdrawerAddress,
+      recipient: recipientAddress,
       amount: addedAmount
     }
   );
@@ -88,10 +113,9 @@ async function checkDepositAdded({
   // Check user's total amount
   await checkUserTotalAmount({
     depositsContract,
-    collectorAddress,
     entityId,
     senderAddress,
-    withdrawerAddress,
+    recipientAddress,
     expectedAmount: totalAmount
   });
 }
@@ -102,7 +126,7 @@ async function checkDepositCanceled({
   collectorAddress,
   entityId,
   senderAddress,
-  withdrawerAddress,
+  recipientAddress,
   canceledAmount,
   totalAmount
 }) {
@@ -115,7 +139,7 @@ async function checkDepositCanceled({
       collector: collectorAddress,
       entityId,
       sender: senderAddress,
-      withdrawer: withdrawerAddress,
+      recipient: recipientAddress,
       amount: canceledAmount
     }
   );
@@ -123,10 +147,9 @@ async function checkDepositCanceled({
   // Check user's total amount
   await checkUserTotalAmount({
     depositsContract,
-    collectorAddress,
     entityId,
     senderAddress,
-    withdrawerAddress,
+    recipientAddress,
     expectedAmount: totalAmount
   });
 }
@@ -214,7 +237,7 @@ async function checkValidatorTransferred({
     }
   );
 
-  // Check validator entry update
+  // check validator entry update
   let validator = await validatorsRegistry.validators(validatorId);
   expect(validator.maintainerFee).to.be.bignumber.equal(newMaintainerFee);
   expect(validator.entityId).equal(newEntityId);
@@ -234,33 +257,36 @@ async function checkValidatorTransferred({
 
 async function registerValidator({
   args = validatorRegistrationArgs[0],
-  hasReadyEntity = false,
+  entityId,
   poolsProxy,
-  privatesProxy,
+  individualsProxy,
   operator,
   sender,
-  withdrawer
+  recipient
 }) {
   let collector;
-  if (privatesProxy) {
-    collector = await Privates.at(privatesProxy);
+  if (individualsProxy) {
+    collector = await Individuals.at(individualsProxy);
   } else if (poolsProxy) {
     collector = await Pools.at(poolsProxy);
   }
 
-  if (!hasReadyEntity) {
-    // Create new ready pool
-    await collector.addDeposit(withdrawer, {
+  if (!entityId) {
+    // add deposit
+    await collector.addDeposit(recipient, {
       from: sender,
       value: initialSettings.validatorDepositAmount
     });
+    // FIXME: invalid if not the first entity created
+    entityId = getEntityId(collector.address, new BN(1));
   }
 
-  // Register validator for the ready entity
+  // register validator for the entity
   await collector.registerValidator(
     args.pubKey,
     args.signature,
     args.hashTreeRoot,
+    entityId,
     {
       from: operator
     }
@@ -272,6 +298,10 @@ async function registerValidator({
 module.exports = {
   validatorRegistrationArgs,
   registerValidator,
+  checkPendingPool,
+  checkPendingGroup,
+  checkPendingIndividual,
+  checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,
   checkValidatorTransferred,

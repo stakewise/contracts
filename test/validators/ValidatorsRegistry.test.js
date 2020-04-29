@@ -1,5 +1,6 @@
-const { expectRevert } = require('@openzeppelin/test-helpers');
+const { expectRevert, constants } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
+const { initialSettings } = require('../../deployments/settings');
 const {
   getNetworkConfig,
   deployLogicContracts
@@ -46,6 +47,9 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
         validatorsRegistry.register(
           web3.utils.fromAscii('\x11'.repeat(48)),
           web3.utils.soliditySha3('collector', 1),
+          constants.ZERO_BYTES32,
+          initialSettings.validatorDepositAmount,
+          initialSettings.maintainerFee,
           {
             from: users[i]
           }
@@ -61,6 +65,7 @@ contract('ValidatorsRegistry', ([_, ...accounts]) => {
         validatorsRegistry.update(
           web3.utils.soliditySha3(validatorRegistrationArgs[0].pubKey),
           web3.utils.soliditySha3('collector', 1),
+          initialSettings.maintainerFee,
           {
             from: users[i]
           }

@@ -6,7 +6,7 @@
 
 The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
 
-- **Extensible:** Abstracts away the logic of sending deposits to Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract). By extending the [Base Collector](./contracts/collectors/BaseCollector.sol) contract, it's possible to create your own contract with logic for accumulating the validator's deposit amount.
+- **Extensible:** It is possible to create your own contract with logic for accumulating validator deposit amount.
 - **Upgradable:** By using [OpenZeppelin SDK](https://github.com/OpenZeppelin/openzeppelin-sdk), it's possible to fix bugs and critical issues when the contracts are deployed to the production network.
 - **Role-based access:** By having [Operators](./contracts/access/Operators.sol), [Admins](./contracts/access/Admins.sol), and [Wallets Managers](./contracts/access/WalletsManagers.sol) contracts, it is possible to restrict user capabilities.
 - **Integration friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
