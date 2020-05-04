@@ -63,9 +63,9 @@ jobs:
       - run:
           name: Run tests
           command: yarn test
-#      - run:
-#          name: Report gas changes
-#          command: npx codechecks
+      - run:
+          name: Report gas changes
+          command: npx codechecks
 
   coverage:
     executor: default
