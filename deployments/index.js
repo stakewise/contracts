@@ -134,6 +134,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig,
   });
   if (individualsProxy !== individualsCalcProxy) {
@@ -150,6 +151,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     settingsProxy,
     operatorsProxy,
     validatorsRegistryProxy,
+    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig,
   });
   if (groupsProxy !== groupsCalcProxy) {
@@ -208,6 +210,8 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     adminsProxy,
     depositsProxy,
     poolsProxy,
+    individualsProxy,
+    groupsProxy,
     settingsProxy,
     validatorsRegistryProxy,
     walletsRegistryProxy,

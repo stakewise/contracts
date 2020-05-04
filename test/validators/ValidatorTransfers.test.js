@@ -86,7 +86,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     entityId = getEntityId(pools.address, new BN(1));
   });
 
-  it('only Pools collector can register transfers', async () => {
+  it('only collectors can register transfers', async () => {
     await expectRevert(
       validatorTransfers.registerTransfer(
         validatorId,
