@@ -7,6 +7,8 @@ import "../access/Admins.sol";
 import "../access/Operators.sol";
 import "../collectors/Individuals.sol";
 import "../collectors/Pools.sol";
+import "../collectors/Groups.sol";
+import "../collectors/Individuals.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
 import "../validators/ValidatorsRegistry.sol";
@@ -70,6 +72,12 @@ contract ValidatorTransfers is Initializable {
     // address of the Pools contract.
     Pools private pools;
 
+    // address of the Individuals contract.
+    Individuals private individuals;
+
+    // address of the Groups contract.
+    Groups private groups;
+
     // address of the Settings contract.
     Settings private settings;
 
@@ -81,6 +89,15 @@ contract ValidatorTransfers is Initializable {
 
     // address of the Withdrawals contract.
     Withdrawals private withdrawals;
+
+    // checks whether the caller is the Collector contract.
+    modifier onlyCollectors() {
+        require(
+            msg.sender == address(pools) || msg.sender == address(individuals) || msg.sender == address(groups),
+            "Permission denied."
+        );
+        _;
+    }
 
     /**
     * Event for tracking validator transfers.
@@ -131,6 +148,8 @@ contract ValidatorTransfers is Initializable {
     * @param _admins - address of the Admins contract.
     * @param _deposits - address of the Deposits contract.
     * @param _pools - address of the Pools contract.
+    * @param _individuals - address of the Individuals contract.
+    * @param _groups - address of the Groups contract.
     * @param _settings - address of the Settings contract.
     * @param _validatorsRegistry - address of the Validators Registry contract.
     * @param _walletsRegistry - address of the Wallets Registry contract.
@@ -140,6 +159,8 @@ contract ValidatorTransfers is Initializable {
         Admins _admins,
         Deposits _deposits,
         Pools _pools,
+        Individuals _individuals,
+        Groups _groups,
         Settings _settings,
         ValidatorsRegistry _validatorsRegistry,
         WalletsRegistry _walletsRegistry,
@@ -150,6 +171,8 @@ contract ValidatorTransfers is Initializable {
         admins = _admins;
         deposits = _deposits;
         pools = _pools;
+        individuals = _individuals;
+        groups = _groups;
         settings = _settings;
         validatorsRegistry = _validatorsRegistry;
         walletsRegistry = _walletsRegistry;
@@ -170,14 +193,13 @@ contract ValidatorTransfers is Initializable {
         uint256 _userDebt,
         uint256 _maintainerDebt
     )
-        external payable
+        external payable onlyCollectors
     {
         require(!settings.pausedContracts(address(this)), "Validator transfers are paused.");
         require(
             !walletsRegistry.assignedValidators(_validatorId),
             "Cannot register transfer for validator with assigned wallet."
         );
-        require(msg.sender == address(pools), "Permission denied.");
 
         // register entity reward for later withdrawals
         entityRewards[_prevEntityId] = EntityReward(_validatorId, _userDebt);

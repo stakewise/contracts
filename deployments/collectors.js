@@ -36,6 +36,7 @@ async function deployIndividualsProxy({
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
+  validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
@@ -48,6 +49,7 @@ async function deployIndividualsProxy({
       operatorsProxy,
       vrc,
       validatorsRegistryProxy,
+      validatorTransfersProxy,
     ],
     salt,
     ...networkConfig,
@@ -63,6 +65,7 @@ async function deployGroupsProxy({
   operatorsProxy,
   vrc,
   validatorsRegistryProxy,
+  validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
@@ -75,6 +78,7 @@ async function deployGroupsProxy({
       operatorsProxy,
       vrc,
       validatorsRegistryProxy,
+      validatorTransfersProxy,
     ],
     salt,
     ...networkConfig,

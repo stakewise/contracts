@@ -50,11 +50,11 @@
     "ethlint": "^1.2.5",
     "ganache-cli": "^6.9.1",
     "husky": "^4.2.5",
-    "lint-staged": "10.2.0",
+    "lint-staged": "10.2.2",
     "prettier": "^2.0.5",
-    "solhint": "^3.0.0-rc.8",
-    "solidity-coverage": "^0.7.4",
-    "truffle": "^5.1.23"
+    "solhint": "^3.0.0",
+    "solidity-coverage": "^0.7.5",
+    "truffle": "^5.1.24"
   },
   "dependencies": {
     "@openzeppelin/cli": "^2.8.2",

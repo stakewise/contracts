@@ -6,6 +6,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Operators.sol";
 import "../validators/IValidatorRegistration.sol";
 import "../validators/ValidatorsRegistry.sol";
+import "../validators/ValidatorTransfers.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
 
@@ -39,6 +40,9 @@ contract Individuals is Initializable {
     // address of the Validators Registry contract.
     ValidatorsRegistry private validatorsRegistry;
 
+    // address of the Validator Transfers contract.
+    ValidatorTransfers private validatorTransfers;
+
     /**
     * Constructor for initializing the Individuals contract.
     * @param _deposits - address of the Deposits contract.
@@ -46,13 +50,15 @@ contract Individuals is Initializable {
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validatorsRegistry - address of the Validators Registry contract.
+    * @param _validatorTransfers - address of the Validator Transfers contract.
     */
     function initialize(
         Deposits _deposits,
         Settings _settings,
         Operators _operators,
         IValidatorRegistration _validatorRegistration,
-        ValidatorsRegistry _validatorsRegistry
+        ValidatorsRegistry _validatorsRegistry,
+        ValidatorTransfers _validatorTransfers
     )
         public initializer
     {
@@ -61,6 +67,7 @@ contract Individuals is Initializable {
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validatorsRegistry = _validatorsRegistry;
+        validatorTransfers = _validatorTransfers;
     }
 
     /**
@@ -136,6 +143,41 @@ contract Individuals is Initializable {
             withdrawalCredentials,
             _signature,
             _depositDataRoot
+        );
+    }
+
+    /**
+    * Function for transferring validator ownership to the new individual.
+    * @param _validatorId - ID of the validator to transfer.
+    * @param _validatorReward - validator current reward.
+    * @param _individualId - ID of the individual to register validator for.
+    */
+    function transferValidator(
+        bytes32 _validatorId,
+        uint256 _validatorReward,
+        bytes32 _individualId
+    )
+    external
+    {
+        require(pendingIndividuals[_individualId], "Invalid individual ID.");
+        require(operators.isOperator(msg.sender), "Permission denied.");
+
+        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
+        require(prevEntityId != "", "Validator with such ID is not registered.");
+
+        (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
+
+        // transfer validator to the new individual
+        delete pendingIndividuals[_individualId];
+        validatorsRegistry.update(_validatorId, _individualId, settings.maintainerFee());
+
+        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
+        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
+        validatorTransfers.registerTransfer.value(depositAmount)(
+            _validatorId,
+            prevEntityId,
+            prevEntityReward.sub(maintainerDebt),
+            maintainerDebt
         );
     }
 }
