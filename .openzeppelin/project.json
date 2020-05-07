@@ -12,7 +12,8 @@
     "Withdrawals": "Withdrawals",
     "Individuals": "Individuals",
     "ValidatorTransfers": "ValidatorTransfers",
-    "Groups": "Groups"
+    "Groups": "Groups",
+    "Wallet": "Wallet"
   },
   "dependencies": {},
   "name": "stakewise",

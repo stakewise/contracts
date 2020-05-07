@@ -178,7 +178,6 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     salt: walletsRegistrySalt,
     validatorsRegistryProxy,
     networkConfig,
-    adminsProxy,
     walletsManagersProxy,
   });
   if (walletsRegistryProxy !== walletsRegistryCalcProxy) {

@@ -2,7 +2,6 @@ const {
   expectRevert,
   expectEvent,
   ether,
-  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -10,11 +9,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { deployVRC } = require('../../deployments/vrc');
-const {
-  removeNetworkFile,
-  registerValidator,
-  validatorRegistrationArgs,
-} = require('../common/utils');
+const { removeNetworkFile, registerValidator } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
@@ -105,90 +100,6 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
       // Validator is marked as assigned
       expect(await walletsRegistry.assignedValidators(validatorId)).equal(true);
-    });
-
-    it('re-uses existing available wallet', async () => {
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
-      });
-
-      // reset wallet
-      const wallet = logs[0].args.wallet;
-      await walletsRegistry.resetWallet(wallet, {
-        from: admin,
-      });
-
-      // Deploy next validator
-      let newValidatorId = await registerValidator({
-        args: validatorRegistrationArgs[1],
-        individualsProxy: proxies.individuals,
-        operator,
-        sender,
-        recipient,
-      });
-
-      let receipt = await walletsRegistry.assignWallet(newValidatorId, {
-        from: walletsManager,
-      });
-
-      // must assign the same wallet to the next validator
-      expectEvent(receipt, 'WalletAssigned', {
-        wallet,
-        validatorId: newValidatorId,
-      });
-
-      // Validator is marked as assigned
-      expect(await walletsRegistry.assignedValidators(newValidatorId)).equal(
-        true
-      );
-    });
-  });
-
-  describe('resetting wallet', () => {
-    let wallet;
-
-    beforeEach(async () => {
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
-      });
-      wallet = logs[0].args.wallet;
-    });
-
-    it('user without admin role cannot reset wallets', async () => {
-      await expectRevert(
-        walletsRegistry.resetWallet(wallet, {
-          from: walletsManager,
-        }),
-        'Permission denied.'
-      );
-    });
-
-    it('cannot reset the same wallet more than once', async () => {
-      await walletsRegistry.resetWallet(wallet, {
-        from: admin,
-      });
-
-      await expectRevert(
-        walletsRegistry.resetWallet(wallet, {
-          from: admin,
-        }),
-        'Wallet has been already reset.'
-      );
-    });
-
-    it('admin user can reset wallet', async () => {
-      let receipt = await walletsRegistry.resetWallet(wallet, {
-        from: admin,
-      });
-
-      expectEvent(receipt, 'WalletReset', {
-        wallet,
-      });
-      let { unlocked, validatorId } = await walletsRegistry.wallets(wallet);
-      expect(unlocked).equal(false);
-      expect(validatorId).to.satisfy((val) =>
-        val.startsWith(constants.ZERO_ADDRESS)
-      );
     });
   });
 
