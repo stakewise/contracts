@@ -26,7 +26,7 @@ const {
 const Individuals = artifacts.require('Individuals');
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
@@ -48,7 +48,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     validatorId,
     newPoolId,
     prevEntityId;
-  let [admin, operator, walletsManager, other, sender1, sender2] = accounts;
+  let [admin, operator, manager, other, sender1, sender2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -79,8 +79,8 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
@@ -207,7 +207,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
   it('fails to transfer validator with assigned wallet', async () => {
     // assign wallet to the validator
     await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager,
+      from: manager,
     });
 
     // transfer validator to the new pool

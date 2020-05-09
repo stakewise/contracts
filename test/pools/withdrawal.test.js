@@ -25,19 +25,12 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Pools = artifacts.require('Pools');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 
 contract('Pools (withdrawal)', ([_, ...accounts]) => {
   let networkConfig, pools, settings, walletsRegistry, withdrawals, vrc;
-  let [
-    admin,
-    operator,
-    walletsManager,
-    other,
-    sender,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -58,8 +51,8 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     pools = await Pools.at(proxies.pools);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
@@ -90,7 +83,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -100,7 +93,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
       // Enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -173,7 +166,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
       // Time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -183,7 +176,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
       // Enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -279,7 +272,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
     // Time for withdrawal, assign wallet
     let receipt = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager,
+      from: manager,
     });
     let wallet = receipt.logs[0].args.wallet;
 
@@ -294,7 +287,7 @@ contract('Pools (withdrawal)', ([_, ...accounts]) => {
 
     // Enable withdrawals
     let { tx } = await withdrawals.enableWithdrawals(wallet, {
-      from: walletsManager,
+      from: manager,
     });
 
     await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {

@@ -20,7 +20,7 @@ const {
 
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
@@ -41,7 +41,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     walletsRegistry,
     validatorId,
     entityId;
-  let [admin, operator, walletsManager, sender, recipient, other] = accounts;
+  let [admin, operator, manager, sender, recipient, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -69,8 +69,8 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     // set maintainer's fee
     settings = await Settings.at(proxies.settings);
@@ -188,14 +188,14 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = logs[0].args.wallet;
 
       // enable withdrawals
       await send.ether(other, wallet, validatorDepositAmount);
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
 
       // user performs rewards withdrawal first time
@@ -234,14 +234,14 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = logs[0].args.wallet;
 
       // enable withdrawals
       await send.ether(other, wallet, validatorDepositAmount);
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
 
       // user performs deposit + rewards withdrawal first time

@@ -24,7 +24,7 @@ const { testCases } = require('./withdrawalTestCases');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const Individuals = artifacts.require('Individuals');
@@ -42,14 +42,7 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
     withdrawals,
     vrc,
     validatorTransfers;
-  let [
-    admin,
-    operator,
-    walletsManager,
-    other,
-    sender,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -70,8 +63,8 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
@@ -161,14 +154,14 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = logs[0].args.wallet;
 
       // enable withdrawals
       await send.ether(other, wallet, validatorReturn.add(ether('1')));
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
 
       // user withdraws reward

@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../access/WalletsManagers.sol";
+import "../access/Managers.sol";
 import "../Deposits.sol";
 import "../Settings.sol";
 import "../validators/ValidatorsRegistry.sol";
@@ -13,7 +13,7 @@ import "./WalletsRegistry.sol";
 /**
  * @title Withdrawals
  * Withdrawals contract is used by users to withdraw their deposits and rewards.
- * Before users will be able to withdraw, a user with wallets manager role must unlock the wallet and
+ * Before users will be able to withdraw, a user with the manager role must unlock the wallet and
  * send a fee to the maintainer. This is done by calling `enableWithdrawals` function.
  */
 contract Withdrawals is Initializable {
@@ -29,8 +29,8 @@ contract Withdrawals is Initializable {
     // tracks penalties (if there are such) for validators.
     mapping(bytes32 => uint256) public validatorPenalties;
 
-    // address of the WalletsManagers contract.
-    WalletsManagers private walletsManagers;
+    // address of the Managers contract.
+    Managers private managers;
 
     // address of the Deposits contract.
     Deposits private deposits;
@@ -77,7 +77,7 @@ contract Withdrawals is Initializable {
 
     /**
     * Constructor for initializing the Withdrawals contract.
-    * @param _walletsManagers - address of the WalletsManagers contract.
+    * @param _managers - address of the Managers contract.
     * @param _deposits - address of the Deposits contract.
     * @param _settings - address of the Settings contract.
     * @param _validatorsRegistry - address of the Validators Registry contract.
@@ -85,7 +85,7 @@ contract Withdrawals is Initializable {
     * @param _walletsRegistry - address of the Wallets Registry contract.
     */
     function initialize(
-        WalletsManagers _walletsManagers,
+        Managers _managers,
         Deposits _deposits,
         Settings _settings,
         ValidatorsRegistry _validatorsRegistry,
@@ -94,7 +94,7 @@ contract Withdrawals is Initializable {
     )
         public initializer
     {
-        walletsManagers = _walletsManagers;
+        managers = _managers;
         deposits = _deposits;
         settings = _settings;
         validatorsRegistry = _validatorsRegistry;
@@ -106,13 +106,13 @@ contract Withdrawals is Initializable {
     * Function for enabling withdrawals.
     * Calculates validator's penalty, sends a fee to the maintainer (if no penalty),
     * resolves debts of the validator to previous entities, unlocks the wallet for withdrawals.
-    * Can only be called by users with a wallets manager role.
+    * Can only be called by users with a manager role.
     * @param _wallet - An address of the wallet to enable withdrawals for.
     */
     function enableWithdrawals(address payable _wallet) external {
         (, bytes32 validatorId) = walletsRegistry.wallets(_wallet);
         require(validatorId != "", "Wallet is not assigned to any validator.");
-        require(walletsManagers.isManager(msg.sender), "Permission denied.");
+        require(managers.isManager(msg.sender), "Permission denied.");
 
         (uint256 depositAmount, uint256 maintainerFee, bytes32 entityId) = validatorsRegistry.validators(validatorId);
         (uint256 userDebt, uint256 maintainerDebt,) = validatorTransfers.validatorDebts(validatorId);

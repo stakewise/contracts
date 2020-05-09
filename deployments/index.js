@@ -1,7 +1,7 @@
 const {
   deployAdminsProxy,
   deployOperatorsProxy,
-  deployWalletsManagersProxy,
+  deployManagersProxy,
 } = require('../deployments/access');
 const { calculateContractAddress } = require('../deployments/common');
 const { deployDepositsProxy } = require('../deployments/deposits');
@@ -32,7 +32,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     networkConfig,
     adminsProxy,
   });
-  let walletsManagersProxy = await deployWalletsManagersProxy({
+  let managersProxy = await deployManagersProxy({
     networkConfig,
     adminsProxy,
   });
@@ -178,7 +178,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     salt: walletsRegistrySalt,
     validatorsRegistryProxy,
     networkConfig,
-    walletsManagersProxy,
+    managersProxy,
   });
   if (walletsRegistryProxy !== walletsRegistryCalcProxy) {
     throw new Error(
@@ -189,7 +189,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   // Deploy Withdrawals proxy
   let withdrawalsProxy = await deployWithdrawalsProxy({
     salt: withdrawalsSalt,
-    walletsManagersProxy,
+    managersProxy,
     depositsProxy,
     settingsProxy,
     networkConfig,
@@ -226,7 +226,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   return {
     admins: adminsProxy,
     operators: operatorsProxy,
-    walletsManagers: walletsManagersProxy,
+    managers: managersProxy,
     settings: settingsProxy,
     deposits: depositsProxy,
     validatorsRegistry: validatorsRegistryProxy,

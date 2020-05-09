@@ -3,7 +3,7 @@
   "contracts": {
     "Admins": "Admins",
     "Operators": "Operators",
-    "WalletsManagers": "WalletsManagers",
+    "Managers": "Managers",
     "Settings": "Settings",
     "Pools": "Pools",
     "Deposits": "Deposits",

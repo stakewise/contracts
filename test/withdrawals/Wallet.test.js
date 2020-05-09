@@ -14,12 +14,12 @@ const { removeNetworkFile, registerValidator } = require('../common/utils');
 const Wallet = artifacts.require('Wallet');
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 
 contract('Wallet', ([_, ...accounts]) => {
   let networkConfig, wallet;
-  let [admin, operator, sender, recipient, walletsManager, anyone] = accounts;
-  let users = [admin, operator, sender, recipient, walletsManager, anyone];
+  let [admin, operator, sender, recipient, manager, anyone] = accounts;
+  let users = [admin, operator, sender, recipient, manager, anyone];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -33,8 +33,8 @@ contract('Wallet', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     let validatorId = await registerValidator({
       poolsProxy: proxies.pools,
@@ -45,7 +45,7 @@ contract('Wallet', ([_, ...accounts]) => {
 
     let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     const { logs } = await walletsRegistry.assignWallet(validatorId, {
-      from: walletsManager,
+      from: manager,
     });
     wallet = await Wallet.at(logs[0].args.wallet);
   });
