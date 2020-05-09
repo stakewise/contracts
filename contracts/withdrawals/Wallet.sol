@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Withdrawals.sol";
 
 /**
@@ -8,7 +9,7 @@ import "./Withdrawals.sol";
  * Each validator will have its own wallet contract which will store validator balance after the withdrawal.
  * The withdrawals can only be performed from the Withdrawals contract.
  */
-contract Wallet {
+contract Wallet is Initializable {
     using Address for address payable;
 
     // address of the Withdrawals contract.
@@ -25,7 +26,7 @@ contract Wallet {
     * Constructor for initializing the Wallet contract.
     * @param _withdrawals - address of the Withdrawals contract.
     */
-    constructor(Withdrawals _withdrawals) public {
+    function initialize(Withdrawals _withdrawals) public initializer {
         withdrawals = _withdrawals;
     }
 

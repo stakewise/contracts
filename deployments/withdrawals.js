@@ -1,22 +1,32 @@
 const { scripts } = require('@openzeppelin/cli');
+const { encodeCall } = require('@openzeppelin/upgrades');
+const {
+  ProjectFile,
+  NetworkFile,
+} = require('@openzeppelin/cli/lib/models/files').default;
 const { log } = require('./common');
 
 async function deployWalletsRegistryProxy({
-  adminsProxy,
   walletsManagersProxy,
   validatorsRegistryProxy,
   withdrawalsProxy,
   salt,
   networkConfig,
 }) {
+  let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
+  const walletImplementation = networkFile.contract('Wallet').address;
+  const initData = encodeCall('initialize', ['address'], [withdrawalsProxy]);
+
   const proxy = await scripts.create({
     contractAlias: 'WalletsRegistry',
     methodName: 'initialize',
     methodArgs: [
-      adminsProxy,
       walletsManagersProxy,
       validatorsRegistryProxy,
       withdrawalsProxy,
+      networkFile.proxyFactory.address,
+      walletImplementation,
+      initData,
     ],
     salt,
     ...networkConfig,
