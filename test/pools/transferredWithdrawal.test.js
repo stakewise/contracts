@@ -25,7 +25,7 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Pools = artifacts.require('Pools');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
@@ -40,14 +40,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
     withdrawals,
     vrc,
     validatorTransfers;
-  let [
-    admin,
-    operator,
-    walletsManager,
-    other,
-    sender,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -68,8 +61,8 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
@@ -189,7 +182,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorIds[i], {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = logs[0].args.wallet;
 
@@ -204,7 +197,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
           .add(validatorDepositAmount)
       );
       await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
     }
 

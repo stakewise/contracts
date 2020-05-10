@@ -5,11 +5,12 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./Admins.sol";
 
 /**
- * @title WalletsManagers
- * Contract for adding/removing manager roles.
- * Managers are responsible for allocating wallets for finished validators and enabling withdrawals.
+ * @title Managers
+ * Contract for assigning/unassigning manager roles.
+ * Managers are responsible for allocating wallets for finished validators, enabling withdrawals,
+ * transferring tokens and refunds.
  */
-contract WalletsManagers is Initializable {
+contract Managers is Initializable {
     using Roles for Roles.Role;
 
     // Stores managers and defines functions for adding/removing them.
@@ -33,7 +34,7 @@ contract WalletsManagers is Initializable {
     event ManagerRemoved(address account, address indexed issuer);
 
     /**
-    * Constructor for initializing the WalletsManagers contract.
+    * Constructor for initializing the Managers contract.
     * @param _admins - An address of the Admins contract.
     */
     function initialize(Admins _admins) public initializer {

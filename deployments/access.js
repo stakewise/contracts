@@ -25,20 +25,20 @@ async function deployOperatorsProxy({ networkConfig, adminsProxy }) {
   return proxy.address;
 }
 
-async function deployWalletsManagersProxy({ networkConfig, adminsProxy }) {
+async function deployManagersProxy({ networkConfig, adminsProxy }) {
   const proxy = await scripts.create({
-    contractAlias: 'WalletsManagers',
+    contractAlias: 'Managers',
     methodName: 'initialize',
     methodArgs: [adminsProxy],
     ...networkConfig,
   });
 
-  log(`WalletsManagers contract: ${proxy.address}`);
+  log(`Managers contract: ${proxy.address}`);
   return proxy.address;
 }
 
 module.exports = {
   deployAdminsProxy,
   deployOperatorsProxy,
-  deployWalletsManagersProxy,
+  deployManagersProxy,
 };

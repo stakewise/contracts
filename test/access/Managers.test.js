@@ -6,7 +6,7 @@ const {
 } = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
-  deployWalletsManagersProxy,
+  deployManagersProxy,
 } = require('../../deployments/access');
 const {
   getNetworkConfig,
@@ -14,12 +14,12 @@ const {
 } = require('../../deployments/common');
 const { removeNetworkFile } = require('../common/utils');
 
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 
-contract('WalletsManagers', ([_, ...accounts]) => {
+contract('Managers', ([_, ...accounts]) => {
   let networkConfig;
   let adminsProxy;
-  let walletsManagers;
+  let managers;
   let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
@@ -36,104 +36,104 @@ contract('WalletsManagers', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    walletsManagers = await WalletsManagers.at(
-      await deployWalletsManagersProxy({ networkConfig, adminsProxy })
+    managers = await Managers.at(
+      await deployManagersProxy({ networkConfig, adminsProxy })
     );
   });
 
   describe('assigning', () => {
     it('admin can assign manager role to another account', async () => {
-      const receipt = await walletsManagers.addManager(manager, {
+      const receipt = await managers.addManager(manager, {
         from: admin,
       });
       expectEvent(receipt, 'ManagerAdded', {
         account: manager,
         issuer: admin,
       });
-      expect(await walletsManagers.isManager(manager)).equal(true);
-      expect(await walletsManagers.isManager(admin)).equal(false);
-      expect(await walletsManagers.isManager(anyone)).equal(false);
+      expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.isManager(admin)).equal(false);
+      expect(await managers.isManager(anyone)).equal(false);
     });
 
     it('zero address cannot be assigned', async () => {
       await expectRevert(
-        walletsManagers.addManager(constants.ZERO_ADDRESS, { from: admin }),
+        managers.addManager(constants.ZERO_ADDRESS, { from: admin }),
         'Roles: account is the zero address'
       );
     });
 
     it('same account cannot be assigned manager role multiple times', async () => {
-      await walletsManagers.addManager(manager, { from: admin });
-      expect(await walletsManagers.isManager(manager)).equal(true);
+      await managers.addManager(manager, { from: admin });
+      expect(await managers.isManager(manager)).equal(true);
       await expectRevert(
-        walletsManagers.addManager(manager, { from: admin }),
+        managers.addManager(manager, { from: admin }),
         'Roles: account already has role'
       );
     });
 
     it('others cannot assign manager role to an account', async () => {
       await expectRevert(
-        walletsManagers.addManager(manager, { from: anyone }),
+        managers.addManager(manager, { from: anyone }),
         'Only admin users can assign managers.'
       );
-      expect(await walletsManagers.isManager(manager)).equal(false);
-      expect(await walletsManagers.isManager(anyone)).equal(false);
+      expect(await managers.isManager(manager)).equal(false);
+      expect(await managers.isManager(anyone)).equal(false);
     });
 
     it('managers cannot assign manager role to others', async () => {
-      await walletsManagers.addManager(manager, { from: admin });
+      await managers.addManager(manager, { from: admin });
       await expectRevert(
-        walletsManagers.addManager(anotherManager, { from: manager }),
+        managers.addManager(anotherManager, { from: manager }),
         'Only admin users can assign managers.'
       );
-      expect(await walletsManagers.isManager(manager)).equal(true);
-      expect(await walletsManagers.isManager(anotherManager)).equal(false);
+      expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.isManager(anotherManager)).equal(false);
     });
   });
 
   describe('removing', () => {
     beforeEach(async () => {
-      await walletsManagers.addManager(manager, { from: admin });
-      await walletsManagers.addManager(anotherManager, { from: admin });
+      await managers.addManager(manager, { from: admin });
+      await managers.addManager(anotherManager, { from: admin });
     });
 
     it('anyone cannot remove managers', async () => {
       await expectRevert(
-        walletsManagers.removeManager(manager, { from: anyone }),
+        managers.removeManager(manager, { from: anyone }),
         'Only admin users can remove managers.'
       );
-      expect(await walletsManagers.isManager(manager)).equal(true);
-      expect(await walletsManagers.isManager(anotherManager)).equal(true);
+      expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.isManager(anotherManager)).equal(true);
     });
 
     it('manager cannot remove other managers', async () => {
       await expectRevert(
-        walletsManagers.removeManager(anotherManager, { from: manager }),
+        managers.removeManager(anotherManager, { from: manager }),
         'Only admin users can remove managers.'
       );
-      expect(await walletsManagers.isManager(manager)).equal(true);
-      expect(await walletsManagers.isManager(anotherManager)).equal(true);
+      expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.isManager(anotherManager)).equal(true);
     });
 
     it('cannot remove account without manager role', async () => {
       await expectRevert(
-        walletsManagers.removeManager(anyone, { from: admin }),
+        managers.removeManager(anyone, { from: admin }),
         'Roles: account does not have role'
       );
-      expect(await walletsManagers.isManager(manager)).equal(true);
-      expect(await walletsManagers.isManager(anotherManager)).equal(true);
+      expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.isManager(anotherManager)).equal(true);
     });
 
     it('admins can remove managers', async () => {
-      const receipt = await walletsManagers.removeManager(manager, {
+      const receipt = await managers.removeManager(manager, {
         from: admin,
       });
       expectEvent(receipt, 'ManagerRemoved', {
         account: manager,
         issuer: admin,
       });
-      expect(await walletsManagers.isManager(manager)).equal(false);
-      expect(await walletsManagers.isManager(anotherManager)).equal(true);
+      expect(await managers.isManager(manager)).equal(false);
+      expect(await managers.isManager(anotherManager)).equal(true);
     });
   });
 });

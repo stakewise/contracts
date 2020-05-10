@@ -7,7 +7,7 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 /**
  * @title Admins
  * Contract for adding/renouncing admin roles.
- * Admin users can change global settings, assign/remove operators and wallets managers.
+ * Admin users can change global settings, assign/remove operators and managers.
  */
 contract Admins is Initializable {
     using Roles for Roles.Role;

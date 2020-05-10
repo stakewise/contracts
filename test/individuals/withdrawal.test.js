@@ -24,19 +24,12 @@ const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Individuals = artifacts.require('Individuals');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 
 contract('Individuals (withdrawal)', ([_, ...accounts]) => {
   let networkConfig, individuals, settings, walletsRegistry, withdrawals, vrc;
-  let [
-    admin,
-    operator,
-    walletsManager,
-    other,
-    sender,
-    ...otherAccounts
-  ] = accounts;
+  let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -57,8 +50,8 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
 
     individuals = await Individuals.at(proxies.individuals);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
@@ -94,7 +87,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -104,7 +97,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -176,7 +169,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // time for withdrawal, assign wallet
       let receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
@@ -186,7 +179,7 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
 
       // enable withdrawals
       receipt = await withdrawals.enableWithdrawals(wallet, {
-        from: walletsManager,
+        from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,

@@ -7,7 +7,7 @@ const {
 const { log } = require('./common');
 
 async function deployWalletsRegistryProxy({
-  walletsManagersProxy,
+  managersProxy,
   validatorsRegistryProxy,
   withdrawalsProxy,
   salt,
@@ -21,7 +21,7 @@ async function deployWalletsRegistryProxy({
     contractAlias: 'WalletsRegistry',
     methodName: 'initialize',
     methodArgs: [
-      walletsManagersProxy,
+      managersProxy,
       validatorsRegistryProxy,
       withdrawalsProxy,
       networkFile.proxyFactory.address,
@@ -37,7 +37,7 @@ async function deployWalletsRegistryProxy({
 }
 
 async function deployWithdrawalsProxy({
-  walletsManagersProxy,
+  managersProxy,
   depositsProxy,
   settingsProxy,
   validatorsRegistryProxy,
@@ -50,7 +50,7 @@ async function deployWithdrawalsProxy({
     contractAlias: 'Withdrawals',
     methodName: 'initialize',
     methodArgs: [
-      walletsManagersProxy,
+      managersProxy,
       depositsProxy,
       settingsProxy,
       validatorsRegistryProxy,

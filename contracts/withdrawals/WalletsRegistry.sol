@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/upgrades/contracts/upgradeability/ProxyFactory.sol";
-import "../access/WalletsManagers.sol";
+import "../access/Managers.sol";
 import "../validators/ValidatorsRegistry.sol";
 import "./Wallet.sol";
 import "./Withdrawals.sol";
@@ -29,8 +29,8 @@ contract WalletsRegistry is Initializable {
     // maps wallet address to the information about its assignment.
     mapping(address => WalletAssignment) public wallets;
 
-    // address of the WalletsManagers contract.
-    WalletsManagers private walletsManagers;
+    // address of the Managers contract.
+    Managers private managers;
 
     // address of the ValidatorsRegistry contract.
     ValidatorsRegistry private validatorsRegistry;
@@ -64,7 +64,7 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Constructor for initializing the WalletsRegistry contract.
-    * @param _walletsManagers - address of the WalletsManagers contract.
+    * @param _managers - address of the Managers contract.
     * @param _validatorsRegistry - address of the Validators Registry contract.
     * @param _withdrawals - address of the Withdrawals contract.
     * @param _proxyFactory - address of the ProxyFactory contract.
@@ -72,7 +72,7 @@ contract WalletsRegistry is Initializable {
     * @param _walletInitData - wallet initialization data for proxy creation.
     */
     function initialize(
-        WalletsManagers _walletsManagers,
+        Managers _managers,
         ValidatorsRegistry _validatorsRegistry,
         Withdrawals _withdrawals,
         ProxyFactory _proxyFactory,
@@ -81,7 +81,7 @@ contract WalletsRegistry is Initializable {
     )
         public initializer
     {
-        walletsManagers = _walletsManagers;
+        managers = _managers;
         validatorsRegistry = _validatorsRegistry;
         withdrawals = _withdrawals;
         proxyFactory = _proxyFactory;
@@ -91,7 +91,7 @@ contract WalletsRegistry is Initializable {
 
     /**
     * Function for assigning wallets to validators.
-    * Can only be called by users with a wallets manager role.
+    * Can only be called by users with a manager role.
     * @param _validatorId - ID (public key hash) of the validator wallet should be assigned to.
     */
     function assignWallet(bytes32 _validatorId) external {
@@ -99,7 +99,7 @@ contract WalletsRegistry is Initializable {
 
         (uint256 validatorAmount, ,) = validatorsRegistry.validators(_validatorId);
         require(validatorAmount != 0, "Validator does not have deposit amount.");
-        require(walletsManagers.isManager(msg.sender), "Permission denied.");
+        require(managers.isManager(msg.sender), "Permission denied.");
 
         address wallet = proxyFactory.deployMinimal(walletImplementation, walletInitData);
         wallets[wallet].validatorId = _validatorId;

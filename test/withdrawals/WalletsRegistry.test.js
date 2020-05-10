@@ -13,11 +13,11 @@ const { removeNetworkFile, registerValidator } = require('../common/utils');
 
 const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Operators = artifacts.require('Operators');
-const WalletsManagers = artifacts.require('WalletsManagers');
+const Managers = artifacts.require('Managers');
 
 contract('WalletsRegistry', ([_, ...accounts]) => {
   let walletsRegistry, proxies, validatorId, networkConfig, vrc;
-  let [admin, operator, sender, recipient, walletsManager] = accounts;
+  let [admin, operator, sender, recipient, manager] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -38,8 +38,8 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
 
-    let walletsManagers = await WalletsManagers.at(proxies.walletsManagers);
-    await walletsManagers.addManager(walletsManager, { from: admin });
+    let managers = await Managers.at(proxies.managers);
+    await managers.addManager(manager, { from: admin });
     walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
@@ -63,12 +63,12 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('cannot assign wallet to the same validator more than once', async () => {
       await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
 
       await expectRevert(
         walletsRegistry.assignWallet(validatorId, {
-          from: walletsManager,
+          from: manager,
         }),
         'Validator has already wallet assigned.'
       );
@@ -79,7 +79,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
         walletsRegistry.assignWallet(
           web3.utils.soliditySha3('invalidValidator'),
           {
-            from: walletsManager,
+            from: manager,
           }
         ),
         'Validator does not have deposit amount.'
@@ -88,7 +88,7 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
 
     it('creates a new wallet', async () => {
       const receipt = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       const wallet = receipt.logs[0].args.wallet;
 
@@ -106,11 +106,11 @@ contract('WalletsRegistry', ([_, ...accounts]) => {
   // More unlocking tests are in Withdrawals.test.js
   describe('unlocking wallet', () => {
     let wallet;
-    let users = [admin, operator, walletsManager, sender];
+    let users = [admin, operator, manager, sender];
 
     beforeEach(async () => {
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
-        from: walletsManager,
+        from: manager,
       });
       wallet = logs[0].args.wallet;
     });
