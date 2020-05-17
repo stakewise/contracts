@@ -67,6 +67,27 @@ async function checkIndividualManager(
   expect(actualAddress).to.equal(expectedAddress);
 }
 
+async function checkValidatorDepositData(
+  contract,
+  entityId,
+  {
+    publicKey = null,
+    withdrawalCredentials = null,
+    amount = new BN(0),
+    signature = null,
+    depositDataRoot = constants.ZERO_BYTES32,
+    submitted = false,
+  } = {}
+) {
+  let depositData = await contract.validatorDeposits(entityId);
+  expect(depositData.amount).to.bignumber.equal(amount);
+  expect(depositData.withdrawalCredentials).equal(withdrawalCredentials);
+  expect(depositData.publicKey).equal(publicKey);
+  expect(depositData.signature).equal(signature);
+  expect(depositData.depositDataRoot).equal(depositDataRoot);
+  expect(depositData.submitted).equal(submitted);
+}
+
 async function checkCollectorBalance(collectorContract, correctBalance) {
   expect(
     await balance.current(collectorContract.address)
@@ -325,6 +346,7 @@ module.exports = {
   checkPendingPool,
   checkPendingGroup,
   checkIndividualManager,
+  checkValidatorDepositData,
   checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,

@@ -8,6 +8,7 @@ const { deployDepositsProxy } = require('../deployments/deposits');
 const {
   deployPoolsProxy,
   deployIndividualsProxy,
+  deployPrivateIndividualsProxy,
   deployGroupsProxy,
 } = require('../deployments/collectors');
 const { deploySettingsProxy } = require('../deployments/settings');
@@ -68,6 +69,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     contractAddress: individualsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
+  // Calculate Private Individuals proxy address via create2
+  let {
+    salt: privateIndividualsSalt,
+    contractAddress: privateIndividualsCalcProxy,
+  } = await calculateContractAddress({ networkConfig });
+
   // Calculate Groups proxy address via create2
   let {
     salt: groupsSalt,
@@ -84,6 +91,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   let depositsProxy = await deployDepositsProxy({
     poolsProxy: poolsCalcProxy,
     individualsProxy: individualsCalcProxy,
+    privateIndividualsProxy: privateIndividualsCalcProxy,
     groupsProxy: groupsCalcProxy,
     salt: depositsSalt,
     networkConfig,
@@ -98,6 +106,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   let validatorsRegistryProxy = await deployValidatorsRegistryProxy({
     poolsProxy: poolsCalcProxy,
     individualsProxy: individualsCalcProxy,
+    privateIndividualsProxy: privateIndividualsCalcProxy,
     groupsProxy: groupsCalcProxy,
     salt: validatorsRegistrySalt,
     settingsProxy,
@@ -140,6 +149,22 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
   if (individualsProxy !== individualsCalcProxy) {
     throw new Error(
       `Individuals contract actual address "${individualsProxy}" does not match expected "${individualsCalcProxy}"`
+    );
+  }
+
+  // Deploy Private Individuals proxy
+  let privateIndividualsProxy = await deployPrivateIndividualsProxy({
+    depositsProxy,
+    settingsProxy,
+    operatorsProxy,
+    vrc,
+    validatorsRegistryProxy,
+    salt: privateIndividualsSalt,
+    networkConfig,
+  });
+  if (privateIndividualsProxy !== privateIndividualsCalcProxy) {
+    throw new Error(
+      `Private Individuals contract actual address "${privateIndividualsProxy}" does not match expected "${privateIndividualsCalcProxy}"`
     );
   }
 
@@ -233,6 +258,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     validatorTransfers: validatorTransfersProxy,
     pools: poolsProxy,
     individuals: individualsProxy,
+    privateIndividuals: privateIndividualsProxy,
     groups: groupsProxy,
     walletsRegistry: walletsRegistryProxy,
     withdrawals: withdrawalsProxy,

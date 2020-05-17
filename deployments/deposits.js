@@ -4,6 +4,7 @@ const { log } = require('./common');
 async function deployDepositsProxy({
   poolsProxy,
   individualsProxy,
+  privateIndividualsProxy,
   groupsProxy,
   salt,
   networkConfig,
@@ -11,7 +12,12 @@ async function deployDepositsProxy({
   const proxy = await scripts.create({
     contractAlias: 'Deposits',
     methodName: 'initialize',
-    methodArgs: [poolsProxy, individualsProxy, groupsProxy],
+    methodArgs: [
+      poolsProxy,
+      individualsProxy,
+      privateIndividualsProxy,
+      groupsProxy,
+    ],
     salt,
     ...networkConfig,
   });

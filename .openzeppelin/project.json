@@ -11,6 +11,7 @@
     "WalletsRegistry": "WalletsRegistry",
     "Withdrawals": "Withdrawals",
     "Individuals": "Individuals",
+    "PrivateIndividuals": "PrivateIndividuals",
     "ValidatorTransfers": "ValidatorTransfers",
     "Groups": "Groups",
     "Wallet": "Wallet"
