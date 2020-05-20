@@ -163,7 +163,6 @@ async function checkValidatorRegistered({
   validatorsRegistry,
   stakingDuration,
   maintainerFee = new BN(initialSettings.maintainerFee),
-  minStakingDuration = new BN(initialSettings.minStakingDuration),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
 }) {
@@ -192,7 +191,6 @@ async function checkValidatorRegistered({
       stakingDuration,
       depositAmount: validatorDepositAmount,
       maintainerFee,
-      minStakingDuration,
     }
   );
 
@@ -218,7 +216,6 @@ async function checkValidatorTransferred({
   totalMaintainerDebt,
   newStakingDuration,
   newMaintainerFee = new BN(initialSettings.maintainerFee),
-  newMinStakingDuration = new BN(initialSettings.minStakingDuration),
 }) {
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
@@ -232,7 +229,6 @@ async function checkValidatorTransferred({
       userDebt,
       maintainerDebt,
       newMaintainerFee,
-      newMinStakingDuration,
       newStakingDuration,
     }
   );

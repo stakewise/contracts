@@ -25,7 +25,6 @@ const newValues = [
   ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
-  ['minStakingDuration', new BN(1209600)],
   ['stakingDuration', new BN(31556952)],
   ['contractPaused', true],
 ];
