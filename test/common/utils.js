@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { expectEvent } = require('@openzeppelin/test-helpers');
+const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../../deployments/settings');
@@ -52,13 +52,13 @@ async function checkPendingGroup(groupsContract, groupId, expectedAmount) {
   expect(collectedAmount).to.bignumber.equal(expectedAmount);
 }
 
-async function checkPendingIndividual(
+async function checkIndividualManager(
   individualsContract,
   individualId,
-  expectedPending
+  expectedAddress = constants.ZERO_ADDRESS
 ) {
-  let isPending = await individualsContract.pendingIndividuals(individualId);
-  expect(isPending).to.equal(expectedPending);
+  let actualAddress = await individualsContract.managers(individualId);
+  expect(actualAddress).to.equal(expectedAddress);
 }
 
 async function checkCollectorBalance(collectorContract, correctBalance) {
@@ -318,7 +318,7 @@ module.exports = {
   registerValidator,
   checkPendingPool,
   checkPendingGroup,
-  checkPendingIndividual,
+  checkIndividualManager,
   checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,

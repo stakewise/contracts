@@ -17,7 +17,7 @@ const {
   removeNetworkFile,
   checkUserTotalAmount,
   checkCollectorBalance,
-  checkPendingIndividual,
+  checkIndividualManager,
   checkDepositCanceled,
   getEntityId,
   validatorRegistrationArgs,
@@ -83,7 +83,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -102,7 +102,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -131,7 +131,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -145,7 +145,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       }),
       'The user does not have a deposit.'
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -169,8 +169,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(
       validatorDepositAmount
     );
-    // Check balance
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 });

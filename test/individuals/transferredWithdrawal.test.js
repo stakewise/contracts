@@ -5,6 +5,7 @@ const {
   balance,
   ether,
   expectEvent,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -18,6 +19,7 @@ const {
   registerValidator,
   validatorRegistrationArgs,
   getEntityId,
+  signValidatorTransfer,
 } = require('../common/utils');
 const { testCases } = require('./withdrawalTestCases');
 
@@ -108,18 +110,26 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
       });
 
       // add new entity for transfer
-      // can only transfer to pool collector
       let newPoolId = getEntityId(pools.address, new BN(testCaseN + 1));
       await pools.addDeposit(other, {
         from: other,
         value: validatorDepositAmount,
       });
 
+      // wait until staking duration has passed
+      await time.increase(time.duration.seconds(stakingDuration));
+
+      let prevEntityManagerSignature = await signValidatorTransfer(
+        sender,
+        individualId
+      );
+
       // transfer validator to the new entity
       await pools.transferValidator(
         validatorId,
         validatorReturn.sub(validatorDepositAmount),
         newPoolId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }

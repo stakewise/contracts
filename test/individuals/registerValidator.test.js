@@ -9,7 +9,7 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
-  checkPendingIndividual,
+  checkIndividualManager,
   checkValidatorRegistered,
   validatorRegistrationArgs,
   getEntityId,
@@ -82,7 +82,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Invalid individual ID.'
     );
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -99,7 +99,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Permission denied.'
     );
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -114,7 +114,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         from: operator,
       }
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
     // Register validator 2 with the same validator public key
     await individuals.addDeposit(recipient, {
@@ -134,7 +134,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Public key has been already used.'
     );
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -149,7 +149,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         from: operator,
       }
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
 
     // Register validator second time
@@ -165,7 +165,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       ),
       'Invalid individual ID.'
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -181,7 +181,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         value: validatorDepositAmount,
       });
       individualId = getEntityId(individuals.address, new BN(i + 1));
-      await checkPendingIndividual(individuals, individualId, true);
+      await checkIndividualManager(individuals, individualId, sender);
       individualIds.push(individualId);
       totalAmount = totalAmount.add(validatorDepositAmount);
     }
@@ -213,7 +213,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
         signature: validatorRegistrationArgs[i].signature,
       });
     }
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 });

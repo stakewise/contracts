@@ -5,6 +5,7 @@ const {
   constants,
   ether,
   balance,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -16,10 +17,11 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
-  checkPendingIndividual,
+  checkIndividualManager,
   checkValidatorTransferred,
   getEntityId,
   registerValidator,
+  signValidatorTransfer,
 } = require('../common/utils');
 
 const Individuals = artifacts.require('Individuals');
@@ -41,7 +43,8 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     settings,
     validatorId,
     newIndividualId,
-    prevEntityId;
+    prevEntityId,
+    prevEntityManagerSignature;
   let [admin, operator, other, sender, recipient] = accounts;
 
   before(async () => {
@@ -77,6 +80,10 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       from: admin,
     });
 
+    await settings.setStakingDuration(proxies.pools, stakingDuration, {
+      from: admin,
+    });
+
     // register validator to transfer
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
@@ -85,6 +92,7 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       recipient: other,
     });
     prevEntityId = getEntityId(proxies.pools, new BN(1));
+    prevEntityManagerSignature = constants.ZERO_BYTES32;
 
     // register new individual
     newIndividualId = getEntityId(individuals.address, new BN(1));
@@ -100,13 +108,14 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         constants.ZERO_BYTES32,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ),
       'Invalid individual ID.'
     );
-    await checkPendingIndividual(individuals, newIndividualId, true);
+    await checkIndividualManager(individuals, newIndividualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -116,13 +125,14 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         constants.ZERO_BYTES32,
         validatorReward,
         newIndividualId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ),
-      'Validator with such ID is not registered.'
+      'Invalid entity ID.'
     );
-    await checkPendingIndividual(individuals, newIndividualId, true);
+    await checkIndividualManager(individuals, newIndividualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -132,13 +142,32 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newIndividualId,
+        prevEntityManagerSignature,
         {
           from: other,
         }
       ),
       'Permission denied.'
     );
-    await checkPendingIndividual(individuals, newIndividualId, true);
+    await checkIndividualManager(individuals, newIndividualId, sender);
+    await checkCollectorBalance(individuals, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator if staking time has not passed', async () => {
+    // transfer validator to the new pool
+    await expectRevert(
+      individuals.transferValidator(
+        validatorId,
+        validatorReward,
+        newIndividualId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      ),
+      'Validator transfer is not allowed.'
+    );
+    await checkIndividualManager(individuals, newIndividualId, sender);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -155,6 +184,9 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       value: newValidatorDepositAmount,
     });
 
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new individual
     newIndividualId = getEntityId(individuals.address, new BN(2));
     await expectRevert(
@@ -162,6 +194,7 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newIndividualId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
@@ -170,7 +203,7 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     );
 
     // check balance didn't change
-    await checkPendingIndividual(individuals, newIndividualId, true);
+    await checkIndividualManager(individuals, newIndividualId, sender);
     await checkCollectorBalance(
       individuals,
       newValidatorDepositAmount.add(validatorDepositAmount)
@@ -178,18 +211,22 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
   });
 
   it('can transfer validator to the new individual', async () => {
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new individual
     let { tx } = await individuals.transferValidator(
       validatorId,
       validatorReward,
       newIndividualId,
+      prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
     // check pending individual updated
-    await checkPendingIndividual(individuals, newIndividualId, false);
+    await checkIndividualManager(individuals, newIndividualId);
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -225,18 +262,23 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     await settings.setMaintainerFee(newMaintainerFee, {
       from: admin,
     });
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new individual
     let { tx } = await individuals.transferValidator(
       validatorId,
       validatorReward,
       newIndividualId,
+      prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
     // check balance updated
-    await checkPendingIndividual(individuals, newIndividualId, false);
+    await checkIndividualManager(individuals, newIndividualId);
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -322,18 +364,22 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         from: admin,
       });
 
+      // wait until staking duration has passed
+      await time.increase(time.duration.seconds(stakingDuration));
+
       // transfer validator to the new individual
       ({ tx } = await individuals.transferValidator(
         validatorId,
         test.validatorReward,
         newIndividualId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ));
 
       // check balance updated
-      await checkPendingIndividual(individuals, newIndividualId, false);
+      await checkIndividualManager(individuals, newIndividualId);
 
       // increment balance and debts
       expectedBalance.iadd(validatorDepositAmount);
@@ -362,7 +408,12 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(expectedBalance);
+
       prevEntityId = newIndividualId;
+      prevEntityManagerSignature = await signValidatorTransfer(
+        sender,
+        prevEntityId
+      );
 
       // add deposit for the next individual
       newIndividualId = getEntityId(individuals.address, individualsCount);

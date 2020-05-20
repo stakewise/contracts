@@ -19,8 +19,8 @@ contract Individuals is Initializable {
     using Address for address payable;
     using SafeMath for uint256;
 
-    // maps individual ID to whether validator can be registered for it.
-    mapping(bytes32 => bool) public pendingIndividuals;
+    // maps individual ID to its manager.
+    mapping(bytes32 => address) public managers;
 
     // total number of individuals created.
     uint256 private individualsCount;
@@ -84,7 +84,7 @@ contract Individuals is Initializable {
         // Register new individual
         individualsCount++;
         bytes32 individualId = keccak256(abi.encodePacked(address(this), individualsCount));
-        pendingIndividuals[individualId] = true;
+        managers[individualId] = msg.sender;
         deposits.addDeposit(individualId, msg.sender, _recipient, msg.value);
     }
 
@@ -97,11 +97,11 @@ contract Individuals is Initializable {
     function cancelDeposit(bytes32 _individualId, address payable _recipient) external {
         uint256 depositAmount = deposits.getDeposit(_individualId, msg.sender, _recipient);
         require(depositAmount > 0, "The user does not have a deposit.");
-        require(pendingIndividuals[_individualId], "Cannot cancel deposit which has started staking.");
+        require(managers[_individualId] != address(0), "Cannot cancel deposit which has started staking.");
 
         // cancel individual deposit
         deposits.cancelDeposit(_individualId, msg.sender, _recipient, depositAmount);
-        delete pendingIndividuals[_individualId];
+        delete managers[_individualId];
 
         // transfer canceled amount to the recipient
         _recipient.sendValue(depositAmount);
@@ -122,11 +122,15 @@ contract Individuals is Initializable {
     )
         external
     {
-        require(pendingIndividuals[_individualId], "Invalid individual ID.");
+        address manager = managers[_individualId];
+        require(manager != address(0), "Invalid individual ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_individualId, manager);
+
         // cleanup pending individual
-        delete pendingIndividuals[_individualId];
+        delete managers[_individualId];
 
         // register validator
         bytes memory withdrawalCredentials = settings.withdrawalCredentials();
@@ -151,24 +155,32 @@ contract Individuals is Initializable {
     * @param _validatorId - ID of the validator to transfer.
     * @param _validatorReward - validator current reward.
     * @param _individualId - ID of the individual to register validator for.
+    * @param _managerSignature - ECDSA signature of the previous entity manager if such exists.
     */
     function transferValidator(
         bytes32 _validatorId,
         uint256 _validatorReward,
-        bytes32 _individualId
+        bytes32 _individualId,
+        bytes calldata _managerSignature
     )
-    external
+        external
     {
-        require(pendingIndividuals[_individualId], "Invalid individual ID.");
+        address manager = managers[_individualId];
+        require(manager != address(0), "Invalid individual ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
-        require(prevEntityId != "", "Validator with such ID is not registered.");
+        require(validatorTransfers.checkAllowance(prevEntityId, _managerSignature), "Validator transfer is not allowed.");
 
         (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
 
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_individualId, manager);
+
+        // cleanup pending individual
+        delete managers[_individualId];
+
         // transfer validator to the new individual
-        delete pendingIndividuals[_individualId];
         validatorsRegistry.update(_validatorId, _individualId, settings.maintainerFee());
 
         uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
