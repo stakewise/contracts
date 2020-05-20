@@ -22,10 +22,12 @@ contract Groups is Initializable {
     /**
     * Structure for storing information about the group which was not yet sent for staking.
     * @param collectedAmount - total amount collected by the group members.
+    * @param manager - address of the group manager.
     * @param members - mapping for users memberships in a group.
     */
     struct PendingGroup {
         uint256 collectedAmount;
+        address manager;
         mapping(address => bool) members;
     }
 
@@ -55,11 +57,11 @@ contract Groups is Initializable {
 
     /**
     * Event for tracking new groups.
-    * @param creator - address of the group creator.
+    * @param manager - address of the group manager.
     * @param groupId - ID of the created group.
     * @param members - list of group members.
     */
-    event GroupCreated(address creator, bytes32 groupId, address[] members);
+    event GroupCreated(address manager, bytes32 groupId, address[] members);
 
     /**
     * Constructor for initializing the Groups contract.
@@ -107,22 +109,27 @@ contract Groups is Initializable {
             pendingGroup.members[_members[i]] = true;
         }
 
-        // register sender as a member
-        pendingGroup.members[msg.sender] = true;
-        emit GroupCreated(msg.sender, groupId, _members);
+        // register group manager
+        pendingGroup.manager = msg.sender;
+        emit GroupCreated(pendingGroup.manager, groupId, _members);
     }
 
     /**
-    * Function for adding deposits in groups.
+    * Function for adding deposits in groups. The depositing will be disallowed in case
+    * `Groups` contract is paused in `Settings` contract.
     * @param _groupId - ID of the group the user would like to deposit to.
     * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     */
     function addDeposit(bytes32 _groupId, address _recipient) external payable {
         require(_recipient != address(0), "Invalid recipient address.");
         require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
+        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
 
         PendingGroup storage pendingGroup = pendingGroups[_groupId];
-        require(pendingGroup.members[msg.sender], "The sender is not a member of the group with the specified ID.");
+        require(
+            pendingGroup.manager == msg.sender || pendingGroup.members[msg.sender],
+            "The sender is not a member or a manager of the group."
+        );
 
         require(
             (pendingGroup.collectedAmount).add(msg.value) <= settings.validatorDepositAmount(),
@@ -182,6 +189,9 @@ contract Groups is Initializable {
         PendingGroup memory pendingGroup = pendingGroups[_groupId];
         require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
 
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_groupId, pendingGroup.manager);
+
         // cleanup pending group
         delete pendingGroups[_groupId];
 
@@ -207,11 +217,13 @@ contract Groups is Initializable {
     * @param _validatorId - ID of the validator to transfer.
     * @param _validatorReward - validator current reward.
     * @param _groupId - ID of the group to register validator for.
+    * @param _managerSignature - ECDSA signature of the previous entity manager if such exists.
     */
     function transferValidator(
         bytes32 _validatorId,
         uint256 _validatorReward,
-        bytes32 _groupId
+        bytes32 _groupId,
+        bytes calldata _managerSignature
     )
         external
     {
@@ -221,12 +233,17 @@ contract Groups is Initializable {
         require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
 
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
-        require(prevEntityId != "", "Validator with such ID is not registered.");
+        require(validatorTransfers.checkAllowance(prevEntityId, _managerSignature), "Validator transfer is not allowed.");
 
         (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
 
-        // transfer validator to the new group
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_groupId, pendingGroup.manager);
+
+        // cleanup pending group
         delete pendingGroups[_groupId];
+
+        // transfer validator to the new group
         validatorsRegistry.update(_validatorId, _groupId, settings.maintainerFee());
 
         uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);

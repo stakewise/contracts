@@ -154,7 +154,6 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
   });
 
   it('fails to transfer validator if staking time has not passed', async () => {
-    // transfer validator to the new pool
     await expectRevert(
       individuals.transferValidator(
         validatorId,

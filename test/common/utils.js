@@ -47,9 +47,15 @@ async function checkPendingPool(poolsContract, poolId, expectedPending) {
   }
 }
 
-async function checkPendingGroup(groupsContract, groupId, expectedAmount) {
-  let collectedAmount = await groupsContract.pendingGroups(groupId);
-  expect(collectedAmount).to.bignumber.equal(expectedAmount);
+async function checkPendingGroup({
+  groups,
+  groupId,
+  collectedAmount = new BN(0),
+  manager = constants.ZERO_ADDRESS,
+}) {
+  let pendingGroup = await groups.pendingGroups(groupId);
+  expect(pendingGroup.collectedAmount).to.bignumber.equal(collectedAmount);
+  expect(pendingGroup.manager).to.equal(manager);
 }
 
 async function checkIndividualManager(

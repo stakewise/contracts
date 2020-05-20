@@ -17,7 +17,7 @@ const Settings = artifacts.require('Settings');
 
 contract('Groups (create group)', ([_, ...accounts]) => {
   let networkConfig, vrc, groups, settings;
-  let [admin, groupCreator, user1, user2, user3] = accounts;
+  let [admin, manager, user1, user2, user3] = accounts;
   let groupMembers = [user1, user2, user3];
 
   before(async () => {
@@ -48,29 +48,29 @@ contract('Groups (create group)', ([_, ...accounts]) => {
     expect(await settings.pausedContracts(groups.address)).equal(true);
 
     await expectRevert(
-      groups.createGroup(groupMembers, { from: groupCreator }),
+      groups.createGroup(groupMembers, { from: manager }),
       'New groups creation is currently disabled.'
     );
   });
 
   it('fails to create a group without members', async () => {
     await expectRevert(
-      groups.createGroup([], { from: groupCreator }),
+      groups.createGroup([], { from: manager }),
       'The group members list cannot be empty.'
     );
   });
 
   it('any user can create a new staking group', async () => {
     const receipt = await groups.createGroup(groupMembers, {
-      from: groupCreator,
+      from: manager,
     });
 
     const groupId = getEntityId(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
-      creator: groupCreator,
+      manager,
       groupId,
     });
     expect(receipt.logs[0].args.members).to.have.members(groupMembers);
-    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkPendingGroup({ groups, groupId, manager });
   });
 });
