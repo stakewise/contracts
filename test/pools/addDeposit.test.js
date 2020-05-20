@@ -356,7 +356,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     }
   });
 
-  it('fails to add a deposit to paused empty pool', async () => {
+  it('fails to add a deposit to paused pool', async () => {
     await settings.setContractPaused(pools.address, true, {
       from: admin,
     });
@@ -367,114 +367,9 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         from: sender1,
         value: ether('1'),
       }),
-      'Deposit amount cannot be larger than amount required to finish the last pool.'
+      'Depositing is currently disabled.'
     );
     await checkCollectorBalance(pools, new BN(0));
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-  });
-
-  it('fails to add a deposit to paused pool with amount bigger than required to finish round', async () => {
-    const depositAmount = getDepositAmount({
-      max: validatorDepositAmount,
-    });
-    // Send a deposit
-    const { tx } = await pools.addDeposit(recipient1, {
-      from: sender1,
-      value: depositAmount,
-    });
-    let poolId = getEntityId(pools.address, new BN(1));
-
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx,
-      depositsContract: deposits,
-      collectorAddress: pools.address,
-      entityId: poolId,
-      senderAddress: sender1,
-      recipientAddress: recipient1,
-      addedAmount: depositAmount,
-      totalAmount: depositAmount,
-    });
-
-    // Check pools balance
-    await checkCollectorBalance(pools, depositAmount);
-
-    // Pause Pools contract
-    await settings.setContractPaused(pools.address, true, {
-      from: admin,
-    });
-    expect(await settings.pausedContracts(pools.address)).equal(true);
-
-    // Add deposit bigger than required to finish current round
-    await expectRevert(
-      pools.addDeposit(recipient1, {
-        from: sender1,
-        value: initialSettings.validatorDepositAmount,
-      }),
-      'Deposit amount cannot be larger than amount required to finish the last pool.'
-    );
-    await checkCollectorBalance(pools, depositAmount);
-    await checkNewPoolCollectedAmount(pools, depositAmount);
-    await checkPendingPool(pools, poolId, false);
-  });
-
-  it('adds a deposit to paused pool with amount required to finish current round', async () => {
-    let tx;
-    let depositAmount = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2)),
-    });
-    // Send a deposit
-    ({ tx } = await pools.addDeposit(recipient1, {
-      from: sender1,
-      value: depositAmount,
-    }));
-    let poolId = getEntityId(pools.address, new BN(1));
-
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx,
-      depositsContract: deposits,
-      collectorAddress: pools.address,
-      entityId: poolId,
-      senderAddress: sender1,
-      recipientAddress: recipient1,
-      addedAmount: depositAmount,
-      totalAmount: depositAmount,
-    });
-
-    // Check pools balance
-    await checkCollectorBalance(pools, depositAmount);
-    await checkPendingPool(pools, poolId, false);
-    await checkNewPoolCollectedAmount(pools, depositAmount);
-
-    // Pause Pools contract
-    await settings.setContractPaused(pools.address, true, {
-      from: admin,
-    });
-    expect(await settings.pausedContracts(pools.address)).equal(true);
-
-    // Add deposit with amount required to finish current round
-    depositAmount = new BN(initialSettings.validatorDepositAmount).sub(
-      depositAmount
-    );
-    ({ tx } = await pools.addDeposit(recipient1, {
-      from: sender1,
-      value: depositAmount,
-    }));
-
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx,
-      depositsContract: deposits,
-      collectorAddress: pools.address,
-      entityId: poolId,
-      senderAddress: sender1,
-      recipientAddress: recipient1,
-      addedAmount: depositAmount,
-      totalAmount: initialSettings.validatorDepositAmount,
-    });
-    await checkPendingPool(pools, poolId, true);
-    await checkCollectorBalance(pools, initialSettings.validatorDepositAmount);
     await checkNewPoolCollectedAmount(pools, new BN(0));
   });
 });

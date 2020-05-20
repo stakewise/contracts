@@ -77,22 +77,18 @@ contract Pools is Initializable {
 
     /**
     * Function for adding deposits to pools. If added amount makes the current pool exceed validator deposit amount,
-    * it will be split between the current pool and the next one. If Pools contract is paused in `Settings` contract,
-    * the maximum deposit size is the amount required to send the last pool for staking.
+    * it will be split between the current pool and the next one. The depositing will be disallowed in case
+    * `Pools` contract is paused in `Settings` contract.
     * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
     */
     function addDeposit(address _recipient) external payable {
         require(_recipient != address(0), "Invalid recipient address.");
         require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
-
-        uint256 validatorTargetAmount = settings.validatorDepositAmount();
-        uint256 toCollect = validatorTargetAmount.sub(collectedAmount);
-        require(
-            !settings.pausedContracts(address(this)) || (collectedAmount != 0 && msg.value <= toCollect),
-            "Deposit amount cannot be larger than amount required to finish the last pool."
-        );
+        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
 
         bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+        uint256 validatorTargetAmount = settings.validatorDepositAmount();
+        uint256 toCollect = validatorTargetAmount.sub(collectedAmount);
         if (msg.value > toCollect) {
             // the deposit is bigger than the amount required to collect
             uint256 toProcess = msg.value;
@@ -163,6 +159,9 @@ contract Pools is Initializable {
         require(pendingPools[_poolId], "Invalid pool ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_poolId, address(0));
+
         // cleanup pending pool
         delete pendingPools[_poolId];
 
@@ -189,11 +188,13 @@ contract Pools is Initializable {
     * @param _validatorId - ID of the validator to transfer.
     * @param _validatorReward - validator current reward.
     * @param _poolId - ID of the pool to register validator for.
+    * @param _managerSignature - ECDSA signature of the previous entity manager if such exists.
     */
     function transferValidator(
         bytes32 _validatorId,
         uint256 _validatorReward,
-        bytes32 _poolId
+        bytes32 _poolId,
+        bytes calldata _managerSignature
     )
         external
     {
@@ -201,12 +202,15 @@ contract Pools is Initializable {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
-        require(prevEntityId != "", "Validator with such ID is not registered.");
+        require(validatorTransfers.checkAllowance(prevEntityId, _managerSignature), "Validator transfer is not allowed.");
 
         (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
 
-        // transfer validator to the new pool
+        // set allowance for future transfer
+        validatorTransfers.setAllowance(_poolId, address(0));
         delete pendingPools[_poolId];
+
+        // transfer validator to the new pool
         validatorsRegistry.update(_validatorId, _poolId, settings.maintainerFee());
 
         uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
