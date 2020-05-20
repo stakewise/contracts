@@ -6,6 +6,7 @@ const {
   expectRevert,
   ether,
   balance,
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -98,9 +99,15 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
 
     // transfer validator to the new entity
     let poolId = getEntityId(pools.address, new BN(2));
-    await pools.transferValidator(validatorId, prevEntityReward, poolId, {
-      from: operator,
-    });
+    await pools.transferValidator(
+      validatorId,
+      prevEntityReward,
+      poolId,
+      constants.ZERO_BYTES32,
+      {
+        from: operator,
+      }
+    );
 
     // assign wallet to transferred validator
     const { logs } = await walletsRegistry.assignWallet(validatorId, {

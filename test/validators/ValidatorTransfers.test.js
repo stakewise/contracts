@@ -4,6 +4,7 @@ const {
   expectEvent,
   ether,
   send,
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -40,7 +41,8 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     validatorTransfers,
     walletsRegistry,
     validatorId,
-    entityId;
+    prevEntityId,
+    prevEntityManagerSignature;
   let [admin, operator, manager, sender, recipient, other] = accounts;
 
   before(async () => {
@@ -83,20 +85,30 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       sender,
       recipient,
     });
-    entityId = getEntityId(pools.address, new BN(1));
+    prevEntityId = getEntityId(pools.address, new BN(1));
+    prevEntityManagerSignature = constants.ZERO_BYTES32;
   });
 
   it('only collectors can register transfers', async () => {
     await expectRevert(
       validatorTransfers.registerTransfer(
         validatorId,
-        entityId,
+        prevEntityId,
         userReward,
         new BN(0),
         {
           from: admin,
         }
       ),
+      'Permission denied.'
+    );
+  });
+
+  it('only collectors can set allowance', async () => {
+    await expectRevert(
+      validatorTransfers.setAllowance(prevEntityId, manager, {
+        from: admin,
+      }),
       'Permission denied.'
     );
   });
@@ -124,12 +136,18 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator,
-      });
+      await pools.transferValidator(
+        validatorId,
+        validatorReward,
+        poolId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      );
 
       await expectRevert(
-        validatorTransfers.withdraw(entityId, other, {
+        validatorTransfers.withdraw(prevEntityId, other, {
           from: other,
         }),
         'User does not have a share in this entity.'
@@ -145,16 +163,22 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator,
-      });
+      await pools.transferValidator(
+        validatorId,
+        validatorReward,
+        poolId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      );
 
-      await validatorTransfers.withdraw(entityId, recipient, {
+      await validatorTransfers.withdraw(prevEntityId, recipient, {
         from: sender,
       });
 
       await expectRevert(
-        validatorTransfers.withdraw(entityId, recipient, {
+        validatorTransfers.withdraw(prevEntityId, recipient, {
           from: sender,
         }),
         'Nothing to withdraw.'
@@ -170,16 +194,22 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator,
-      });
+      await pools.transferValidator(
+        validatorId,
+        validatorReward,
+        poolId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      );
 
       // user withdraws deposit
-      let receipt = await validatorTransfers.withdraw(entityId, recipient, {
+      let receipt = await validatorTransfers.withdraw(prevEntityId, recipient, {
         from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: prevEntityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
@@ -199,11 +229,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user performs rewards withdrawal first time
-      receipt = await validatorTransfers.withdraw(entityId, recipient, {
+      receipt = await validatorTransfers.withdraw(prevEntityId, recipient, {
         from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: prevEntityId,
         sender,
         recipient,
         depositAmount: new BN(0),
@@ -212,7 +242,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // user performs withdrawal second time
       await expectRevert(
-        validatorTransfers.withdraw(entityId, recipient, {
+        validatorTransfers.withdraw(prevEntityId, recipient, {
           from: sender,
         }),
         'Nothing to withdraw.'
@@ -228,9 +258,15 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator,
-      });
+      await pools.transferValidator(
+        validatorId,
+        validatorReward,
+        poolId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      );
 
       // assign wallet
       const { logs } = await walletsRegistry.assignWallet(validatorId, {
@@ -245,11 +281,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // user performs deposit + rewards withdrawal first time
-      let receipt = await validatorTransfers.withdraw(entityId, recipient, {
+      let receipt = await validatorTransfers.withdraw(prevEntityId, recipient, {
         from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: prevEntityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
@@ -258,7 +294,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // user performs withdrawal second time
       await expectRevert(
-        validatorTransfers.withdraw(entityId, recipient, {
+        validatorTransfers.withdraw(prevEntityId, recipient, {
           from: sender,
         }),
         'Nothing to withdraw.'
@@ -274,16 +310,22 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // transfer validator to the new entity
-      await pools.transferValidator(validatorId, validatorReward, poolId, {
-        from: operator,
-      });
+      await pools.transferValidator(
+        validatorId,
+        validatorReward,
+        poolId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      );
 
       // user withdraws deposit
-      let receipt = await validatorTransfers.withdraw(entityId, recipient, {
+      let receipt = await validatorTransfers.withdraw(prevEntityId, recipient, {
         from: sender,
       });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId,
+        entityId: prevEntityId,
         sender,
         recipient,
         depositAmount: validatorDepositAmount,
@@ -292,7 +334,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
 
       // debt was not resolved yet
       await expectRevert(
-        validatorTransfers.withdraw(entityId, recipient, {
+        validatorTransfers.withdraw(prevEntityId, recipient, {
           from: sender,
         }),
         'Nothing to withdraw.'

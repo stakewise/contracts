@@ -55,7 +55,6 @@ contract ValidatorsRegistry is Initializable {
     * @param pubKey - validator public key.
     * @param withdrawalCredentials - withdrawal credentials used to perform withdrawal for the validator in the beacon chain.
     * @param maintainerFee - fee to pay to the maintainer after the withdrawal.
-    * @param minStakingDuration - minimal staking duration of the validator.
     * @param stakingDuration - staking duration of the validator.
     * @param depositAmount - validator deposit amount.
     */
@@ -64,7 +63,6 @@ contract ValidatorsRegistry is Initializable {
         bytes pubKey,
         bytes withdrawalCredentials,
         uint256 maintainerFee,
-        uint256 minStakingDuration,
         uint256 stakingDuration,
         uint256 depositAmount
     );
@@ -115,7 +113,6 @@ contract ValidatorsRegistry is Initializable {
             _pubKey,
             _withdrawalCredentials,
             validator.maintainerFee,
-            settings.minStakingDuration(),
             settings.stakingDurations(msg.sender),
             validator.depositAmount
         );
