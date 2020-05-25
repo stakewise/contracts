@@ -64,8 +64,8 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid recipient address.'
     );
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-    await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
+    await checkCollectorBalance(pools);
   });
 
   it('fails to add a deposit with zero amount', async () => {
@@ -76,8 +76,8 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-    await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
+    await checkCollectorBalance(pools);
   });
 
   it('fails to add a deposit with unit less than minimal', async () => {
@@ -88,8 +88,8 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-    await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
+    await checkCollectorBalance(pools);
   });
 
   it('adds a deposit smaller than validator deposit amount', async () => {
@@ -210,7 +210,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
 
     // check contract balance
     await checkPendingPool(pools, poolId, true);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
@@ -242,7 +242,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
     }
     if (userBalance.eq(validatorDepositAmount)) {
       await checkPendingPool(pools, poolId, true);
-      await checkNewPoolCollectedAmount(pools, new BN(0));
+      await checkNewPoolCollectedAmount(pools);
     } else {
       await checkPendingPool(pools, poolId, false);
       await checkNewPoolCollectedAmount(pools, userBalance);
@@ -284,7 +284,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         // check pending pools registry
         if (balance1.eq(validatorDepositAmount)) {
           await checkPendingPool(pools, poolId1, true);
-          await checkNewPoolCollectedAmount(pools, new BN(0));
+          await checkNewPoolCollectedAmount(pools);
         } else {
           await checkPendingPool(pools, poolId1, false);
           await checkNewPoolCollectedAmount(pools, balance1);
@@ -307,7 +307,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         await checkPendingPool(pools, poolId1, true);
         if (balance2.eq(validatorDepositAmount)) {
           await checkPendingPool(pools, poolId2, true);
-          await checkNewPoolCollectedAmount(pools, new BN(0));
+          await checkNewPoolCollectedAmount(pools);
         } else {
           await checkPendingPool(pools, poolId2, false);
           await checkNewPoolCollectedAmount(pools, balance2);
@@ -344,7 +344,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
         await checkPendingPool(pools, poolId1, true);
         if (balance2.eq(validatorDepositAmount)) {
           await checkPendingPool(pools, poolId2, true);
-          await checkNewPoolCollectedAmount(pools, new BN(0));
+          await checkNewPoolCollectedAmount(pools);
         } else {
           await checkPendingPool(pools, poolId2, false);
           await checkNewPoolCollectedAmount(pools, balance2);
@@ -369,7 +369,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       }),
       'Depositing is currently disabled.'
     );
-    await checkCollectorBalance(pools, new BN(0));
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkCollectorBalance(pools);
+    await checkNewPoolCollectedAmount(pools);
   });
 });

@@ -330,7 +330,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
 
     // check balance updated
     await checkPendingPool(pools, newPoolId, false);
-    await checkCollectorBalance(pools, new BN(0));
+    await checkCollectorBalance(pools);
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -383,7 +383,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
 
     // check balance updated
     await checkPendingPool(pools, newPoolId, false);
-    await checkCollectorBalance(pools, new BN(0));
+    await checkCollectorBalance(pools);
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -485,7 +485,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
 
       // check balance updated
       await checkPendingPool(pools, newPoolId, false);
-      await checkCollectorBalance(pools, new BN(0));
+      await checkCollectorBalance(pools);
 
       // increment balance and debts
       expectedBalance.iadd(validatorDepositAmount);

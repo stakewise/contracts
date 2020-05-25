@@ -257,7 +257,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       recipientAddress: recipient1,
     });
     await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('fails to cancel a deposit with too small unit', async () => {
@@ -333,7 +333,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     // Check recipient balance changed
     expect(await recipientBalance.delta()).to.be.bignumber.equal(amount2);
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('cancels deposit in partial amount', async () => {

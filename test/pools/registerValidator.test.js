@@ -107,7 +107,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       'Invalid pool ID.'
     );
     await checkPendingPool(pools, poolId, true);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
@@ -119,7 +119,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       'Permission denied.'
     );
     await checkPendingPool(pools, poolId, true);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
@@ -129,7 +129,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       from: operator,
     });
     await checkPendingPool(pools, poolId, false);
-    await checkCollectorBalance(pools, new BN(0));
+    await checkCollectorBalance(pools);
 
     // create new pool
     await pools.addDeposit(recipient1, {
@@ -146,7 +146,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       'Public key has been already used.'
     );
     await checkPendingPool(pools, poolId, true);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
@@ -178,8 +178,8 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       from: operator,
     });
     await checkPendingPool(pools, poolId, false);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-    await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
+    await checkCollectorBalance(pools);
 
     // Register validator second time
     await expectRevert(
@@ -189,8 +189,8 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       'Invalid pool ID.'
     );
     await checkPendingPool(pools, poolId, false);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
-    await checkCollectorBalance(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
+    await checkCollectorBalance(pools);
   });
 
   it('registers validators for pools with validator deposit amount collected', async () => {
@@ -212,7 +212,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
 
     // check balance increased correctly
     await checkCollectorBalance(pools, totalAmount);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
 
     // register validators
     for (let i = 0; i < validatorRegistrationArgs.length; i++) {
@@ -239,7 +239,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
         signature: validatorRegistrationArgs[i].signature,
       });
     }
-    await checkCollectorBalance(pools, new BN(0));
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkCollectorBalance(pools);
+    await checkNewPoolCollectedAmount(pools);
   });
 });

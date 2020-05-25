@@ -65,7 +65,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       'Invalid recipient address.'
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('fails to add a deposit smaller than validator deposit amount', async () => {
@@ -77,7 +77,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       'Invalid deposit amount.'
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('fails to add a deposit bigger than validator deposit amount', async () => {
@@ -89,7 +89,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       'Invalid deposit amount.'
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('adds a deposit equal to validator deposit amount', async () => {
@@ -220,7 +220,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       }),
       'Depositing is currently disabled.'
     );
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
     await checkIndividualManager(individuals, individualId);
   });
 });

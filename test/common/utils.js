@@ -88,13 +88,19 @@ async function checkValidatorDepositData(
   expect(depositData.submitted).equal(submitted);
 }
 
-async function checkCollectorBalance(collectorContract, correctBalance) {
+async function checkCollectorBalance(
+  collectorContract,
+  correctBalance = new BN(0)
+) {
   expect(
     await balance.current(collectorContract.address)
   ).to.be.bignumber.equal(correctBalance);
 }
 
-async function checkNewPoolCollectedAmount(poolsContract, correctAmount) {
+async function checkNewPoolCollectedAmount(
+  poolsContract,
+  correctAmount = new BN(0)
+) {
   let collectedAmount = await poolsContract.collectedAmount();
   expect(collectedAmount).to.be.bignumber.equal(correctAmount);
 }

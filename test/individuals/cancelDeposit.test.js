@@ -132,7 +132,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       recipientAddress: recipient1,
     });
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('fails to cancel deposit amount twice', async () => {
@@ -146,7 +146,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       'The user does not have a deposit.'
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('cancels deposit in full amount', async () => {
@@ -170,6 +170,6 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
       validatorDepositAmount
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 });
