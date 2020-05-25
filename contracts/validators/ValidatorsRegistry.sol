@@ -1,9 +1,10 @@
 pragma solidity 0.5.17;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../collectors/Individuals.sol";
 import "../collectors/Pools.sol";
 import "../collectors/Groups.sol";
+import "../collectors/Individuals.sol";
+import "../collectors/PrivateIndividuals.sol";
 import "../Settings.sol";
 
 
@@ -34,6 +35,9 @@ contract ValidatorsRegistry is Initializable {
     // address of the Individuals contract.
     Individuals private individuals;
 
+    // address of the PrivateIndividuals contract.
+    PrivateIndividuals private privateIndividuals;
+
     // address of the Groups contract.
     Groups private groups;
 
@@ -43,7 +47,10 @@ contract ValidatorsRegistry is Initializable {
     // checks whether the caller is the Collector contract.
     modifier onlyCollectors() {
         require(
-            msg.sender == address(pools) || msg.sender == address(individuals) || msg.sender == address(groups),
+            msg.sender == address(pools) ||
+            msg.sender == address(groups) ||
+            msg.sender == address(individuals) ||
+            msg.sender == address(privateIndividuals),
             "Permission denied."
         );
         _;
@@ -71,12 +78,22 @@ contract ValidatorsRegistry is Initializable {
     * Constructor for initializing the ValidatorsRegistry contract.
     * @param _pools - address of the Pools contract.
     * @param _individuals - address of the Individuals contract.
+    * @param _privateIndividuals - address of the PrivateIndividuals contract.
     * @param _groups - address of the Groups contract.
     * @param _settings - address of the Settings contract.
     */
-    function initialize(Pools _pools, Individuals _individuals, Groups _groups, Settings _settings) public initializer {
+    function initialize(
+        Pools _pools,
+        Individuals _individuals,
+        PrivateIndividuals _privateIndividuals,
+        Groups _groups,
+        Settings _settings
+    )
+        public initializer
+    {
         pools = _pools;
         individuals = _individuals;
+        privateIndividuals = _privateIndividuals;
         groups = _groups;
         settings = _settings;
     }

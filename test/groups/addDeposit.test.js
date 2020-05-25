@@ -69,7 +69,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'Invalid recipient address.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('fails to add a deposit with invalid group ID', async () => {
@@ -81,7 +81,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'The sender is not a member or a manager of the group.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('fails to add a deposit without any amount', async () => {
@@ -93,7 +93,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'Invalid deposit amount.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('fails to add a deposit with unit less than minimal', async () => {
@@ -105,7 +105,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'Invalid deposit amount.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('fails to add a deposit to paused group', async () => {
@@ -122,7 +122,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'Depositing is currently disabled.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('unregistered group member cannot add deposit', async () => {
@@ -134,7 +134,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'The sender is not a member or a manager of the group.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('cannot deposit to group which has already collected validator deposit amount', async () => {
@@ -168,7 +168,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       'The deposit amount is bigger than the amount required to collect.'
     );
     await checkPendingGroup({ groups, groupId, manager });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('group member can deposit amount smaller than validator deposit amount', async () => {

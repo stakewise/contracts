@@ -121,7 +121,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       from: operator,
     });
     await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
 
     // create new group
     await groups.createGroup(groupMembers, {
@@ -175,7 +175,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       from: operator,
     });
     await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
 
     // Register validator second time
     await expectRevert(
@@ -185,7 +185,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       'Invalid validator deposit amount.'
     );
     await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 
   it('registers validators for groups with validator deposit amount collected', async () => {
@@ -242,6 +242,6 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
         signature: validatorRegistrationArgs[i].signature,
       });
     }
-    await checkCollectorBalance(groups, new BN(0));
+    await checkCollectorBalance(groups);
   });
 });

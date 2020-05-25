@@ -297,7 +297,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     // Check Pools balance
     await checkPendingPool(pools, poolId, true);
     await checkPendingPool(pools, getEntityId(pools.address, new BN(2)), false);
-    await checkNewPoolCollectedAmount(pools, new BN(0));
+    await checkNewPoolCollectedAmount(pools);
     await checkCollectorBalance(
       pools,
       poolsBalance.add(validatorDepositAmount).sub(cancelAmount)

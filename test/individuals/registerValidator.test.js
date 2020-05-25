@@ -115,7 +115,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       }
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
     // Register validator 2 with the same validator public key
     await individuals.addDeposit(recipient, {
       from: sender,
@@ -150,7 +150,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       }
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
 
     // Register validator second time
     await expectRevert(
@@ -166,7 +166,7 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       'Invalid individual ID.'
     );
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 
   it('registers validators for individuals with validator deposit amount collected', async () => {
@@ -214,6 +214,6 @@ contract('Individuals (register validator)', ([_, ...accounts]) => {
       });
     }
     await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals, new BN(0));
+    await checkCollectorBalance(individuals);
   });
 });
