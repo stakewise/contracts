@@ -14,10 +14,7 @@ contract Settings is Initializable {
     address payable public maintainer;
 
     // The percentage fee users pay from their reward for using the service.
-    uint16 public maintainerFee;
-
-    // The minimal staking duration of the Validator.
-    uint48 public minStakingDuration;
+    uint64 public maintainerFee;
 
     // The minimal unit (wei, gwei, etc.) deposit can have.
     uint64 public userDepositMinUnit;
@@ -50,7 +47,6 @@ contract Settings is Initializable {
     * Constructor for initializing the Settings contract.
     * @param _maintainer - An address of the maintainer, where the fee is paid.
     * @param _maintainerFee - A percentage fee for using the service.
-    * @param _minStakingDuration - The minimal staking duration of the Validator.
     * @param _userDepositMinUnit - The minimal unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - The deposit amount required to become an Ethereum validator.
     * @param _withdrawalCredentials - The withdrawal credentials.
@@ -60,7 +56,6 @@ contract Settings is Initializable {
     function initialize(
         address payable _maintainer,
         uint16 _maintainerFee,
-        uint48 _minStakingDuration,
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
         bytes memory _withdrawalCredentials,
@@ -71,7 +66,6 @@ contract Settings is Initializable {
     {
         maintainer = _maintainer;
         maintainerFee = _maintainerFee;
-        minStakingDuration = _minStakingDuration;
         userDepositMinUnit = _userDepositMinUnit;
         validatorDepositAmount = _validatorDepositAmount;
         withdrawalCredentials = _withdrawalCredentials;
@@ -127,23 +121,12 @@ contract Settings is Initializable {
     * Function for changing the maintainer's fee.
     * @param newValue - the new maintainer's fee. Must be less than 10000 (100.00%).
     */
-    function setMaintainerFee(uint16 newValue) external {
+    function setMaintainerFee(uint64 newValue) external {
         require(admins.isAdmin(msg.sender), "Permission denied.");
         require(newValue < 10000, "Invalid value.");
 
         maintainerFee = newValue;
         emit SettingChanged("maintainerFee");
-    }
-
-    /**
-    * Function for changing validator minimal staking duration.
-    * @param newValue - new minimal duration.
-    */
-    function setMinStakingDuration(uint48 newValue) external {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-
-        minStakingDuration = newValue;
-        emit SettingChanged("minStakingDuration");
     }
 
     /**

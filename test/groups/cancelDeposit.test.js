@@ -44,7 +44,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
   let [
     admin,
     operator,
-    groupCreator,
+    manager,
     sender1,
     recipient1,
     sender2,
@@ -80,7 +80,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
 
     // create new group
     await groups.createGroup(groupMembers, {
-      from: groupCreator,
+      from: manager,
     });
 
     groupId = getEntityId(groups.address, new BN(1));
@@ -116,7 +116,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -135,7 +140,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -154,7 +164,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -171,7 +186,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender2,
       recipientAddress: recipient2,
     });
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -182,7 +202,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       }),
       'The user does not have specified deposit cancel amount.'
     );
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -197,7 +222,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       'The user does not have specified deposit cancel amount.'
     );
     let expectedBalance = groupBalance.sub(amount1);
-    await checkPendingGroup(groups, groupId, expectedBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: expectedBalance,
+    });
     await checkCollectorBalance(groups, expectedBalance);
   });
 
@@ -226,7 +256,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -246,7 +276,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkPendingGroup(groups, groupId, groupBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: groupBalance,
+    });
     await checkCollectorBalance(groups, groupBalance);
   });
 
@@ -271,7 +306,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(amount1);
 
     let expectedBalance = groupBalance.sub(amount1);
-    await checkPendingGroup(groups, groupId, expectedBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: expectedBalance,
+    });
     await checkCollectorBalance(groups, expectedBalance);
 
     // sender2 cancels deposit
@@ -292,7 +332,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
 
     // Check recipient balance changed
     expect(await recipientBalance.delta()).to.be.bignumber.equal(amount2);
-    await checkPendingGroup(groups, groupId, new BN(0));
+    await checkPendingGroup({ groups, groupId, manager });
     await checkCollectorBalance(groups, new BN(0));
   });
 
@@ -318,7 +358,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(cancelAmount);
 
     let expectedBalance = groupBalance.sub(cancelAmount);
-    await checkPendingGroup(groups, groupId, expectedBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: expectedBalance,
+    });
     await checkCollectorBalance(groups, expectedBalance);
 
     // sender2 cancels deposit
@@ -342,7 +387,12 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(cancelAmount);
 
     expectedBalance = expectedBalance.sub(cancelAmount);
-    await checkPendingGroup(groups, groupId, expectedBalance);
+    await checkPendingGroup({
+      groups,
+      groupId,
+      manager,
+      collectedAmount: expectedBalance,
+    });
     await checkCollectorBalance(groups, expectedBalance);
   });
 });

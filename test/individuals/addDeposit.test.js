@@ -16,7 +16,7 @@ const {
   checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance,
-  checkPendingIndividual,
+  checkIndividualManager,
   getEntityId,
 } = require('../common/utils');
 
@@ -64,7 +64,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid recipient address.'
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -76,7 +76,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -88,7 +88,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
     await checkCollectorBalance(individuals, new BN(0));
   });
 
@@ -111,9 +111,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount,
     });
-
-    // Check contract balance
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
     await checkCollectorBalance(individuals, validatorDepositAmount);
   });
 
@@ -136,7 +134,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
 
     // User 2 creates a deposit
     ({ tx } = await individuals.addDeposit(recipient2, {
@@ -154,7 +152,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender2);
 
     // Check contract balance
     await checkCollectorBalance(
@@ -182,7 +180,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
 
     // User 1 creates a second deposit
     individualId = getEntityId(individuals.address, new BN(2));
@@ -200,7 +198,7 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       addedAmount: validatorDepositAmount,
       totalAmount: validatorDepositAmount,
     });
-    await checkPendingIndividual(individuals, individualId, true);
+    await checkIndividualManager(individuals, individualId, sender1);
 
     // Check contract balance
     await checkCollectorBalance(
@@ -223,6 +221,6 @@ contract('Individuals (add deposit)', ([_, ...accounts]) => {
       'Depositing is currently disabled.'
     );
     await checkCollectorBalance(individuals, new BN(0));
-    await checkPendingIndividual(individuals, individualId, false);
+    await checkIndividualManager(individuals, individualId);
   });
 });

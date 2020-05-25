@@ -5,6 +5,7 @@ const {
   constants,
   ether,
   balance,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -14,12 +15,15 @@ const {
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const {
+  validatorRegistrationArgs,
+} = require('../common/validatorRegistrationArgs');
+const {
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingGroup,
   checkValidatorTransferred,
   getEntityId,
-  registerValidator,
+  signValidatorTransfer,
 } = require('../common/utils');
 
 const Groups = artifacts.require('Groups');
@@ -29,6 +33,7 @@ const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const stakingDuration = new BN('31536000');
 const validatorReward = ether('0.034871228');
 
@@ -41,8 +46,9 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     settings,
     validatorId,
     newGroupId,
-    prevEntityId;
-  let [admin, operator, other, sender, recipient] = accounts;
+    prevEntityId,
+    prevEntityManagerSignature;
+  let [admin, operator, other, manager, recipient] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -78,21 +84,36 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     });
 
     // register validator to transfer
-    validatorId = await registerValidator({
-      poolsProxy: proxies.pools,
-      operator,
-      sender: other,
-      recipient: other,
+    await groups.createGroup([other], {
+      from: manager,
     });
-    prevEntityId = getEntityId(proxies.pools, new BN(1));
+    prevEntityId = getEntityId(proxies.groups, new BN(1));
+    prevEntityManagerSignature = await signValidatorTransfer(
+      manager,
+      prevEntityId
+    );
+    await groups.addDeposit(prevEntityId, recipient, {
+      from: other,
+      value: validatorDepositAmount,
+    });
+    await groups.registerValidator(
+      pubKey,
+      signature,
+      hashTreeRoot,
+      prevEntityId,
+      {
+        from: operator,
+      }
+    );
+    validatorId = web3.utils.soliditySha3(pubKey);
 
     // register new group
     await groups.createGroup([other], {
-      from: sender,
+      from: manager,
     });
-    newGroupId = getEntityId(groups.address, new BN(1));
+    newGroupId = getEntityId(groups.address, new BN(2));
     await groups.addDeposit(newGroupId, recipient, {
-      from: sender,
+      from: other,
       value: validatorDepositAmount,
     });
   });
@@ -103,13 +124,19 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         constants.ZERO_BYTES32,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ),
       'Invalid validator deposit amount.'
     );
-    await checkPendingGroup(groups, newGroupId, validatorDepositAmount);
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: validatorDepositAmount,
+    });
     await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
@@ -119,24 +146,91 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
         constants.ZERO_BYTES32,
         validatorReward,
         newGroupId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ),
-      'Validator with such ID is not registered.'
+      'Invalid entity ID.'
     );
-    await checkPendingGroup(groups, newGroupId, validatorDepositAmount);
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: validatorDepositAmount,
+    });
     await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
   it('fails to transfer validator with caller other than operator', async () => {
     await expectRevert(
-      groups.transferValidator(validatorId, validatorReward, newGroupId, {
-        from: other,
-      }),
+      groups.transferValidator(
+        validatorId,
+        validatorReward,
+        newGroupId,
+        prevEntityManagerSignature,
+        {
+          from: other,
+        }
+      ),
       'Permission denied.'
     );
-    await checkPendingGroup(groups, newGroupId, validatorDepositAmount);
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(groups, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator if staking time has not passed', async () => {
+    await expectRevert(
+      groups.transferValidator(
+        validatorId,
+        validatorReward,
+        newGroupId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      ),
+      'Validator transfer is not allowed.'
+    );
+
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(groups, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator with invalid previous entity manager signature', async () => {
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
+    // transfer validator to the new group
+    await expectRevert(
+      groups.transferValidator(
+        validatorId,
+        validatorReward,
+        newGroupId,
+        await signValidatorTransfer(operator, prevEntityId),
+        {
+          from: operator,
+        }
+      ),
+      'Validator transfer is not allowed.'
+    );
+
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: validatorDepositAmount,
+    });
     await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
@@ -149,24 +243,37 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
 
     // register new group
     await groups.createGroup([other], {
-      from: sender,
+      from: manager,
     });
-    newGroupId = getEntityId(groups.address, new BN(2));
+    newGroupId = getEntityId(groups.address, new BN(3));
     await groups.addDeposit(newGroupId, recipient, {
-      from: sender,
+      from: manager,
       value: newValidatorDepositAmount,
     });
 
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new group
     await expectRevert(
-      groups.transferValidator(validatorId, validatorReward, newGroupId, {
-        from: operator,
-      }),
+      groups.transferValidator(
+        validatorId,
+        validatorReward,
+        newGroupId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      ),
       'Validator deposit amount cannot be updated.'
     );
 
-    // check balance didn't change
-    await checkPendingGroup(groups, newGroupId, newValidatorDepositAmount);
+    await checkPendingGroup({
+      groups,
+      groupId: newGroupId,
+      manager,
+      collectedAmount: newValidatorDepositAmount,
+    });
     await checkCollectorBalance(
       groups,
       newValidatorDepositAmount.add(validatorDepositAmount)
@@ -174,18 +281,22 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
   });
 
   it('can transfer validator to the new group', async () => {
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new group
     let { tx } = await groups.transferValidator(
       validatorId,
       validatorReward,
       newGroupId,
+      prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
-    // check balance updated
-    await checkPendingGroup(groups, newGroupId, new BN(0));
+    // check pending group removed
+    await checkPendingGroup({ groups, groupId: newGroupId });
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -221,18 +332,23 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await settings.setMaintainerFee(newMaintainerFee, {
       from: admin,
     });
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
     // transfer validator to the new group
     let { tx } = await groups.transferValidator(
       validatorId,
       validatorReward,
       newGroupId,
+      prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
-    // check balance updated
-    await checkPendingGroup(groups, newGroupId, new BN(0));
+    // check pending group removed
+    await checkPendingGroup({ groups, groupId: newGroupId });
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -310,7 +426,7 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     let expectedBalance = new BN(0);
     let totalUserDebt = new BN(0);
     let totalMaintainerDebt = new BN(0);
-    let groupsCount = new BN(1);
+    let groupsCount = new BN(2);
 
     for (const test of tests) {
       // update maintainer fee
@@ -318,18 +434,22 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
         from: admin,
       });
 
+      // wait until staking duration has passed
+      await time.increase(time.duration.seconds(stakingDuration));
+
       // transfer validator to the new group
       ({ tx } = await groups.transferValidator(
         validatorId,
         test.validatorReward,
         newGroupId,
+        prevEntityManagerSignature,
         {
           from: operator,
         }
       ));
 
-      // check balance updated
-      await checkPendingGroup(groups, newGroupId, new BN(0));
+      // check pending group removed
+      await checkPendingGroup({ groups, groupId: newGroupId });
 
       // increment balance and debts
       expectedBalance.iadd(validatorDepositAmount);
@@ -358,15 +478,20 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
       expect(
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(expectedBalance);
+
       prevEntityId = newGroupId;
+      prevEntityManagerSignature = await signValidatorTransfer(
+        manager,
+        prevEntityId
+      );
 
       // add deposit for the next group
       await groups.createGroup([other], {
-        from: sender,
+        from: manager,
       });
       newGroupId = getEntityId(groups.address, groupsCount);
       await groups.addDeposit(newGroupId, recipient, {
-        from: sender,
+        from: manager,
         value: validatorDepositAmount,
       });
     }

@@ -5,6 +5,8 @@ const {
   balance,
   ether,
   expectEvent,
+  time,
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -114,11 +116,15 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
         value: validatorDepositAmount,
       });
 
+      // wait until staking duration has passed
+      await time.increase(time.duration.seconds(stakingDuration));
+
       // transfer validator
       await pools.transferValidator(
         validatorIds[i],
         validatorReturn.sub(validatorDepositAmount),
         newEntityId,
+        constants.ZERO_BYTES32,
         {
           from: operator,
         }

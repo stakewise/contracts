@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { expectEvent } = require('@openzeppelin/test-helpers');
+const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../../deployments/settings');
@@ -47,18 +47,24 @@ async function checkPendingPool(poolsContract, poolId, expectedPending) {
   }
 }
 
-async function checkPendingGroup(groupsContract, groupId, expectedAmount) {
-  let collectedAmount = await groupsContract.pendingGroups(groupId);
-  expect(collectedAmount).to.bignumber.equal(expectedAmount);
+async function checkPendingGroup({
+  groups,
+  groupId,
+  collectedAmount = new BN(0),
+  manager = constants.ZERO_ADDRESS,
+}) {
+  let pendingGroup = await groups.pendingGroups(groupId);
+  expect(pendingGroup.collectedAmount).to.bignumber.equal(collectedAmount);
+  expect(pendingGroup.manager).to.equal(manager);
 }
 
-async function checkPendingIndividual(
+async function checkIndividualManager(
   individualsContract,
   individualId,
-  expectedPending
+  expectedAddress = constants.ZERO_ADDRESS
 ) {
-  let isPending = await individualsContract.pendingIndividuals(individualId);
-  expect(isPending).to.equal(expectedPending);
+  let actualAddress = await individualsContract.managers(individualId);
+  expect(actualAddress).to.equal(expectedAddress);
 }
 
 async function checkCollectorBalance(collectorContract, correctBalance) {
@@ -163,7 +169,6 @@ async function checkValidatorRegistered({
   validatorsRegistry,
   stakingDuration,
   maintainerFee = new BN(initialSettings.maintainerFee),
-  minStakingDuration = new BN(initialSettings.minStakingDuration),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
 }) {
@@ -192,7 +197,6 @@ async function checkValidatorRegistered({
       stakingDuration,
       depositAmount: validatorDepositAmount,
       maintainerFee,
-      minStakingDuration,
     }
   );
 
@@ -218,7 +222,6 @@ async function checkValidatorTransferred({
   totalMaintainerDebt,
   newStakingDuration,
   newMaintainerFee = new BN(initialSettings.maintainerFee),
-  newMinStakingDuration = new BN(initialSettings.minStakingDuration),
 }) {
   // Check ValidatorsRegistry log emitted
   await expectEvent.inTransaction(
@@ -232,7 +235,6 @@ async function checkValidatorTransferred({
       userDebt,
       maintainerDebt,
       newMaintainerFee,
-      newMinStakingDuration,
       newStakingDuration,
     }
   );
@@ -295,19 +297,42 @@ async function registerValidator({
   return web3.utils.soliditySha3(args.pubKey);
 }
 
+function fixSignature(signature) {
+  // in geth its always 27/28, in ganache its 0/1. Change to 27/28 to prevent
+  // signature malleability if version is 0/1
+  // see https://github.com/ethereum/go-ethereum/blob/v1.8.23/internal/ethapi/api.go#L465
+  let v = parseInt(signature.slice(130, 132), 16);
+  if (v < 27) {
+    v += 27;
+  }
+  const vHex = v.toString(16);
+  return signature.slice(0, 130) + vHex;
+}
+
+// signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
+async function signMessage(signer, messageHex = '0x') {
+  return fixSignature(await web3.eth.sign(messageHex, signer));
+}
+
+async function signValidatorTransfer(signer, entityId) {
+  let messageHash = web3.utils.soliditySha3('validator transfer', entityId);
+  return fixSignature(await web3.eth.sign(messageHash, signer));
+}
+
 module.exports = {
   validatorRegistrationArgs,
   registerValidator,
   checkPendingPool,
   checkPendingGroup,
-  checkPendingIndividual,
+  checkIndividualManager,
   checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,
   checkValidatorTransferred,
   removeNetworkFile,
   getDepositAmount,
-  getUserId,
+  signMessage,
+  signValidatorTransfer,
   getEntityId,
   checkUserTotalAmount,
   checkDepositAdded,

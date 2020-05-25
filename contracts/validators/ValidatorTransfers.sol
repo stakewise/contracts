@@ -2,6 +2,7 @@ pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/cryptography/ECDSA.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../access/Admins.sol";
 import "../access/Operators.sol";
@@ -25,6 +26,7 @@ import "../withdrawals/Withdrawals.sol";
 contract ValidatorTransfers is Initializable {
     using Address for address payable;
     using SafeMath for uint256;
+    using ECDSA for bytes32;
 
     /**
     * Structure to store information about validator debt to the entities it was transferred from.
@@ -48,17 +50,37 @@ contract ValidatorTransfers is Initializable {
         uint256 amount;
     }
 
+    /**
+    * Structure to store information about user withdrawals.
+    * @param rewardWithdrawn - tracks whether user has withdrawn its reward.
+    * @param depositWithdrawn - tracks whether user has withdrawn its deposit.
+    */
+    struct UserWithdrawal {
+        bool rewardWithdrawn;
+        bool depositWithdrawn;
+    }
+
+    /**
+    * Structure to store information about transfer allowance.
+    * @param time - minimal time when the transfer can be initiated.
+    * @param manager - address of the user who can request the transfer.
+    */
+    struct TransferAllowance {
+        uint256 time;
+        address manager;
+    }
+
     // maps validator ID to its debt information.
     mapping(bytes32 => ValidatorDebt) public validatorDebts;
 
     // maps entity ID to the rewards it owns in the validator.
     mapping(bytes32 => EntityReward) public entityRewards;
 
-    // tracks whether user has withdrawn its deposit.
-    mapping(bytes32 => bool) public withdrawnDeposits;
+    // maps user ID to its withdrawal information.
+    mapping(bytes32 => UserWithdrawal) public userWithdrawals;
 
-    // tracks whether user has withdrawn its reward.
-    mapping(bytes32 => bool) public withdrawnRewards;
+    // maps entity ID to its transfer allowance information.
+    mapping(bytes32 => TransferAllowance) private transferAllowances;
 
     // address of the Admins contract.
     Admins private admins;
@@ -107,7 +129,6 @@ contract ValidatorTransfers is Initializable {
     * @param userDebt - validator debt to the users of previous entity.
     * @param maintainerDebt - validator debt to the maintainer of the previous entity.
     * @param newMaintainerFee - new fee to pay to the maintainer after new entity transfer or withdrawal.
-    * @param newMinStakingDuration - new minimal staking duration of the validator.
     * @param newStakingDuration - new staking duration of the validator.
     */
     event ValidatorTransferred(
@@ -117,7 +138,6 @@ contract ValidatorTransfers is Initializable {
         uint256 userDebt,
         uint256 maintainerDebt,
         uint256 newMaintainerFee,
-        uint256 newMinStakingDuration,
         uint256 newStakingDuration
     );
 
@@ -218,7 +238,6 @@ contract ValidatorTransfers is Initializable {
             _userDebt,
             _maintainerDebt,
             newMaintainerFee,
-            settings.minStakingDuration(),
             settings.stakingDurations(msg.sender)
         );
     }
@@ -236,6 +255,44 @@ contract ValidatorTransfers is Initializable {
     }
 
     /**
+    * Function for setting transfer allowance. Can only be called by collector contracts.
+    * @param _entityId - ID of the entity, the deposit belongs to.
+    * @param _manager - address of the manager who will request validator transfer.
+    */
+    function setAllowance(bytes32 _entityId, address _manager) external onlyCollectors {
+        require(_entityId != "", "Invalid entity ID.");
+        TransferAllowance storage transferAllowance = transferAllowances[_entityId];
+        require(transferAllowance.time == 0, "Transfer allowance has already been set.");
+
+        // solhint-disable-next-line not-rely-on-time
+        transferAllowance.time = now + settings.stakingDurations(msg.sender);
+        transferAllowance.manager = _manager;
+    }
+
+    /**
+    * Function for checking transfer allowance.
+    * @param _entityId - ID of the entity, the deposit belongs to.
+    * @param _signature - ECDSA signature of the previous entity manager if such exists.
+    */
+    function checkAllowance(bytes32 _entityId, bytes calldata _signature) external view returns (bool) {
+        // check entity transfer allowance
+        TransferAllowance storage transferAllowance = transferAllowances[_entityId];
+        require(transferAllowance.time != 0, "Invalid entity ID.");
+
+        // solhint-disable-next-line not-rely-on-time
+        if (transferAllowance.time > now) {
+            return false;
+        }
+
+        if (transferAllowance.manager != address(0)) {
+            bytes32 hash = keccak256(abi.encodePacked("validator transfer", _entityId));
+            return transferAllowance.manager == hash.toEthSignedMessageHash().recover(_signature);
+        }
+
+        return true;
+    }
+
+    /**
     * Function for withdrawing deposits and rewards to the recipient address.
     * User reward is calculated based on the deposit amount.
     * @param _entityId - ID of the entity, the deposit belongs to.
@@ -250,18 +307,20 @@ contract ValidatorTransfers is Initializable {
         uint256 userDeposit = deposits.amounts(userId);
         require(userDeposit > 0, "User does not have a share in this entity.");
 
+        UserWithdrawal storage userWithdrawal = userWithdrawals[userId];
+
         uint256 depositWithdrawal;
-        if (!withdrawnDeposits[userId]) {
+        if (!userWithdrawal.depositWithdrawn) {
             depositWithdrawal = userDeposit;
-            withdrawnDeposits[userId] = true;
+            userWithdrawal.depositWithdrawn = true;
         }
 
         uint256 rewardWithdrawal;
         ValidatorDebt memory validatorDebt = validatorDebts[entityReward.validatorId];
-        if (validatorDebt.resolved && !withdrawnRewards[userId]) {
+        if (validatorDebt.resolved && !userWithdrawal.rewardWithdrawn) {
             (uint256 validatorDepositAmount, ,) = validatorsRegistry.validators(entityReward.validatorId);
             rewardWithdrawal = (entityReward.amount).mul(userDeposit).div(validatorDepositAmount);
-            withdrawnRewards[userId] = true;
+            userWithdrawal.rewardWithdrawn = true;
         }
 
         uint256 withdrawalAmount = depositWithdrawal.add(rewardWithdrawal);
