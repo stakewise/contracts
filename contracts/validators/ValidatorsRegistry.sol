@@ -66,7 +66,7 @@ contract ValidatorsRegistry is Initializable {
     * @param depositAmount - validator deposit amount.
     */
     event ValidatorRegistered(
-        bytes32 entityId,
+        bytes32 indexed entityId,
         bytes pubKey,
         bytes withdrawalCredentials,
         uint256 maintainerFee,

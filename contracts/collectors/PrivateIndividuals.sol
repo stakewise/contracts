@@ -63,11 +63,13 @@ contract PrivateIndividuals is Initializable {
     /**
     * Event for tracking added withdrawal public key by the user.
     * @param entityId - ID of the individual the deposit data was approved for.
+    * @param manager - address of the private individual manager.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the user.
     * @param withdrawalCredentials - withdrawal credentials based on user BLS public key.
     */
     event WithdrawalKeyAdded(
-        bytes32 entityId,
+        bytes32 indexed entityId,
+        address manager,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -130,7 +132,7 @@ contract PrivateIndividuals is Initializable {
         // set BLS withdrawal prefix
         withdrawalCredentials[0] = 0x00;
         depositData.withdrawalCredentials = withdrawalCredentials;
-        emit WithdrawalKeyAdded(individualId, _publicKey, withdrawalCredentials);
+        emit WithdrawalKeyAdded(individualId, msg.sender, _publicKey, withdrawalCredentials);
     }
 
     /**
