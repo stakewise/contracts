@@ -154,6 +154,7 @@ contract('Private Individuals (add deposit)', ([_, ...accounts]) => {
     // check validator deposit withdrawal key added
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: individualId,
+      manager: sender1,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -191,6 +192,7 @@ contract('Private Individuals (add deposit)', ([_, ...accounts]) => {
     // check validator deposit withdrawal key added
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: individualId,
+      manager: sender1,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -222,6 +224,7 @@ contract('Private Individuals (add deposit)', ([_, ...accounts]) => {
     // check validator deposit withdrawal key added
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: individualId,
+      manager: sender2,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -262,6 +265,7 @@ contract('Private Individuals (add deposit)', ([_, ...accounts]) => {
     // check validator deposit withdrawal key added
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: individualId,
+      manager: sender1,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -292,6 +296,7 @@ contract('Private Individuals (add deposit)', ([_, ...accounts]) => {
     // check validator deposit withdrawal key added
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: individualId,
+      manager: sender1,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
