@@ -1,11 +1,11 @@
 {
   "contracts": {
-    "Withdrawals": {
-      "address": "0xdABC462CcFCFE5a41616140fcC43d32DC85e901C",
-      "constructorCode": "608060405234801561001057600080fd5b5061150c806100206000396000f3fe",
-      "bodyBytecodeHash": "d7d02dcbc4aa005c0dd10ca46939d44eb5a61eee859d5fb5f1d4c77e3414fb12",
-      "localBytecodeHash": "8ce6880f00a95234e22aec7e6798ffe0525bcbffad95744701d85eed683c3805",
-      "deployedBytecodeHash": "8ce6880f00a95234e22aec7e6798ffe0525bcbffad95744701d85eed683c3805",
+    "WalletsRegistry": {
+      "address": "0xF200451d98E2019451bfe250C19bfec26a06bFf9",
+      "constructorCode": "608060405234801561001057600080fd5b50610b49806100206000396000f3fe",
+      "bodyBytecodeHash": "a0b3443b5d435643f2d85dba7257d2695d637913ed873ddc4f3700489384bc65",
+      "localBytecodeHash": "0525f624aad2e97c122a50f479fc00b73d2817cbc3ddae9b807d4748e4eade4f",
+      "deployedBytecodeHash": "0525f624aad2e97c122a50f479fc00b73d2817cbc3ddae9b807d4748e4eade4f",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -29,6 +29,189 @@
           "valueType": "t_bool",
           "label": "mapping(key => bool)",
           "kind": "mapping"
+        },
+        "t_struct<WalletsRegistry.WalletAssignment>": {
+          "id": "t_struct<WalletsRegistry.WalletAssignment>",
+          "kind": "struct",
+          "label": "WalletsRegistry.WalletAssignment",
+          "members": [
+            {
+              "label": "unlocked",
+              "astId": 5011,
+              "type": "t_bool",
+              "src": "804:13:27"
+            },
+            {
+              "label": "validatorId",
+              "astId": 5013,
+              "type": "t_bytes32",
+              "src": "827:19:27"
+            }
+          ]
+        },
+        "t_bytes32": {
+          "id": "t_bytes32",
+          "kind": "elementary",
+          "label": "bytes32"
+        },
+        "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>": {
+          "id": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
+          "valueType": "t_struct<WalletsRegistry.WalletAssignment>",
+          "label": "mapping(key => WalletsRegistry.WalletAssignment)",
+          "kind": "mapping"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_bytes": {
+          "id": "t_bytes",
+          "kind": "elementary",
+          "label": "bytes"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "assignedValidators",
+          "astId": 5018,
+          "type": "t_mapping<t_bool>",
+          "src": "946:50:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "wallets",
+          "astId": 5022,
+          "type": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
+          "src": "1071:51:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "managers",
+          "astId": 5024,
+          "type": "t_address",
+          "src": "1170:25:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "validatorsRegistry",
+          "astId": 5026,
+          "type": "t_address",
+          "src": "1253:45:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "withdrawals",
+          "astId": 5028,
+          "type": "t_address",
+          "src": "1349:31:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "proxyFactory",
+          "astId": 5030,
+          "type": "t_address",
+          "src": "1432:33:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "walletImplementation",
+          "astId": 5032,
+          "type": "t_address",
+          "src": "1519:36:27"
+        },
+        {
+          "contract": "WalletsRegistry",
+          "path": "contracts/withdrawals/WalletsRegistry.sol",
+          "label": "walletInitData",
+          "astId": 5034,
+          "type": "t_bytes",
+          "src": "1616:28:27"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Settings": {
+      "address": "0xD5709A92FBAeddAe1E8B454e65b5A76388a9fbF5",
+      "constructorCode": "608060405234801561001057600080fd5b506116d1806100206000396000f3fe",
+      "bodyBytecodeHash": "68d298b7421bfda3d1708ddb25a6c02087079e85e39f6dd9af8ddc533af3fe37",
+      "localBytecodeHash": "968ae02eb77de3390e28157aad80b57d639b5ed36c7a3618bbebbed601cda438",
+      "deployedBytecodeHash": "968ae02eb77de3390e28157aad80b57d639b5ed36c7a3618bbebbed601cda438",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address_payable": {
+          "id": "t_address_payable",
+          "kind": "elementary",
+          "label": "address payable"
+        },
+        "t_uint64": {
+          "id": "t_uint64",
+          "kind": "elementary",
+          "label": "uint64"
+        },
+        "t_uint128": {
+          "id": "t_uint128",
+          "kind": "elementary",
+          "label": "uint128"
+        },
+        "t_bytes": {
+          "id": "t_bytes",
+          "kind": "elementary",
+          "label": "bytes"
         },
         "t_mapping<t_uint256>": {
           "id": "t_mapping<t_uint256>",
@@ -36,6 +219,12 @@
           "label": "mapping(key => uint256)",
           "kind": "mapping"
         },
+        "t_mapping<t_bool>": {
+          "id": "t_mapping<t_bool>",
+          "valueType": "t_bool",
+          "label": "mapping(key => bool)",
+          "kind": "mapping"
+        },
         "t_address": {
           "id": "t_address",
           "kind": "elementary",
@@ -47,282 +236,97 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "withdrawnUsers",
-          "astId": 3696,
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "maintainer",
+          "astId": 1546,
+          "type": "t_address_payable",
+          "src": "387:33:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "maintainerFee",
+          "astId": 1548,
+          "type": "t_uint64",
+          "src": "504:27:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "userDepositMinUnit",
+          "astId": 1550,
+          "type": "t_uint64",
+          "src": "598:32:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "validatorDepositAmount",
+          "astId": 1552,
+          "type": "t_uint128",
+          "src": "705:37:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "withdrawalCredentials",
+          "astId": 1554,
+          "type": "t_bytes",
+          "src": "846:34:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "stakingDurations",
+          "astId": 1558,
+          "type": "t_mapping<t_uint256>",
+          "src": "950:51:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "pausedContracts",
+          "astId": 1562,
           "type": "t_mapping<t_bool>",
-          "src": "845:46:17"
+          "src": "1089:47:15"
         },
         {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "validatorLeftDeposits",
-          "astId": 3700,
-          "type": "t_mapping<t_uint256>",
-          "src": "1027:56:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "validatorPenalties",
-          "astId": 3704,
-          "type": "t_mapping<t_uint256>",
-          "src": "1150:53:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "walletsManagers",
-          "astId": 3706,
-          "type": "t_address",
-          "src": "1258:39:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "deposits",
-          "astId": 3708,
-          "type": "t_address",
-          "src": "1345:25:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "settings",
-          "astId": 3710,
-          "type": "t_address",
-          "src": "1418:25:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "validatorsRegistry",
-          "astId": 3712,
-          "type": "t_address",
-          "src": "1501:45:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "validatorTransfers",
-          "astId": 3714,
-          "type": "t_address",
-          "src": "1605:45:17"
-        },
-        {
-          "contract": "Withdrawals",
-          "path": "contracts/withdrawals/Withdrawals.sol",
-          "label": "walletsRegistry",
-          "astId": 3716,
-          "type": "t_address",
-          "src": "1705:39:17"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "Admins": {
-      "address": "0x837B42305466e31A40690632dd9BA13f746a3E32",
-      "constructorCode": "608060405234801561001057600080fd5b50610686806100206000396000f3fe",
-      "bodyBytecodeHash": "cca9f2a26a6d3807a7e0295459e8b6757624c2bb67a0dad9daba8514f99adb84",
-      "localBytecodeHash": "6f4ad840e5b631d809c4e41d219a406fad4cefe15760847f95fff52330ca6509",
-      "deployedBytecodeHash": "6f4ad840e5b631d809c4e41d219a406fad4cefe15760847f95fff52330ca6509",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_struct<Roles.Role>": {
-          "id": "t_struct<Roles.Role>",
-          "kind": "struct",
-          "label": "Roles.Role",
-          "members": [
-            {
-              "label": "bearer",
-              "astId": 5,
-              "type": "t_mapping<t_bool>",
-              "src": "150:32:0"
-            }
-          ]
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 346,
-          "type": "t_bool",
-          "src": "757:24:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 348,
-          "type": "t_bool",
-          "src": "876:25:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 410,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
-        },
-        {
-          "contract": "Admins",
-          "path": "contracts/access/Admins.sol",
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
           "label": "admins",
-          "astId": 924,
-          "type": "t_struct<Roles.Role>",
-          "src": "468:25:6"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "WalletsManagers": {
-      "address": "0x88731A64D605f8Eb398857f65eB88ee291e6573c",
-      "constructorCode": "608060405234801561001057600080fd5b50610848806100206000396000f3fe",
-      "bodyBytecodeHash": "61c6f8f8d417503c535079a66e0bd84ae16cb61ad1e02c5785c88af3db6488d1",
-      "localBytecodeHash": "38476706f22e0993bfbddbd2f028dfe3d0a17b6a65e7d849feb32ff0e119a0e7",
-      "deployedBytecodeHash": "38476706f22e0993bfbddbd2f028dfe3d0a17b6a65e7d849feb32ff0e119a0e7",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_struct<Roles.Role>": {
-          "id": "t_struct<Roles.Role>",
-          "kind": "struct",
-          "label": "Roles.Role",
-          "members": [
-            {
-              "label": "bearer",
-              "astId": 5,
-              "type": "t_mapping<t_bool>",
-              "src": "150:32:0"
-            }
-          ]
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 346,
-          "type": "t_bool",
-          "src": "757:24:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 348,
-          "type": "t_bool",
-          "src": "876:25:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 410,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
-        },
-        {
-          "contract": "WalletsManagers",
-          "path": "contracts/access/WalletsManagers.sol",
-          "label": "managers",
-          "astId": 1134,
-          "type": "t_struct<Roles.Role>",
-          "src": "522:27:8"
-        },
-        {
-          "contract": "WalletsManagers",
-          "path": "contracts/access/WalletsManagers.sol",
-          "label": "admins",
-          "astId": 1136,
+          "astId": 1564,
           "type": "t_address",
-          "src": "595:21:8"
+          "src": "1182:21:15"
+        },
+        {
+          "contract": "Settings",
+          "path": "contracts/Settings.sol",
+          "label": "operators",
+          "astId": 1566,
+          "type": "t_address",
+          "src": "1252:27:15"
         }
       ],
       "warnings": {
@@ -334,7 +338,7 @@
       }
     },
     "Operators": {
-      "address": "0x8172D899e576b66c4C557a755E384ED67aE0bb3b",
+      "address": "0x0E7eD5D53eeFA568c2e266503c3C42F6D6ab3e4D",
       "constructorCode": "608060405234801561001057600080fd5b5061084a806100206000396000f3fe",
       "bodyBytecodeHash": "4d49c34efcbd537b4650a8b77d858a14d8e5284d1479230c8030b7073d369147",
       "localBytecodeHash": "87195e4cff425503b7eb286ecdca28b12d87412cbd7894fba968a54a4178c45f",
@@ -387,41 +391,41 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
           "contract": "Operators",
           "path": "contracts/access/Operators.sol",
           "label": "operators",
-          "astId": 1028,
+          "astId": 2022,
           "type": "t_struct<Roles.Role>",
-          "src": "481:28:7"
+          "src": "481:28:18"
         },
         {
           "contract": "Operators",
           "path": "contracts/access/Operators.sol",
           "label": "admins",
-          "astId": 1030,
+          "astId": 2024,
           "type": "t_address",
-          "src": "555:21:7"
+          "src": "555:21:18"
         }
       ],
       "warnings": {
@@ -433,11 +437,11 @@
       }
     },
     "Deposits": {
-      "address": "0x8D130BA5C5aE3F291c100515F316491263056C81",
-      "constructorCode": "608060405234801561001057600080fd5b5061075a806100206000396000f3fe",
-      "bodyBytecodeHash": "3dee54a973224b7276d4acdc32b93db63057ca4c498f30dddb817e3f652f7e03",
-      "localBytecodeHash": "d55c84b03bf8bbff075ab03863345e7bda4eb8dd74b9c351ec70b173070f3a6e",
-      "deployedBytecodeHash": "d55c84b03bf8bbff075ab03863345e7bda4eb8dd74b9c351ec70b173070f3a6e",
+      "address": "0x9b566d096191b55b681Aac97D759aDfF520bAdFe",
+      "constructorCode": "608060405234801561001057600080fd5b5061095d806100206000396000f3fe",
+      "bodyBytecodeHash": "b46f9c3999a30151de349f5df573d64923b6f676bbe1ace3bd5ce616e4ce4b7b",
+      "localBytecodeHash": "8b0368731818a5df042f9b8db360a57ae24fa4fe21d471f27aece386ed75f26d",
+      "deployedBytecodeHash": "8b0368731818a5df042f9b8db360a57ae24fa4fe21d471f27aece386ed75f26d",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -473,57 +477,223 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
           "contract": "Deposits",
           "path": "contracts/Deposits.sol",
           "label": "amounts",
-          "astId": 424,
+          "astId": 1324,
           "type": "t_mapping<t_uint256>",
-          "src": "483:42:4"
+          "src": "641:42:14"
         },
         {
           "contract": "Deposits",
           "path": "contracts/Deposits.sol",
           "label": "pools",
-          "astId": 426,
+          "astId": 1326,
           "type": "t_address",
-          "src": "570:19:4"
+          "src": "728:19:14"
         },
         {
           "contract": "Deposits",
           "path": "contracts/Deposits.sol",
           "label": "individuals",
-          "astId": 428,
+          "astId": 1328,
           "type": "t_address",
-          "src": "640:31:4"
+          "src": "798:31:14"
+        },
+        {
+          "contract": "Deposits",
+          "path": "contracts/Deposits.sol",
+          "label": "privateIndividuals",
+          "astId": 1330,
+          "type": "t_address",
+          "src": "887:45:14"
         },
         {
           "contract": "Deposits",
           "path": "contracts/Deposits.sol",
           "label": "groups",
-          "astId": 430,
+          "astId": 1332,
           "type": "t_address",
-          "src": "717:21:4"
+          "src": "978:21:14"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Admins": {
+      "address": "0xF6494442415eadd68a6eb8068aFbb3F6A05a9819",
+      "constructorCode": "608060405234801561001057600080fd5b50610686806100206000396000f3fe",
+      "bodyBytecodeHash": "cca9f2a26a6d3807a7e0295459e8b6757624c2bb67a0dad9daba8514f99adb84",
+      "localBytecodeHash": "6f4ad840e5b631d809c4e41d219a406fad4cefe15760847f95fff52330ca6509",
+      "deployedBytecodeHash": "6f4ad840e5b631d809c4e41d219a406fad4cefe15760847f95fff52330ca6509",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_struct<Roles.Role>": {
+          "id": "t_struct<Roles.Role>",
+          "kind": "struct",
+          "label": "Roles.Role",
+          "members": [
+            {
+              "label": "bearer",
+              "astId": 5,
+              "type": "t_mapping<t_bool>",
+              "src": "150:32:0"
+            }
+          ]
+        },
+        "t_mapping<t_bool>": {
+          "id": "t_mapping<t_bool>",
+          "valueType": "t_bool",
+          "label": "mapping(key => bool)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "Admins",
+          "path": "contracts/access/Admins.sol",
+          "label": "admins",
+          "astId": 1812,
+          "type": "t_struct<Roles.Role>",
+          "src": "460:25:16"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Wallet": {
+      "address": "0x3475bEE80b69Ee9a6fB0986d0313658C0F4BdbA2",
+      "constructorCode": "608060405234801561001057600080fd5b506104b9806100206000396000f3fe",
+      "bodyBytecodeHash": "e4470f9306ccbb24812be06dd401997bccd6489d6855cecdc97cfdf8bfa8df44",
+      "localBytecodeHash": "54c20eeb7f57abff3995dd5659a35e006a5a17c255c8a2db82c4fafcda219129",
+      "deployedBytecodeHash": "54c20eeb7f57abff3995dd5659a35e006a5a17c255c8a2db82c4fafcda219129",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "Wallet",
+          "path": "contracts/withdrawals/Wallet.sol",
+          "label": "withdrawals",
+          "astId": 4945,
+          "type": "t_address",
+          "src": "523:31:26"
         }
       ],
       "warnings": {
@@ -535,11 +705,11 @@
       }
     },
     "ValidatorsRegistry": {
-      "address": "0x7976428e3e0bD3c2Fd6DE3965Eae30F999291808",
-      "constructorCode": "608060405234801561001057600080fd5b50610a2a806100206000396000f3fe",
-      "bodyBytecodeHash": "44265d112e285a8bdb518cc3c62d5d0afe54d8a832ba97f345347b94c1f7a957",
-      "localBytecodeHash": "82befa32b1d827d5c927b1fc8ce02c635abaa76ab34aaeabf9556896a6cae4c4",
-      "deployedBytecodeHash": "82befa32b1d827d5c927b1fc8ce02c635abaa76ab34aaeabf9556896a6cae4c4",
+      "address": "0x3219a5628C0F882dc297B44AEd3C4F1b5bfD675F",
+      "constructorCode": "608060405234801561001057600080fd5b506109d4806100206000396000f3fe",
+      "bodyBytecodeHash": "da8326d8a4b0034c0a534acbb498eb7b4bbf26acad34a330ac7e44e0fc0ef9a5",
+      "localBytecodeHash": "74ab2ae8e7d8d8b35f9887b5a1e7d3f67d6c02ee9090cabd7ebf0b2d4c5f8c96",
+      "deployedBytecodeHash": "74ab2ae8e7d8d8b35f9887b5a1e7d3f67d6c02ee9090cabd7ebf0b2d4c5f8c96",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -565,21 +735,21 @@
           "members": [
             {
               "label": "depositAmount",
-              "astId": 3162,
+              "astId": 4723,
               "type": "t_uint256",
-              "src": "732:21:14"
+              "src": "779:21:25"
             },
             {
               "label": "maintainerFee",
-              "astId": 3164,
+              "astId": 4725,
               "type": "t_uint256",
-              "src": "763:21:14"
+              "src": "810:21:25"
             },
             {
               "label": "entityId",
-              "astId": 3166,
+              "astId": 4727,
               "type": "t_bytes32",
-              "src": "794:16:14"
+              "src": "841:16:25"
             }
           ]
         },
@@ -605,65 +775,73 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "validators",
-          "astId": 3171,
+          "astId": 4732,
           "type": "t_mapping<t_struct<ValidatorsRegistry.Validator>>",
-          "src": "903:47:14"
+          "src": "950:47:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "pools",
-          "astId": 3173,
+          "astId": 4734,
           "type": "t_address",
-          "src": "995:19:14"
+          "src": "1042:19:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "individuals",
-          "astId": 3175,
+          "astId": 4736,
           "type": "t_address",
-          "src": "1065:31:14"
+          "src": "1112:31:25"
+        },
+        {
+          "contract": "ValidatorsRegistry",
+          "path": "contracts/validators/ValidatorsRegistry.sol",
+          "label": "privateIndividuals",
+          "astId": 4738,
+          "type": "t_address",
+          "src": "1201:45:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "groups",
-          "astId": 3177,
+          "astId": 4740,
           "type": "t_address",
-          "src": "1142:21:14"
+          "src": "1292:21:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "settings",
-          "astId": 3179,
+          "astId": 4742,
           "type": "t_address",
-          "src": "1211:25:14"
+          "src": "1361:25:25"
         }
       ],
       "warnings": {
@@ -674,12 +852,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "WalletsRegistry": {
-      "address": "0x5c18E9E271B5212104A977ac57495533Ca06Ef39",
-      "constructorCode": "608060405234801561001057600080fd5b50610ff4806100206000396000f3fe",
-      "bodyBytecodeHash": "40ca8687c71b134f644edeb2a714e88d6a7f95c5e5664aef2d1aadff4f8cbf7a",
-      "localBytecodeHash": "ed4a0bd384942defde9539cfa3db95405fa33f8d4c2c7c498ceb0b427cb618d3",
-      "deployedBytecodeHash": "ed4a0bd384942defde9539cfa3db95405fa33f8d4c2c7c498ceb0b427cb618d3",
+    "Managers": {
+      "address": "0xDE18709529BAa4A2BA0b920adAB67ecd5BeE1006",
+      "constructorCode": "608060405234801561001057600080fd5b50610848806100206000396000f3fe",
+      "bodyBytecodeHash": "61c6f8f8d417503c535079a66e0bd84ae16cb61ad1e02c5785c88af3db6488d1",
+      "localBytecodeHash": "38476706f22e0993bfbddbd2f028dfe3d0a17b6a65e7d849feb32ff0e119a0e7",
+      "deployedBytecodeHash": "38476706f22e0993bfbddbd2f028dfe3d0a17b6a65e7d849feb32ff0e119a0e7",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -698,472 +876,16 @@
           "kind": "array",
           "label": "uint256[50]"
         },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_struct<WalletsRegistry.WalletAssignment>": {
-          "id": "t_struct<WalletsRegistry.WalletAssignment>",
+        "t_struct<Roles.Role>": {
+          "id": "t_struct<Roles.Role>",
           "kind": "struct",
-          "label": "WalletsRegistry.WalletAssignment",
+          "label": "Roles.Role",
           "members": [
             {
-              "label": "unlocked",
-              "astId": 3434,
-              "type": "t_bool",
-              "src": "895:13:16"
-            },
-            {
-              "label": "validatorId",
-              "astId": 3436,
-              "type": "t_bytes32",
-              "src": "918:19:16"
-            }
-          ]
-        },
-        "t_bytes32": {
-          "id": "t_bytes32",
-          "kind": "elementary",
-          "label": "bytes32"
-        },
-        "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>": {
-          "id": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
-          "valueType": "t_struct<WalletsRegistry.WalletAssignment>",
-          "label": "mapping(key => WalletsRegistry.WalletAssignment)",
-          "kind": "mapping"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        },
-        "t_array:dyn<t_address>": {
-          "id": "t_array:dyn<t_address>",
-          "valueType": "t_address",
-          "length": "dyn",
-          "kind": "array",
-          "label": "address[]"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 346,
-          "type": "t_bool",
-          "src": "757:24:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 348,
-          "type": "t_bool",
-          "src": "876:25:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 410,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "assignedValidators",
-          "astId": 3441,
-          "type": "t_mapping<t_bool>",
-          "src": "1037:50:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "wallets",
-          "astId": 3445,
-          "type": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
-          "src": "1162:51:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "availableWallets",
-          "astId": 3448,
-          "type": "t_array:dyn<t_address>",
-          "src": "1261:34:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "admins",
-          "astId": 3450,
-          "type": "t_address",
-          "src": "1341:21:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "walletsManagers",
-          "astId": 3452,
-          "type": "t_address",
-          "src": "1417:39:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "validatorsRegistry",
-          "astId": 3454,
-          "type": "t_address",
-          "src": "1514:45:16"
-        },
-        {
-          "contract": "WalletsRegistry",
-          "path": "contracts/withdrawals/WalletsRegistry.sol",
-          "label": "withdrawals",
-          "astId": 3456,
-          "type": "t_address",
-          "src": "1610:31:16"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": [],
-        "storageUncheckedVars": [
-          {
-            "contract": "WalletsRegistry",
-            "path": "contracts/withdrawals/WalletsRegistry.sol",
-            "label": "wallets",
-            "astId": 3445,
-            "type": "t_mapping<t_struct<WalletsRegistry.WalletAssignment>>",
-            "src": "1162:51:16"
-          }
-        ],
-        "storageDiff": []
-      }
-    },
-    "Pools": {
-      "address": "0xc972A46f6E76e8C52C40A621db523bFF8F0FcD5b",
-      "constructorCode": "608060405234801561001057600080fd5b50611f80806100206000396000f3fe",
-      "bodyBytecodeHash": "03a07e3a01358469a6513e51223d9fb0c91fea22f91e7bf7ad02a8e8b7a4101d",
-      "localBytecodeHash": "ce4bb03330dd4f78058824f4a094d93dc41865d2df9d2ba36bba5a8c828b7e0e",
-      "deployedBytecodeHash": "ce4bb03330dd4f78058824f4a094d93dc41865d2df9d2ba36bba5a8c828b7e0e",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 346,
-          "type": "t_bool",
-          "src": "757:24:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 348,
-          "type": "t_bool",
-          "src": "876:25:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 410,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "pendingPools",
-          "astId": 2168,
-          "type": "t_mapping<t_bool>",
-          "src": "885:44:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "collectedAmount",
-          "astId": 2170,
-          "type": "t_uint256",
-          "src": "984:30:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "poolsCount",
-          "astId": 2172,
-          "type": "t_uint256",
-          "src": "1059:25:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "deposits",
-          "astId": 2174,
-          "type": "t_address",
-          "src": "1132:25:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "settings",
-          "astId": 2176,
-          "type": "t_address",
-          "src": "1205:25:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "operators",
-          "astId": 2178,
-          "type": "t_address",
-          "src": "1279:27:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "validatorRegistration",
-          "astId": 2180,
-          "type": "t_address",
-          "src": "1363:52:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "validatorsRegistry",
-          "astId": 2182,
-          "type": "t_address",
-          "src": "1474:45:11"
-        },
-        {
-          "contract": "Pools",
-          "path": "contracts/collectors/Pools.sol",
-          "label": "validatorTransfers",
-          "astId": 2184,
-          "type": "t_address",
-          "src": "1578:45:11"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "Individuals": {
-      "address": "0x3540d57593e6d08b7f5D335c8bC5160AE408d353",
-      "constructorCode": "608060405234801561001057600080fd5b50611a34806100206000396000f3fe",
-      "bodyBytecodeHash": "f87dfb19193cd246690296917628d6b28ac3d37f5f6073d9e65735671fefe4d6",
-      "localBytecodeHash": "7dc5f2b8c25195f2f3d0a4a8cff2a21f33cd93e8e4c6c2c7b7590d8963fe42a9",
-      "deployedBytecodeHash": "7dc5f2b8c25195f2f3d0a4a8cff2a21f33cd93e8e4c6c2c7b7590d8963fe42a9",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_address": {
-          "id": "t_address",
-          "kind": "elementary",
-          "label": "address"
-        }
-      },
-      "storage": [
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initialized",
-          "astId": 346,
-          "type": "t_bool",
-          "src": "757:24:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "initializing",
-          "astId": 348,
-          "type": "t_bool",
-          "src": "876:25:3"
-        },
-        {
-          "contract": "Initializable",
-          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
-          "label": "______gap",
-          "astId": 410,
-          "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "pendingIndividuals",
-          "astId": 1792,
-          "type": "t_mapping<t_bool>",
-          "src": "861:50:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "individualsCount",
-          "astId": 1794,
-          "type": "t_uint256",
-          "src": "962:32:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "deposits",
-          "astId": 1796,
-          "type": "t_address",
-          "src": "1042:25:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "settings",
-          "astId": 1798,
-          "type": "t_address",
-          "src": "1115:25:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "operators",
-          "astId": 1800,
-          "type": "t_address",
-          "src": "1189:27:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "validatorRegistration",
-          "astId": 1802,
-          "type": "t_address",
-          "src": "1273:52:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "validatorsRegistry",
-          "astId": 1804,
-          "type": "t_address",
-          "src": "1384:45:10"
-        },
-        {
-          "contract": "Individuals",
-          "path": "contracts/collectors/Individuals.sol",
-          "label": "validatorTransfers",
-          "astId": 1806,
-          "type": "t_address",
-          "src": "1488:45:10"
-        }
-      ],
-      "warnings": {
-        "hasConstructor": false,
-        "hasSelfDestruct": false,
-        "hasDelegateCall": false,
-        "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
-      }
-    },
-    "Groups": {
-      "address": "0x432aDE35C17ee0e8118ee9c32862ee6F5E6dAd1E",
-      "constructorCode": "608060405234801561001057600080fd5b50612135806100206000396000f3fe",
-      "bodyBytecodeHash": "f40828e9b9555db5907d4c6717fd8528aaa7a0f84225c57706e7f4e1822bff93",
-      "localBytecodeHash": "34001b009d8ead862a63d898d29026c92a1d740f5ada6495116db7331b54ad35",
-      "deployedBytecodeHash": "34001b009d8ead862a63d898d29026c92a1d740f5ada6495116db7331b54ad35",
-      "types": {
-        "t_bool": {
-          "id": "t_bool",
-          "kind": "elementary",
-          "label": "bool"
-        },
-        "t_uint256": {
-          "id": "t_uint256",
-          "kind": "elementary",
-          "label": "uint256"
-        },
-        "t_array:50<t_uint256>": {
-          "id": "t_array:50<t_uint256>",
-          "valueType": "t_uint256",
-          "length": "50",
-          "kind": "array",
-          "label": "uint256[50]"
-        },
-        "t_struct<Groups.PendingGroup>": {
-          "id": "t_struct<Groups.PendingGroup>",
-          "kind": "struct",
-          "label": "Groups.PendingGroup",
-          "members": [
-            {
-              "label": "collectedAmount",
-              "astId": 1249,
-              "type": "t_uint256",
-              "src": "1083:23:9"
-            },
-            {
-              "label": "members",
-              "astId": 1253,
+              "label": "bearer",
+              "astId": 5,
               "type": "t_mapping<t_bool>",
-              "src": "1116:32:9"
+              "src": "150:32:0"
             }
           ]
         },
@@ -1171,12 +893,6 @@
           "id": "t_mapping<t_bool>",
           "valueType": "t_bool",
           "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
-        "t_mapping<t_struct<Groups.PendingGroup>>": {
-          "id": "t_mapping<t_struct<Groups.PendingGroup>>",
-          "valueType": "t_struct<Groups.PendingGroup>",
-          "label": "mapping(key => Groups.PendingGroup)",
           "kind": "mapping"
         },
         "t_address": {
@@ -1190,89 +906,41 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "pendingGroups",
-          "astId": 1258,
-          "type": "t_mapping<t_struct<Groups.PendingGroup>>",
-          "src": "1258:53:9"
+          "contract": "Managers",
+          "path": "contracts/access/Managers.sol",
+          "label": "managers",
+          "astId": 1916,
+          "type": "t_struct<Roles.Role>",
+          "src": "547:27:17"
         },
         {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "groupsCount",
-          "astId": 1260,
-          "type": "t_uint256",
-          "src": "1357:27:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "deposits",
-          "astId": 1262,
+          "contract": "Managers",
+          "path": "contracts/access/Managers.sol",
+          "label": "admins",
+          "astId": 1918,
           "type": "t_address",
-          "src": "1432:25:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "settings",
-          "astId": 1264,
-          "type": "t_address",
-          "src": "1505:25:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "operators",
-          "astId": 1266,
-          "type": "t_address",
-          "src": "1579:27:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "validatorRegistration",
-          "astId": 1268,
-          "type": "t_address",
-          "src": "1663:52:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "validatorsRegistry",
-          "astId": 1270,
-          "type": "t_address",
-          "src": "1774:45:9"
-        },
-        {
-          "contract": "Groups",
-          "path": "contracts/collectors/Groups.sol",
-          "label": "validatorTransfers",
-          "astId": 1272,
-          "type": "t_address",
-          "src": "1878:45:9"
+          "src": "620:21:17"
         }
       ],
       "warnings": {
@@ -1283,12 +951,12 @@
         "uninitializedBaseContracts": []
       }
     },
-    "Settings": {
-      "address": "0x96926f1E41f54E888fB833514f5538559f689e5a",
-      "constructorCode": "608060405234801561001057600080fd5b50611966806100206000396000f3fe",
-      "bodyBytecodeHash": "e2bc52e4456f1ad8bf134ff2541d8b6e85467106671cba24ce1ddf24e3c19839",
-      "localBytecodeHash": "0a23c1b138db977b2eea51dacb2220e932efbf2a3d8813e65db3e6b20093c999",
-      "deployedBytecodeHash": "0a23c1b138db977b2eea51dacb2220e932efbf2a3d8813e65db3e6b20093c999",
+    "Withdrawals": {
+      "address": "0x4ADF0f11b42b06248B9e4C88c28951B805BdF5e4",
+      "constructorCode": "608060405234801561001057600080fd5b5061150c806100206000396000f3fe",
+      "bodyBytecodeHash": "d7d02dcbc4aa005c0dd10ca46939d44eb5a61eee859d5fb5f1d4c77e3414fb12",
+      "localBytecodeHash": "8ce6880f00a95234e22aec7e6798ffe0525bcbffad95744701d85eed683c3805",
+      "deployedBytecodeHash": "8ce6880f00a95234e22aec7e6798ffe0525bcbffad95744701d85eed683c3805",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1307,35 +975,11 @@
           "kind": "array",
           "label": "uint256[50]"
         },
-        "t_address_payable": {
-          "id": "t_address_payable",
-          "kind": "elementary",
-          "label": "address payable"
-        },
-        "t_uint16": {
-          "id": "t_uint16",
-          "kind": "elementary",
-          "label": "uint16"
-        },
-        "t_uint48": {
-          "id": "t_uint48",
-          "kind": "elementary",
-          "label": "uint48"
-        },
-        "t_uint64": {
-          "id": "t_uint64",
-          "kind": "elementary",
-          "label": "uint64"
-        },
-        "t_uint128": {
-          "id": "t_uint128",
-          "kind": "elementary",
-          "label": "uint128"
-        },
-        "t_bytes": {
-          "id": "t_bytes",
-          "kind": "elementary",
-          "label": "bytes"
+        "t_mapping<t_bool>": {
+          "id": "t_mapping<t_bool>",
+          "valueType": "t_bool",
+          "label": "mapping(key => bool)",
+          "kind": "mapping"
         },
         "t_mapping<t_uint256>": {
           "id": "t_mapping<t_uint256>",
@@ -1343,12 +987,6 @@
           "label": "mapping(key => uint256)",
           "kind": "mapping"
         },
-        "t_mapping<t_bool>": {
-          "id": "t_mapping<t_bool>",
-          "valueType": "t_bool",
-          "label": "mapping(key => bool)",
-          "kind": "mapping"
-        },
         "t_address": {
           "id": "t_address",
           "kind": "elementary",
@@ -1360,105 +998,97 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "maintainer",
-          "astId": 627,
-          "type": "t_address_payable",
-          "src": "387:33:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "maintainerFee",
-          "astId": 629,
-          "type": "t_uint16",
-          "src": "504:27:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "minStakingDuration",
-          "astId": 631,
-          "type": "t_uint48",
-          "src": "592:32:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "userDepositMinUnit",
-          "astId": 633,
-          "type": "t_uint64",
-          "src": "691:32:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "validatorDepositAmount",
-          "astId": 635,
-          "type": "t_uint128",
-          "src": "798:37:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "withdrawalCredentials",
-          "astId": 637,
-          "type": "t_bytes",
-          "src": "939:34:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "stakingDurations",
-          "astId": 641,
-          "type": "t_mapping<t_uint256>",
-          "src": "1043:51:5"
-        },
-        {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "pausedContracts",
-          "astId": 645,
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "withdrawnUsers",
+          "astId": 5217,
           "type": "t_mapping<t_bool>",
-          "src": "1182:47:5"
+          "src": "834:46:28"
         },
         {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "admins",
-          "astId": 647,
-          "type": "t_address",
-          "src": "1275:21:5"
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "validatorLeftDeposits",
+          "astId": 5221,
+          "type": "t_mapping<t_uint256>",
+          "src": "1016:56:28"
         },
         {
-          "contract": "Settings",
-          "path": "contracts/Settings.sol",
-          "label": "operators",
-          "astId": 649,
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "validatorPenalties",
+          "astId": 5225,
+          "type": "t_mapping<t_uint256>",
+          "src": "1139:53:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "managers",
+          "astId": 5227,
           "type": "t_address",
-          "src": "1345:27:5"
+          "src": "1240:25:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "deposits",
+          "astId": 5229,
+          "type": "t_address",
+          "src": "1313:25:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "settings",
+          "astId": 5231,
+          "type": "t_address",
+          "src": "1386:25:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "validatorsRegistry",
+          "astId": 5233,
+          "type": "t_address",
+          "src": "1469:45:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "validatorTransfers",
+          "astId": 5235,
+          "type": "t_address",
+          "src": "1573:45:28"
+        },
+        {
+          "contract": "Withdrawals",
+          "path": "contracts/withdrawals/Withdrawals.sol",
+          "label": "walletsRegistry",
+          "astId": 5237,
+          "type": "t_address",
+          "src": "1673:39:28"
         }
       ],
       "warnings": {
@@ -1470,11 +1100,11 @@
       }
     },
     "ValidatorTransfers": {
-      "address": "0xE4b08990B65ad9CFd25755c2eAc4345c37B86F11",
-      "constructorCode": "608060405234801561001057600080fd5b5061134a806100206000396000f3fe",
-      "bodyBytecodeHash": "083129443ccd97ef67ec1923699474150387ef178cb1a568a3d5a7ad6468dc33",
-      "localBytecodeHash": "7baedc5fd2cecb22e91037afc6b80d45f94a0c5db79b9822236ec307696e64ff",
-      "deployedBytecodeHash": "7baedc5fd2cecb22e91037afc6b80d45f94a0c5db79b9822236ec307696e64ff",
+      "address": "0xde9F03BFc9Facf645677ED06B06f7A91ba01da3A",
+      "constructorCode": "608060405234801561001057600080fd5b5061189a806100206000396000f3fe",
+      "bodyBytecodeHash": "7498fe182857d288c6f21f5af5436a946ebe892988987f6bef0a5a3b9c192892",
+      "localBytecodeHash": "b750cfe7349553587a05846be7f1386b9cd5040cf7d9d738c121d5ffe79f4bf8",
+      "deployedBytecodeHash": "b750cfe7349553587a05846be7f1386b9cd5040cf7d9d738c121d5ffe79f4bf8",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1500,21 +1130,21 @@
           "members": [
             {
               "label": "userDebt",
-              "astId": 2708,
+              "astId": 4148,
               "type": "t_uint256",
-              "src": "1532:16:13"
+              "src": "1645:16:24"
             },
             {
               "label": "maintainerDebt",
-              "astId": 2710,
+              "astId": 4150,
               "type": "t_uint256",
-              "src": "1558:22:13"
+              "src": "1671:22:24"
             },
             {
               "label": "resolved",
-              "astId": 2712,
+              "astId": 4152,
               "type": "t_bool",
-              "src": "1590:13:13"
+              "src": "1703:13:24"
             }
           ]
         },
@@ -1531,15 +1161,15 @@
           "members": [
             {
               "label": "validatorId",
-              "astId": 2715,
+              "astId": 4155,
               "type": "t_bytes32",
-              "src": "1836:19:13"
+              "src": "1949:19:24"
             },
             {
               "label": "amount",
-              "astId": 2717,
+              "astId": 4157,
               "type": "t_uint256",
-              "src": "1865:14:13"
+              "src": "1978:14:24"
             }
           ]
         },
@@ -1553,6 +1183,232 @@
           "valueType": "t_struct<ValidatorTransfers.EntityReward>",
           "label": "mapping(key => ValidatorTransfers.EntityReward)",
           "kind": "mapping"
+        },
+        "t_struct<ValidatorTransfers.UserWithdrawal>": {
+          "id": "t_struct<ValidatorTransfers.UserWithdrawal>",
+          "kind": "struct",
+          "label": "ValidatorTransfers.UserWithdrawal",
+          "members": [
+            {
+              "label": "rewardWithdrawn",
+              "astId": 4160,
+              "type": "t_bool",
+              "src": "2269:20:24"
+            },
+            {
+              "label": "depositWithdrawn",
+              "astId": 4162,
+              "type": "t_bool",
+              "src": "2299:21:24"
+            }
+          ]
+        },
+        "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>": {
+          "id": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
+          "valueType": "t_struct<ValidatorTransfers.UserWithdrawal>",
+          "label": "mapping(key => ValidatorTransfers.UserWithdrawal)",
+          "kind": "mapping"
+        },
+        "t_struct<ValidatorTransfers.TransferAllowance>": {
+          "id": "t_struct<ValidatorTransfers.TransferAllowance>",
+          "kind": "struct",
+          "label": "ValidatorTransfers.TransferAllowance",
+          "members": [
+            {
+              "label": "time",
+              "astId": 4165,
+              "type": "t_uint256",
+              "src": "2588:12:24"
+            },
+            {
+              "label": "manager",
+              "astId": 4167,
+              "type": "t_address",
+              "src": "2610:15:24"
+            }
+          ]
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>": {
+          "id": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
+          "valueType": "t_struct<ValidatorTransfers.TransferAllowance>",
+          "label": "mapping(key => ValidatorTransfers.TransferAllowance)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "validatorDebts",
+          "astId": 4172,
+          "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
+          "src": "2688:55:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "entityRewards",
+          "astId": 4176,
+          "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
+          "src": "2813:53:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "userWithdrawals",
+          "astId": 4180,
+          "type": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
+          "src": "2924:57:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "transferAllowances",
+          "astId": 4184,
+          "type": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
+          "src": "3049:64:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "admins",
+          "astId": 4186,
+          "type": "t_address",
+          "src": "3159:21:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "operators",
+          "astId": 4188,
+          "type": "t_address",
+          "src": "3229:27:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "deposits",
+          "astId": 4190,
+          "type": "t_address",
+          "src": "3304:25:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "pools",
+          "astId": 4192,
+          "type": "t_address",
+          "src": "3374:19:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "individuals",
+          "astId": 4194,
+          "type": "t_address",
+          "src": "3444:31:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "groups",
+          "astId": 4196,
+          "type": "t_address",
+          "src": "3521:21:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "settings",
+          "astId": 4198,
+          "type": "t_address",
+          "src": "3590:25:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "validatorsRegistry",
+          "astId": 4200,
+          "type": "t_address",
+          "src": "3673:45:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "walletsRegistry",
+          "astId": 4202,
+          "type": "t_address",
+          "src": "3773:39:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "withdrawals",
+          "astId": 4204,
+          "type": "t_address",
+          "src": "3863:31:24"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Pools": {
+      "address": "0xb32982cd36f466146DDd545F106eAbB08f0B164C",
+      "constructorCode": "608060405234801561001057600080fd5b506121c8806100206000396000f3fe",
+      "bodyBytecodeHash": "002d545389b5c280b9c1ce41f38b03ebfe3614d4495c09b26558ad31f68ff762",
+      "localBytecodeHash": "1fc06bf7a4b1bbca86733213a43beedfa60c202287446d65e99e51124cfe87e6",
+      "deployedBytecodeHash": "1fc06bf7a4b1bbca86733213a43beedfa60c202287446d65e99e51124cfe87e6",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
         },
         "t_mapping<t_bool>": {
           "id": "t_mapping<t_bool>",
@@ -1571,137 +1427,575 @@
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initialized",
-          "astId": 346,
+          "astId": 427,
           "type": "t_bool",
-          "src": "757:24:3"
+          "src": "757:24:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "initializing",
-          "astId": 348,
+          "astId": 429,
           "type": "t_bool",
-          "src": "876:25:3"
+          "src": "876:25:4"
         },
         {
           "contract": "Initializable",
           "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
           "label": "______gap",
-          "astId": 410,
+          "astId": 491,
           "type": "t_array:50<t_uint256>",
-          "src": "1982:29:3"
+          "src": "1982:29:4"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "validatorDebts",
-          "astId": 2722,
-          "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
-          "src": "1942:55:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "entityRewards",
-          "astId": 2726,
-          "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
-          "src": "2067:53:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "withdrawnDeposits",
-          "astId": 2730,
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "pendingPools",
+          "astId": 3132,
           "type": "t_mapping<t_bool>",
-          "src": "2181:49:13"
+          "src": "885:44:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "withdrawnRewards",
-          "astId": 2734,
-          "type": "t_mapping<t_bool>",
-          "src": "2290:48:13"
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "collectedAmount",
+          "astId": 3134,
+          "type": "t_uint256",
+          "src": "984:30:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "admins",
-          "astId": 2736,
-          "type": "t_address",
-          "src": "2384:21:13"
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "poolsCount",
+          "astId": 3136,
+          "type": "t_uint256",
+          "src": "1059:25:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "operators",
-          "astId": 2738,
-          "type": "t_address",
-          "src": "2454:27:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
           "label": "deposits",
-          "astId": 2740,
+          "astId": 3138,
           "type": "t_address",
-          "src": "2529:25:13"
+          "src": "1132:25:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "pools",
-          "astId": 2742,
-          "type": "t_address",
-          "src": "2599:19:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "individuals",
-          "astId": 2744,
-          "type": "t_address",
-          "src": "2669:31:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "groups",
-          "astId": 2746,
-          "type": "t_address",
-          "src": "2746:21:13"
-        },
-        {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
           "label": "settings",
-          "astId": 2748,
+          "astId": 3140,
           "type": "t_address",
-          "src": "2815:25:13"
+          "src": "1205:25:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "operators",
+          "astId": 3142,
+          "type": "t_address",
+          "src": "1279:27:21"
+        },
+        {
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "validatorRegistration",
+          "astId": 3144,
+          "type": "t_address",
+          "src": "1363:52:21"
+        },
+        {
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
           "label": "validatorsRegistry",
-          "astId": 2750,
+          "astId": 3146,
           "type": "t_address",
-          "src": "2898:45:13"
+          "src": "1474:45:21"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "walletsRegistry",
-          "astId": 2752,
+          "contract": "Pools",
+          "path": "contracts/collectors/Pools.sol",
+          "label": "validatorTransfers",
+          "astId": 3148,
           "type": "t_address",
-          "src": "2998:39:13"
+          "src": "1578:45:21"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Individuals": {
+      "address": "0x630a28C1Fcec27Caf51d2770DDCB6420AaCDe937",
+      "constructorCode": "608060405234801561001057600080fd5b50611d35806100206000396000f3fe",
+      "bodyBytecodeHash": "956749400e22122751350d5dbc193ccd4a60cb03cd82e592a6952c43bdec4c10",
+      "localBytecodeHash": "87fd5b44e931edbb49fc13399147a5e00034dc9ad9008b83fae59074962311c1",
+      "deployedBytecodeHash": "87fd5b44e931edbb49fc13399147a5e00034dc9ad9008b83fae59074962311c1",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_mapping<t_address>": {
+          "id": "t_mapping<t_address>",
+          "valueType": "t_address",
+          "label": "mapping(key => address)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
         },
         {
-          "contract": "ValidatorTransfers",
-          "path": "contracts/validators/ValidatorTransfers.sol",
-          "label": "withdrawals",
-          "astId": 2754,
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "managers",
+          "astId": 2717,
+          "type": "t_mapping<t_address>",
+          "src": "830:43:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "individualsCount",
+          "astId": 2719,
+          "type": "t_uint256",
+          "src": "924:32:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "deposits",
+          "astId": 2721,
           "type": "t_address",
-          "src": "3088:31:13"
+          "src": "1004:25:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "settings",
+          "astId": 2723,
+          "type": "t_address",
+          "src": "1077:25:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "operators",
+          "astId": 2725,
+          "type": "t_address",
+          "src": "1151:27:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "validatorRegistration",
+          "astId": 2727,
+          "type": "t_address",
+          "src": "1235:52:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "validatorsRegistry",
+          "astId": 2729,
+          "type": "t_address",
+          "src": "1346:45:20"
+        },
+        {
+          "contract": "Individuals",
+          "path": "contracts/collectors/Individuals.sol",
+          "label": "validatorTransfers",
+          "astId": 2731,
+          "type": "t_address",
+          "src": "1450:45:20"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "PrivateIndividuals": {
+      "address": "0x5B484ca3F053D57059C70A7A5dc956C226cCb397",
+      "constructorCode": "608060405234801561001057600080fd5b506120d7806100206000396000f3fe",
+      "bodyBytecodeHash": "43c240e4a91169cfc6db5a182f47bed6b9cffb6dd82ca883fadf472950edae18",
+      "localBytecodeHash": "73546781e751b09fefcf886570d011b3a1206cb2e5b1fc9de0e224e5be118692",
+      "deployedBytecodeHash": "73546781e751b09fefcf886570d011b3a1206cb2e5b1fc9de0e224e5be118692",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_struct<PrivateIndividuals.ValidatorDeposit>": {
+          "id": "t_struct<PrivateIndividuals.ValidatorDeposit>",
+          "kind": "struct",
+          "label": "PrivateIndividuals.ValidatorDeposit",
+          "members": [
+            {
+              "label": "publicKey",
+              "astId": 3668,
+              "type": "t_bytes",
+              "src": "1582:15:22"
+            },
+            {
+              "label": "withdrawalCredentials",
+              "astId": 3670,
+              "type": "t_bytes",
+              "src": "1607:27:22"
+            },
+            {
+              "label": "signature",
+              "astId": 3672,
+              "type": "t_bytes",
+              "src": "1644:15:22"
+            },
+            {
+              "label": "amount",
+              "astId": 3674,
+              "type": "t_uint256",
+              "src": "1669:14:22"
+            },
+            {
+              "label": "depositDataRoot",
+              "astId": 3676,
+              "type": "t_bytes32",
+              "src": "1693:23:22"
+            },
+            {
+              "label": "submitted",
+              "astId": 3678,
+              "type": "t_bool",
+              "src": "1726:14:22"
+            }
+          ]
+        },
+        "t_bytes": {
+          "id": "t_bytes",
+          "kind": "elementary",
+          "label": "bytes"
+        },
+        "t_bytes32": {
+          "id": "t_bytes32",
+          "kind": "elementary",
+          "label": "bytes32"
+        },
+        "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>": {
+          "id": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
+          "valueType": "t_struct<PrivateIndividuals.ValidatorDeposit>",
+          "label": "mapping(key => PrivateIndividuals.ValidatorDeposit)",
+          "kind": "mapping"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "validatorDeposits",
+          "astId": 3683,
+          "type": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
+          "src": "1823:61:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "individualsCount",
+          "astId": 3685,
+          "type": "t_uint256",
+          "src": "1943:32:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "deposits",
+          "astId": 3687,
+          "type": "t_address",
+          "src": "2023:25:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "settings",
+          "astId": 3689,
+          "type": "t_address",
+          "src": "2096:25:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "operators",
+          "astId": 3691,
+          "type": "t_address",
+          "src": "2170:27:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "validatorRegistration",
+          "astId": 3693,
+          "type": "t_address",
+          "src": "2254:52:22"
+        },
+        {
+          "contract": "PrivateIndividuals",
+          "path": "contracts/collectors/PrivateIndividuals.sol",
+          "label": "validatorsRegistry",
+          "astId": 3695,
+          "type": "t_address",
+          "src": "2365:45:22"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    },
+    "Groups": {
+      "address": "0x0B0C7BC55EfccEAeB98a6DC605c6CE819165672f",
+      "constructorCode": "608060405234801561001057600080fd5b506125b1806100206000396000f3fe",
+      "bodyBytecodeHash": "bd0836aecb09407c33946063a33fd98d1800fc56dd48094f0cc161b580374d0d",
+      "localBytecodeHash": "f908bd6ed4650ca59362eef1d1e90d9f336b8f071b795c683319725022192e3c",
+      "deployedBytecodeHash": "f908bd6ed4650ca59362eef1d1e90d9f336b8f071b795c683319725022192e3c",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_struct<Groups.PendingGroup>": {
+          "id": "t_struct<Groups.PendingGroup>",
+          "kind": "struct",
+          "label": "Groups.PendingGroup",
+          "members": [
+            {
+              "label": "collectedAmount",
+              "astId": 2137,
+              "type": "t_uint256",
+              "src": "1136:23:19"
+            },
+            {
+              "label": "manager",
+              "astId": 2139,
+              "type": "t_address",
+              "src": "1169:15:19"
+            },
+            {
+              "label": "members",
+              "astId": 2143,
+              "type": "t_mapping<t_bool>",
+              "src": "1194:32:19"
+            }
+          ]
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_mapping<t_bool>": {
+          "id": "t_mapping<t_bool>",
+          "valueType": "t_bool",
+          "label": "mapping(key => bool)",
+          "kind": "mapping"
+        },
+        "t_mapping<t_struct<Groups.PendingGroup>>": {
+          "id": "t_mapping<t_struct<Groups.PendingGroup>>",
+          "valueType": "t_struct<Groups.PendingGroup>",
+          "label": "mapping(key => Groups.PendingGroup)",
+          "kind": "mapping"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 427,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 429,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 491,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "pendingGroups",
+          "astId": 2148,
+          "type": "t_mapping<t_struct<Groups.PendingGroup>>",
+          "src": "1336:53:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "groupsCount",
+          "astId": 2150,
+          "type": "t_uint256",
+          "src": "1435:27:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "deposits",
+          "astId": 2152,
+          "type": "t_address",
+          "src": "1510:25:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "settings",
+          "astId": 2154,
+          "type": "t_address",
+          "src": "1583:25:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "operators",
+          "astId": 2156,
+          "type": "t_address",
+          "src": "1657:27:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "validatorRegistration",
+          "astId": 2158,
+          "type": "t_address",
+          "src": "1741:52:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "validatorsRegistry",
+          "astId": 2160,
+          "type": "t_address",
+          "src": "1852:45:19"
+        },
+        {
+          "contract": "Groups",
+          "path": "contracts/collectors/Groups.sol",
+          "label": "validatorTransfers",
+          "astId": 2162,
+          "type": "t_address",
+          "src": "1956:45:19"
         }
       ],
       "warnings": {
@@ -1717,109 +2011,118 @@
   "proxies": {
     "stakewise/Admins": [
       {
-        "address": "0xb04520D15A5f6287FfC92bc38967D7d10D2CcCD5",
+        "address": "0x45C3d36204067983d73CB49C25578f80217D0D53",
         "version": "0.1.0",
-        "implementation": "0x837B42305466e31A40690632dd9BA13f746a3E32",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xF6494442415eadd68a6eb8068aFbb3F6A05a9819",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Operators": [
       {
-        "address": "0x8068Cec0f70CAa5D91B548981EB46C37400656dB",
+        "address": "0xbAA77b10912825697f4831c3bf4841e80139B5Be",
         "version": "0.1.0",
-        "implementation": "0x8172D899e576b66c4C557a755E384ED67aE0bb3b",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x0E7eD5D53eeFA568c2e266503c3C42F6D6ab3e4D",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
-    "stakewise/WalletsManagers": [
+    "stakewise/Managers": [
       {
-        "address": "0x92B12D4000C7c3bA64fDa9D8CdABBa9e6089D80C",
+        "address": "0x4569377244aD22e1388a5e8ff2F31CFCF8869B03",
         "version": "0.1.0",
-        "implementation": "0x88731A64D605f8Eb398857f65eB88ee291e6573c",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xDE18709529BAa4A2BA0b920adAB67ecd5BeE1006",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Settings": [
       {
-        "address": "0x1c6AEFFf732C91A9dB6101927123057684f6D237",
+        "address": "0x8e2A632E84dB43BD3AE823a13aeB636b1210ee58",
         "version": "0.1.0",
-        "implementation": "0x96926f1E41f54E888fB833514f5538559f689e5a",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xD5709A92FBAeddAe1E8B454e65b5A76388a9fbF5",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Deposits": [
       {
-        "address": "0x660247EBe362e2Cc14Cff8783A80FAD8aa8f2cfD",
+        "address": "0x4Ae50B2438eE04831b7d6E96F8E92cABC90a7CA4",
         "version": "0.1.0",
-        "implementation": "0x8D130BA5C5aE3F291c100515F316491263056C81",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x9b566d096191b55b681Aac97D759aDfF520bAdFe",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/ValidatorsRegistry": [
       {
-        "address": "0x4Ec98E9a42E90FB094f8C122f667f2161C1d93a3",
+        "address": "0x625Fc3EB1Ee9EBcdf8d0751ccf2271Ecc8b99a6C",
         "version": "0.1.0",
-        "implementation": "0x7976428e3e0bD3c2Fd6DE3965Eae30F999291808",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x3219a5628C0F882dc297B44AEd3C4F1b5bfD675F",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Pools": [
       {
-        "address": "0x543Dd92451F8F8D5CF9Fc4841AAe8DBbd8F02464",
+        "address": "0x805Ab1820ee01C6c5Ff7545b68835138EA52D1eE",
         "version": "0.1.0",
-        "implementation": "0xc972A46f6E76e8C52C40A621db523bFF8F0FcD5b",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xb32982cd36f466146DDd545F106eAbB08f0B164C",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Individuals": [
       {
-        "address": "0xc5De9aD04F6A149bd3ff3047b34335f38fc9b35B",
+        "address": "0xf4CA6aE48B00D97F3Fb811c59ae00Cb8B89B8840",
         "version": "0.1.0",
-        "implementation": "0x3540d57593e6d08b7f5D335c8bC5160AE408d353",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x630a28C1Fcec27Caf51d2770DDCB6420AaCDe937",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
+        "kind": "Upgradeable"
+      }
+    ],
+    "stakewise/PrivateIndividuals": [
+      {
+        "address": "0xE3D950adb8590d047d1877B0ca52Ce5143f19B58",
+        "version": "0.1.0",
+        "implementation": "0x5B484ca3F053D57059C70A7A5dc956C226cCb397",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Groups": [
       {
-        "address": "0xD5b8e3AE925eb4Dcf9836221AaB9095E19FD59Eb",
+        "address": "0x55De392FF4bc36F0CA37e14f6f40f60cD719f568",
         "version": "0.1.0",
-        "implementation": "0x432aDE35C17ee0e8118ee9c32862ee6F5E6dAd1E",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x0B0C7BC55EfccEAeB98a6DC605c6CE819165672f",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/WalletsRegistry": [
       {
-        "address": "0x8e3D0Fc30CD109350f50304c04dbB3b99f1b7B38",
+        "address": "0x03E3f09e5c23A5e43421dD5A4C0229A05334533b",
         "version": "0.1.0",
-        "implementation": "0x4708fdb787d08eee810dDe3eC520965418Ab14B1",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xF200451d98E2019451bfe250C19bfec26a06bFf9",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/Withdrawals": [
       {
-        "address": "0xb03d21FDd454A7874E3B7bfb7F444072Dd9564f8",
+        "address": "0xF58590a8A2594F30F409B6d3A2776d5D8eC29A78",
         "version": "0.1.0",
-        "implementation": "0xdABC462CcFCFE5a41616140fcC43d32DC85e901C",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0x4ADF0f11b42b06248B9e4C88c28951B805BdF5e4",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ],
     "stakewise/ValidatorTransfers": [
       {
-        "address": "0xBc8dd194e268e8d5C1e070fEdFEDFbe90b0bbb79",
+        "address": "0x7FDe3A71Ab21824EAb712ca90E277A48AC7Ab4a6",
         "version": "0.1.0",
-        "implementation": "0xE4b08990B65ad9CFd25755c2eAc4345c37B86F11",
-        "admin": "0x3cD021b3De9e0FfC8245046B94c911822C320411",
+        "implementation": "0xde9F03BFc9Facf645677ED06B06f7A91ba01da3A",
+        "admin": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782",
         "kind": "Upgradeable"
       }
     ]
@@ -1827,9 +2130,9 @@
   "manifestVersion": "2.2",
   "version": "0.1.0",
   "proxyAdmin": {
-    "address": "0x3cD021b3De9e0FfC8245046B94c911822C320411"
+    "address": "0xF99E322CAAdF7Cf797EfB6f85433fba43B3f0782"
   },
   "proxyFactory": {
-    "address": "0xB38680CAa0A5250AFf329F8A36f63E3A945E930c"
+    "address": "0x70b2f71103B568fBA62Bf8413e3D30FFB30D4b24"
   }
 }
