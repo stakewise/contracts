@@ -4,7 +4,6 @@ const {
   ProjectFile,
   NetworkFile,
 } = require('@openzeppelin/cli/lib/models/files').default;
-const { log } = require('./common');
 
 async function deployWalletsRegistryProxy({
   managersProxy,
@@ -32,7 +31,6 @@ async function deployWalletsRegistryProxy({
     ...networkConfig,
   });
 
-  log(`Wallets Registry contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -61,7 +59,6 @@ async function deployWithdrawalsProxy({
     ...networkConfig,
   });
 
-  log(`Withdrawals contract: ${proxy.address}`);
   return proxy.address;
 }
 

@@ -29,7 +29,7 @@ contract ValidatorsRegistry is Initializable {
     // maps validator ID (hash of the public key) to the validator information.
     mapping(bytes32 => Validator) public validators;
 
-    // address of the Pools contract.
+    // address of the Pools contract. TODO: rename to periodicPools
     Pools private pools;
 
     // address of the Individuals contract.
@@ -44,10 +44,15 @@ contract ValidatorsRegistry is Initializable {
     // address of the Settings contract.
     Settings private settings;
 
+    // TODO: move up on Goerli contracts redeployment
+    // address of the phase 2 Pools contract.
+    Pools private phase2Pools;
+
     // checks whether the caller is the Collector contract.
     modifier onlyCollectors() {
         require(
             msg.sender == address(pools) ||
+            msg.sender == address(phase2Pools) ||
             msg.sender == address(groups) ||
             msg.sender == address(individuals) ||
             msg.sender == address(privateIndividuals),
@@ -76,7 +81,7 @@ contract ValidatorsRegistry is Initializable {
 
     /**
     * Constructor for initializing the ValidatorsRegistry contract.
-    * @param _pools - address of the Pools contract.
+    * @param _pools - address of the Pools contract. TODO: rename to periodicPools
     * @param _individuals - address of the Individuals contract.
     * @param _privateIndividuals - address of the PrivateIndividuals contract.
     * @param _groups - address of the Groups contract.
@@ -96,6 +101,16 @@ contract ValidatorsRegistry is Initializable {
         privateIndividuals = _privateIndividuals;
         groups = _groups;
         settings = _settings;
+    }
+
+    /**
+    * TODO: merge with constructor on Goerli contracts redeployment
+    * Function for adding phase 2 Pools contract.
+    * @param _phase2Pools - address of the phase 2 Pools contract.
+    */
+    function initialize2(Pools _phase2Pools) public {
+        require(address(phase2Pools) == address(0));
+        phase2Pools = _phase2Pools;
     }
 
     /**

@@ -1,10 +1,12 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
+
+const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
 
 async function deployValidatorsRegistryProxy({
   networkConfig,
   settingsProxy,
-  poolsProxy,
+  phase2PoolsProxy,
+  periodicPoolsProxy,
   individualsProxy,
   privateIndividualsProxy,
   groupsProxy,
@@ -14,7 +16,7 @@ async function deployValidatorsRegistryProxy({
     contractAlias: 'ValidatorsRegistry',
     methodName: 'initialize',
     methodArgs: [
-      poolsProxy,
+      periodicPoolsProxy,
       individualsProxy,
       privateIndividualsProxy,
       groupsProxy,
@@ -24,7 +26,10 @@ async function deployValidatorsRegistryProxy({
     ...networkConfig,
   });
 
-  log(`Validators Registry contract: ${proxy.address}`);
+  // TODO: remove after merging with constructor
+  let validatorsRegistry = await ValidatorsRegistry.at(proxy.address);
+  await validatorsRegistry.initialize2(phase2PoolsProxy);
+
   return proxy.address;
 }
 

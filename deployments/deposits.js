@@ -1,8 +1,10 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
+
+const Deposits = artifacts.require('Deposits');
 
 async function deployDepositsProxy({
-  poolsProxy,
+  phase2PoolsProxy,
+  periodicPoolsProxy,
   individualsProxy,
   privateIndividualsProxy,
   groupsProxy,
@@ -13,7 +15,7 @@ async function deployDepositsProxy({
     contractAlias: 'Deposits',
     methodName: 'initialize',
     methodArgs: [
-      poolsProxy,
+      periodicPoolsProxy,
       individualsProxy,
       privateIndividualsProxy,
       groupsProxy,
@@ -22,7 +24,10 @@ async function deployDepositsProxy({
     ...networkConfig,
   });
 
-  log(`Deposits contract: ${proxy.address}`);
+  // TODO: remove after merging with constructor
+  let deposits = await Deposits.at(proxy.address);
+  await deposits.initialize2(phase2PoolsProxy);
+
   return proxy.address;
 }
 

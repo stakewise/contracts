@@ -1,5 +1,4 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
 
 async function deployPoolsProxy({
   depositsProxy,
@@ -26,7 +25,6 @@ async function deployPoolsProxy({
     ...networkConfig,
   });
 
-  log(`Pools contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -55,7 +53,6 @@ async function deployIndividualsProxy({
     ...networkConfig,
   });
 
-  log(`Individuals contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -84,7 +81,6 @@ async function deployGroupsProxy({
     ...networkConfig,
   });
 
-  log(`Groups contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -111,7 +107,6 @@ async function deployPrivateIndividualsProxy({
     ...networkConfig,
   });
 
-  log(`Private Individuals contract: ${proxy.address}`);
   return proxy.address;
 }
 

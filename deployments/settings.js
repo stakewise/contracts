@@ -1,5 +1,4 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
 
 // TODO: Replace with actual values
 const initialSettings = {
@@ -30,8 +29,6 @@ async function deploySettingsProxy({
     ],
     ...networkConfig,
   });
-
-  log(`Settings contract: ${proxy.address}`);
   return proxy.address;
 }
 

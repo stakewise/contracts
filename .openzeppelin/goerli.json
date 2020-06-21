@@ -595,11 +595,11 @@
       }
     },
     "Deposits": {
-      "address": "0x00999dC372a5aB9FD3911024F2637e7023F3E7eA",
-      "constructorCode": "608060405234801561001057600080fd5b5061095d806100206000396000f3fe",
-      "bodyBytecodeHash": "b46f9c3999a30151de349f5df573d64923b6f676bbe1ace3bd5ce616e4ce4b7b",
-      "localBytecodeHash": "8b0368731818a5df042f9b8db360a57ae24fa4fe21d471f27aece386ed75f26d",
-      "deployedBytecodeHash": "8b0368731818a5df042f9b8db360a57ae24fa4fe21d471f27aece386ed75f26d",
+      "address": "0xE07e6aF42B1416283114693895FFC21db5cc3cA5",
+      "constructorCode": "608060405234801561001057600080fd5b50610a49806100206000396000f3fe",
+      "bodyBytecodeHash": "df6e9aa7f45eaafb3191fb799012621d3cb3d222e395ab5af940439af3c37a2c",
+      "localBytecodeHash": "afc77cec4b90c6d205fa581e3cf471f8f5934a90d53f3143d62bef3641b79f09",
+      "deployedBytecodeHash": "afc77cec4b90c6d205fa581e3cf471f8f5934a90d53f3143d62bef3641b79f09",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -669,7 +669,7 @@
           "label": "pools",
           "astId": 1326,
           "type": "t_address",
-          "src": "728:19:14"
+          "src": "758:19:14"
         },
         {
           "contract": "Deposits",
@@ -677,7 +677,7 @@
           "label": "individuals",
           "astId": 1328,
           "type": "t_address",
-          "src": "798:31:14"
+          "src": "828:31:14"
         },
         {
           "contract": "Deposits",
@@ -685,7 +685,7 @@
           "label": "privateIndividuals",
           "astId": 1330,
           "type": "t_address",
-          "src": "887:45:14"
+          "src": "917:45:14"
         },
         {
           "contract": "Deposits",
@@ -693,7 +693,15 @@
           "label": "groups",
           "astId": 1332,
           "type": "t_address",
-          "src": "978:21:14"
+          "src": "1008:21:14"
+        },
+        {
+          "contract": "Deposits",
+          "path": "contracts/Deposits.sol",
+          "label": "phase2Pools",
+          "astId": 1334,
+          "type": "t_address",
+          "src": "1136:25:14"
         }
       ],
       "warnings": {
@@ -701,15 +709,30 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 8,
+              "contract": "Deposits",
+              "path": "contracts/Deposits.sol",
+              "label": "phase2Pools",
+              "astId": 1334,
+              "type": "t_address",
+              "src": "1136:25:14"
+            }
+          }
+        ]
       }
     },
     "ValidatorsRegistry": {
-      "address": "0xA9fC1978eB9FcB63Cd7b28745C5D8582165A7020",
-      "constructorCode": "608060405234801561001057600080fd5b506109d4806100206000396000f3fe",
-      "bodyBytecodeHash": "da8326d8a4b0034c0a534acbb498eb7b4bbf26acad34a330ac7e44e0fc0ef9a5",
-      "localBytecodeHash": "74ab2ae8e7d8d8b35f9887b5a1e7d3f67d6c02ee9090cabd7ebf0b2d4c5f8c96",
-      "deployedBytecodeHash": "74ab2ae8e7d8d8b35f9887b5a1e7d3f67d6c02ee9090cabd7ebf0b2d4c5f8c96",
+      "address": "0x13B8B12119A56007a6E67cea17aA2Fc2dd43e3Ff",
+      "constructorCode": "608060405234801561001057600080fd5b50610ad0806100206000396000f3fe",
+      "bodyBytecodeHash": "31f095dd2df97873059bb658912ae2fcae1cd7e6ddf8f3f85eceaddc3de6f668",
+      "localBytecodeHash": "1342a1879c22d61d36c7321b5ba5834d9d1e4c5184c4588fa981da13ed7a5f01",
+      "deployedBytecodeHash": "1342a1879c22d61d36c7321b5ba5834d9d1e4c5184c4588fa981da13ed7a5f01",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -735,19 +758,19 @@
           "members": [
             {
               "label": "depositAmount",
-              "astId": 4723,
+              "astId": 4752,
               "type": "t_uint256",
               "src": "779:21:25"
             },
             {
               "label": "maintainerFee",
-              "astId": 4725,
+              "astId": 4754,
               "type": "t_uint256",
               "src": "810:21:25"
             },
             {
               "label": "entityId",
-              "astId": 4727,
+              "astId": 4756,
               "type": "t_bytes32",
               "src": "841:16:25"
             }
@@ -799,7 +822,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "validators",
-          "astId": 4732,
+          "astId": 4761,
           "type": "t_mapping<t_struct<ValidatorsRegistry.Validator>>",
           "src": "950:47:25"
         },
@@ -807,41 +830,49 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "pools",
-          "astId": 4734,
+          "astId": 4763,
           "type": "t_address",
-          "src": "1042:19:25"
+          "src": "1072:19:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "individuals",
-          "astId": 4736,
+          "astId": 4765,
           "type": "t_address",
-          "src": "1112:31:25"
+          "src": "1142:31:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "privateIndividuals",
-          "astId": 4738,
+          "astId": 4767,
           "type": "t_address",
-          "src": "1201:45:25"
+          "src": "1231:45:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "groups",
-          "astId": 4740,
+          "astId": 4769,
           "type": "t_address",
-          "src": "1292:21:25"
+          "src": "1322:21:25"
         },
         {
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "settings",
-          "astId": 4742,
+          "astId": 4771,
           "type": "t_address",
-          "src": "1361:25:25"
+          "src": "1391:25:25"
+        },
+        {
+          "contract": "ValidatorsRegistry",
+          "path": "contracts/validators/ValidatorsRegistry.sol",
+          "label": "phase2Pools",
+          "astId": 4773,
+          "type": "t_address",
+          "src": "1523:25:25"
         }
       ],
       "warnings": {
@@ -849,7 +880,31 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "ValidatorsRegistry",
+            "path": "contracts/validators/ValidatorsRegistry.sol",
+            "label": "validators",
+            "astId": 4761,
+            "type": "t_mapping<t_struct<ValidatorsRegistry.Validator>>",
+            "src": "950:47:25"
+          }
+        ],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 9,
+              "contract": "ValidatorsRegistry",
+              "path": "contracts/validators/ValidatorsRegistry.sol",
+              "label": "phase2Pools",
+              "astId": 4773,
+              "type": "t_address",
+              "src": "1523:25:25"
+            }
+          }
+        ]
       }
     },
     "WalletsRegistry": {
@@ -1483,11 +1538,11 @@
       }
     },
     "ValidatorTransfers": {
-      "address": "0xAbe5D4956bda82f163E428E32A1036dB541ebB02",
-      "constructorCode": "608060405234801561001057600080fd5b5061189a806100206000396000f3fe",
-      "bodyBytecodeHash": "7498fe182857d288c6f21f5af5436a946ebe892988987f6bef0a5a3b9c192892",
-      "localBytecodeHash": "b750cfe7349553587a05846be7f1386b9cd5040cf7d9d738c121d5ffe79f4bf8",
-      "deployedBytecodeHash": "b750cfe7349553587a05846be7f1386b9cd5040cf7d9d738c121d5ffe79f4bf8",
+      "address": "0xEc2356Bb8996c6E4F6033f74219f875ab9A88430",
+      "constructorCode": "608060405234801561001057600080fd5b506119a3806100206000396000f3fe",
+      "bodyBytecodeHash": "a9e77a67ceedd5670ceb6c4b4ec4ddc249ed8be47d91c5a79e7dcd3517335f52",
+      "localBytecodeHash": "9a2b385a46f9d92cfcbb64f0e03b1447b1de47265f7dddd4e63e102c9eeebba9",
+      "deployedBytecodeHash": "9a2b385a46f9d92cfcbb64f0e03b1447b1de47265f7dddd4e63e102c9eeebba9",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1513,19 +1568,19 @@
           "members": [
             {
               "label": "userDebt",
-              "astId": 4148,
+              "astId": 4177,
               "type": "t_uint256",
               "src": "1645:16:24"
             },
             {
               "label": "maintainerDebt",
-              "astId": 4150,
+              "astId": 4179,
               "type": "t_uint256",
               "src": "1671:22:24"
             },
             {
               "label": "resolved",
-              "astId": 4152,
+              "astId": 4181,
               "type": "t_bool",
               "src": "1703:13:24"
             }
@@ -1544,13 +1599,13 @@
           "members": [
             {
               "label": "validatorId",
-              "astId": 4155,
+              "astId": 4184,
               "type": "t_bytes32",
               "src": "1949:19:24"
             },
             {
               "label": "amount",
-              "astId": 4157,
+              "astId": 4186,
               "type": "t_uint256",
               "src": "1978:14:24"
             }
@@ -1574,13 +1629,13 @@
           "members": [
             {
               "label": "rewardWithdrawn",
-              "astId": 4160,
+              "astId": 4189,
               "type": "t_bool",
               "src": "2269:20:24"
             },
             {
               "label": "depositWithdrawn",
-              "astId": 4162,
+              "astId": 4191,
               "type": "t_bool",
               "src": "2299:21:24"
             }
@@ -1599,13 +1654,13 @@
           "members": [
             {
               "label": "time",
-              "astId": 4165,
+              "astId": 4194,
               "type": "t_uint256",
               "src": "2588:12:24"
             },
             {
               "label": "manager",
-              "astId": 4167,
+              "astId": 4196,
               "type": "t_address",
               "src": "2610:15:24"
             }
@@ -1652,7 +1707,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "validatorDebts",
-          "astId": 4172,
+          "astId": 4201,
           "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
           "src": "2688:55:24"
         },
@@ -1660,7 +1715,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "entityRewards",
-          "astId": 4176,
+          "astId": 4205,
           "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
           "src": "2813:53:24"
         },
@@ -1668,7 +1723,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "userWithdrawals",
-          "astId": 4180,
+          "astId": 4209,
           "type": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
           "src": "2924:57:24"
         },
@@ -1676,7 +1731,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "transferAllowances",
-          "astId": 4184,
+          "astId": 4213,
           "type": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
           "src": "3049:64:24"
         },
@@ -1684,7 +1739,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "admins",
-          "astId": 4186,
+          "astId": 4215,
           "type": "t_address",
           "src": "3159:21:24"
         },
@@ -1692,7 +1747,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "operators",
-          "astId": 4188,
+          "astId": 4217,
           "type": "t_address",
           "src": "3229:27:24"
         },
@@ -1700,7 +1755,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "deposits",
-          "astId": 4190,
+          "astId": 4219,
           "type": "t_address",
           "src": "3304:25:24"
         },
@@ -1708,57 +1763,65 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "pools",
-          "astId": 4192,
+          "astId": 4221,
           "type": "t_address",
-          "src": "3374:19:24"
+          "src": "3404:19:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "individuals",
-          "astId": 4194,
+          "astId": 4223,
           "type": "t_address",
-          "src": "3444:31:24"
+          "src": "3474:31:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "groups",
-          "astId": 4196,
+          "astId": 4225,
           "type": "t_address",
-          "src": "3521:21:24"
+          "src": "3551:21:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "settings",
-          "astId": 4198,
+          "astId": 4227,
           "type": "t_address",
-          "src": "3590:25:24"
+          "src": "3620:25:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "validatorsRegistry",
-          "astId": 4200,
+          "astId": 4229,
           "type": "t_address",
-          "src": "3673:45:24"
+          "src": "3703:45:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "walletsRegistry",
-          "astId": 4202,
+          "astId": 4231,
           "type": "t_address",
-          "src": "3773:39:24"
+          "src": "3803:39:24"
         },
         {
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "withdrawals",
-          "astId": 4204,
+          "astId": 4233,
           "type": "t_address",
-          "src": "3863:31:24"
+          "src": "3893:31:24"
+        },
+        {
+          "contract": "ValidatorTransfers",
+          "path": "contracts/validators/ValidatorTransfers.sol",
+          "label": "phase2Pools",
+          "astId": 4235,
+          "type": "t_address",
+          "src": "4031:25:24"
         }
       ],
       "warnings": {
@@ -1766,7 +1829,55 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "ValidatorTransfers",
+            "path": "contracts/validators/ValidatorTransfers.sol",
+            "label": "validatorDebts",
+            "astId": 4201,
+            "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
+            "src": "2688:55:24"
+          },
+          {
+            "contract": "ValidatorTransfers",
+            "path": "contracts/validators/ValidatorTransfers.sol",
+            "label": "entityRewards",
+            "astId": 4205,
+            "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
+            "src": "2813:53:24"
+          },
+          {
+            "contract": "ValidatorTransfers",
+            "path": "contracts/validators/ValidatorTransfers.sol",
+            "label": "userWithdrawals",
+            "astId": 4209,
+            "type": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
+            "src": "2924:57:24"
+          },
+          {
+            "contract": "ValidatorTransfers",
+            "path": "contracts/validators/ValidatorTransfers.sol",
+            "label": "transferAllowances",
+            "astId": 4213,
+            "type": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
+            "src": "3049:64:24"
+          }
+        ],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 17,
+              "contract": "ValidatorTransfers",
+              "path": "contracts/validators/ValidatorTransfers.sol",
+              "label": "phase2Pools",
+              "astId": 4235,
+              "type": "t_address",
+              "src": "4031:25:24"
+            }
+          }
+        ]
       }
     },
     "Groups": {
@@ -2049,7 +2160,7 @@
       {
         "address": "0x2dDe1dbEE791D93562869C5bc461Dd798853C9C9",
         "version": "0.1.0",
-        "implementation": "0x00999dC372a5aB9FD3911024F2637e7023F3E7eA",
+        "implementation": "0xE07e6aF42B1416283114693895FFC21db5cc3cA5",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
@@ -2058,7 +2169,7 @@
       {
         "address": "0x89C573ea641c1eA1617a0B0Be2111d461E627926",
         "version": "0.1.0",
-        "implementation": "0xA9fC1978eB9FcB63Cd7b28745C5D8582165A7020",
+        "implementation": "0x13B8B12119A56007a6E67cea17aA2Fc2dd43e3Ff",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
@@ -2066,6 +2177,13 @@
     "stakewise/Pools": [
       {
         "address": "0x0b7B46332B96D7E7281E16cB0A4D2959298C78E9",
+        "version": "0.1.0",
+        "implementation": "0xEaD77b4F1677dd43Cd9b27e2C76A190185C70B87",
+        "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
+        "kind": "Upgradeable"
+      },
+      {
+        "address": "0x58d361026a11FAf294eF4baB629e7E7e36DD221f",
         "version": "0.1.0",
         "implementation": "0xEaD77b4F1677dd43Cd9b27e2C76A190185C70B87",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
@@ -2121,7 +2239,7 @@
       {
         "address": "0xCFb6cC8b6d25728027B18eEf43E7c82e7A21090a",
         "version": "0.1.0",
-        "implementation": "0xAbe5D4956bda82f163E428E32A1036dB541ebB02",
+        "implementation": "0xEc2356Bb8996c6E4F6033f74219f875ab9A88430",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
