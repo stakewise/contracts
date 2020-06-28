@@ -1,7 +1,5 @@
 const { scripts } = require('@openzeppelin/cli');
 
-const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-
 async function deployValidatorTransfersProxy({
   adminsProxy,
   depositsProxy,
@@ -23,6 +21,7 @@ async function deployValidatorTransfersProxy({
       adminsProxy,
       depositsProxy,
       periodicPoolsProxy,
+      phase2PoolsProxy,
       individualsProxy,
       groupsProxy,
       settingsProxy,
@@ -33,10 +32,6 @@ async function deployValidatorTransfersProxy({
     salt,
     ...networkConfig,
   });
-
-  // TODO: remove after merging with constructor
-  let validatorTransfers = await ValidatorTransfers.at(proxy.address);
-  await validatorTransfers.initialize2(phase2PoolsProxy);
 
   return proxy.address;
 }

@@ -595,11 +595,11 @@
       }
     },
     "Deposits": {
-      "address": "0xE07e6aF42B1416283114693895FFC21db5cc3cA5",
-      "constructorCode": "608060405234801561001057600080fd5b50610a49806100206000396000f3fe",
-      "bodyBytecodeHash": "df6e9aa7f45eaafb3191fb799012621d3cb3d222e395ab5af940439af3c37a2c",
-      "localBytecodeHash": "afc77cec4b90c6d205fa581e3cf471f8f5934a90d53f3143d62bef3641b79f09",
-      "deployedBytecodeHash": "afc77cec4b90c6d205fa581e3cf471f8f5934a90d53f3143d62bef3641b79f09",
+      "address": "0x2Dc53689FCa33d6fBB1cab488981AcF9dae7B087",
+      "constructorCode": "608060405234801561001057600080fd5b50610a44806100206000396000f3fe",
+      "bodyBytecodeHash": "7dbeebc6052c4af0be5a1a5420da602c442f15cf737a7938b99e34b6eaf9f2d6",
+      "localBytecodeHash": "e4a0ae7a04a77b7b244ee7e1e1066412f4818abeb71e135d15aebf3498f1af65",
+      "deployedBytecodeHash": "e4a0ae7a04a77b7b244ee7e1e1066412f4818abeb71e135d15aebf3498f1af65",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -701,7 +701,7 @@
           "label": "phase2Pools",
           "astId": 1334,
           "type": "t_address",
-          "src": "1136:25:14"
+          "src": "1129:25:14"
         }
       ],
       "warnings": {
@@ -711,28 +711,15 @@
         "hasInitialValuesInDeclarations": false,
         "uninitializedBaseContracts": [],
         "storageUncheckedVars": [],
-        "storageDiff": [
-          {
-            "action": "append",
-            "updated": {
-              "index": 8,
-              "contract": "Deposits",
-              "path": "contracts/Deposits.sol",
-              "label": "phase2Pools",
-              "astId": 1334,
-              "type": "t_address",
-              "src": "1136:25:14"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     },
     "ValidatorsRegistry": {
-      "address": "0x13B8B12119A56007a6E67cea17aA2Fc2dd43e3Ff",
-      "constructorCode": "608060405234801561001057600080fd5b50610ad0806100206000396000f3fe",
-      "bodyBytecodeHash": "31f095dd2df97873059bb658912ae2fcae1cd7e6ddf8f3f85eceaddc3de6f668",
-      "localBytecodeHash": "1342a1879c22d61d36c7321b5ba5834d9d1e4c5184c4588fa981da13ed7a5f01",
-      "deployedBytecodeHash": "1342a1879c22d61d36c7321b5ba5834d9d1e4c5184c4588fa981da13ed7a5f01",
+      "address": "0x0d32eaFD62669c77f3309E943cCBb338365278F2",
+      "constructorCode": "608060405234801561001057600080fd5b50610ac7806100206000396000f3fe",
+      "bodyBytecodeHash": "7d9763f48f963294644853195dc72d8a9997c72e510b90fdcc16faf9ec5c91fb",
+      "localBytecodeHash": "8a20565cfc94e0c2daeac28e0f39dfeb22e05dad1f494cfd642dc801ab266250",
+      "deployedBytecodeHash": "8a20565cfc94e0c2daeac28e0f39dfeb22e05dad1f494cfd642dc801ab266250",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -758,19 +745,19 @@
           "members": [
             {
               "label": "depositAmount",
-              "astId": 4752,
+              "astId": 4646,
               "type": "t_uint256",
               "src": "779:21:25"
             },
             {
               "label": "maintainerFee",
-              "astId": 4754,
+              "astId": 4648,
               "type": "t_uint256",
               "src": "810:21:25"
             },
             {
               "label": "entityId",
-              "astId": 4756,
+              "astId": 4650,
               "type": "t_bytes32",
               "src": "841:16:25"
             }
@@ -822,7 +809,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "validators",
-          "astId": 4761,
+          "astId": 4655,
           "type": "t_mapping<t_struct<ValidatorsRegistry.Validator>>",
           "src": "950:47:25"
         },
@@ -830,7 +817,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "pools",
-          "astId": 4763,
+          "astId": 4657,
           "type": "t_address",
           "src": "1072:19:25"
         },
@@ -838,7 +825,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "individuals",
-          "astId": 4765,
+          "astId": 4659,
           "type": "t_address",
           "src": "1142:31:25"
         },
@@ -846,7 +833,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "privateIndividuals",
-          "astId": 4767,
+          "astId": 4661,
           "type": "t_address",
           "src": "1231:45:25"
         },
@@ -854,7 +841,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "groups",
-          "astId": 4769,
+          "astId": 4663,
           "type": "t_address",
           "src": "1322:21:25"
         },
@@ -862,7 +849,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "settings",
-          "astId": 4771,
+          "astId": 4665,
           "type": "t_address",
           "src": "1391:25:25"
         },
@@ -870,7 +857,7 @@
           "contract": "ValidatorsRegistry",
           "path": "contracts/validators/ValidatorsRegistry.sol",
           "label": "phase2Pools",
-          "astId": 4773,
+          "astId": 4667,
           "type": "t_address",
           "src": "1523:25:25"
         }
@@ -886,25 +873,12 @@
             "contract": "ValidatorsRegistry",
             "path": "contracts/validators/ValidatorsRegistry.sol",
             "label": "validators",
-            "astId": 4761,
+            "astId": 4655,
             "type": "t_mapping<t_struct<ValidatorsRegistry.Validator>>",
             "src": "950:47:25"
           }
         ],
-        "storageDiff": [
-          {
-            "action": "append",
-            "updated": {
-              "index": 9,
-              "contract": "ValidatorsRegistry",
-              "path": "contracts/validators/ValidatorsRegistry.sol",
-              "label": "phase2Pools",
-              "astId": 4773,
-              "type": "t_address",
-              "src": "1523:25:25"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     },
     "WalletsRegistry": {
@@ -1359,11 +1333,11 @@
       }
     },
     "PrivateIndividuals": {
-      "address": "0xd74e8397976eB5Ef1FBCe8a339Af72E6B4cCD5d9",
-      "constructorCode": "608060405234801561001057600080fd5b506120d7806100206000396000f3fe",
-      "bodyBytecodeHash": "43c240e4a91169cfc6db5a182f47bed6b9cffb6dd82ca883fadf472950edae18",
-      "localBytecodeHash": "73546781e751b09fefcf886570d011b3a1206cb2e5b1fc9de0e224e5be118692",
-      "deployedBytecodeHash": "73546781e751b09fefcf886570d011b3a1206cb2e5b1fc9de0e224e5be118692",
+      "address": "0x0090ee1C611341aFCF4d96e5f9b49546DF9F145c",
+      "constructorCode": "608060405234801561001057600080fd5b50611709806100206000396000f3fe",
+      "bodyBytecodeHash": "25692502150ceed7dd87034a564b35e6e4741c58fa6551f0e8acc136d5618975",
+      "localBytecodeHash": "3cf95002a091797853fc384c395d977080633f2effe5bb8583a7e092d658bbb6",
+      "deployedBytecodeHash": "3cf95002a091797853fc384c395d977080633f2effe5bb8583a7e092d658bbb6",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1388,40 +1362,16 @@
           "label": "PrivateIndividuals.ValidatorDeposit",
           "members": [
             {
-              "label": "publicKey",
-              "astId": 3668,
-              "type": "t_bytes",
-              "src": "1582:15:22"
-            },
-            {
               "label": "withdrawalCredentials",
-              "astId": 3670,
+              "astId": 3697,
               "type": "t_bytes",
-              "src": "1607:27:22"
-            },
-            {
-              "label": "signature",
-              "astId": 3672,
-              "type": "t_bytes",
-              "src": "1644:15:22"
+              "src": "1202:27:22"
             },
             {
               "label": "amount",
-              "astId": 3674,
+              "astId": 3699,
               "type": "t_uint256",
-              "src": "1669:14:22"
-            },
-            {
-              "label": "depositDataRoot",
-              "astId": 3676,
-              "type": "t_bytes32",
-              "src": "1693:23:22"
-            },
-            {
-              "label": "submitted",
-              "astId": 3678,
-              "type": "t_bool",
-              "src": "1726:14:22"
+              "src": "1239:14:22"
             }
           ]
         },
@@ -1429,11 +1379,6 @@
           "id": "t_bytes",
           "kind": "elementary",
           "label": "bytes"
-        },
-        "t_bytes32": {
-          "id": "t_bytes32",
-          "kind": "elementary",
-          "label": "bytes32"
         },
         "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>": {
           "id": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
@@ -1476,57 +1421,57 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorDeposits",
-          "astId": 3683,
+          "astId": 3704,
           "type": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
-          "src": "1823:61:22"
+          "src": "1336:61:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "individualsCount",
-          "astId": 3685,
+          "astId": 3706,
           "type": "t_uint256",
-          "src": "1943:32:22"
+          "src": "1456:32:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "deposits",
-          "astId": 3687,
+          "astId": 3708,
           "type": "t_address",
-          "src": "2023:25:22"
+          "src": "1536:25:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "settings",
-          "astId": 3689,
+          "astId": 3710,
           "type": "t_address",
-          "src": "2096:25:22"
+          "src": "1609:25:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "operators",
-          "astId": 3691,
+          "astId": 3712,
           "type": "t_address",
-          "src": "2170:27:22"
+          "src": "1683:27:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorRegistration",
-          "astId": 3693,
+          "astId": 3714,
           "type": "t_address",
-          "src": "2254:52:22"
+          "src": "1767:52:22"
         },
         {
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorsRegistry",
-          "astId": 3695,
+          "astId": 3716,
           "type": "t_address",
-          "src": "2365:45:22"
+          "src": "1878:45:22"
         }
       ],
       "warnings": {
@@ -1534,15 +1479,26 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "PrivateIndividuals",
+            "path": "contracts/collectors/PrivateIndividuals.sol",
+            "label": "validatorDeposits",
+            "astId": 3704,
+            "type": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
+            "src": "1336:61:22"
+          }
+        ],
+        "storageDiff": []
       }
     },
     "ValidatorTransfers": {
-      "address": "0xEc2356Bb8996c6E4F6033f74219f875ab9A88430",
-      "constructorCode": "608060405234801561001057600080fd5b506119a3806100206000396000f3fe",
-      "bodyBytecodeHash": "a9e77a67ceedd5670ceb6c4b4ec4ddc249ed8be47d91c5a79e7dcd3517335f52",
-      "localBytecodeHash": "9a2b385a46f9d92cfcbb64f0e03b1447b1de47265f7dddd4e63e102c9eeebba9",
-      "deployedBytecodeHash": "9a2b385a46f9d92cfcbb64f0e03b1447b1de47265f7dddd4e63e102c9eeebba9",
+      "address": "0x1E09D5659DBdb0518bf3d0f56096C5eB548C01e1",
+      "constructorCode": "608060405234801561001057600080fd5b506118f3806100206000396000f3fe",
+      "bodyBytecodeHash": "cdc0c27d3e48672af84d059263863cc57b35c1919706e4d1e09e2db418bccc25",
+      "localBytecodeHash": "c03396ad1d027864d4f5e6add156a41a65b0348d8311427c5b669e04ead5b7f0",
+      "deployedBytecodeHash": "c03396ad1d027864d4f5e6add156a41a65b0348d8311427c5b669e04ead5b7f0",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1568,19 +1524,19 @@
           "members": [
             {
               "label": "userDebt",
-              "astId": 4177,
+              "astId": 4056,
               "type": "t_uint256",
               "src": "1645:16:24"
             },
             {
               "label": "maintainerDebt",
-              "astId": 4179,
+              "astId": 4058,
               "type": "t_uint256",
               "src": "1671:22:24"
             },
             {
               "label": "resolved",
-              "astId": 4181,
+              "astId": 4060,
               "type": "t_bool",
               "src": "1703:13:24"
             }
@@ -1599,13 +1555,13 @@
           "members": [
             {
               "label": "validatorId",
-              "astId": 4184,
+              "astId": 4063,
               "type": "t_bytes32",
               "src": "1949:19:24"
             },
             {
               "label": "amount",
-              "astId": 4186,
+              "astId": 4065,
               "type": "t_uint256",
               "src": "1978:14:24"
             }
@@ -1629,13 +1585,13 @@
           "members": [
             {
               "label": "rewardWithdrawn",
-              "astId": 4189,
+              "astId": 4068,
               "type": "t_bool",
               "src": "2269:20:24"
             },
             {
               "label": "depositWithdrawn",
-              "astId": 4191,
+              "astId": 4070,
               "type": "t_bool",
               "src": "2299:21:24"
             }
@@ -1654,13 +1610,13 @@
           "members": [
             {
               "label": "time",
-              "astId": 4194,
+              "astId": 4073,
               "type": "t_uint256",
               "src": "2588:12:24"
             },
             {
               "label": "manager",
-              "astId": 4196,
+              "astId": 4075,
               "type": "t_address",
               "src": "2610:15:24"
             }
@@ -1707,7 +1663,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "validatorDebts",
-          "astId": 4201,
+          "astId": 4080,
           "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
           "src": "2688:55:24"
         },
@@ -1715,7 +1671,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "entityRewards",
-          "astId": 4205,
+          "astId": 4084,
           "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
           "src": "2813:53:24"
         },
@@ -1723,7 +1679,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "userWithdrawals",
-          "astId": 4209,
+          "astId": 4088,
           "type": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
           "src": "2924:57:24"
         },
@@ -1731,7 +1687,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "transferAllowances",
-          "astId": 4213,
+          "astId": 4092,
           "type": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
           "src": "3049:64:24"
         },
@@ -1739,7 +1695,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "admins",
-          "astId": 4215,
+          "astId": 4094,
           "type": "t_address",
           "src": "3159:21:24"
         },
@@ -1747,7 +1703,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "operators",
-          "astId": 4217,
+          "astId": 4096,
           "type": "t_address",
           "src": "3229:27:24"
         },
@@ -1755,7 +1711,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "deposits",
-          "astId": 4219,
+          "astId": 4098,
           "type": "t_address",
           "src": "3304:25:24"
         },
@@ -1763,7 +1719,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "pools",
-          "astId": 4221,
+          "astId": 4100,
           "type": "t_address",
           "src": "3404:19:24"
         },
@@ -1771,7 +1727,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "individuals",
-          "astId": 4223,
+          "astId": 4102,
           "type": "t_address",
           "src": "3474:31:24"
         },
@@ -1779,7 +1735,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "groups",
-          "astId": 4225,
+          "astId": 4104,
           "type": "t_address",
           "src": "3551:21:24"
         },
@@ -1787,7 +1743,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "settings",
-          "astId": 4227,
+          "astId": 4106,
           "type": "t_address",
           "src": "3620:25:24"
         },
@@ -1795,7 +1751,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "validatorsRegistry",
-          "astId": 4229,
+          "astId": 4108,
           "type": "t_address",
           "src": "3703:45:24"
         },
@@ -1803,7 +1759,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "walletsRegistry",
-          "astId": 4231,
+          "astId": 4110,
           "type": "t_address",
           "src": "3803:39:24"
         },
@@ -1811,7 +1767,7 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "withdrawals",
-          "astId": 4233,
+          "astId": 4112,
           "type": "t_address",
           "src": "3893:31:24"
         },
@@ -1819,9 +1775,9 @@
           "contract": "ValidatorTransfers",
           "path": "contracts/validators/ValidatorTransfers.sol",
           "label": "phase2Pools",
-          "astId": 4235,
+          "astId": 4114,
           "type": "t_address",
-          "src": "4031:25:24"
+          "src": "4024:25:24"
         }
       ],
       "warnings": {
@@ -1835,7 +1791,7 @@
             "contract": "ValidatorTransfers",
             "path": "contracts/validators/ValidatorTransfers.sol",
             "label": "validatorDebts",
-            "astId": 4201,
+            "astId": 4080,
             "type": "t_mapping<t_struct<ValidatorTransfers.ValidatorDebt>>",
             "src": "2688:55:24"
           },
@@ -1843,7 +1799,7 @@
             "contract": "ValidatorTransfers",
             "path": "contracts/validators/ValidatorTransfers.sol",
             "label": "entityRewards",
-            "astId": 4205,
+            "astId": 4084,
             "type": "t_mapping<t_struct<ValidatorTransfers.EntityReward>>",
             "src": "2813:53:24"
           },
@@ -1851,7 +1807,7 @@
             "contract": "ValidatorTransfers",
             "path": "contracts/validators/ValidatorTransfers.sol",
             "label": "userWithdrawals",
-            "astId": 4209,
+            "astId": 4088,
             "type": "t_mapping<t_struct<ValidatorTransfers.UserWithdrawal>>",
             "src": "2924:57:24"
           },
@@ -1859,25 +1815,12 @@
             "contract": "ValidatorTransfers",
             "path": "contracts/validators/ValidatorTransfers.sol",
             "label": "transferAllowances",
-            "astId": 4213,
+            "astId": 4092,
             "type": "t_mapping<t_struct<ValidatorTransfers.TransferAllowance>>",
             "src": "3049:64:24"
           }
         ],
-        "storageDiff": [
-          {
-            "action": "append",
-            "updated": {
-              "index": 17,
-              "contract": "ValidatorTransfers",
-              "path": "contracts/validators/ValidatorTransfers.sol",
-              "label": "phase2Pools",
-              "astId": 4235,
-              "type": "t_address",
-              "src": "4031:25:24"
-            }
-          }
-        ]
+        "storageDiff": []
       }
     },
     "Groups": {
@@ -2160,7 +2103,7 @@
       {
         "address": "0x2dDe1dbEE791D93562869C5bc461Dd798853C9C9",
         "version": "0.1.0",
-        "implementation": "0xE07e6aF42B1416283114693895FFC21db5cc3cA5",
+        "implementation": "0x2Dc53689FCa33d6fBB1cab488981AcF9dae7B087",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
@@ -2169,7 +2112,7 @@
       {
         "address": "0x89C573ea641c1eA1617a0B0Be2111d461E627926",
         "version": "0.1.0",
-        "implementation": "0x13B8B12119A56007a6E67cea17aA2Fc2dd43e3Ff",
+        "implementation": "0x0d32eaFD62669c77f3309E943cCBb338365278F2",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
@@ -2201,9 +2144,9 @@
     ],
     "stakewise/PrivateIndividuals": [
       {
-        "address": "0x942B71E61D2a0B17fb4E6440Ce1dcD86B38A5838",
+        "address": "0x67249bA45f650afC28521A2e8791aAb6aB2A5a5e",
         "version": "0.1.0",
-        "implementation": "0xd74e8397976eB5Ef1FBCe8a339Af72E6B4cCD5d9",
+        "implementation": "0x0090ee1C611341aFCF4d96e5f9b49546DF9F145c",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }
@@ -2239,7 +2182,7 @@
       {
         "address": "0xCFb6cC8b6d25728027B18eEf43E7c82e7A21090a",
         "version": "0.1.0",
-        "implementation": "0xEc2356Bb8996c6E4F6033f74219f875ab9A88430",
+        "implementation": "0x1E09D5659DBdb0518bf3d0f56096C5eB548C01e1",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }

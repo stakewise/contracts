@@ -70,22 +70,11 @@ async function checkIndividualManager(
 async function checkValidatorDepositData(
   contract,
   entityId,
-  {
-    publicKey = null,
-    withdrawalCredentials = null,
-    amount = new BN(0),
-    signature = null,
-    depositDataRoot = constants.ZERO_BYTES32,
-    submitted = false,
-  } = {}
+  { withdrawalCredentials = null, amount = new BN(0) } = {}
 ) {
   let depositData = await contract.validatorDeposits(entityId);
   expect(depositData.amount).to.bignumber.equal(amount);
   expect(depositData.withdrawalCredentials).equal(withdrawalCredentials);
-  expect(depositData.publicKey).equal(publicKey);
-  expect(depositData.signature).equal(signature);
-  expect(depositData.depositDataRoot).equal(depositDataRoot);
-  expect(depositData.submitted).equal(submitted);
 }
 
 async function checkCollectorBalance(
@@ -336,11 +325,6 @@ function fixSignature(signature) {
   return signature.slice(0, 130) + vHex;
 }
 
-// signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
-async function signMessage(signer, messageHex = '0x') {
-  return fixSignature(await web3.eth.sign(messageHex, signer));
-}
-
 async function signValidatorTransfer(signer, entityId) {
   let messageHash = web3.utils.soliditySha3('validator transfer', entityId);
   return fixSignature(await web3.eth.sign(messageHash, signer));
@@ -359,7 +343,6 @@ module.exports = {
   checkValidatorTransferred,
   removeNetworkFile,
   getDepositAmount,
-  signMessage,
   signValidatorTransfer,
   getEntityId,
   checkUserTotalAmount,

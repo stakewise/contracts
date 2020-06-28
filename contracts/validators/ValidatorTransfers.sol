@@ -112,7 +112,7 @@ contract ValidatorTransfers is Initializable {
     // address of the Withdrawals contract.
     Withdrawals private withdrawals;
 
-    // TODO: move up on Goerli contracts redeployment
+    // TODO: move up on contracts redeployment
     // address of the phase 2 Pools contract.
     Pools private phase2Pools;
 
@@ -174,7 +174,8 @@ contract ValidatorTransfers is Initializable {
     * Constructor for initializing the ValidatorTransfers contract.
     * @param _admins - address of the Admins contract.
     * @param _deposits - address of the Deposits contract.
-    * @param _pools - address of the Pools contract. TODO: rename to periodicPools
+    * @param _periodicPools - address of the periodic Pools contract.
+    * @param _phase2Pools - address of the phase 2 Pools contract.
     * @param _individuals - address of the Individuals contract.
     * @param _groups - address of the Groups contract.
     * @param _settings - address of the Settings contract.
@@ -185,7 +186,8 @@ contract ValidatorTransfers is Initializable {
     function initialize(
         Admins _admins,
         Deposits _deposits,
-        Pools _pools,
+        Pools _periodicPools,
+        Pools _phase2Pools,
         Individuals _individuals,
         Groups _groups,
         Settings _settings,
@@ -197,23 +199,15 @@ contract ValidatorTransfers is Initializable {
     {
         admins = _admins;
         deposits = _deposits;
-        pools = _pools;
+        // TODO: rename to periodicPools
+        pools = _periodicPools;
+        phase2Pools = _phase2Pools;
         individuals = _individuals;
         groups = _groups;
         settings = _settings;
         validatorsRegistry = _validatorsRegistry;
         walletsRegistry = _walletsRegistry;
         withdrawals = _withdrawals;
-    }
-
-    /**
-    * TODO: merge with constructor on Goerli contracts redeployment
-    * Function for adding phase 2 Pools contract.
-    * @param _phase2Pools - address of the phase 2 Pools contract.
-    */
-    function initialize2(Pools _phase2Pools) public {
-        require(address(phase2Pools) == address(0));
-        phase2Pools = _phase2Pools;
     }
 
     /**

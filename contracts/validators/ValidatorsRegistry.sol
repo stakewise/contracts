@@ -81,14 +81,16 @@ contract ValidatorsRegistry is Initializable {
 
     /**
     * Constructor for initializing the ValidatorsRegistry contract.
-    * @param _pools - address of the Pools contract. TODO: rename to periodicPools
+    * @param _periodicPools - address of the periodic Pools contract.
+    * @param _phase2Pools - address of the phase 2 Pools contract.
     * @param _individuals - address of the Individuals contract.
     * @param _privateIndividuals - address of the PrivateIndividuals contract.
     * @param _groups - address of the Groups contract.
     * @param _settings - address of the Settings contract.
     */
     function initialize(
-        Pools _pools,
+        Pools _periodicPools,
+        Pools _phase2Pools,
         Individuals _individuals,
         PrivateIndividuals _privateIndividuals,
         Groups _groups,
@@ -96,7 +98,9 @@ contract ValidatorsRegistry is Initializable {
     )
         public initializer
     {
-        pools = _pools;
+        // TODO: rename to periodicPools
+        pools = _periodicPools;
+        phase2Pools = _phase2Pools;
         individuals = _individuals;
         privateIndividuals = _privateIndividuals;
         groups = _groups;
@@ -104,13 +108,11 @@ contract ValidatorsRegistry is Initializable {
     }
 
     /**
-    * TODO: merge with constructor on Goerli contracts redeployment
-    * Function for adding phase 2 Pools contract.
-    * @param _phase2Pools - address of the phase 2 Pools contract.
+    * TODO: remove on contracts redeployment
     */
-    function initialize2(Pools _phase2Pools) public {
-        require(address(phase2Pools) == address(0));
-        phase2Pools = _phase2Pools;
+    function initialize2() public {
+        require(address(privateIndividuals) != 0x67249bA45f650afC28521A2e8791aAb6aB2A5a5e);
+        privateIndividuals = PrivateIndividuals(0x67249bA45f650afC28521A2e8791aAb6aB2A5a5e);
     }
 
     /**
