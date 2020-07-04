@@ -66,12 +66,6 @@ contract PrivateIndividuals is Initializable {
     );
 
     /**
-    * Event for tracking validator deposit data approvals by the user.
-    * @param entityId - ID of the individual the deposit data was approved for.
-    */
-    event DepositDataApproved(bytes32 entityId);
-
-    /**
     * Constructor for initializing the PrivateIndividuals contract.
     * @param _deposits - address of the Deposits contract.
     * @param _settings - address of the Settings contract.
@@ -100,10 +94,8 @@ contract PrivateIndividuals is Initializable {
     * The deposit amount must be the same as the validator deposit amount.
     * The depositing will be disallowed in case `PrivateIndividuals` contract is paused in `Settings` contract.
     * @param _publicKey - BLS public key for performing validator withdrawal.
-    * @param _recipient - address where canceled deposit amount will be sent.
     */
-    function addDeposit(bytes calldata _publicKey, address payable _recipient) external payable {
-        require(_recipient != address(0), "Invalid recipient address.");
+    function addDeposit(bytes calldata _publicKey) external payable {
         require(_publicKey.length == 48, "Invalid BLS withdrawal public key.");
         require(msg.value == settings.validatorDepositAmount(), "Invalid deposit amount.");
         require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
@@ -111,7 +103,7 @@ contract PrivateIndividuals is Initializable {
         // register new private individual
         individualsCount++;
         bytes32 individualId = keccak256(abi.encodePacked(address(this), individualsCount));
-        deposits.addDeposit(individualId, msg.sender, _recipient, msg.value);
+        deposits.addDeposit(individualId, msg.sender, msg.sender, msg.value);
 
         // create new deposit data
         ValidatorDeposit storage depositData = validatorDeposits[individualId];
@@ -130,23 +122,22 @@ contract PrivateIndividuals is Initializable {
     * Function for canceling private individual deposits.
     * The deposit can only be canceled before it will be registered as a validator.
     * @param _individualId - ID of the individual the deposit belongs to.
-    * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
     */
-    function cancelDeposit(bytes32 _individualId, address payable _recipient) external {
-        uint256 depositAmount = deposits.getDeposit(_individualId, msg.sender, _recipient);
+    function cancelDeposit(bytes32 _individualId) external {
+        uint256 depositAmount = deposits.getDeposit(_individualId, msg.sender, msg.sender);
         require(depositAmount > 0, "The user does not have a deposit.");
 
         ValidatorDeposit memory depositData = validatorDeposits[_individualId];
         require(depositData.amount > 0, "Cannot cancel deposit which has started staking.");
 
         // cancel individual deposit
-        deposits.cancelDeposit(_individualId, msg.sender, _recipient, depositAmount);
+        deposits.cancelDeposit(_individualId, msg.sender, msg.sender, depositAmount);
 
         // remove validator deposit data
         delete validatorDeposits[_individualId];
 
-        // transfer canceled amount to the recipient
-        _recipient.sendValue(depositAmount);
+        // transfer canceled amount to the deposit sender
+        msg.sender.sendValue(depositAmount);
     }
 
     /**

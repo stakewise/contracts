@@ -1333,11 +1333,11 @@
       }
     },
     "PrivateIndividuals": {
-      "address": "0x0090ee1C611341aFCF4d96e5f9b49546DF9F145c",
-      "constructorCode": "608060405234801561001057600080fd5b50611709806100206000396000f3fe",
-      "bodyBytecodeHash": "25692502150ceed7dd87034a564b35e6e4741c58fa6551f0e8acc136d5618975",
-      "localBytecodeHash": "3cf95002a091797853fc384c395d977080633f2effe5bb8583a7e092d658bbb6",
-      "deployedBytecodeHash": "3cf95002a091797853fc384c395d977080633f2effe5bb8583a7e092d658bbb6",
+      "address": "0x887a3F758E29708122cb37f212C501C639CB4E96",
+      "constructorCode": "608060405234801561001057600080fd5b50611630806100206000396000f3fe",
+      "bodyBytecodeHash": "8050ee5d68dc9777df8f189936dc21dc488128833da40e716a76c4ab07397998",
+      "localBytecodeHash": "d2d2a573332e344ae820aab0d9927dc62ac7dea48acb7ea7e345180739b8a68a",
+      "deployedBytecodeHash": "d2d2a573332e344ae820aab0d9927dc62ac7dea48acb7ea7e345180739b8a68a",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -1363,13 +1363,13 @@
           "members": [
             {
               "label": "withdrawalCredentials",
-              "astId": 3697,
+              "astId": 3701,
               "type": "t_bytes",
               "src": "1202:27:22"
             },
             {
               "label": "amount",
-              "astId": 3699,
+              "astId": 3703,
               "type": "t_uint256",
               "src": "1239:14:22"
             }
@@ -1421,7 +1421,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorDeposits",
-          "astId": 3704,
+          "astId": 3708,
           "type": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
           "src": "1336:61:22"
         },
@@ -1429,7 +1429,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "individualsCount",
-          "astId": 3706,
+          "astId": 3710,
           "type": "t_uint256",
           "src": "1456:32:22"
         },
@@ -1437,7 +1437,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "deposits",
-          "astId": 3708,
+          "astId": 3712,
           "type": "t_address",
           "src": "1536:25:22"
         },
@@ -1445,7 +1445,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "settings",
-          "astId": 3710,
+          "astId": 3714,
           "type": "t_address",
           "src": "1609:25:22"
         },
@@ -1453,7 +1453,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "operators",
-          "astId": 3712,
+          "astId": 3716,
           "type": "t_address",
           "src": "1683:27:22"
         },
@@ -1461,7 +1461,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorRegistration",
-          "astId": 3714,
+          "astId": 3718,
           "type": "t_address",
           "src": "1767:52:22"
         },
@@ -1469,7 +1469,7 @@
           "contract": "PrivateIndividuals",
           "path": "contracts/collectors/PrivateIndividuals.sol",
           "label": "validatorsRegistry",
-          "astId": 3716,
+          "astId": 3720,
           "type": "t_address",
           "src": "1878:45:22"
         }
@@ -1485,7 +1485,7 @@
             "contract": "PrivateIndividuals",
             "path": "contracts/collectors/PrivateIndividuals.sol",
             "label": "validatorDeposits",
-            "astId": 3704,
+            "astId": 3708,
             "type": "t_mapping<t_struct<PrivateIndividuals.ValidatorDeposit>>",
             "src": "1336:61:22"
           }
@@ -2146,7 +2146,7 @@
       {
         "address": "0x67249bA45f650afC28521A2e8791aAb6aB2A5a5e",
         "version": "0.1.0",
-        "implementation": "0x0090ee1C611341aFCF4d96e5f9b49546DF9F145c",
+        "implementation": "0x887a3F758E29708122cb37f212C501C639CB4E96",
         "admin": "0x41a52ebd3B064A398480A5E7C216828F1924F6e0",
         "kind": "Upgradeable"
       }

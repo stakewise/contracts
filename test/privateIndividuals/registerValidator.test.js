@@ -37,7 +37,7 @@ const stakingDuration = new BN(86400);
 
 contract('Private Individuals (register validator)', ([_, ...accounts]) => {
   let networkConfig, vrc, validatorsRegistry, individuals, individualId;
-  let [admin, operator, sender, recipient, other] = accounts;
+  let [admin, operator, sender, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -73,7 +73,7 @@ contract('Private Individuals (register validator)', ([_, ...accounts]) => {
     });
 
     // create new individual
-    await individuals.addDeposit(withdrawalPublicKey, recipient, {
+    await individuals.addDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
@@ -160,7 +160,7 @@ contract('Private Individuals (register validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(individuals);
 
     // Register validator 2 with the same validator public key
-    await individuals.addDeposit(withdrawalPublicKey, recipient, {
+    await individuals.addDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });

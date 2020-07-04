@@ -1,11 +1,4 @@
-const { expect } = require('chai');
-const {
-  BN,
-  ether,
-  expectRevert,
-  constants,
-  balance,
-} = require('@openzeppelin/test-helpers');
+const { BN, ether, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -43,7 +36,7 @@ const depositData = {
 
 contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
   let networkConfig, deposits, vrc, individuals, individualId;
-  let [admin, operator, sender1, recipient1] = accounts;
+  let [admin, operator, sender1, sender2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -72,40 +65,17 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     // create new private individual
-    await individuals.addDeposit(withdrawalPublicKey, recipient1, {
+    await individuals.addDeposit(withdrawalPublicKey, {
       from: sender1,
       value: validatorDepositAmount,
     });
     individualId = getEntityId(individuals.address, new BN(1));
   });
 
-  it('fails to cancel a deposit with invalid recipient address', async () => {
-    await expectRevert(
-      individuals.cancelDeposit(individualId, constants.ZERO_ADDRESS, {
-        from: sender1,
-      }),
-      'The user does not have a deposit.'
-    );
-
-    await checkUserTotalAmount({
-      depositsContract: deposits,
-      expectedAmount: validatorDepositAmount,
-      entityId: individualId,
-      collectorAddress: individuals.address,
-      senderAddress: sender1,
-      recipientAddress: recipient1,
-    });
-    await checkValidatorDepositData(individuals, individualId, {
-      withdrawalCredentials: depositData.withdrawalCredentials,
-      amount: validatorDepositAmount,
-    });
-    await checkCollectorBalance(individuals, validatorDepositAmount);
-  });
-
   it('fails to cancel a deposit for other user account', async () => {
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
-        from: recipient1,
+      individuals.cancelDeposit(individualId, {
+        from: sender2,
       }),
       'The user does not have a deposit.'
     );
@@ -115,7 +85,7 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
       entityId: individualId,
       collectorAddress: individuals.address,
       senderAddress: sender1,
-      recipientAddress: recipient1,
+      recipientAddress: sender1,
     });
     await checkValidatorDepositData(individuals, individualId, {
       withdrawalCredentials: depositData.withdrawalCredentials,
@@ -136,7 +106,7 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
     );
 
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
+      individuals.cancelDeposit(individualId, {
         from: sender1,
       }),
       'Cannot cancel deposit which has started staking.'
@@ -147,18 +117,18 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
       entityId: individualId,
       collectorAddress: individuals.address,
       senderAddress: sender1,
-      recipientAddress: recipient1,
+      recipientAddress: sender1,
     });
     await checkValidatorDepositData(individuals, individualId);
     await checkCollectorBalance(individuals);
   });
 
   it('fails to cancel deposit amount twice', async () => {
-    await individuals.cancelDeposit(individualId, recipient1, {
+    await individuals.cancelDeposit(individualId, {
       from: sender1,
     });
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
+      individuals.cancelDeposit(individualId, {
         from: sender1,
       }),
       'The user does not have a deposit.'
@@ -168,8 +138,7 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
   });
 
   it('cancels deposit in full amount', async () => {
-    const recipientBalance = await balance.tracker(recipient1);
-    const { tx } = await individuals.cancelDeposit(individualId, recipient1, {
+    const { tx } = await individuals.cancelDeposit(individualId, {
       from: sender1,
     });
     await checkDepositCanceled({
@@ -178,15 +147,11 @@ contract('Private Individuals (cancel deposit)', ([_, ...accounts]) => {
       collectorAddress: individuals.address,
       entityId: individualId,
       senderAddress: sender1,
-      recipientAddress: recipient1,
+      recipientAddress: sender1,
       canceledAmount: validatorDepositAmount,
       totalAmount: ether('0'),
     });
 
-    // Check recipient balance changed
-    expect(await recipientBalance.delta()).to.be.bignumber.equal(
-      validatorDepositAmount
-    );
     // Check balance
     await checkValidatorDepositData(individuals, individualId);
     await checkCollectorBalance(individuals);
