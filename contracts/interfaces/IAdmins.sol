@@ -22,13 +22,13 @@ interface IAdmins {
     * @dev Constructor for initializing the Admins contract.
     * @param admin - The first account to assign the admin role.
     */
-    function initialize(address admin) public;
+    function initialize(address admin) external;
 
     /**
     * @dev Function for checking whether an account has an admin role.
     * @param account - The account to check.
     */
-    function isAdmin(address account) public view returns (bool);
+    function isAdmin(address account) external view returns (bool);
 
     /**
     * @dev Function for assigning an admin role to the account.

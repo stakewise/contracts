@@ -1,58 +1,44 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
 pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./Admins.sol";
+import "../interfaces/IOperators.sol";
+import "../interfaces/IAdmins.sol";
 
 /**
  * @title Operators
- * Contract for adding/removing operator roles.
+ *
+ * @dev Contract for adding/removing operator roles.
  * Operators are responsible for registering and starting validators.
  */
-contract Operators is Initializable {
+contract Operators is IOperators, Initializable {
     using Roles for Roles.Role;
 
-    // Stores operators and defines functions for adding/removing them.
+    // @dev Stores operators and defines functions for adding/removing them.
     Roles.Role private operators;
 
-    // Address of the Admins contract.
-    Admins private admins;
+    // @dev Address of the Admins contract.
+    IAdmins private admins;
 
     /**
-    * Event for tracking added operators.
-    * @param account - An address of the account which was assigned an operator role.
-    * @param issuer - An address of the account which assigned an operator role.
-    */
-    event OperatorAdded(address account, address indexed issuer);
-
-    /**
-    * Event for tracking removed operators.
-    * @param account - An address of the account which was removed an operator role.
-    * @param issuer - An address of the account which removed an operator role.
-    */
-    event OperatorRemoved(address account, address indexed issuer);
-
-    /**
-    * Constructor for initializing the Operators contract.
-    * @param _admins - An address of the Admins contract.
-    */
-    function initialize(Admins _admins) public initializer {
-        admins = _admins;
+     * @dev See {IOperators-initialize}.
+     */
+    function initialize(address _admins) public initializer {
+        admins = IAdmins(_admins);
     }
 
     /**
-    * Function for checking whether an account has an operator role.
-    * @param account - the account to check.
-    */
+     * @dev See {IOperators-isOperator}.
+     */
     function isOperator(address account) public view returns (bool) {
         return operators.has(account);
     }
 
     /**
-    * Function for adding an operator role to the account.
-    * Can only be called by an account with an admin role.
-    * @param account - the account to assign an operator role to.
-    */
+     * @dev See {IOperators-addOperator}.
+     */
     function addOperator(address account) external {
         require(admins.isAdmin(msg.sender), "Only admin users can assign operators.");
         operators.add(account);
@@ -60,10 +46,8 @@ contract Operators is Initializable {
     }
 
     /**
-    * Function for removing an operator role from the account.
-    * Can only be called by an account with an admin role.
-    * @param account - the account to remove an operator role from.
-    */
+     * @dev See {IOperators-removeOperator}.
+     */
     function removeOperator(address account) external {
         require(admins.isAdmin(msg.sender), "Only admin users can remove operators.");
         operators.remove(account);
