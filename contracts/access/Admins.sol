@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../interfaces/IAdmins.sol";
 
-
 /**
  * @title Admins
  *
