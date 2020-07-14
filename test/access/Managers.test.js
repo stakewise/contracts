@@ -4,31 +4,26 @@ const {
   expectEvent,
   expectRevert,
 } = require('@openzeppelin/test-helpers');
-const {
-  deployAdminsProxy,
-  deployManagersProxy,
-} = require('../../deployments/access');
+const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile } = require('../common/utils');
 
 const Managers = artifacts.require('Managers');
+const entityId =
+  '0xd5399111f6a7d6b0ea29fe682b6046191f613b4bff0c4f7ebb28dd62e6fd5434';
 
 contract('Managers', ([_, ...accounts]) => {
-  let networkConfig;
-  let adminsProxy;
-  let managers;
+  let networkConfig, vrc, managers;
   let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
+    vrc = await deployVRC({ from: admin });
   });
 
   after(() => {
@@ -36,9 +31,12 @@ contract('Managers', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    managers = await Managers.at(
-      await deployManagersProxy({ networkConfig, adminsProxy })
-    );
+    let { managers: managersProxy } = await deployAllProxies({
+      initialAdmin: admin,
+      networkConfig,
+      vrc: vrc.options.address,
+    });
+    managers = await Managers.at(managersProxy);
   });
 
   describe('assigning', () => {
@@ -48,9 +46,9 @@ contract('Managers', ([_, ...accounts]) => {
       });
       expectEvent(receipt, 'ManagerAdded', {
         account: manager,
-        issuer: admin,
       });
       expect(await managers.isManager(manager)).equal(true);
+      expect(await managers.canManageWallet(entityId, manager)).equal(true);
       expect(await managers.isManager(admin)).equal(false);
       expect(await managers.isManager(anyone)).equal(false);
     });
@@ -88,6 +86,29 @@ contract('Managers', ([_, ...accounts]) => {
       );
       expect(await managers.isManager(manager)).equal(true);
       expect(await managers.isManager(anotherManager)).equal(false);
+    });
+
+    it('only collectors can assign transfer managers', async () => {
+      for (const user of [manager, admin, anyone]) {
+        await expectRevert(
+          managers.addTransferManager(entityId, anyone, {
+            from: user,
+          }),
+          'Permission denied.'
+        );
+      }
+    });
+
+    it('only collectors can assign wallet managers', async () => {
+      for (const user of [manager, admin, anyone]) {
+        await expectRevert(
+          managers.addWalletManager(entityId, anyone, {
+            from: user,
+          }),
+          'Permission denied.'
+        );
+        expect(await managers.canManageWallet(entityId, user)).equal(false);
+      }
     });
   });
 
@@ -130,7 +151,6 @@ contract('Managers', ([_, ...accounts]) => {
       });
       expectEvent(receipt, 'ManagerRemoved', {
         account: manager,
-        issuer: admin,
       });
       expect(await managers.isManager(manager)).equal(false);
       expect(await managers.isManager(anotherManager)).equal(true);

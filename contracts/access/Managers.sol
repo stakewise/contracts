@@ -1,73 +1,119 @@
-pragma solidity 0.5.17;
+// SPDX-License-Identifier: GPL-3.0-only
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
+pragma solidity 0.6.11;
+
+import "@openzeppelin/contracts-ethereum-package/contracts/cryptography/ECDSA.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./Admins.sol";
+import "../libraries/Roles.sol";
+import "../interfaces/IAdmins.sol";
+import "../interfaces/IManagers.sol";
 
 /**
  * @title Managers
- * Contract for assigning/unassigning manager roles.
- * Managers are responsible for allocating wallets for finished validators, enabling withdrawals,
- * transferring tokens and refunds.
+ *
+ * @dev Contract for assigning managers.
+ * Managers are responsible for requesting validator transfers, assigning withdrawal wallets.
  */
-contract Managers is Initializable {
+contract Managers is IManagers, Initializable {
+    using ECDSA for bytes32;
     using Roles for Roles.Role;
 
-    // Stores managers and defines functions for adding/removing them.
+    // @dev Mapping between the entity ID and its wallet manager.
+    mapping(bytes32 => address) public override walletManagers;
+
+    // @dev Stores managers and defines functions for adding/removing them.
     Roles.Role private managers;
 
-    // Address of the Admins contract.
-    Admins private admins;
+    // @dev Mapping between the entity ID and its transfer manager.
+    mapping(bytes32 => address) private transferManagers;
 
-    /**
-    * Event for tracking added managers.
-    * @param account - An address of the account which was assigned a manager role.
-    * @param issuer - An address of the admin account which assigned a manager role.
-    */
-    event ManagerAdded(address account, address indexed issuer);
+    // @dev Address of the Solos contract.
+    address private solos;
 
-    /**
-    * Event for tracking removed managers.
-    * @param account - An address of the account which was removed a manager role.
-    * @param issuer - An address of the admin account which removed a manager role.
-    */
-    event ManagerRemoved(address account, address indexed issuer);
+    // @dev Address of the Groups contract.
+    address private groups;
 
-    /**
-    * Constructor for initializing the Managers contract.
-    * @param _admins - An address of the Admins contract.
-    */
-    function initialize(Admins _admins) public initializer {
-        admins = _admins;
+    // @dev Address of the Admins contract.
+    IAdmins private admins;
+
+    // @dev Checks whether the caller is the collector contract.
+    modifier onlyCollectors() {
+        require(
+            msg.sender == groups ||
+            msg.sender == solos,
+            "Permission denied."
+        );
+        _;
     }
 
     /**
-    * Function for checking whether an account has a manager role.
-    * @param account - the account to check.
-    */
-    function isManager(address account) public view returns (bool) {
-        return managers.has(account);
+     * @dev See {IManagers-initialize}.
+     */
+    function initialize(address _solos, address _groups, address _admins) public override initializer {
+        solos = _solos;
+        groups = _groups;
+        admins = IAdmins(_admins);
     }
 
     /**
-    * Function for adding a manager role to the account.
-    * Can only be called by an admin account.
-    * @param account - the account to assign a manager role to.
-    */
-    function addManager(address account) external {
+     * @dev See {IManagers-isManager}.
+     */
+    function isManager(address _account) public override view returns (bool) {
+        return managers.has(_account);
+    }
+
+    /**
+     * @dev See {IManagers-canTransfer}.
+     */
+    function canTransfer(bytes32 _entityId, bytes calldata _signature) external override view returns (bool) {
+        address manager = transferManagers[_entityId];
+        if (manager != address(0)) {
+            bytes32 hash = keccak256(abi.encodePacked("validatortransfer", _entityId));
+            return manager == hash.toEthSignedMessageHash().recover(_signature);
+        }
+        return true;
+    }
+
+    /**
+     * @dev See {IManagers-canManageWallet}.
+     */
+    function canManageWallet(bytes32 _entityId, address _account) external override view returns (bool) {
+        address manager = walletManagers[_entityId];
+        if (manager != address(0)) {
+            return manager == _account;
+        }
+        return isManager(_account);
+    }
+
+    /**
+     * @dev See {IManagers-addTransferManager}.
+     */
+    function addTransferManager(bytes32 _entityId, address _account) external override onlyCollectors {
+        transferManagers[_entityId] = _account;
+    }
+
+    /**
+     * @dev See {IManagers-addWalletManager}.
+     */
+    function addWalletManager(bytes32 _entityId, address _account) external override onlyCollectors {
+        walletManagers[_entityId] = _account;
+    }
+
+    /**
+     * @dev See {IManagers-addManager}.
+     */
+    function addManager(address _account) external override {
         require(admins.isAdmin(msg.sender), "Only admin users can assign managers.");
-        managers.add(account);
-        emit ManagerAdded(account, msg.sender);
+        managers.add(_account);
+        emit ManagerAdded(_account);
     }
 
     /**
-    * Function for removing a manager role from the account.
-    * Can only be called by an admin account.
-    * @param account - the account to remove a manager role from.
-    */
-    function removeManager(address account) external {
+     * @dev See {IManagers-removeManager}.
+     */
+    function removeManager(address _account) external override {
         require(admins.isAdmin(msg.sender), "Only admin users can remove managers.");
-        managers.remove(account);
-        emit ManagerRemoved(account, msg.sender);
+        managers.remove(_account);
+        emit ManagerRemoved(_account);
     }
 }
