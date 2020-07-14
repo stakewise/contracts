@@ -46,7 +46,6 @@ contract('Operators', ([_, ...accounts]) => {
       const receipt = await operators.addOperator(operator, { from: admin });
       expectEvent(receipt, 'OperatorAdded', {
         account: operator,
-        issuer: admin,
       });
       expect(await operators.isOperator(operator)).equal(true);
       expect(await operators.isOperator(admin)).equal(false);
@@ -128,7 +127,6 @@ contract('Operators', ([_, ...accounts]) => {
       });
       expectEvent(receipt, 'OperatorRemoved', {
         account: operator,
-        issuer: admin,
       });
       expect(await operators.isOperator(operator)).equal(false);
       expect(await operators.isOperator(anotherOperator)).equal(true);
