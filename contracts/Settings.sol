@@ -1,4 +1,6 @@
-pragma solidity 0.5.17;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity 0.6.11;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "./interfaces/IAdmins.sol";
@@ -13,29 +15,25 @@ import "./interfaces/ISettings.sol";
  */
 contract Settings is ISettings, Initializable {
     // @dev The address of the application owner, where the fee will be paid.
-    address payable public maintainer;
+    address payable public override maintainer;
 
     // @dev The percentage fee users pay from their reward for using the service.
-    uint64 public maintainerFee;
+    uint64 public override maintainerFee;
 
     // @dev The minimal unit (wei, gwei, etc.) deposit can have.
-    uint64 public userDepositMinUnit;
+    uint64 public override userDepositMinUnit;
 
     // @dev The deposit amount required to become an Ethereum validator.
-    uint128 public validatorDepositAmount;
+    uint128 public override validatorDepositAmount;
 
     // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
-    bytes public withdrawalCredentials;
+    bytes public override withdrawalCredentials;
 
-    /**
-     * @dev See {ISettings-stakingDurations}.
-     */
-    mapping(address => uint256) public stakingDurations;
+    // @dev The mapping between collector and its staking duration.
+    mapping(address => uint256) public override stakingDurations;
 
-    /**
-     * @dev See {ISettings-pausedContracts}.
-     */
-    mapping(address => bool) public pausedContracts;
+    // @dev The mapping between the managed contract and whether it is paused or not.
+    mapping(address => bool) public override pausedContracts;
 
     // @dev Address of the Admins contract.
     IAdmins private admins;
@@ -55,7 +53,7 @@ contract Settings is ISettings, Initializable {
         address _admins,
         address _operators
     )
-        public initializer
+        public override initializer
     {
         maintainer = _maintainer;
         maintainerFee = _maintainerFee;
@@ -69,7 +67,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setUserDepositMinUnit}.
      */
-    function setUserDepositMinUnit(uint64 newValue) external {
+    function setUserDepositMinUnit(uint64 newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
         userDepositMinUnit = newValue;
@@ -79,7 +77,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setValidatorDepositAmount}.
      */
-    function setValidatorDepositAmount(uint128 newValue) external {
+    function setValidatorDepositAmount(uint128 newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
         validatorDepositAmount = newValue;
@@ -89,7 +87,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setWithdrawalCredentials}.
      */
-    function setWithdrawalCredentials(bytes calldata newValue) external {
+    function setWithdrawalCredentials(bytes calldata newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
         withdrawalCredentials = newValue;
@@ -99,7 +97,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setMaintainer}.
      */
-    function setMaintainer(address payable newValue) external {
+    function setMaintainer(address payable newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
         maintainer = newValue;
@@ -109,7 +107,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setMaintainerFee}.
      */
-    function setMaintainerFee(uint64 newValue) external {
+    function setMaintainerFee(uint64 newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
         require(newValue < 10000, "Invalid value.");
 
@@ -120,7 +118,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setStakingDuration}.
      */
-    function setStakingDuration(address collector, uint256 stakingDuration) external {
+    function setStakingDuration(address collector, uint256 stakingDuration) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
         stakingDurations[collector] = stakingDuration;
@@ -130,7 +128,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setContractPaused}.
      */
-    function setContractPaused(address _contract, bool isPaused) external {
+    function setContractPaused(address _contract, bool isPaused) external  override {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
 
         pausedContracts[_contract] = isPaused;

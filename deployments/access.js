@@ -20,11 +20,16 @@ async function deployOperatorsProxy({ networkConfig, adminsProxy }) {
   return proxy.address;
 }
 
-async function deployManagersProxy({ networkConfig, adminsProxy }) {
+async function deployManagersProxy({
+  networkConfig,
+  adminsProxy,
+  solosProxy,
+  groupsProxy,
+}) {
   const proxy = await scripts.create({
     contractAlias: 'Managers',
     methodName: 'initialize',
-    methodArgs: [adminsProxy],
+    methodArgs: [solosProxy, groupsProxy, adminsProxy],
     ...networkConfig,
   });
   return proxy.address;
