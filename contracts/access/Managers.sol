@@ -63,9 +63,9 @@ contract Managers is IManagers, Initializable {
     }
 
     /**
-     * @dev See {IManagers-canTransfer}.
+     * @dev See {IManagers-canTransferValidator}.
      */
-    function canTransfer(bytes32 _entityId, bytes calldata _signature) external override view returns (bool) {
+    function canTransferValidator(bytes32 _entityId, bytes calldata _signature) external override view returns (bool) {
         address manager = transferManagers[_entityId];
         if (manager != address(0)) {
             bytes32 hash = keccak256(abi.encodePacked("validatortransfer", _entityId));

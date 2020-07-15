@@ -223,7 +223,7 @@ contract Pools is Initializable {
         require(operators.isOperator(msg.sender), "Permission denied.");
 
         (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId,) = validators.validators(_validatorId);
-        require(managers.canTransfer(prevEntityId, _managerSignature), "Invalid transfers manager signature.");
+        require(managers.canTransferValidator(prevEntityId, _managerSignature), "Invalid transfers manager signature.");
         require(validatorTransfers.checkTransferAllowed(prevEntityId), "Validator transfer is not allowed.");
 
         // calculate previous entity reward and fee

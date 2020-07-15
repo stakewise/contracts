@@ -43,7 +43,7 @@ interface IManagers {
     * @param _entityId - ID of the entity to transfer validator from.
     * @param _signature - signature of the entity transfer manager.
     */
-    function canTransfer(bytes32 _entityId, bytes calldata _signature) external view returns (bool);
+    function canTransferValidator(bytes32 _entityId, bytes calldata _signature) external view returns (bool);
 
     /**
     * @dev Function for checking whether account can manage entity wallet.
