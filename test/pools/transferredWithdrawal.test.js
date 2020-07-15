@@ -23,12 +23,12 @@ const {
 } = require('../common/utils');
 const { testCases } = require('./withdrawalTestCases');
 
-const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Pools = artifacts.require('Pools');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
+const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
@@ -38,9 +38,9 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
   let networkConfig,
     pools,
     settings,
-    walletsRegistry,
     withdrawals,
     vrc,
+    validators,
     validatorTransfers;
   let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
@@ -77,7 +77,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
     );
     pools = await Pools.at(proxies.pools);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
+    validators = await Validators.at(proxies.validators);
   });
 
   it('user can withdraw deposit and reward from transferred validators', async () => {
@@ -187,7 +187,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
       const { validatorReturn, maintainerReward } = testCases[i];
 
       // assign wallet
-      const { logs } = await walletsRegistry.assignWallet(validatorIds[i], {
+      const { logs } = await validators.assignWallet(validatorIds[i], {
         from: manager,
       });
       let wallet = logs[0].args.wallet;
@@ -202,7 +202,7 @@ contract('Pools (transferred withdrawal)', ([_, ...accounts]) => {
           .add(ether('1'))
           .add(validatorDepositAmount)
       );
-      await withdrawals.enableWithdrawals(wallet, {
+      await withdrawals.unlockWallet(validatorIds[i], {
         from: manager,
       });
     }

@@ -1,7 +1,9 @@
+const { expect } = require('chai');
 const {
   BN,
   expectRevert,
   constants,
+  time,
   ether,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
@@ -25,14 +27,21 @@ const {
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const Settings = artifacts.require('Settings');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
+const Validators = artifacts.require('Validators');
+const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const stakingDuration = new BN(86400);
 
 contract('Pools (register validator)', ([_, ...accounts]) => {
-  let networkConfig, vrc, pools, validatorsRegistry, poolId;
+  let networkConfig,
+    vrc,
+    pools,
+    validators,
+    validatorTransfers,
+    settings,
+    poolId;
   let [
     admin,
     operator,
@@ -57,7 +66,8 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     let {
       pools: poolsProxy,
       operators: operatorsProxy,
-      validatorsRegistry: validatorsRegistryProxy,
+      validators: validatorsProxy,
+      validatorTransfers: validatorTransfersProxy,
       settings: settingsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
@@ -65,16 +75,12 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       vrc: vrc.options.address,
     });
     pools = await Pools.at(poolsProxy);
-    validatorsRegistry = await ValidatorsRegistry.at(validatorsRegistryProxy);
+    validators = await Validators.at(validatorsProxy);
+    settings = await Settings.at(settingsProxy);
+    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
 
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });
-
-    // set staking duration
-    let settings = await Settings.at(settingsProxy);
-    await settings.setStakingDuration(pools.address, stakingDuration, {
-      from: admin,
-    });
 
     // register pool
     let amount1 = getDepositAmount({
@@ -193,6 +199,37 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(pools);
   });
 
+  it('allows transfer for periodic pools', async () => {
+    // set staking duration for the periodic pool
+    await settings.setStakingDuration(pools.address, stakingDuration, {
+      from: admin,
+    });
+
+    // register validator
+    await pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
+      from: operator,
+    });
+    await checkPendingPool(pools, poolId, false);
+    await checkCollectorBalance(pools);
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+    expect(await validatorTransfers.checkTransferAllowed(poolId)).equal(true);
+  });
+
+  it('does not allow transfer for not periodic pools', async () => {
+    // register validator
+    await pools.registerValidator(pubKey, signature, hashTreeRoot, poolId, {
+      from: operator,
+    });
+    await checkPendingPool(pools, poolId, false);
+    await checkCollectorBalance(pools);
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+    expect(await validatorTransfers.checkTransferAllowed(poolId)).equal(false);
+  });
+
   it('registers validators for pools with validator deposit amount collected', async () => {
     // one pool is already created
     let totalAmount = validatorDepositAmount;
@@ -230,12 +267,11 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       await checkPendingPool(pools, poolIds[i], false);
       await checkValidatorRegistered({
         vrc,
-        stakingDuration,
+        validators,
         transaction: tx,
         entityId: poolIds[i],
         pubKey: validatorRegistrationArgs[i].pubKey,
         collectorAddress: pools.address,
-        validatorsRegistry: validatorsRegistry,
         signature: validatorRegistrationArgs[i].signature,
       });
     }

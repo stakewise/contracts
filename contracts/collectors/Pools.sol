@@ -1,82 +1,101 @@
-pragma solidity 0.5.17;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "../access/Operators.sol";
-import "../validators/IValidatorRegistration.sol";
-import "../validators/ValidatorsRegistry.sol";
-import "../validators/ValidatorTransfers.sol";
-import "../Deposits.sol";
-import "../Settings.sol";
+import "../interfaces/IOperators.sol";
+import "../interfaces/IValidatorRegistration.sol";
+import "../interfaces/IValidators.sol";
+import "../interfaces/IValidatorTransfers.sol";
+import "../interfaces/IDeposits.sol";
+import "../interfaces/ISettings.sol";
+import "../interfaces/IManagers.sol";
 
 /**
  * @title Pools
- * Pools contract collects deposits from any user.
+ *
+ * @dev Pools contract collects deposits from any user.
  * It accumulates deposits, distributes them among pools and registers as validators.
  * The deposits are cancelable until new pool or validator is created.
  */
 contract Pools is Initializable {
     using Address for address payable;
+    using Counters for Counters.Counter;
     using SafeMath for uint256;
 
-    // maps pool ID to whether validator can be registered for it.
+    // @dev Maps pool ID to whether validator can be registered for it.
     mapping(bytes32 => bool) public pendingPools;
 
-    // total amount collected for the new pool.
+    // @dev Total amount collected for the new pool.
     uint256 public collectedAmount;
 
-    // total number of pools created.
-    uint256 public poolsCount;
+    // @dev Total number of pools created.
+    Counters.Counter private poolsCounter;
 
-    // address of the Deposits contract.
-    Deposits private deposits;
+    // @dev Address of the Managers contract.
+    IManagers private managers;
 
-    // address of the Settings contract.
-    Settings private settings;
+    // @dev Address of the Deposits contract.
+    IDeposits private deposits;
 
-    // address of the Operators contract.
-    Operators private operators;
+    // @dev Address of the Settings contract.
+    ISettings private settings;
 
-    // address of the VRC (deployed by Ethereum).
+    // @dev Address of the Operators contract.
+    IOperators private operators;
+
+    // @dev Address of the VRC (deployed by Ethereum).
     IValidatorRegistration private validatorRegistration;
 
-    // address of the Validators Registry contract.
-    ValidatorsRegistry private validatorsRegistry;
+    // @dev Address of the Validators contract.
+    IValidators private validators;
 
-    // address of the Validator Transfers contract.
-    ValidatorTransfers private validatorTransfers;
+    // @dev Address of the Validator Transfers contract.
+    IValidatorTransfers private validatorTransfers;
 
     /**
-    * Constructor for initializing the Pools contract.
+    * @dev Constructor for initializing the Pools contract.
+    * @param _managers - address of the Managers contract.
     * @param _deposits - address of the Deposits contract.
     * @param _settings - address of the Settings contract.
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
-    * @param _validatorsRegistry - address of the Validators Registry contract.
+    * @param _validators - address of the Validators contract.
     * @param _validatorTransfers - address of the Validator Transfers contract.
     */
     function initialize(
-        Deposits _deposits,
-        Settings _settings,
-        Operators _operators,
+        IManagers _managers,
+        IDeposits _deposits,
+        ISettings _settings,
+        IOperators _operators,
         IValidatorRegistration _validatorRegistration,
-        ValidatorsRegistry _validatorsRegistry,
-        ValidatorTransfers _validatorTransfers
+        IValidators _validators,
+        IValidatorTransfers _validatorTransfers
     )
         public initializer
     {
+        managers = _managers;
         deposits = _deposits;
         settings = _settings;
         operators = _operators;
         validatorRegistration = _validatorRegistration;
-        validatorsRegistry = _validatorsRegistry;
+        validators = _validators;
         validatorTransfers = _validatorTransfers;
-        poolsCount = 1;
+        poolsCounter.increment();
     }
 
     /**
-    * Function for adding deposits to pools. If added amount makes the current pool exceed validator deposit amount,
+    * @dev Function for getting pools counter.
+    */
+    function getCounter() external view returns (uint256) {
+        return poolsCounter.current();
+    }
+
+    /**
+    * @dev Function for adding deposits to pools. If added amount makes the current pool exceed validator deposit amount,
     * it will be split between the current pool and the next one. The depositing will be disallowed in case
     * `Pools` contract is paused in `Settings` contract.
     * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
@@ -86,7 +105,7 @@ contract Pools is Initializable {
         require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
         require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
 
-        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCounter.current()));
         uint256 validatorTargetAmount = settings.validatorDepositAmount();
         uint256 toCollect = validatorTargetAmount.sub(collectedAmount);
         if (msg.value > toCollect) {
@@ -100,8 +119,8 @@ contract Pools is Initializable {
                 pendingPools[poolId] = true;
 
                 // create new pool
-                poolsCount++;
-                poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+                poolsCounter.increment();
+                poolId = keccak256(abi.encodePacked(address(this), poolsCounter.current()));
                 toCollect = validatorTargetAmount;
             } while (toProcess > toCollect);
             deposits.addDeposit(poolId, msg.sender, _recipient, toProcess);
@@ -114,20 +133,20 @@ contract Pools is Initializable {
 
         if (collectedAmount == validatorTargetAmount) {
             pendingPools[poolId] = true;
-            poolsCount++;
+            poolsCounter.increment();
             collectedAmount = 0;
         }
     }
 
     /**
-    * Function for canceling deposits in new pool.
+    * @dev Function for canceling deposits in new pool.
     * The deposits are cancelable until new pool or validator is created.
     * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
     * @param _amount - amount to cancel from the deposit.
     */
     function cancelDeposit(address payable _recipient, uint256 _amount) external {
         require(_amount > 0 && _amount.mod(settings.userDepositMinUnit()) == 0, "Invalid deposit cancel amount.");
-        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCount));
+        bytes32 poolId = keccak256(abi.encodePacked(address(this), poolsCounter.current()));
         require(
             deposits.getDeposit(poolId, msg.sender, _recipient) >= _amount,
             "The user does not have specified deposit cancel amount."
@@ -142,7 +161,7 @@ contract Pools is Initializable {
     }
 
     /**
-    * Function for registering validators for the pools which are ready to start staking.
+    * @dev Function for registering validators for the pools which are ready to start staking.
     * @param _pubKey - BLS public key of the validator, generated by the operator.
     * @param _signature - BLS signature of the validator, generated by the operator.
     * @param _depositDataRoot - hash tree root of the deposit data, generated by the operator.
@@ -159,8 +178,10 @@ contract Pools is Initializable {
         require(pendingPools[_poolId], "Invalid pool ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        // set allowance for future transfer
-        validatorTransfers.setAllowance(_poolId, address(0));
+        // allow transfers for periodic pools
+        if (settings.stakingDurations(address(this)) > 0) {
+            validatorTransfers.allowTransfer(_poolId);
+        }
 
         // cleanup pending pool
         delete pendingPools[_poolId];
@@ -168,14 +189,14 @@ contract Pools is Initializable {
         // register validator
         bytes memory withdrawalCredentials = settings.withdrawalCredentials();
         uint256 depositAmount = settings.validatorDepositAmount();
-        validatorsRegistry.register(
+        validators.register(
             _pubKey,
             withdrawalCredentials,
             _poolId,
             depositAmount,
             settings.maintainerFee()
         );
-        validatorRegistration.deposit.value(depositAmount)(
+        validatorRegistration.deposit{value: depositAmount}(
             _pubKey,
             withdrawalCredentials,
             _signature,
@@ -184,7 +205,7 @@ contract Pools is Initializable {
     }
 
     /**
-    * Function for transferring validator ownership to the new pool.
+    * @dev Function for transferring validator ownership to the new pool.
     * @param _validatorId - ID of the validator to transfer.
     * @param _validatorReward - validator current reward.
     * @param _poolId - ID of the pool to register validator for.
@@ -201,21 +222,28 @@ contract Pools is Initializable {
         require(pendingPools[_poolId], "Invalid pool ID.");
         require(operators.isOperator(msg.sender), "Permission denied.");
 
-        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId) = validatorsRegistry.validators(_validatorId);
-        require(validatorTransfers.checkAllowance(prevEntityId, _managerSignature), "Validator transfer is not allowed.");
+        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId,) = validators.validators(_validatorId);
+        require(managers.canTransfer(prevEntityId, _managerSignature), "Invalid transfers manager signature.");
+        require(validatorTransfers.checkTransferAllowed(prevEntityId), "Validator transfer is not allowed.");
 
+        // calculate previous entity reward and fee
         (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
+        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
+        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
 
-        // set allowance for future transfer
-        validatorTransfers.setAllowance(_poolId, address(0));
+        // allow transfer for periodic pool
+        if (settings.stakingDurations(address(this)) > 0) {
+            validatorTransfers.allowTransfer(_poolId);
+        }
+
+        // clean up pending pool
         delete pendingPools[_poolId];
 
         // transfer validator to the new pool
-        validatorsRegistry.update(_validatorId, _poolId, settings.maintainerFee());
+        validators.update(_validatorId, _poolId, settings.maintainerFee());
 
-        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
-        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
-        validatorTransfers.registerTransfer.value(depositAmount)(
+        // register validator transfer
+        validatorTransfers.registerTransfer{value: depositAmount}(
             _validatorId,
             prevEntityId,
             prevEntityReward.sub(maintainerDebt),
