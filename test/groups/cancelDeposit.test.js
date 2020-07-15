@@ -119,7 +119,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -143,7 +142,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -167,7 +165,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -189,7 +186,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -205,7 +201,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -225,7 +220,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: expectedBalance,
     });
     await checkCollectorBalance(groups, expectedBalance);
@@ -279,7 +273,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: groupBalance,
     });
     await checkCollectorBalance(groups, groupBalance);
@@ -309,7 +302,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: expectedBalance,
     });
     await checkCollectorBalance(groups, expectedBalance);
@@ -361,7 +353,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: expectedBalance,
     });
     await checkCollectorBalance(groups, expectedBalance);
@@ -390,7 +381,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: expectedBalance,
     });
     await checkCollectorBalance(groups, expectedBalance);
