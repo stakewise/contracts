@@ -22,25 +22,37 @@ const {
   getEntityId,
 } = require('../common/utils');
 
-const WalletsRegistry = artifacts.require('WalletsRegistry');
+const Validators = artifacts.require('Validators');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const Pools = artifacts.require('Pools');
+const Groups = artifacts.require('Groups');
 
-contract('Withdrawals (enable)', ([_, ...accounts]) => {
+const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const withdrawalPublicKey =
+  '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
+const signature =
+  '0xa763fd95e10a3f54e480174a5df246c4dc447605219d13d971ff02dbbbd3fbba8197b65c4738449ad4dec10c14f5f3b51686c3d75bf58eee6e296a6b8254e7073dc4a73b10256bc6d58c8e24d8d462bec6a9f4c224eae703bf6baf5047ed206b';
+const publicKey =
+  '0xb07ef3635f585b5baeb057a45e7337ab5ba2b1205b43fac3a46e0add8aab242b0fb35a54373ad809405ca05c9cbf34c7';
+const depositDataRoot =
+  '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
+
+contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
   let networkConfig,
     proxies,
     settings,
-    walletsRegistry,
+    validators,
     wallet,
     withdrawals,
     validatorId,
     vrc,
-    pools;
+    pools,
+    groups;
 
-  let [admin, operator, manager, other] = accounts;
+  let [admin, operator, manager, sender, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -65,56 +77,97 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     await managers.addManager(manager, { from: admin });
 
     withdrawals = await Withdrawals.at(proxies.withdrawals);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
+    validators = await Validators.at(proxies.validators);
     settings = await Settings.at(proxies.settings);
     pools = await Pools.at(proxies.pools);
+    groups = await Groups.at(proxies.groups);
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
-      sender: other,
-      recipient: other,
+      sender: sender,
+      recipient: sender,
     });
-    const { logs } = await walletsRegistry.assignWallet(validatorId, {
+    const { logs } = await validators.assignWallet(validatorId, {
       from: manager,
     });
     wallet = logs[0].args.wallet;
   });
 
-  it('user without manager role cannot enable withdrawals', async () => {
-    await send.ether(other, wallet, initialSettings.validatorDepositAmount);
+  it('user without manager role cannot unlock wallet', async () => {
+    await send.ether(sender, wallet, initialSettings.validatorDepositAmount);
     await expectRevert(
-      withdrawals.enableWithdrawals(wallet, {
+      withdrawals.unlockWallet(validatorId, {
         from: operator,
       }),
       'Permission denied.'
     );
   });
 
-  it('cannot enable withdrawals for wallet not assigned to any validator', async () => {
+  it('user without wallet manager role cannot unlock wallet for private entity', async () => {
+    await groups.createPrivateGroup([other], withdrawalPublicKey, {
+      from: sender,
+    });
+
+    const groupId = getEntityId(groups.address, new BN(1));
+    await groups.addDeposit(groupId, other, {
+      from: other,
+      value: validatorDepositAmount,
+    });
+
+    // register validator
+    await groups.registerValidator(
+      publicKey,
+      signature,
+      depositDataRoot,
+      groupId,
+      {
+        from: operator,
+      }
+    );
+    let validatorId = web3.utils.soliditySha3(publicKey);
+
+    // assign wallet
+    const { logs } = await validators.assignWallet(validatorId, {
+      from: sender,
+    });
+    wallet = logs[0].args.wallet;
+
+    // imitate validator withdrawal
+    await send.ether(sender, wallet, validatorDepositAmount.add(ether('1')));
+
     await expectRevert(
-      withdrawals.enableWithdrawals(constants.ZERO_ADDRESS, {
+      withdrawals.unlockWallet(validatorId, {
         from: manager,
       }),
-      'Wallet is not assigned to any validator.'
+      'Permission denied.'
     );
   });
 
-  it('cannot enable withdrawals for wallet with zero balance', async () => {
+  it('cannot unlock wallet for an invalid validator', async () => {
     await expectRevert(
-      withdrawals.enableWithdrawals(wallet, {
+      withdrawals.unlockWallet(constants.ZERO_BYTES32, {
+        from: manager,
+      }),
+      'Validator must have a wallet assigned.'
+    );
+  });
+
+  it('cannot unlock wallet with zero balance', async () => {
+    await expectRevert(
+      withdrawals.unlockWallet(validatorId, {
         from: manager,
       }),
       'Wallet has not enough ether in it.'
     );
   });
 
-  it('cannot enable withdrawals for already unlocked wallet', async () => {
-    await send.ether(other, wallet, initialSettings.validatorDepositAmount);
-    await withdrawals.enableWithdrawals(wallet, {
+  it('cannot unlock wallet twice', async () => {
+    await send.ether(sender, wallet, initialSettings.validatorDepositAmount);
+    await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
     await expectRevert(
-      withdrawals.enableWithdrawals(wallet, {
+      withdrawals.unlockWallet(validatorId, {
         from: manager,
       }),
       'Wallet is already unlocked.'
@@ -122,15 +175,16 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
   });
 
   it("penalty is not applied if balance is not less than validator's deposit", async () => {
-    await send.ether(other, wallet, initialSettings.validatorDepositAmount);
-    const { tx } = await withdrawals.enableWithdrawals(wallet, {
+    await send.ether(sender, wallet, initialSettings.validatorDepositAmount);
+    const { tx } = await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
-    await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validatorId,
+    await expectEvent.inTransaction(tx, withdrawals, 'WalletUnlocked', {
       wallet,
-      usersBalance: initialSettings.validatorDepositAmount,
     });
+    expect(
+      await withdrawals.validatorPenalties(validatorId)
+    ).to.be.bignumber.equal(new BN(0));
   });
 
   it('calculates penalties correctly', async () => {
@@ -147,8 +201,8 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     ];
 
     for (let i = 0; i < tests.length; i++) {
-      await pools.addDeposit(other, {
-        from: other,
+      await pools.addDeposit(sender, {
+        from: sender,
         value: initialSettings.validatorDepositAmount,
       });
       let entityId = getEntityId(pools.address, new BN(i + 2));
@@ -162,7 +216,7 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       });
 
       // Time for withdrawal, assign wallet
-      let receipt = await walletsRegistry.assignWallet(validatorId, {
+      let receipt = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
@@ -170,20 +224,18 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       const [withdrawalReturn, expectedPenalty] = tests[i];
 
       // Withdrawal performed, penalized deposit returned
-      await send.ether(other, wallet, withdrawalReturn);
+      await send.ether(sender, wallet, withdrawalReturn);
 
-      // Enable withdrawals, check whether penalty calculated properly
-      receipt = await withdrawals.enableWithdrawals(wallet, {
+      // Unlock wallet, check whether penalty calculated properly
+      receipt = await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        walletsRegistry,
+        withdrawals,
         'WalletUnlocked',
         {
-          validatorId,
           wallet,
-          usersBalance: withdrawalReturn,
         }
       );
       expect(
@@ -192,34 +244,59 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
     }
   });
 
-  it('unlocks the wallet for withdrawals', async () => {
-    // initially wallet is locked
-    expect((await walletsRegistry.wallets(wallet)).unlocked).equal(false);
-    await send.ether(other, wallet, initialSettings.validatorDepositAmount);
-
-    // enable withdrawals
-    await withdrawals.enableWithdrawals(wallet, {
-      from: manager,
+  it('user with wallet manager role can unlock wallet for private entity', async () => {
+    await groups.createPrivateGroup([other], withdrawalPublicKey, {
+      from: sender,
     });
 
-    // wallet must be unlocked
-    expect((await walletsRegistry.wallets(wallet)).unlocked).equal(true);
+    const groupId = getEntityId(groups.address, new BN(1));
+    await groups.addDeposit(groupId, other, {
+      from: other,
+      value: validatorDepositAmount,
+    });
+
+    // register validator
+    await groups.registerValidator(
+      publicKey,
+      signature,
+      depositDataRoot,
+      groupId,
+      {
+        from: operator,
+      }
+    );
+    let validatorId = web3.utils.soliditySha3(publicKey);
+
+    // assign wallet
+    const { logs } = await validators.assignWallet(validatorId, {
+      from: sender,
+    });
+    wallet = logs[0].args.wallet;
+
+    // imitate validator withdrawal
+    await send.ether(sender, wallet, validatorDepositAmount.add(ether('1')));
+
+    // unlock wallet
+    let receipt = await withdrawals.unlockWallet(validatorId, {
+      from: sender,
+    });
+    await expectEvent.inTransaction(receipt.tx, withdrawals, 'WalletUnlocked', {
+      wallet,
+    });
   });
 
   it("doesn't send maintainer's reward when no profit", async () => {
     // start tracking maintainer's balance
     const maintainerBalance = await balance.tracker(initialSettings.maintainer);
-    await send.ether(other, wallet, initialSettings.validatorDepositAmount);
+    await send.ether(sender, wallet, initialSettings.validatorDepositAmount);
 
-    // enable withdrawals
-    const { tx } = await withdrawals.enableWithdrawals(wallet, {
+    // unlock wallet
+    const { tx } = await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
-    await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validatorId,
+    await expectEvent.inTransaction(tx, withdrawals, 'WalletUnlocked', {
       wallet,
-      usersBalance: initialSettings.validatorDepositAmount,
     });
 
     // maintainer's balance hasn't changed
@@ -259,8 +336,8 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       // set maintainer's fee
       await settings.setMaintainerFee(maintainerFee, { from: admin });
 
-      await pools.addDeposit(other, {
-        from: other,
+      await pools.addDeposit(sender, {
+        from: sender,
         value: initialSettings.validatorDepositAmount,
       });
       let entityId = getEntityId(pools.address, new BN(i + 2));
@@ -274,32 +351,28 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
       });
 
       // time for withdrawal, assign wallet
-      receipt = await walletsRegistry.assignWallet(validatorId, {
+      receipt = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
       // validator receives deposits and rewards from network
       await send.ether(
-        other,
+        sender,
         wallet,
         validatorDepositAmount.add(new BN(validatorReward))
       );
 
-      // enable withdrawals
-      receipt = await withdrawals.enableWithdrawals(wallet, {
+      // unlock wallet
+      receipt = await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        walletsRegistry,
+        withdrawals,
         'WalletUnlocked',
         {
-          validatorId,
           wallet,
-          usersBalance: validatorDepositAmount
-            .add(new BN(validatorReward))
-            .sub(new BN(expectedMaintainerReward)),
         }
       );
 
@@ -321,9 +394,6 @@ contract('Withdrawals (enable)', ([_, ...accounts]) => {
           .add(new BN(validatorReward))
           .sub(new BN(expectedMaintainerReward))
       );
-
-      // wallet unlocked
-      expect((await walletsRegistry.wallets(wallet)).unlocked).equal(true);
     }
   });
 });

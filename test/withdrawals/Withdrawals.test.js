@@ -8,19 +8,13 @@ const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
 
-const WalletsRegistry = artifacts.require('WalletsRegistry');
+const Validators = artifacts.require('Validators');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 
 contract('Withdrawals', ([_, ...accounts]) => {
-  let networkConfig,
-    proxies,
-    walletsRegistry,
-    wallet,
-    withdrawals,
-    validatorId,
-    vrc;
+  let networkConfig, proxies, validators, wallet, withdrawals, validatorId, vrc;
   let [admin, operator, manager, other, ...otherAccounts] = accounts;
 
   before(async () => {
@@ -46,67 +40,67 @@ contract('Withdrawals', ([_, ...accounts]) => {
     await managers.addManager(manager, { from: admin });
 
     withdrawals = await Withdrawals.at(proxies.withdrawals);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
+    validators = await Validators.at(proxies.validators);
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
       operator,
       sender: other,
       recipient: other,
     });
-    const { logs } = await walletsRegistry.assignWallet(validatorId, {
+    const { logs } = await validators.assignWallet(validatorId, {
       from: manager,
     });
     wallet = logs[0].args.wallet;
   });
 
-  it('user cannot withdraw from unknown wallet', async () => {
+  it('user cannot withdraw from unknown validator', async () => {
     await expectRevert(
-      withdrawals.withdraw(constants.ZERO_ADDRESS, other, {
+      withdrawals.withdraw(constants.ZERO_BYTES32, other, {
         from: other,
       }),
-      'Wallet withdrawals are not enabled.'
+      'Wallet is not unlocked yet.'
     );
   });
 
   it('user cannot withdraw from locked wallet', async () => {
     await expectRevert(
-      withdrawals.withdraw(wallet, other, {
+      withdrawals.withdraw(validatorId, other, {
         from: other,
       }),
-      'Wallet withdrawals are not enabled.'
+      'Wallet is not unlocked yet.'
     );
   });
 
   it('user not holding share cannot withdraw from wallet', async () => {
-    // enable withdrawals
+    // unlock wallet
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
-    await withdrawals.enableWithdrawals(wallet, {
+    await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
     await expectRevert(
-      withdrawals.withdraw(wallet, other, {
+      withdrawals.withdraw(validatorId, other, {
         from: otherAccounts[0],
       }),
-      'User does not have a share in this wallet.'
+      'User does not have a share in validator.'
     );
   });
 
   it('user cannot withdraw from the same wallet multiple times', async () => {
-    // enable withdrawals
+    // unlock wallet
     await send.ether(other, wallet, initialSettings.validatorDepositAmount);
-    await withdrawals.enableWithdrawals(wallet, {
+    await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
     // user performs withdrawal first time
-    await withdrawals.withdraw(wallet, other, {
+    await withdrawals.withdraw(validatorId, other, {
       from: other,
     });
 
     // user performs withdrawal second time
     await expectRevert(
-      withdrawals.withdraw(wallet, other, {
+      withdrawals.withdraw(validatorId, other, {
         from: other,
       }),
       'The withdrawal has already been performed.'

@@ -168,7 +168,7 @@ contract('Solos (withdrawal)', ([_, ...accounts]) => {
       // withdrawal performed, penalised deposit returned
       await send.ether(other, wallet, userPenalisedReturn);
 
-      // enable withdrawals
+      // unlock wallet
       receipt = await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });

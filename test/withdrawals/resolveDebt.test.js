@@ -7,6 +7,7 @@ const {
   ether,
   balance,
   constants,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -25,8 +26,8 @@ const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
+const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
@@ -34,6 +35,7 @@ const maintainerFee = new BN('2000');
 const prevEntityReward = ether('0.034871228');
 const prevEntityMaintainerReward = ether('0.0069742456');
 const prevEntityUserReward = ether('0.0278969824');
+const stakingDuration = new BN('31536000');
 
 const curEntityReward = ether('1');
 const curEntityMaintainerReward = ether('0.2');
@@ -46,7 +48,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     settings,
     wallet,
     validatorTransfers,
-    walletsRegistry,
+    validators,
     validatorId;
   let [admin, operator, manager, sender, recipient, other] = accounts;
 
@@ -67,7 +69,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       vrc: vrc.options.address,
     });
     pools = await Pools.at(proxies.pools);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
+    validators = await Validators.at(proxies.validators);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
@@ -83,6 +85,11 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     settings = await Settings.at(proxies.settings);
     await settings.setMaintainerFee(maintainerFee, { from: admin });
 
+    // set staking duration
+    await settings.setStakingDuration(pools.address, stakingDuration, {
+      from: admin,
+    });
+
     // register new validator
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
@@ -90,6 +97,9 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       sender: other,
       recipient: other,
     });
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
 
     // register new ready entity
     await pools.addDeposit(recipient, {
@@ -110,7 +120,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     );
 
     // assign wallet to transferred validator
-    const { logs } = await walletsRegistry.assignWallet(validatorId, {
+    const { logs } = await validators.assignWallet(validatorId, {
       from: manager,
     });
     wallet = logs[0].args.wallet;
@@ -125,7 +135,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     );
   });
 
-  it('resolves validator debts when enabling withdrawals', async () => {
+  it('resolves validator debts when unlocking wallet', async () => {
     let validatorBalance = validatorDepositAmount
       .add(prevEntityReward)
       .add(curEntityReward);
@@ -133,18 +143,14 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     // deposit + rewards received from the chain
     await send.ether(other, wallet, validatorBalance);
 
-    // enable withdrawals
-    const { tx } = await withdrawals.enableWithdrawals(wallet, {
+    // unlock wallet
+    const { tx } = await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
-    // Wallet unlocked
-    await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validatorId,
+    // wallet unlocked
+    await expectEvent.inTransaction(tx, withdrawals, 'WalletUnlocked', {
       wallet,
-      usersBalance: validatorBalance
-        .sub(prevEntityReward)
-        .sub(curEntityMaintainerReward),
     });
 
     // debts and maintainer reward transferred
@@ -167,22 +173,20 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     ).to.be.bignumber.equal(validatorDepositAmount.add(prevEntityUserReward));
   });
 
-  it('resolves validator debts when enabling withdrawals for penalised validator', async () => {
+  it('resolves validator debts when unlocking wallet for penalised validator', async () => {
     let validatorBalance = validatorDepositAmount.sub(ether('3'));
 
     // penalised deposit received from the chain
     await send.ether(other, wallet, validatorBalance);
 
-    // enable withdrawals
-    const { tx } = await withdrawals.enableWithdrawals(wallet, {
+    // unlock wallet
+    const { tx } = await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
     // Wallet unlocked
-    await expectEvent.inTransaction(tx, walletsRegistry, 'WalletUnlocked', {
-      validatorId,
+    await expectEvent.inTransaction(tx, withdrawals, 'WalletUnlocked', {
       wallet,
-      usersBalance: validatorBalance.sub(prevEntityReward),
     });
 
     // debts and maintainer reward transferred
@@ -213,14 +217,14 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     // deposit + rewards received from the chain
     await send.ether(other, wallet, validatorBalance);
 
-    // enable withdrawals first time
-    await withdrawals.enableWithdrawals(wallet, {
+    // unlock wallet first time
+    await withdrawals.unlockWallet(validatorId, {
       from: manager,
     });
 
-    // enable withdrawals second time
+    // unlock wallet second time
     await expectRevert(
-      withdrawals.enableWithdrawals(wallet, {
+      withdrawals.unlockWallet(validatorId, {
         from: manager,
       }),
       'Wallet is already unlocked.'

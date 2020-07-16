@@ -1,52 +1,48 @@
-pragma solidity 0.5.17;
+// SPDX-License-Identifier: GPL-3.0-only
+
+pragma solidity 0.6.11;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-import "./Withdrawals.sol";
+import "../interfaces/IWallet.sol";
 
 /**
  * @title Wallet
- * Each validator will have its own wallet contract which will store validator balance after the withdrawal.
+ *
+ * @dev Each validator will have its own wallet contract which will store validator balance after the withdrawal.
  * The withdrawals can only be performed from the Withdrawals contract.
  */
-contract Wallet is Initializable {
+contract Wallet is IWallet, Initializable {
     using Address for address payable;
 
-    // address of the Withdrawals contract.
-    Withdrawals private withdrawals;
+    // @dev Address of the Withdrawals contract.
+    address private withdrawals;
 
     /**
-    * Event for tracking transfers made to this contract.
-    * @param sender - address of the transfer sender.
-    * @param amount - amount transferred.
-    */
-    event EtherAdded(address indexed sender, uint256 amount);
-
-    /**
-    * Constructor for initializing the Wallet contract.
+    * @dev Constructor for initializing the Wallet contract.
     * @param _withdrawals - address of the Withdrawals contract.
     */
-    function initialize(Withdrawals _withdrawals) public initializer {
+    function initialize(address _withdrawals) public override initializer {
         withdrawals = _withdrawals;
     }
 
     /**
-    * a fallback function to receive transfers.
-    */
-    function() external payable {
-        emit EtherAdded(msg.sender, msg.value);
-    }
-
-    /**
-    * Function for sending ether to the recipient.
+    * @dev Function for sending ether to the recipient.
     * Can only be called from the Withdrawals contract.
     * @param _recipient - address of the recipient.
     * @param _amount - amount to transfer to the recipient.
     */
-    function withdraw(address payable _recipient, uint256 _amount) external {
-        require(msg.sender == address(withdrawals), "Permission denied.");
+    function withdraw(address payable _recipient, uint256 _amount) external override {
+        require(msg.sender == withdrawals, "Permission denied.");
 
         // transfer withdrawal amount to the recipient
         _recipient.sendValue(_amount);
+    }
+
+    /**
+    * @dev The function to receive transfers.
+    */
+    receive() external payable {
+        emit EtherAdded(msg.sender, msg.value);
     }
 }
