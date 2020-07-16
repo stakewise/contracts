@@ -1,11 +1,12 @@
 const { scripts } = require('@openzeppelin/cli');
 
 async function deployPoolsProxy({
+  vrc,
+  managersProxy,
   depositsProxy,
   settingsProxy,
   operatorsProxy,
-  vrc,
-  validatorsRegistryProxy,
+  validatorsProxy,
   validatorTransfersProxy,
   salt,
   networkConfig,
@@ -14,11 +15,12 @@ async function deployPoolsProxy({
     contractAlias: 'Pools',
     methodName: 'initialize',
     methodArgs: [
+      managersProxy,
       depositsProxy,
       settingsProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy,
+      validatorsProxy,
       validatorTransfersProxy,
     ],
     salt,
@@ -28,25 +30,27 @@ async function deployPoolsProxy({
   return proxy.address;
 }
 
-async function deployIndividualsProxy({
+async function deploySolosProxy({
   depositsProxy,
   settingsProxy,
   operatorsProxy,
+  managersProxy,
   vrc,
-  validatorsRegistryProxy,
+  validatorsProxy,
   validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Individuals',
+    contractAlias: 'Solos',
     methodName: 'initialize',
     methodArgs: [
       depositsProxy,
       settingsProxy,
+      managersProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy,
+      validatorsProxy,
       validatorTransfersProxy,
     ],
     salt,
@@ -60,8 +64,9 @@ async function deployGroupsProxy({
   depositsProxy,
   settingsProxy,
   operatorsProxy,
+  managersProxy,
   vrc,
-  validatorsRegistryProxy,
+  validatorsProxy,
   validatorTransfersProxy,
   salt,
   networkConfig,
@@ -72,36 +77,11 @@ async function deployGroupsProxy({
     methodArgs: [
       depositsProxy,
       settingsProxy,
+      managersProxy,
       operatorsProxy,
       vrc,
-      validatorsRegistryProxy,
+      validatorsProxy,
       validatorTransfersProxy,
-    ],
-    salt,
-    ...networkConfig,
-  });
-
-  return proxy.address;
-}
-
-async function deployPrivateIndividualsProxy({
-  depositsProxy,
-  settingsProxy,
-  operatorsProxy,
-  vrc,
-  validatorsRegistryProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'PrivateIndividuals',
-    methodName: 'initialize',
-    methodArgs: [
-      depositsProxy,
-      settingsProxy,
-      operatorsProxy,
-      vrc,
-      validatorsRegistryProxy,
     ],
     salt,
     ...networkConfig,
@@ -112,7 +92,6 @@ async function deployPrivateIndividualsProxy({
 
 module.exports = {
   deployPoolsProxy,
-  deployIndividualsProxy,
-  deployPrivateIndividualsProxy,
+  deploySolosProxy,
   deployGroupsProxy,
 };

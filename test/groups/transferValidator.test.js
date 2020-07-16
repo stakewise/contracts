@@ -136,7 +136,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -158,7 +157,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -180,7 +178,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -203,7 +200,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -230,7 +226,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -273,7 +268,6 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: newGroupId,
-      manager,
       collectedAmount: newValidatorDepositAmount,
     });
     await checkCollectorBalance(

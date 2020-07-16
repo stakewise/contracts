@@ -17,21 +17,21 @@ const {
   removeNetworkFile,
   checkUserTotalAmount,
   checkCollectorBalance,
-  checkIndividualManager,
+  checkPendingSolo,
   checkDepositCanceled,
   getEntityId,
   validatorRegistrationArgs,
 } = require('../common/utils');
 
 const Deposits = artifacts.require('Deposits');
-const Individuals = artifacts.require('Individuals');
+const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
 
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, individuals, individualId;
+contract('Solos (cancel deposit)', ([_, ...accounts]) => {
+  let networkConfig, deposits, vrc, solos, soloId;
   let [admin, operator, sender1, recipient1] = accounts;
 
   before(async () => {
@@ -47,30 +47,30 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       deposits: depositsProxy,
-      individuals: individualsProxy,
+      solos: solosProxy,
       operators: operatorsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
     });
-    individuals = await Individuals.at(individualsProxy);
+    solos = await Solos.at(solosProxy);
     deposits = await Deposits.at(depositsProxy);
 
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });
 
-    // create new individual
-    await individuals.addDeposit(recipient1, {
+    // create new solo
+    await solos.addDeposit(recipient1, {
       from: sender1,
       value: validatorDepositAmount,
     });
-    individualId = getEntityId(individuals.address, new BN(1));
+    soloId = getEntityId(solos.address, new BN(1));
   });
 
   it('fails to cancel a deposit with invalid recipient address', async () => {
     await expectRevert(
-      individuals.cancelDeposit(individualId, constants.ZERO_ADDRESS, {
+      solos.cancelDeposit(soloId, constants.ZERO_ADDRESS, {
         from: sender1,
       }),
       'The user does not have a deposit.'
@@ -78,18 +78,18 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: validatorDepositAmount,
-      entityId: individualId,
-      collectorAddress: individuals.address,
+      entityId: soloId,
+      collectorAddress: solos.address,
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkIndividualManager(individuals, individualId, sender1);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
+    await checkPendingSolo({ solos, soloId, amount: validatorDepositAmount });
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
   it('fails to cancel a deposit for other user account', async () => {
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
+      solos.cancelDeposit(soloId, recipient1, {
         from: recipient1,
       }),
       'The user does not have a deposit.'
@@ -97,28 +97,22 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: validatorDepositAmount,
-      entityId: individualId,
-      collectorAddress: individuals.address,
+      entityId: soloId,
+      collectorAddress: solos.address,
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkIndividualManager(individuals, individualId, sender1);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
+    await checkPendingSolo({ solos, soloId, amount: validatorDepositAmount });
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
   it('fails to cancel a deposit with registered validator', async () => {
-    await individuals.registerValidator(
-      pubKey,
-      signature,
-      hashTreeRoot,
-      individualId,
-      {
-        from: operator,
-      }
-    );
+    await solos.registerValidator(pubKey, signature, hashTreeRoot, soloId, {
+      from: operator,
+    });
 
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
+      solos.cancelDeposit(soloId, recipient1, {
         from: sender1,
       }),
       'Cannot cancel deposit which has started staking.'
@@ -126,39 +120,39 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     await checkUserTotalAmount({
       depositsContract: deposits,
       expectedAmount: validatorDepositAmount,
-      entityId: individualId,
-      collectorAddress: individuals.address,
+      entityId: soloId,
+      collectorAddress: solos.address,
       senderAddress: sender1,
       recipientAddress: recipient1,
     });
-    await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
   });
 
   it('fails to cancel deposit amount twice', async () => {
-    await individuals.cancelDeposit(individualId, recipient1, {
+    await solos.cancelDeposit(soloId, recipient1, {
       from: sender1,
     });
     await expectRevert(
-      individuals.cancelDeposit(individualId, recipient1, {
+      solos.cancelDeposit(soloId, recipient1, {
         from: sender1,
       }),
       'The user does not have a deposit.'
     );
-    await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
   });
 
   it('cancels deposit in full amount', async () => {
     const recipientBalance = await balance.tracker(recipient1);
-    const { tx } = await individuals.cancelDeposit(individualId, recipient1, {
+    const { tx } = await solos.cancelDeposit(soloId, recipient1, {
       from: sender1,
     });
     await checkDepositCanceled({
       transaction: tx,
       depositsContract: deposits,
-      collectorAddress: individuals.address,
-      entityId: individualId,
+      collectorAddress: solos.address,
+      entityId: soloId,
       senderAddress: sender1,
       recipientAddress: recipient1,
       canceledAmount: validatorDepositAmount,
@@ -169,7 +163,7 @@ contract('Individuals (cancel deposit)', ([_, ...accounts]) => {
     expect(await recipientBalance.delta()).to.be.bignumber.equal(
       validatorDepositAmount
     );
-    await checkIndividualManager(individuals, individualId);
-    await checkCollectorBalance(individuals);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
   });
 });

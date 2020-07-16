@@ -251,11 +251,13 @@ contract Groups is Initializable {
         PendingGroup memory pendingGroup = pendingGroups[_groupId];
         require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
 
-        bytes memory withdrawalCredentials = pendingGroup.withdrawalCredentials;
         uint256 maintainerFee;
+        bytes memory withdrawalCredentials = pendingGroup.withdrawalCredentials;
         if (withdrawalCredentials.length == 0) {
-            // allow transfer for not private groups
+            // set custodial withdrawal credentials
             withdrawalCredentials = settings.withdrawalCredentials();
+
+            // allow transfer for not private groups
             validatorTransfers.allowTransfer(_groupId);
 
             // set maintainer fee for not private groups

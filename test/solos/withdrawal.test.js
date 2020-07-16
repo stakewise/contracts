@@ -20,15 +20,15 @@ const {
 } = require('../common/utils');
 const { testCases, penalisedTestCases } = require('./withdrawalTestCases');
 
-const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
-const Individuals = artifacts.require('Individuals');
+const Solos = artifacts.require('Solos');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
+const Validators = artifacts.require('Validators');
 
-contract('Individuals (withdrawal)', ([_, ...accounts]) => {
-  let networkConfig, individuals, settings, walletsRegistry, withdrawals, vrc;
+contract('Solos (withdrawal)', ([_, ...accounts]) => {
+  let networkConfig, solos, settings, withdrawals, vrc, validators;
   let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
   before(async () => {
@@ -53,13 +53,13 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
     let managers = await Managers.at(proxies.managers);
     await managers.addManager(manager, { from: admin });
 
-    individuals = await Individuals.at(proxies.individuals);
+    solos = await Solos.at(proxies.solos);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     settings = await Settings.at(proxies.settings);
+    validators = await Validators.at(proxies.validators);
   });
 
-  it('can withdraw individual deposit and reward from validator', async () => {
+  it('can withdraw solo deposit and reward from validator', async () => {
     for (const [
       testCaseN,
       { maintainerFee, maintainerReward, userDeposit, userReward },
@@ -68,25 +68,22 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       await settings.setMaintainerFee(maintainerFee, { from: admin });
 
       // user performs deposit equal to validator deposit amount
-      await individuals.addDeposit(otherAccounts[0], {
+      await solos.addDeposit(otherAccounts[0], {
         from: sender,
         value: userDeposit,
       });
 
       // register validator
-      let individualId = getEntityId(
-        individuals.address,
-        new BN(testCaseN + 1)
-      );
+      let soloId = getEntityId(solos.address, new BN(testCaseN + 1));
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        entityId: individualId,
-        individualsProxy: individuals.address,
+        entityId: soloId,
+        solosProxy: solos.address,
         operator,
       });
 
       // time for withdrawal, assign wallet
-      let receipt = await walletsRegistry.assignWallet(validatorId, {
+      let receipt = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
@@ -95,25 +92,23 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       let walletBalance = userDeposit.add(maintainerReward).add(userReward);
       await send.ether(other, wallet, walletBalance);
 
-      // enable withdrawals
-      receipt = await withdrawals.enableWithdrawals(wallet, {
+      // unlock wallet
+      receipt = await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        walletsRegistry,
+        withdrawals,
         'WalletUnlocked',
         {
-          validatorId,
           wallet,
-          usersBalance: walletBalance.sub(maintainerReward),
         }
       );
 
       // maintainer has withdrawn correct fee
       expectEvent(receipt, 'MaintainerWithdrawn', {
         maintainer: initialSettings.maintainer,
-        entityId: individualId,
+        entityId: soloId,
         amount: maintainerReward,
       });
       walletBalance.isub(maintainerReward);
@@ -122,12 +117,12 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       const userBalance = await balance.tracker(otherAccounts[0]);
 
       // user withdraws his deposit and reward
-      receipt = await withdrawals.withdraw(wallet, otherAccounts[0], {
+      receipt = await withdrawals.withdraw(validatorId, otherAccounts[0], {
         from: sender,
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId: individualId,
+        entityId: soloId,
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: userDeposit,
@@ -144,51 +139,45 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
     }
   });
 
-  it('can withdraw individual deposit from penalised validator', async () => {
+  it('can withdraw solo deposit from penalised validator', async () => {
     for (const [
       testCaseN,
       { userDeposit, userPenalisedReturn },
     ] of penalisedTestCases.entries()) {
       // user performs deposit equal to validator deposit amount
-      await individuals.addDeposit(otherAccounts[0], {
+      await solos.addDeposit(otherAccounts[0], {
         from: sender,
         value: userDeposit,
       });
 
       // register validator
-      let individualId = getEntityId(
-        individuals.address,
-        new BN(testCaseN + 1)
-      );
+      let soloId = getEntityId(solos.address, new BN(testCaseN + 1));
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        entityId: individualId,
-        individualsProxy: individuals.address,
+        entityId: soloId,
+        solosProxy: solos.address,
         operator,
       });
 
       // time for withdrawal, assign wallet
-      let receipt = await walletsRegistry.assignWallet(validatorId, {
+      let receipt = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = receipt.logs[0].args.wallet;
 
       // withdrawal performed, penalised deposit returned
-      let walletBalance = userPenalisedReturn;
-      await send.ether(other, wallet, walletBalance);
+      await send.ether(other, wallet, userPenalisedReturn);
 
       // enable withdrawals
-      receipt = await withdrawals.enableWithdrawals(wallet, {
+      receipt = await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        walletsRegistry,
+        withdrawals,
         'WalletUnlocked',
         {
-          validatorId,
           wallet,
-          usersBalance: walletBalance,
         }
       );
 
@@ -196,12 +185,12 @@ contract('Individuals (withdrawal)', ([_, ...accounts]) => {
       const userBalance = await balance.tracker(otherAccounts[0]);
 
       // user withdraws his deposit and reward
-      receipt = await withdrawals.withdraw(wallet, otherAccounts[0], {
+      receipt = await withdrawals.withdraw(validatorId, otherAccounts[0], {
         from: sender,
       });
 
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId: individualId,
+        entityId: soloId,
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: userPenalisedReturn,

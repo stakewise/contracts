@@ -23,26 +23,26 @@ const {
 } = require('../common/utils');
 const { testCases } = require('./withdrawalTestCases');
 
-const WalletsRegistry = artifacts.require('WalletsRegistry');
 const Withdrawals = artifacts.require('Withdrawals');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-const Individuals = artifacts.require('Individuals');
+const Validators = artifacts.require('Validators');
+const Solos = artifacts.require('Solos');
 const Pools = artifacts.require('Pools');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
 
-contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
+contract('Solos (transferred withdrawal)', ([_, ...accounts]) => {
   let networkConfig,
-    individuals,
+    solos,
     pools,
     settings,
-    walletsRegistry,
     withdrawals,
     vrc,
+    validators,
     validatorTransfers;
   let [admin, operator, manager, other, sender, ...otherAccounts] = accounts;
 
@@ -70,17 +70,17 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
-    await settings.setStakingDuration(proxies.individuals, stakingDuration, {
+    await settings.setStakingDuration(proxies.solos, stakingDuration, {
       from: admin,
     });
 
+    validators = await Validators.at(proxies.validators);
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
     );
-    individuals = await Individuals.at(proxies.individuals);
+    solos = await Solos.at(proxies.solos);
     pools = await Pools.at(proxies.pools);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
   });
 
   it('user can withdraw deposit and reward from transferred validator', async () => {
@@ -92,20 +92,17 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
       await settings.setMaintainerFee(maintainerFee, { from: admin });
 
       // user performs deposit equal to validator deposit amount
-      await individuals.addDeposit(otherAccounts[0], {
+      await solos.addDeposit(otherAccounts[0], {
         from: sender,
         value: userDeposit,
       });
 
       // register validator
-      let individualId = getEntityId(
-        individuals.address,
-        new BN(testCaseN + 1)
-      );
+      let soloId = getEntityId(solos.address, new BN(testCaseN + 1));
       let validatorId = await registerValidator({
         args: validatorRegistrationArgs[testCaseN],
-        entityId: individualId,
-        individualsProxy: individuals.address,
+        entityId: soloId,
+        solosProxy: solos.address,
         operator,
       });
 
@@ -121,7 +118,7 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
 
       let prevEntityManagerSignature = await signValidatorTransfer(
         sender,
-        individualId
+        soloId
       );
 
       // transfer validator to the new entity
@@ -140,14 +137,14 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
 
       // User withdraws deposit
       let receipt = await validatorTransfers.withdraw(
-        individualId,
+        soloId,
         otherAccounts[0],
         {
           from: sender,
         }
       );
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId: individualId,
+        entityId: soloId,
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: userDeposit,
@@ -163,27 +160,23 @@ contract('Individuals (transferred withdrawal)', ([_, ...accounts]) => {
       ).to.be.bignumber.equal(new BN(0));
 
       // assign wallet
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
+      const { logs } = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = logs[0].args.wallet;
 
-      // enable withdrawals
+      // unlock wallet
       await send.ether(other, wallet, validatorReturn.add(ether('1')));
-      await withdrawals.enableWithdrawals(wallet, {
+      await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
 
       // user withdraws reward
-      receipt = await validatorTransfers.withdraw(
-        individualId,
-        otherAccounts[0],
-        {
-          from: sender,
-        }
-      );
+      receipt = await validatorTransfers.withdraw(soloId, otherAccounts[0], {
+        from: sender,
+      });
       expectEvent(receipt, 'UserWithdrawn', {
-        entityId: individualId,
+        entityId: soloId,
         sender: sender,
         recipient: otherAccounts[0],
         depositAmount: new BN(0),

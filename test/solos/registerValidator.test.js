@@ -4,7 +4,6 @@ const {
   expectRevert,
   constants,
   time,
-  ether,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -16,14 +15,14 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
-  checkPendingGroup,
+  checkPendingSolo,
   checkValidatorRegistered,
-  validatorRegistrationArgs,
   signValidatorTransfer,
+  validatorRegistrationArgs,
   getEntityId,
 } = require('../common/utils');
 
-const Groups = artifacts.require('Groups');
+const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
 const Settings = artifacts.require('Settings');
 const Validators = artifacts.require('Validators');
@@ -43,16 +42,15 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 const stakingDuration = new BN(86400);
 
-contract('Groups (register validator)', ([_, ...accounts]) => {
+contract('Solos (register validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
     validators,
     validatorTransfers,
-    groups,
     managers,
-    groupId;
-  let [admin, operator, manager, sender, recipient, other] = accounts;
-  let groupMembers = [sender];
+    solos,
+    soloId;
+  let [admin, operator, sender, recipient, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -66,45 +64,42 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
 
   beforeEach(async () => {
     let {
-      groups: groupsProxy,
-      managers: managersProxy,
+      solos: solosProxy,
       operators: operatorsProxy,
       validators: validatorsProxy,
-      validatorTransfers: validatorTransfersProxy,
+      validatorTransfers: validatorTransferProxy,
       settings: settingsProxy,
+      managers: managersProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
     });
-    groups = await Groups.at(groupsProxy);
+    solos = await Solos.at(solosProxy);
     validators = await Validators.at(validatorsProxy);
-    validatorTransfers = await ValidatorTransfers.at(validatorTransfersProxy);
     managers = await Managers.at(managersProxy);
+    validatorTransfers = await ValidatorTransfers.at(validatorTransferProxy);
 
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });
 
     // set staking duration
     let settings = await Settings.at(settingsProxy);
-    await settings.setStakingDuration(groups.address, stakingDuration, {
+    await settings.setStakingDuration(solos.address, stakingDuration, {
       from: admin,
     });
 
-    // register group
-    await groups.createGroup(groupMembers, {
-      from: manager,
-    });
-    groupId = getEntityId(groups.address, new BN(1));
-    await groups.addDeposit(groupId, recipient, {
+    // create new solo
+    await solos.addDeposit(recipient, {
       from: sender,
       value: validatorDepositAmount,
     });
+    soloId = getEntityId(solos.address, new BN(1));
   });
 
-  it('fails to register validator for invalid group', async () => {
+  it('fails to register validator for invalid solo deposit', async () => {
     await expectRevert(
-      groups.registerValidator(
+      solos.registerValidator(
         validatorRegistrationArgs[0].pubKey,
         validatorRegistrationArgs[0].signature,
         validatorRegistrationArgs[0].hashTreeRoot,
@@ -115,239 +110,190 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       ),
       'Invalid validator deposit amount.'
     );
-    await checkPendingGroup({
-      groups,
-      groupId,
-      collectedAmount: validatorDepositAmount,
+    await checkPendingSolo({
+      solos,
+      soloId,
+      amount: validatorDepositAmount,
     });
-    await checkCollectorBalance(groups, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
   it('fails to register validator with callers other than operator', async () => {
     await expectRevert(
-      groups.registerValidator(
+      solos.registerValidator(
         validatorRegistrationArgs[0].pubKey,
         validatorRegistrationArgs[0].signature,
         validatorRegistrationArgs[0].hashTreeRoot,
-        groupId,
+        soloId,
         {
           from: other,
         }
       ),
       'Permission denied.'
     );
-    await checkPendingGroup({
-      groups,
-      groupId,
-      collectedAmount: validatorDepositAmount,
+    await checkPendingSolo({
+      solos,
+      soloId,
+      amount: validatorDepositAmount,
     });
-    await checkCollectorBalance(groups, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
   it('fails to register validator with used public key', async () => {
     // Register validator 1
-    await groups.registerValidator(
+    await solos.registerValidator(
       validatorRegistrationArgs[0].pubKey,
       validatorRegistrationArgs[0].signature,
       validatorRegistrationArgs[0].hashTreeRoot,
-      groupId,
+      soloId,
       {
         from: operator,
       }
     );
-    await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
 
-    // create new group
-    await groups.createGroup(groupMembers, {
-      from: manager,
-    });
-    groupId = getEntityId(groups.address, new BN(2));
-    await groups.addDeposit(groupId, recipient, {
+    // Register validator 2 with the same validator public key
+    await solos.addDeposit(recipient, {
       from: sender,
       value: validatorDepositAmount,
     });
-
-    // Register validator 2 with the same validator public key
+    soloId = getEntityId(solos.address, new BN(2));
     await expectRevert(
-      groups.registerValidator(
+      solos.registerValidator(
         validatorRegistrationArgs[0].pubKey,
         validatorRegistrationArgs[0].signature,
         validatorRegistrationArgs[0].hashTreeRoot,
-        groupId,
+        soloId,
         {
           from: operator,
         }
       ),
       'Public key has been already used.'
     );
-    await checkPendingGroup({
-      groups,
-      groupId,
-      collectedAmount: validatorDepositAmount,
-    });
-    await checkCollectorBalance(groups, validatorDepositAmount);
+    await checkPendingSolo({ solos, soloId, amount: validatorDepositAmount });
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
-  it('fails to register validator for group which did not collect validator deposit amount', async () => {
-    let newBalance = validatorDepositAmount.sub(ether('1'));
-    await groups.cancelDeposit(groupId, recipient, newBalance, {
-      from: sender,
-    });
-    await expectRevert(
-      groups.registerValidator(
-        validatorRegistrationArgs[0].pubKey,
-        validatorRegistrationArgs[0].signature,
-        validatorRegistrationArgs[0].hashTreeRoot,
-        groupId,
-        {
-          from: operator,
-        }
-      ),
-      'Invalid validator deposit amount.'
-    );
-    await checkPendingGroup({
-      groups,
-      groupId,
-      collectedAmount: ether('1'),
-    });
-    await checkCollectorBalance(groups, ether('1'));
-  });
-
-  it('fails to register validator for the same group twice', async () => {
+  it('fails to register validator for the same solo twice', async () => {
     // Register validator first time
-    await groups.registerValidator(
+    await solos.registerValidator(
       validatorRegistrationArgs[0].pubKey,
       validatorRegistrationArgs[0].signature,
       validatorRegistrationArgs[0].hashTreeRoot,
-      groupId,
+      soloId,
       {
         from: operator,
       }
     );
-    await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
 
     // Register validator second time
     await expectRevert(
-      groups.registerValidator(
+      solos.registerValidator(
         validatorRegistrationArgs[0].pubKey,
         validatorRegistrationArgs[0].signature,
         validatorRegistrationArgs[0].hashTreeRoot,
-        groupId,
+        soloId,
         {
           from: operator,
         }
       ),
       'Invalid validator deposit amount.'
     );
-    await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups);
+    await checkPendingSolo({ solos, soloId });
+    await checkCollectorBalance(solos);
   });
 
-  it('registers validators for groups', async () => {
-    // one group is already created
+  it('registers validators for solos', async () => {
+    // one solo is already created
     let totalAmount = validatorDepositAmount;
 
-    // create registrable groups
-    let groupIds = [groupId];
+    // create registrable solos
+    let soloIds = [soloId];
     for (let i = 1; i < validatorRegistrationArgs.length; i++) {
-      let receipt = await groups.createGroup(groupMembers, {
-        from: manager,
-      });
-      groupId = receipt.logs[0].args.groupId;
-      groupIds.push(groupId);
-
-      await groups.addDeposit(groupId, recipient, {
+      await solos.addDeposit(recipient, {
         from: sender,
         value: validatorDepositAmount,
       });
-      await checkPendingGroup({
-        groups,
-        groupId,
-        collectedAmount: validatorDepositAmount,
-      });
+      soloId = getEntityId(solos.address, new BN(i + 1));
+      soloIds.push(soloId);
+
+      await checkPendingSolo({ solos, soloId, amount: validatorDepositAmount });
       totalAmount = totalAmount.add(validatorDepositAmount);
     }
 
     // check balance increased correctly
-    await checkCollectorBalance(groups, totalAmount);
+    await checkCollectorBalance(solos, totalAmount);
 
     // register validators
     for (let i = 0; i < validatorRegistrationArgs.length; i++) {
-      const { tx } = await groups.registerValidator(
+      const { tx } = await solos.registerValidator(
         validatorRegistrationArgs[i].pubKey,
         validatorRegistrationArgs[i].signature,
         validatorRegistrationArgs[i].hashTreeRoot,
-        groupIds[i],
+        soloIds[i],
         {
           from: operator,
         }
       );
       totalAmount = totalAmount.sub(validatorDepositAmount);
 
-      await checkPendingGroup({ groups, groupId: groupIds[i] });
+      await checkPendingSolo({ solos, soloId: soloIds[i] });
       await checkValidatorRegistered({
         vrc,
         stakingDuration,
         validators,
         transaction: tx,
-        entityId: groupIds[i],
+        entityId: soloIds[i],
         pubKey: validatorRegistrationArgs[i].pubKey,
-        collectorAddress: groups.address,
+        collectorAddress: solos.address,
         signature: validatorRegistrationArgs[i].signature,
       });
 
       // check manager permissions
-      expect(await managers.canManageWallet(groupIds[i], manager)).equal(false);
+      expect(await managers.canManageWallet(soloIds[i], sender)).equal(false);
       expect(
         await managers.canTransferValidator(
-          groupIds[i],
-          await signValidatorTransfer(manager, groupIds[i])
+          soloIds[i],
+          await signValidatorTransfer(sender, soloIds[i])
         )
       ).equal(true);
 
       // wait until staking duration has passed
       await time.increase(time.duration.seconds(stakingDuration));
-      expect(await validatorTransfers.checkTransferAllowed(groupIds[i])).equal(
+      expect(await validatorTransfers.checkTransferAllowed(soloIds[i])).equal(
         true
       );
     }
-    await checkCollectorBalance(groups);
+    await checkCollectorBalance(solos);
   });
 
-  it('registers validators for private groups', async () => {
-    // create private group
-    let receipt = await groups.createPrivateGroup(
-      groupMembers,
-      withdrawalPublicKey,
-      {
-        from: manager,
-      }
-    );
-    groupId = receipt.logs[0].args.groupId;
-
-    await groups.addDeposit(groupId, recipient, {
+  it('registers validators for private solos', async () => {
+    // create private solo deposit
+    await solos.addPrivateDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
-    await checkPendingGroup({
-      groups,
-      groupId,
+    soloId = getEntityId(solos.address, new BN(2));
+    await checkPendingSolo({
+      solos,
+      soloId,
       withdrawalCredentials,
-      collectedAmount: validatorDepositAmount,
+      amount: validatorDepositAmount,
     });
 
     // check balance increased correctly
-    // multiply by 2 as there is already one filled group in contract
-    await checkCollectorBalance(groups, validatorDepositAmount.mul(new BN(2)));
+    // multiply by 2 as there is already one solo deposit in contract
+    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(2)));
 
     // register validator
-    const { tx } = await groups.registerValidator(
+    let receipt = await solos.registerValidator(
       publicKey,
       signature,
       depositDataRoot,
-      groupId,
+      soloId,
       {
         from: operator,
       }
@@ -356,30 +302,30 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     await checkValidatorRegistered({
       vrc,
       stakingDuration,
-      validators,
-      transaction: tx,
-      entityId: groupId,
+      transaction: receipt.tx,
+      entityId: soloId,
       pubKey: publicKey,
-      collectorAddress: groups.address,
+      collectorAddress: solos.address,
+      validators,
       signature,
       withdrawalCredentials,
       maintainerFee: new BN(0),
     });
 
     // check manager permissions
-    expect(await managers.canManageWallet(groupId, manager)).equal(true);
+    expect(await managers.canManageWallet(soloId, sender)).equal(true);
     expect(
       await managers.canTransferValidator(
-        groupId,
-        await signValidatorTransfer(manager, groupId)
+        soloId,
+        await signValidatorTransfer(sender, soloId)
       )
     ).equal(true);
 
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));
-    expect(await validatorTransfers.checkTransferAllowed(groupId)).equal(false);
+    expect(await validatorTransfers.checkTransferAllowed(soloId)).equal(false);
 
-    // there was one already filled group in contract
-    await checkCollectorBalance(groups, validatorDepositAmount);
+    // there was already one solo deposit in contract
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 });
