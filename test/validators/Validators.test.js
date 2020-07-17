@@ -24,6 +24,7 @@ const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Validators = artifacts.require('Validators');
 const Solos = artifacts.require('Solos');
+const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const withdrawalPublicKey =
@@ -36,7 +37,7 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 
 contract('Validators', ([_, ...accounts]) => {
-  let networkConfig, validators, solos, vrc, validatorId;
+  let networkConfig, validators, solos, vrc, settings, validatorId;
   let [admin, operator, manager, sender, anyone] = accounts;
   let users = [admin, operator, anyone];
 
@@ -58,6 +59,7 @@ contract('Validators', ([_, ...accounts]) => {
     });
     validators = await Validators.at(proxies.validators);
     solos = await Solos.at(proxies.solos);
+    settings = await Settings.at(proxies.settings);
 
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -210,6 +212,20 @@ contract('Validators', ([_, ...accounts]) => {
         validatorId,
       });
       expect((await validators.validators(validatorId)).wallet).equal(wallet);
+    });
+
+    it('fails to assign wallet if validators contract paused', async () => {
+      await settings.setContractPaused(validators.address, true, {
+        from: admin,
+      });
+      expect(await settings.pausedContracts(validators.address)).equal(true);
+
+      await expectRevert(
+        validators.assignWallet(validatorId, {
+          from: manager,
+        }),
+        'Wallets assignment is currently disabled.'
+      );
     });
   });
 });
