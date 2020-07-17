@@ -99,6 +99,7 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
     });
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: groupId,
+      manager,
       withdrawalPublicKey,
       withdrawalCredentials,
     });

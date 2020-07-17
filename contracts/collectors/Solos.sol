@@ -65,11 +65,13 @@ contract Solos is Initializable {
     /**
     * @dev Event for tracking solo deposit own withdrawal public key.
     * @param entityId - ID of the solo deposit the key belongs to.
+    * @param manager - address of the solo deposit manager.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the deposit sender.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
     event WithdrawalKeyAdded(
         bytes32 indexed entityId,
+        address manager,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -166,7 +168,7 @@ contract Solos is Initializable {
             managers.addWalletManager(soloId, msg.sender);
 
             // emit event
-            emit WithdrawalKeyAdded(soloId, _publicKey, withdrawalCredentials);
+            emit WithdrawalKeyAdded(soloId, msg.sender, _publicKey, withdrawalCredentials);
 
             depositsCount--;
         } while (depositsCount > 0);

@@ -76,11 +76,13 @@ contract Groups is Initializable {
     /**
     * @dev Event for tracking group own withdrawal public key.
     * @param entityId - ID of the group the key belongs to.
+    * @param manager - address of the entity manager.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the group creator.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
     event WithdrawalKeyAdded(
         bytes32 indexed entityId,
+        address manager,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -176,7 +178,7 @@ contract Groups is Initializable {
 
         // emit events
         emit GroupCreated(msg.sender, groupId, _members);
-        emit WithdrawalKeyAdded(groupId, _publicKey, withdrawalCredentials);
+        emit WithdrawalKeyAdded(groupId, msg.sender, _publicKey, withdrawalCredentials);
     }
 
     /**
