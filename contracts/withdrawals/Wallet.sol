@@ -40,9 +40,7 @@ contract Wallet is IWallet, Initializable {
     }
 
     /**
-    * @dev The function to receive transfers.
+    * @dev Fallback function to receive transfers.
     */
-    receive() external payable {
-        emit EtherAdded(msg.sender, msg.value);
-    }
+    receive() external payable {}
 }

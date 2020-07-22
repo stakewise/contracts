@@ -7,13 +7,6 @@ pragma solidity 0.6.11;
  */
 interface IWallet {
     /**
-    * @dev Event for tracking transfers made to this contract.
-    * @param sender - address of the transfer sender.
-    * @param amount - amount transferred.
-    */
-    event EtherAdded(address indexed sender, uint256 amount);
-
-    /**
     * @dev Constructor for initializing the Wallet contract.
     * @param _withdrawals - address of the Withdrawals contract.
     */

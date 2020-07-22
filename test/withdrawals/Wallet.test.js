@@ -1,8 +1,4 @@
-const {
-  expectRevert,
-  ether,
-  expectEvent,
-} = require('@openzeppelin/test-helpers');
+const { expectRevert, ether } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -63,14 +59,5 @@ contract('Wallet', ([_, ...accounts]) => {
         'Permission denied.'
       );
     }
-  });
-
-  it('emits event when ether transferred', async () => {
-    let amount = ether('5');
-    const receipt = await wallet.send(amount, { from: anyone });
-    expectEvent(receipt, 'EtherAdded', {
-      amount,
-      sender: anyone,
-    });
   });
 });
