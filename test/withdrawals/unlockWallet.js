@@ -103,7 +103,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
     );
   });
 
-  it('user without wallet manager role cannot unlock wallet for private entity', async () => {
+  it('user without manager role cannot unlock wallet for private entity', async () => {
     await groups.createPrivateGroup([other], withdrawalPublicKey, {
       from: sender,
     });
@@ -128,7 +128,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
 
     // assign wallet
     const { logs } = await validators.assignWallet(validatorId, {
-      from: sender,
+      from: manager,
     });
     wallet = logs[0].args.wallet;
 
@@ -137,7 +137,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
 
     await expectRevert(
       withdrawals.unlockWallet(validatorId, {
-        from: manager,
+        from: sender,
       }),
       'Permission denied.'
     );
@@ -244,7 +244,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
     }
   });
 
-  it('user with wallet manager role can unlock wallet for private entity', async () => {
+  it('user with manager role can unlock wallet for private entity', async () => {
     await groups.createPrivateGroup([other], withdrawalPublicKey, {
       from: sender,
     });
@@ -269,7 +269,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
 
     // assign wallet
     const { logs } = await validators.assignWallet(validatorId, {
-      from: sender,
+      from: manager,
     });
     wallet = logs[0].args.wallet;
 
@@ -278,7 +278,7 @@ contract('Withdrawals (unlock wallet)', ([_, ...accounts]) => {
 
     // unlock wallet
     let receipt = await withdrawals.unlockWallet(validatorId, {
-      from: sender,
+      from: manager,
     });
     await expectEvent.inTransaction(receipt.tx, withdrawals, 'WalletUnlocked', {
       wallet,

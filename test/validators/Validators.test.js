@@ -134,7 +134,7 @@ contract('Validators', ([_, ...accounts]) => {
       );
     });
 
-    it('user cannot assign wallet to private entity without wallet manager role', async () => {
+    it('user cannot assign wallet to private entity without manager role', async () => {
       await solos.addPrivateDeposit(withdrawalPublicKey, {
         from: sender,
         value: validatorDepositAmount,
@@ -154,7 +154,7 @@ contract('Validators', ([_, ...accounts]) => {
 
       await expectRevert(
         validators.assignWallet(validatorId, {
-          from: manager,
+          from: sender,
         }),
         'Permission denied.'
       );
@@ -169,7 +169,7 @@ contract('Validators', ([_, ...accounts]) => {
       );
     });
 
-    it('user with wallet manager role can assign wallet to the private entity', async () => {
+    it('user with manager role can assign wallet to the private entity', async () => {
       await solos.addPrivateDeposit(withdrawalPublicKey, {
         from: sender,
         value: validatorDepositAmount,
@@ -188,7 +188,7 @@ contract('Validators', ([_, ...accounts]) => {
       let validatorId = web3.utils.soliditySha3(publicKey);
 
       const receipt = await validators.assignWallet(validatorId, {
-        from: sender,
+        from: manager,
       });
       const wallet = receipt.logs[0].args.wallet;
 
