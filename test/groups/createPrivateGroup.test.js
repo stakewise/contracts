@@ -29,7 +29,7 @@ const withdrawalCredentials =
 
 contract('Groups (create private group)', ([_, ...accounts]) => {
   let networkConfig, vrc, groups, managers, settings;
-  let [admin, manager, user1, user2, user3] = accounts;
+  let [admin, creator, user1, user2, user3] = accounts;
   let groupMembers = [user1, user2, user3];
 
   before(async () => {
@@ -63,7 +63,7 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
 
     await expectRevert(
       groups.createPrivateGroup(groupMembers, withdrawalPublicKey, {
-        from: manager,
+        from: creator,
       }),
       'Private groups creation is currently disabled.'
     );
@@ -71,14 +71,14 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
 
   it('fails to create a group without members', async () => {
     await expectRevert(
-      groups.createPrivateGroup([], withdrawalPublicKey, { from: manager }),
+      groups.createPrivateGroup([], withdrawalPublicKey, { from: creator }),
       'The group members list cannot be empty.'
     );
   });
 
   it('fails to create a group with invalid withdrawal key', async () => {
     await expectRevert(
-      groups.createPrivateGroup([], constants.ZERO_BYTES32, { from: manager }),
+      groups.createPrivateGroup([], constants.ZERO_BYTES32, { from: creator }),
       'Invalid BLS withdrawal public key.'
     );
   });
@@ -88,27 +88,26 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
       groupMembers,
       withdrawalPublicKey,
       {
-        from: manager,
+        from: creator,
       }
     );
 
     const groupId = getEntityId(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
-      manager,
+      creator,
+      canTransfer: false,
       groupId,
     });
     expectEvent(receipt, 'WithdrawalKeyAdded', {
       entityId: groupId,
-      manager,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
     expect(receipt.logs[0].args.members).to.have.members(groupMembers);
-    expect(await managers.canManageWallet(groupId, manager)).equal(true);
     expect(
       await managers.canTransferValidator(
         groupId,
-        await signValidatorTransfer(manager, groupId)
+        await signValidatorTransfer(creator, groupId)
       )
     ).equal(true);
     await checkPendingGroup({ groups, groupId, withdrawalCredentials });

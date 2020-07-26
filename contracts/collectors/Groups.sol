@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
@@ -67,22 +67,21 @@ contract Groups is Initializable {
 
     /**
     * @dev Event for tracking new groups.
-    * @param manager - address of the group manager.
+    * @param creator - address of the group creator.
+    * @param canTransfer - defines whether group creator can transfer validator.
     * @param groupId - ID of the created group.
     * @param members - list of group members.
     */
-    event GroupCreated(address manager, bytes32 groupId, address[] members);
+    event GroupCreated(address creator, bool canTransfer, bytes32 groupId, address[] members);
 
     /**
     * @dev Event for tracking group own withdrawal public key.
     * @param entityId - ID of the group the key belongs to.
-    * @param manager - address of the entity manager.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the group creator.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
     event WithdrawalKeyAdded(
         bytes32 indexed entityId,
-        address manager,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -141,7 +140,7 @@ contract Groups is Initializable {
         managers.addTransferManager(groupId, msg.sender);
 
         // emit event
-        emit GroupCreated(msg.sender, groupId, _members);
+        emit GroupCreated(msg.sender, true, groupId, _members);
     }
 
     /**
@@ -173,12 +172,9 @@ contract Groups is Initializable {
         withdrawalCredentials[0] = 0x00;
         pendingGroup.withdrawalCredentials = withdrawalCredentials;
 
-        // register wallet manager for the group
-        managers.addWalletManager(groupId, msg.sender);
-
         // emit events
-        emit GroupCreated(msg.sender, groupId, _members);
-        emit WithdrawalKeyAdded(groupId, msg.sender, _publicKey, withdrawalCredentials);
+        emit GroupCreated(msg.sender, false, groupId, _members);
+        emit WithdrawalKeyAdded(groupId, _publicKey, withdrawalCredentials);
     }
 
     /**

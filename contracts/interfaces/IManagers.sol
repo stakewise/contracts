@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 /**
  * @dev Interface of the Managers contract.
@@ -33,24 +33,11 @@ interface IManagers {
     function isManager(address _account) external view returns (bool);
 
     /**
-    * @dev Function for getting wallet manager.
-    * @param _entityId - ID of the entity to get manager for.
-    */
-    function walletManagers(bytes32 _entityId) external view returns (address);
-
-    /**
     * @dev Function for checking whether validator ownership can be transferred.
     * @param _entityId - ID of the entity to transfer validator from.
     * @param _signature - signature of the entity transfer manager.
     */
     function canTransferValidator(bytes32 _entityId, bytes calldata _signature) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether account can manage entity wallet.
-    * @param _entityId - ID of the validator entity.
-    * @param _account - account of the entity wallet manager.
-    */
-    function canManageWallet(bytes32 _entityId, address _account) external view returns (bool);
 
     /**
     * @dev Function for assigning a transfer manager to the entity.
@@ -59,14 +46,6 @@ interface IManagers {
     * @param _account - account to assign a transfer manager role to.
     */
     function addTransferManager(bytes32 _entityId, address _account) external;
-
-    /**
-    * @dev Function for assigning a wallet manager to the entity.
-    * Can only be called by the collector contracts.
-    * @param _entityId - ID of the entity to assign wallet manager for.
-    * @param _account - account to assign a wallet manager role to.
-    */
-    function addWalletManager(bytes32 _entityId, address _account) external;
 
     /**
     * @dev Function for adding a manager role to the account.

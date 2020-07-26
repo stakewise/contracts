@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "../interfaces/IManagers.sol";
@@ -145,7 +145,7 @@ contract Validators is IValidators, Initializable {
 
         Validator storage validator = validators[_validatorId];
         require(validator.entityId != "", "Invalid validator ID.");
-        require(managers.canManageWallet(validator.entityId, msg.sender), "Permission denied.");
+        require(managers.isManager(msg.sender), "Permission denied.");
         require(validator.wallet == address(0), "Validator has already wallet assigned.");
 
         // deploy and assign wallet to the validator

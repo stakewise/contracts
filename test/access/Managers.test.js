@@ -48,7 +48,6 @@ contract('Managers', ([_, ...accounts]) => {
         account: manager,
       });
       expect(await managers.isManager(manager)).equal(true);
-      expect(await managers.canManageWallet(entityId, manager)).equal(true);
       expect(await managers.isManager(admin)).equal(false);
       expect(await managers.isManager(anyone)).equal(false);
     });
@@ -96,18 +95,6 @@ contract('Managers', ([_, ...accounts]) => {
           }),
           'Permission denied.'
         );
-      }
-    });
-
-    it('only collectors can assign wallet managers', async () => {
-      for (const user of [manager, admin, anyone]) {
-        await expectRevert(
-          managers.addWalletManager(entityId, anyone, {
-            from: user,
-          }),
-          'Permission denied.'
-        );
-        expect(await managers.canManageWallet(entityId, user)).equal(false);
       }
     });
   });

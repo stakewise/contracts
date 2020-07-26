@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -117,7 +117,7 @@ contract Withdrawals is Initializable {
     function unlockWallet(bytes32 _validatorId) external {
         (uint256 depositAmount, uint256 maintainerFee, bytes32 entityId, address wallet) = validators.validators(_validatorId);
         require(wallet != address(0), "Validator must have a wallet assigned.");
-        require(managers.canManageWallet(entityId, msg.sender), "Permission denied.");
+        require(managers.isManager(msg.sender), "Permission denied.");
         require(!unlockedWallets[wallet], "Wallet is already unlocked.");
 
         (uint256 userDebt, uint256 maintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);

@@ -22,10 +22,10 @@
     "compilerSettings": {
       "optimizer": {
         "enabled": true,
-        "runs": "10000"
+        "runs": "10000000"
       }
     },
-    "solcVersion": "0.6.11",
+    "solcVersion": "0.6.12",
     "typechain": {
       "enabled": false
     },

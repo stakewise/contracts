@@ -14,10 +14,10 @@ module.exports = {
   },
   compilers: {
     solc: {
-      version: '0.6.11',
+      version: '0.6.12',
       optimizer: {
         enabled: true,
-        runs: 10000,
+        runs: 10000000,
       },
     },
   },

@@ -253,7 +253,6 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       });
 
       // check manager permissions
-      expect(await managers.canManageWallet(soloIds[i], sender)).equal(false);
       expect(
         await managers.canTransferValidator(
           soloIds[i],
@@ -313,7 +312,6 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     });
 
     // check manager permissions
-    expect(await managers.canManageWallet(soloId, sender)).equal(true);
     expect(
       await managers.canTransferValidator(
         soloId,

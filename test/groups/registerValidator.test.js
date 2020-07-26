@@ -299,7 +299,6 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       });
 
       // check manager permissions
-      expect(await managers.canManageWallet(groupIds[i], manager)).equal(false);
       expect(
         await managers.canTransferValidator(
           groupIds[i],
@@ -367,7 +366,6 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     });
 
     // check manager permissions
-    expect(await managers.canManageWallet(groupId, manager)).equal(true);
     expect(
       await managers.canTransferValidator(
         groupId,

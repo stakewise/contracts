@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/cryptography/ECDSA.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
@@ -17,9 +17,6 @@ import "../interfaces/IManagers.sol";
 contract Managers is IManagers, Initializable {
     using ECDSA for bytes32;
     using Roles for Roles.Role;
-
-    // @dev Mapping between the entity ID and its wallet manager.
-    mapping(bytes32 => address) public override walletManagers;
 
     // @dev Stores managers and defines functions for adding/removing them.
     Roles.Role private managers;
@@ -75,28 +72,10 @@ contract Managers is IManagers, Initializable {
     }
 
     /**
-     * @dev See {IManagers-canManageWallet}.
-     */
-    function canManageWallet(bytes32 _entityId, address _account) external override view returns (bool) {
-        address manager = walletManagers[_entityId];
-        if (manager != address(0)) {
-            return manager == _account;
-        }
-        return isManager(_account);
-    }
-
-    /**
      * @dev See {IManagers-addTransferManager}.
      */
     function addTransferManager(bytes32 _entityId, address _account) external override onlyCollectors {
         transferManagers[_entityId] = _account;
-    }
-
-    /**
-     * @dev See {IManagers-addWalletManager}.
-     */
-    function addWalletManager(bytes32 _entityId, address _account) external override onlyCollectors {
-        walletManagers[_entityId] = _account;
     }
 
     /**

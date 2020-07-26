@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
-pragma solidity 0.6.11;
+pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
@@ -65,13 +65,11 @@ contract Solos is Initializable {
     /**
     * @dev Event for tracking solo deposit own withdrawal public key.
     * @param entityId - ID of the solo deposit the key belongs to.
-    * @param manager - address of the solo deposit manager.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the deposit sender.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
     event WithdrawalKeyAdded(
         bytes32 indexed entityId,
-        address manager,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -164,11 +162,8 @@ contract Solos is Initializable {
             pendingSolo.amount = validatorDepositAmount;
             pendingSolo.withdrawalCredentials = withdrawalCredentials;
 
-            // register wallet manager
-            managers.addWalletManager(soloId, msg.sender);
-
             // emit event
-            emit WithdrawalKeyAdded(soloId, msg.sender, _publicKey, withdrawalCredentials);
+            emit WithdrawalKeyAdded(soloId, _publicKey, withdrawalCredentials);
 
             depositsCount--;
         } while (depositsCount > 0);
