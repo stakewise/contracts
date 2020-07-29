@@ -1,16 +1,14 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
 
 async function deployValidatorTransfersProxy({
-  adminsProxy,
-  depositsProxy,
-  poolsProxy,
-  individualsProxy,
+  periodicPoolsProxy,
+  phase2PoolsProxy,
+  solosProxy,
   groupsProxy,
-  settingsProxy,
-  validatorsRegistryProxy,
-  walletsRegistryProxy,
   withdrawalsProxy,
+  depositsProxy,
+  settingsProxy,
+  validatorsProxy,
   salt,
   networkConfig,
 }) {
@@ -18,21 +16,19 @@ async function deployValidatorTransfersProxy({
     contractAlias: 'ValidatorTransfers',
     methodName: 'initialize',
     methodArgs: [
-      adminsProxy,
-      depositsProxy,
-      poolsProxy,
-      individualsProxy,
+      periodicPoolsProxy,
+      phase2PoolsProxy,
+      solosProxy,
       groupsProxy,
-      settingsProxy,
-      validatorsRegistryProxy,
-      walletsRegistryProxy,
       withdrawalsProxy,
+      depositsProxy,
+      settingsProxy,
+      validatorsProxy,
     ],
     salt,
     ...networkConfig,
   });
 
-  log(`Validator Transfers contract: ${proxy.address}`);
   return proxy.address;
 }
 

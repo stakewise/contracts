@@ -1,5 +1,4 @@
 const { scripts } = require('@openzeppelin/cli');
-const { log } = require('./common');
 
 async function deployAdminsProxy({ networkConfig, initialAdmin }) {
   const proxy = await scripts.create({
@@ -8,8 +7,6 @@ async function deployAdminsProxy({ networkConfig, initialAdmin }) {
     methodArgs: [initialAdmin],
     ...networkConfig,
   });
-
-  log(`Admins contract: ${proxy.address}`);
   return proxy.address;
 }
 
@@ -20,20 +17,21 @@ async function deployOperatorsProxy({ networkConfig, adminsProxy }) {
     methodArgs: [adminsProxy],
     ...networkConfig,
   });
-
-  log(`Operators contract: ${proxy.address}`);
   return proxy.address;
 }
 
-async function deployManagersProxy({ networkConfig, adminsProxy }) {
+async function deployManagersProxy({
+  networkConfig,
+  adminsProxy,
+  solosProxy,
+  groupsProxy,
+}) {
   const proxy = await scripts.create({
     contractAlias: 'Managers',
     methodName: 'initialize',
-    methodArgs: [adminsProxy],
+    methodArgs: [solosProxy, groupsProxy, adminsProxy],
     ...networkConfig,
   });
-
-  log(`Managers contract: ${proxy.address}`);
   return proxy.address;
 }
 

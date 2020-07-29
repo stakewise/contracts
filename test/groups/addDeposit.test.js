@@ -68,7 +68,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid recipient address.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -80,7 +80,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The sender is not a member or a manager of the group.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -92,7 +92,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -104,7 +104,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Invalid deposit amount.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -121,7 +121,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'Depositing is currently disabled.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -133,7 +133,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The sender is not a member or a manager of the group.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -153,7 +153,6 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
@@ -167,7 +166,7 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       }),
       'The deposit amount is bigger than the amount required to collect.'
     );
-    await checkPendingGroup({ groups, groupId, manager });
+    await checkPendingGroup({ groups, groupId });
     await checkCollectorBalance(groups);
   });
 
@@ -196,7 +195,6 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: depositAmount,
     });
     await checkCollectorBalance(groups, depositAmount);
@@ -246,7 +244,6 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
-      manager,
       collectedAmount: validatorDepositAmount,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);

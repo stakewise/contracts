@@ -1,34 +1,25 @@
-pragma solidity 0.5.17;
+// SPDX-License-Identifier: GPL-3.0-only
 
-import "@openzeppelin/contracts-ethereum-package/contracts/access/Roles.sol";
+pragma solidity 0.6.12;
+
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
-
+import "../libraries/Roles.sol";
+import "../interfaces/IAdmins.sol";
 
 /**
  * @title Admins
- * Contract for adding/renouncing admin roles.
+ *
+ * @dev Contract for adding/renouncing admin roles.
  * Admin users can change global settings, assign/remove operators and managers.
  */
-contract Admins is Initializable {
+contract Admins is IAdmins, Initializable {
     using Roles for Roles.Role;
 
-    // Stores admins and defines functions for adding/removing them.
+    // @dev Stores admins and defines functions for adding/removing them.
     Roles.Role private admins;
 
     /**
-    * Event for tracking added admins.
-    * @param account - An address of the account which was assigned an admin role.
-    */
-    event AdminAdded(address account);
-
-    /**
-    * Event for tracking removed admins.
-    * @param account - An address of the account which was removed an admin role.
-    */
-    event AdminRemoved(address account);
-
-    /**
-    * Modifier for checking whether the caller has an admin role.
+    * @dev Modifier for checking whether the caller has an admin role.
     */
     modifier onlyAdmin() {
         require(isAdmin(msg.sender), "Caller does not have an Admin role.");
@@ -36,45 +27,40 @@ contract Admins is Initializable {
     }
 
     /**
-    * Constructor for initializing the Admins contract.
-    * @param admin - the first account to assign the admin role.
-    */
-    function initialize(address admin) public initializer {
-        _addAdmin(admin);
+     * @dev See {IAdmins-initialize}.
+     */
+    function initialize(address _admin) public override initializer {
+        _addAdmin(_admin);
     }
 
     /**
-    * Function for checking whether an account has an admin role.
-    * @param account - the account to check.
-    */
-    function isAdmin(address account) public view returns (bool) {
-        return admins.has(account);
+     * @dev See {IAdmins-isAdmin}.
+     */
+    function isAdmin(address _account) public override view returns (bool) {
+        return admins.has(_account);
     }
 
     /**
-    * Function for assigning an admin role to the account.
-    * Can only be called by an account with an admin role.
-    * @param account - the account to assign an admin role to.
-    */
-    function addAdmin(address account) external onlyAdmin {
-        _addAdmin(account);
+     * @dev See {IAdmins-addAdmin}.
+     */
+    function addAdmin(address _account) external override onlyAdmin {
+        _addAdmin(_account);
     }
 
     /**
-    * Function for renouncing an admin role from the account.
-    * Account can only renounce himself from having an admin role.
-    */
-    function renounceAdmin() external onlyAdmin {
+     * @dev See {IAdmins-renounceAdmin}.
+     */
+    function renounceAdmin() external override onlyAdmin {
         admins.remove(msg.sender);
         emit AdminRemoved(msg.sender);
     }
 
     /**
-    * Private function for assigning an admin role to the account.
-    * @param account - the account to assign an admin role to.
+    * @dev Private function for assigning an admin role to the account.
+    * @param _account - account to assign an admin role to.
     */
-    function _addAdmin(address account) private {
-        admins.add(account);
-        emit AdminAdded(account);
+    function _addAdmin(address _account) private {
+        admins.add(_account);
+        emit AdminAdded(_account);
     }
 }

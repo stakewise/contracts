@@ -7,13 +7,11 @@
     "Settings": "Settings",
     "Pools": "Pools",
     "Deposits": "Deposits",
-    "ValidatorsRegistry": "ValidatorsRegistry",
-    "WalletsRegistry": "WalletsRegistry",
-    "Withdrawals": "Withdrawals",
-    "Individuals": "Individuals",
-    "PrivateIndividuals": "PrivateIndividuals",
+    "Validators": "Validators",
     "ValidatorTransfers": "ValidatorTransfers",
+    "Withdrawals": "Withdrawals",
     "Groups": "Groups",
+    "Solos": "Solos",
     "Wallet": "Wallet"
   },
   "dependencies": {},
@@ -24,10 +22,10 @@
     "compilerSettings": {
       "optimizer": {
         "enabled": true,
-        "runs": "10000"
+        "runs": "10000000"
       }
     },
-    "solcVersion": "0.5.17",
+    "solcVersion": "0.6.12",
     "typechain": {
       "enabled": false
     },

@@ -25,14 +25,13 @@ const {
   signValidatorTransfer,
 } = require('../common/utils');
 
-const Individuals = artifacts.require('Individuals');
+const Solos = artifacts.require('Solos');
 const Pools = artifacts.require('Pools');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
+const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-const WalletsRegistry = artifacts.require('WalletsRegistry');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
@@ -41,16 +40,15 @@ const validatorReward = ether('0.034871228');
 contract('Pools (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
-    validatorsRegistry,
+    validators,
     validatorTransfers,
-    individuals,
+    solos,
     pools,
     settings,
-    walletsRegistry,
     validatorId,
     newPoolId,
     prevEntityId,
-    prevEntityManagerSignature;
+    prevTransfersManagerSignature;
   let [admin, operator, manager, other, sender1, sender2] = accounts;
 
   before(async () => {
@@ -69,15 +67,12 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       networkConfig,
       vrc: vrc.options.address,
     });
-    individuals = await Individuals.at(proxies.individuals);
+    solos = await Solos.at(proxies.solos);
     pools = await Pools.at(proxies.pools);
-    validatorsRegistry = await ValidatorsRegistry.at(
-      proxies.validatorsRegistry
-    );
+    validators = await Validators.at(proxies.validators);
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
     );
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
 
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -91,20 +86,20 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       from: admin,
     });
 
-    await settings.setStakingDuration(individuals.address, stakingDuration, {
+    await settings.setStakingDuration(solos.address, stakingDuration, {
       from: admin,
     });
 
     // register validator to transfer
     validatorId = await registerValidator({
-      individualsProxy: proxies.individuals,
       operator,
+      solosProxy: proxies.solos,
       sender: other,
       recipient: other,
     });
-    prevEntityId = getEntityId(proxies.individuals, new BN(1));
+    prevEntityId = getEntityId(proxies.solos, new BN(1));
 
-    prevEntityManagerSignature = await signValidatorTransfer(
+    prevTransfersManagerSignature = await signValidatorTransfer(
       other,
       prevEntityId
     );
@@ -132,7 +127,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         constants.ZERO_BYTES32,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
@@ -147,12 +142,12 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         constants.ZERO_BYTES32,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
       ),
-      'Invalid entity ID.'
+      'Validator transfer is not allowed.'
     );
     await checkPendingPool(pools, newPoolId, true);
     await checkCollectorBalance(pools, validatorDepositAmount);
@@ -164,9 +159,9 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
-          from: other,
+          from: manager,
         }
       ),
       'Permission denied.'
@@ -182,7 +177,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
@@ -195,7 +190,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(pools, validatorDepositAmount);
   });
 
-  it('fails to transfer validator with invalid previous entity manager signature', async () => {
+  it('fails to transfer validator with invalid previous transfers manager signature', async () => {
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));
 
@@ -210,7 +205,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
           from: operator,
         }
       ),
-      'Validator transfer is not allowed.'
+      'Invalid transfers manager signature.'
     );
 
     // check balance didn't change
@@ -233,7 +228,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
@@ -269,7 +264,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
@@ -290,7 +285,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     await time.increase(time.duration.seconds(stakingDuration));
 
     // assign wallet to the validator
-    await walletsRegistry.assignWallet(validatorId, {
+    await validators.assignWallet(validatorId, {
       from: manager,
     });
 
@@ -300,12 +295,12 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
       ),
-      'Cannot register transfer for validator with assigned wallet.'
+      'Cannot update validator with assigned wallet.'
     );
 
     // check balance didn't change
@@ -322,7 +317,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       validatorId,
       validatorReward,
       newPoolId,
-      prevEntityManagerSignature,
+      prevTransfersManagerSignature,
       {
         from: operator,
       }
@@ -346,7 +341,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       newEntityId: newPoolId,
       newStakingDuration: stakingDuration,
       collectorAddress: pools.address,
-      validatorsRegistry,
+      validators,
       validatorTransfers,
       userDebt,
       maintainerDebt,
@@ -358,6 +353,64 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
     expect(
       await balance.current(validatorTransfers.address)
     ).to.be.bignumber.equal(validatorDepositAmount);
+  });
+
+  it('does not allow transfer for transferred non-periodic pools', async () => {
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
+    // remove staking duration for non-periodic pool
+    await settings.setStakingDuration(pools.address, new BN(0), {
+      from: admin,
+    });
+
+    // transfer validator to the new pool
+    await pools.transferValidator(
+      validatorId,
+      validatorReward,
+      newPoolId,
+      prevTransfersManagerSignature,
+      {
+        from: operator,
+      }
+    );
+    await checkPendingPool(pools, newPoolId, false);
+    await checkCollectorBalance(pools);
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+    expect(await validatorTransfers.checkTransferAllowed(newPoolId)).equal(
+      false
+    );
+  });
+
+  it('allows transfer for transferred periodic pools', async () => {
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+
+    // set staking duration for the periodic pool
+    await settings.setStakingDuration(pools.address, stakingDuration, {
+      from: admin,
+    });
+
+    // transfer validator to the new pool
+    await pools.transferValidator(
+      validatorId,
+      validatorReward,
+      newPoolId,
+      prevTransfersManagerSignature,
+      {
+        from: operator,
+      }
+    );
+    await checkPendingPool(pools, newPoolId, false);
+    await checkCollectorBalance(pools);
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
+    expect(await validatorTransfers.checkTransferAllowed(newPoolId)).equal(
+      true
+    );
   });
 
   it('updates maintainer fee for transferred validator', async () => {
@@ -375,7 +428,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       validatorId,
       validatorReward,
       newPoolId,
-      prevEntityManagerSignature,
+      prevTransfersManagerSignature,
       {
         from: operator,
       }
@@ -400,7 +453,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
       newEntityId: newPoolId,
       newStakingDuration: stakingDuration,
       collectorAddress: pools.address,
-      validatorsRegistry,
+      validators,
       validatorTransfers,
       userDebt,
       maintainerDebt,
@@ -477,7 +530,7 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         test.validatorReward,
         newPoolId,
-        prevEntityManagerSignature,
+        prevTransfersManagerSignature,
         {
           from: operator,
         }
@@ -501,8 +554,8 @@ contract('Pools (transfer validator)', ([_, ...accounts]) => {
         prevEntityId,
         newEntityId: newPoolId,
         newStakingDuration: stakingDuration,
-        collectorAddress: individuals.address,
-        validatorsRegistry,
+        collectorAddress: solos.address,
+        validators,
         validatorTransfers,
         userDebt: test.userDebt,
         maintainerDebt: test.maintainerDebt,

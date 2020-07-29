@@ -1,8 +1,4 @@
-const {
-  expectRevert,
-  ether,
-  expectEvent,
-} = require('@openzeppelin/test-helpers');
+const { expectRevert, ether } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
   getNetworkConfig,
@@ -12,7 +8,7 @@ const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
 
 const Wallet = artifacts.require('Wallet');
-const WalletsRegistry = artifacts.require('WalletsRegistry');
+const Validators = artifacts.require('Validators');
 const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 
@@ -43,8 +39,8 @@ contract('Wallet', ([_, ...accounts]) => {
       recipient,
     });
 
-    let walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
-    const { logs } = await walletsRegistry.assignWallet(validatorId, {
+    let validators = await Validators.at(proxies.validators);
+    const { logs } = await validators.assignWallet(validatorId, {
       from: manager,
     });
     wallet = await Wallet.at(logs[0].args.wallet);
@@ -63,14 +59,5 @@ contract('Wallet', ([_, ...accounts]) => {
         'Permission denied.'
       );
     }
-  });
-
-  it('emits event when ether transferred', async () => {
-    let amount = ether('5');
-    const receipt = await wallet.send(amount, { from: anyone });
-    expectEvent(receipt, 'EtherAdded', {
-      amount,
-      sender: anyone,
-    });
   });
 });

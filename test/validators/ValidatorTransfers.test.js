@@ -5,6 +5,7 @@ const {
   ether,
   send,
   constants,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -24,10 +25,11 @@ const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 const Settings = artifacts.require('Settings');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
-const WalletsRegistry = artifacts.require('WalletsRegistry');
+const Validators = artifacts.require('Validators');
 const Withdrawals = artifacts.require('Withdrawals');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const stakingDuration = new BN('31536000');
 const validatorReward = ether('0.034871228');
 const userReward = ether('0.0278969824');
 const maintainerFee = new BN('2000');
@@ -39,7 +41,7 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     pools,
     settings,
     validatorTransfers,
-    walletsRegistry,
+    validators,
     validatorId,
     prevEntityId,
     prevEntityManagerSignature;
@@ -62,11 +64,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       vrc: vrc.options.address,
     });
     pools = await Pools.at(proxies.pools);
-    walletsRegistry = await WalletsRegistry.at(proxies.walletsRegistry);
     withdrawals = await Withdrawals.at(proxies.withdrawals);
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
     );
+    validators = await Validators.at(proxies.validators);
 
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });
@@ -78,6 +80,11 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     settings = await Settings.at(proxies.settings);
     await settings.setMaintainerFee(maintainerFee, { from: admin });
 
+    // set staking duration
+    await settings.setStakingDuration(pools.address, stakingDuration, {
+      from: admin,
+    });
+
     // register new validator
     validatorId = await registerValidator({
       poolsProxy: proxies.pools,
@@ -87,6 +94,9 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     });
     prevEntityId = getEntityId(pools.address, new BN(1));
     prevEntityManagerSignature = constants.ZERO_BYTES32;
+
+    // wait until staking duration has passed
+    await time.increase(time.duration.seconds(stakingDuration));
   });
 
   it('only collectors can register transfers', async () => {
@@ -104,9 +114,18 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
     );
   });
 
-  it('only collectors can set allowance', async () => {
+  it('only collectors can allow transfers', async () => {
     await expectRevert(
-      validatorTransfers.setAllowance(prevEntityId, manager, {
+      validatorTransfers.allowTransfer(prevEntityId, {
+        from: admin,
+      }),
+      'Permission denied.'
+    );
+  });
+
+  it('only withdrawals contract can resolve debts', async () => {
+    await expectRevert(
+      validatorTransfers.resolveDebt(prevEntityId, {
         from: admin,
       }),
       'Permission denied.'
@@ -217,14 +236,14 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       });
 
       // assign wallet
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
+      const { logs } = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = logs[0].args.wallet;
 
-      // enable withdrawals
+      // unlock wallet
       await send.ether(other, wallet, validatorDepositAmount);
-      await withdrawals.enableWithdrawals(wallet, {
+      await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
 
@@ -269,14 +288,14 @@ contract('ValidatorTransfers', ([_, ...accounts]) => {
       );
 
       // assign wallet
-      const { logs } = await walletsRegistry.assignWallet(validatorId, {
+      const { logs } = await validators.assignWallet(validatorId, {
         from: manager,
       });
       let wallet = logs[0].args.wallet;
 
-      // enable withdrawals
+      // unlock wallet
       await send.ether(other, wallet, validatorDepositAmount);
-      await withdrawals.enableWithdrawals(wallet, {
+      await withdrawals.unlockWallet(validatorId, {
         from: manager,
       });
 

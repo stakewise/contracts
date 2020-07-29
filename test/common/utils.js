@@ -1,13 +1,13 @@
 const fs = require('fs');
-const { expectEvent, constants } = require('@openzeppelin/test-helpers');
+const { expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../../deployments/settings');
 const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');
-const Individuals = artifacts.require('Individuals');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
+const Solos = artifacts.require('Solos');
+const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 function getDepositAmount({
@@ -42,8 +42,10 @@ async function checkPendingPool(poolsContract, poolId, expectedPending) {
   let isPending = await poolsContract.pendingPools(poolId);
   expect(isPending).to.equal(expectedPending);
   if (expectedPending) {
-    let poolsCount = await poolsContract.poolsCount();
-    expect(poolId).to.not.equal(getEntityId(poolsContract.address, poolsCount));
+    let poolsCounter = await poolsContract.getCounter();
+    expect(poolId).to.not.equal(
+      getEntityId(poolsContract.address, poolsCounter)
+    );
   }
 }
 
@@ -51,41 +53,22 @@ async function checkPendingGroup({
   groups,
   groupId,
   collectedAmount = new BN(0),
-  manager = constants.ZERO_ADDRESS,
+  withdrawalCredentials = null,
 }) {
   let pendingGroup = await groups.pendingGroups(groupId);
   expect(pendingGroup.collectedAmount).to.bignumber.equal(collectedAmount);
-  expect(pendingGroup.manager).to.equal(manager);
+  expect(pendingGroup.withdrawalCredentials).equal(withdrawalCredentials);
 }
 
-async function checkIndividualManager(
-  individualsContract,
-  individualId,
-  expectedAddress = constants.ZERO_ADDRESS
-) {
-  let actualAddress = await individualsContract.managers(individualId);
-  expect(actualAddress).to.equal(expectedAddress);
-}
-
-async function checkValidatorDepositData(
-  contract,
-  entityId,
-  {
-    publicKey = null,
-    withdrawalCredentials = null,
-    amount = new BN(0),
-    signature = null,
-    depositDataRoot = constants.ZERO_BYTES32,
-    submitted = false,
-  } = {}
-) {
-  let depositData = await contract.validatorDeposits(entityId);
-  expect(depositData.amount).to.bignumber.equal(amount);
-  expect(depositData.withdrawalCredentials).equal(withdrawalCredentials);
-  expect(depositData.publicKey).equal(publicKey);
-  expect(depositData.signature).equal(signature);
-  expect(depositData.depositDataRoot).equal(depositDataRoot);
-  expect(depositData.submitted).equal(submitted);
+async function checkPendingSolo({
+  solos,
+  soloId,
+  withdrawalCredentials = null,
+  amount = new BN(0),
+} = {}) {
+  let pendingSolo = await solos.pendingSolos(soloId);
+  expect(pendingSolo.amount).to.bignumber.equal(amount);
+  expect(pendingSolo.withdrawalCredentials).equal(withdrawalCredentials);
 }
 
 async function checkCollectorBalance(
@@ -193,8 +176,8 @@ async function checkValidatorRegistered({
   pubKey,
   entityId,
   signature,
-  validatorsRegistry,
-  stakingDuration,
+  validators,
+  stakingDuration = new BN(0),
   maintainerFee = new BN(initialSettings.maintainerFee),
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
@@ -212,10 +195,10 @@ async function checkValidatorRegistered({
     signature: signature,
   });
 
-  // Check ValidatorsRegistry log emitted
+  // Check ValidatorRegistered log emitted
   await expectEvent.inTransaction(
     transaction,
-    ValidatorsRegistry,
+    Validators,
     'ValidatorRegistered',
     {
       pubKey: pubKey,
@@ -228,9 +211,7 @@ async function checkValidatorRegistered({
   );
 
   // Check validator entry created
-  let validator = await validatorsRegistry.validators(
-    web3.utils.soliditySha3(pubKey)
-  );
+  let validator = await validators.validators(web3.utils.soliditySha3(pubKey));
   expect(validator.depositAmount).to.be.bignumber.equal(validatorDepositAmount);
   expect(validator.maintainerFee).to.be.bignumber.equal(maintainerFee);
   expect(validator.entityId).equal(entityId);
@@ -241,7 +222,7 @@ async function checkValidatorTransferred({
   validatorId,
   newEntityId,
   prevEntityId,
-  validatorsRegistry,
+  validators,
   validatorTransfers,
   userDebt,
   totalUserDebt,
@@ -250,7 +231,7 @@ async function checkValidatorTransferred({
   newStakingDuration,
   newMaintainerFee = new BN(initialSettings.maintainerFee),
 }) {
-  // Check ValidatorsRegistry log emitted
+  // Check ValidatorTransferred log emitted
   await expectEvent.inTransaction(
     transaction,
     ValidatorTransfers,
@@ -267,7 +248,7 @@ async function checkValidatorTransferred({
   );
 
   // check validator entry update
-  let validator = await validatorsRegistry.validators(validatorId);
+  let validator = await validators.validators(validatorId);
   expect(validator.maintainerFee).to.be.bignumber.equal(newMaintainerFee);
   expect(validator.entityId).equal(newEntityId);
 
@@ -288,14 +269,14 @@ async function registerValidator({
   args = validatorRegistrationArgs[0],
   entityId,
   poolsProxy,
-  individualsProxy,
+  solosProxy,
   operator,
   sender,
   recipient,
 }) {
   let collector;
-  if (individualsProxy) {
-    collector = await Individuals.at(individualsProxy);
+  if (solosProxy) {
+    collector = await Solos.at(solosProxy);
   } else if (poolsProxy) {
     collector = await Pools.at(poolsProxy);
   }
@@ -336,13 +317,8 @@ function fixSignature(signature) {
   return signature.slice(0, 130) + vHex;
 }
 
-// signs message in node (ganache auto-applies "Ethereum Signed Message" prefix)
-async function signMessage(signer, messageHex = '0x') {
-  return fixSignature(await web3.eth.sign(messageHex, signer));
-}
-
 async function signValidatorTransfer(signer, entityId) {
-  let messageHash = web3.utils.soliditySha3('validator transfer', entityId);
+  let messageHash = web3.utils.soliditySha3('validatortransfer', entityId);
   return fixSignature(await web3.eth.sign(messageHash, signer));
 }
 
@@ -351,15 +327,13 @@ module.exports = {
   registerValidator,
   checkPendingPool,
   checkPendingGroup,
-  checkIndividualManager,
-  checkValidatorDepositData,
+  checkPendingSolo,
   checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,
   checkValidatorTransferred,
   removeNetworkFile,
   getDepositAmount,
-  signMessage,
   signValidatorTransfer,
   getEntityId,
   checkUserTotalAmount,

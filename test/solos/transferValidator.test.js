@@ -17,32 +17,36 @@ const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
-  checkIndividualManager,
+  checkPendingSolo,
   checkValidatorTransferred,
   getEntityId,
   registerValidator,
   signValidatorTransfer,
 } = require('../common/utils');
 
-const Individuals = artifacts.require('Individuals');
+const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
 const Settings = artifacts.require('Settings');
-const ValidatorsRegistry = artifacts.require('ValidatorsRegistry');
+const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const stakingDuration = new BN('31536000');
 const validatorReward = ether('0.034871228');
+const withdrawalPublicKey =
+  '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
+const withdrawalCredentials =
+  '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
-contract('Individuals (transfer validator)', ([_, ...accounts]) => {
+contract('Solos (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
-    validatorsRegistry,
+    validators,
     validatorTransfers,
-    individuals,
+    solos,
     settings,
     validatorId,
-    newIndividualId,
+    newSoloId,
     prevEntityId,
     prevEntityManagerSignature;
   let [admin, operator, other, sender, recipient] = accounts;
@@ -63,10 +67,8 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       networkConfig,
       vrc: vrc.options.address,
     });
-    individuals = await Individuals.at(proxies.individuals);
-    validatorsRegistry = await ValidatorsRegistry.at(
-      proxies.validatorsRegistry
-    );
+    solos = await Solos.at(proxies.solos);
+    validators = await Validators.at(proxies.validators);
     validatorTransfers = await ValidatorTransfers.at(
       proxies.validatorTransfers
     );
@@ -76,7 +78,7 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
 
     // set staking duration
     settings = await Settings.at(proxies.settings);
-    await settings.setStakingDuration(individuals.address, stakingDuration, {
+    await settings.setStakingDuration(solos.address, stakingDuration, {
       from: admin,
     });
 
@@ -94,17 +96,17 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     prevEntityId = getEntityId(proxies.pools, new BN(1));
     prevEntityManagerSignature = constants.ZERO_BYTES32;
 
-    // register new individual
-    newIndividualId = getEntityId(individuals.address, new BN(1));
-    await individuals.addDeposit(recipient, {
+    // register new solo
+    newSoloId = getEntityId(solos.address, new BN(1));
+    await solos.addDeposit(recipient, {
       from: sender,
       value: validatorDepositAmount,
     });
   });
 
-  it('fails to transfer validator to an invalid individual', async () => {
+  it('fails to transfer validator to an invalid solo', async () => {
     await expectRevert(
-      individuals.transferValidator(
+      solos.transferValidator(
         validatorId,
         validatorReward,
         constants.ZERO_BYTES32,
@@ -113,52 +115,22 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
           from: operator,
         }
       ),
-      'Invalid individual ID.'
+      'Invalid validator deposit amount.'
     );
-    await checkIndividualManager(individuals, newIndividualId, sender);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+      amount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
-  it('fails to transfer invalid validator to the new individual', async () => {
+  it('fails to transfer invalid validator to the new solo', async () => {
     await expectRevert(
-      individuals.transferValidator(
+      solos.transferValidator(
         constants.ZERO_BYTES32,
         validatorReward,
-        newIndividualId,
-        prevEntityManagerSignature,
-        {
-          from: operator,
-        }
-      ),
-      'Invalid entity ID.'
-    );
-    await checkIndividualManager(individuals, newIndividualId, sender);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
-  });
-
-  it('fails to transfer validator with caller other than operator', async () => {
-    await expectRevert(
-      individuals.transferValidator(
-        validatorId,
-        validatorReward,
-        newIndividualId,
-        prevEntityManagerSignature,
-        {
-          from: other,
-        }
-      ),
-      'Permission denied.'
-    );
-    await checkIndividualManager(individuals, newIndividualId, sender);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
-  });
-
-  it('fails to transfer validator if staking time has not passed', async () => {
-    await expectRevert(
-      individuals.transferValidator(
-        validatorId,
-        validatorReward,
-        newIndividualId,
+        newSoloId,
         prevEntityManagerSignature,
         {
           from: operator,
@@ -166,8 +138,54 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       ),
       'Validator transfer is not allowed.'
     );
-    await checkIndividualManager(individuals, newIndividualId, sender);
-    await checkCollectorBalance(individuals, validatorDepositAmount);
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+      amount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(solos, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator with caller other than operator', async () => {
+    await expectRevert(
+      solos.transferValidator(
+        validatorId,
+        validatorReward,
+        newSoloId,
+        prevEntityManagerSignature,
+        {
+          from: other,
+        }
+      ),
+      'Permission denied.'
+    );
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+      amount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(solos, validatorDepositAmount);
+  });
+
+  it('fails to transfer validator if staking time has not passed', async () => {
+    await expectRevert(
+      solos.transferValidator(
+        validatorId,
+        validatorReward,
+        newSoloId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      ),
+      'Validator transfer is not allowed.'
+    );
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+      amount: validatorDepositAmount,
+    });
+    await checkCollectorBalance(solos, validatorDepositAmount);
   });
 
   it('fails to transfer validator with updated deposit amount', async () => {
@@ -177,8 +195,8 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       from: admin,
     });
 
-    // register new individual
-    await individuals.addDeposit(recipient, {
+    // register new solo
+    await solos.addDeposit(recipient, {
       from: sender,
       value: newValidatorDepositAmount,
     });
@@ -186,13 +204,13 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));
 
-    // transfer validator to the new individual
-    newIndividualId = getEntityId(individuals.address, new BN(2));
+    // transfer validator to the new solo
+    newSoloId = getEntityId(solos.address, new BN(2));
     await expectRevert(
-      individuals.transferValidator(
+      solos.transferValidator(
         validatorId,
         validatorReward,
-        newIndividualId,
+        newSoloId,
         prevEntityManagerSignature,
         {
           from: operator,
@@ -201,31 +219,69 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       'Validator deposit amount cannot be updated.'
     );
 
-    // check balance didn't change
-    await checkIndividualManager(individuals, newIndividualId, sender);
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+      amount: newValidatorDepositAmount,
+    });
     await checkCollectorBalance(
-      individuals,
+      solos,
       newValidatorDepositAmount.add(validatorDepositAmount)
     );
   });
 
-  it('can transfer validator to the new individual', async () => {
+  it('fails to transfer validator to private solo', async () => {
+    // register new private solo
+    await solos.addPrivateDeposit(withdrawalPublicKey, {
+      from: sender,
+      value: validatorDepositAmount,
+    });
+    let privateSoloId = getEntityId(solos.address, new BN(2));
+
+    // transfer validator to the new solo
+    await expectRevert(
+      solos.transferValidator(
+        validatorId,
+        validatorReward,
+        privateSoloId,
+        prevEntityManagerSignature,
+        {
+          from: operator,
+        }
+      ),
+      'Cannot transfer to the private solo.'
+    );
+
+    await checkPendingSolo({
+      solos,
+      soloId: privateSoloId,
+      withdrawalCredentials,
+      amount: validatorDepositAmount,
+    });
+    // multiply by 2 as there is already one solo deposit in contract
+    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(2)));
+  });
+
+  it('can transfer validator to the new solo', async () => {
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));
 
-    // transfer validator to the new individual
-    let { tx } = await individuals.transferValidator(
+    // transfer validator to the new solo
+    let { tx } = await solos.transferValidator(
       validatorId,
       validatorReward,
-      newIndividualId,
+      newSoloId,
       prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
-    // check pending individual updated
-    await checkIndividualManager(individuals, newIndividualId);
+    // check pending solo removed
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+    });
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -238,10 +294,10 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       transaction: tx,
       validatorId,
       prevEntityId,
-      newEntityId: newIndividualId,
+      newEntityId: newSoloId,
       newStakingDuration: stakingDuration,
-      collectorAddress: individuals.address,
-      validatorsRegistry,
+      collectorAddress: solos.address,
+      validators,
       validatorTransfers,
       userDebt,
       maintainerDebt,
@@ -253,6 +309,12 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     expect(
       await balance.current(validatorTransfers.address)
     ).to.be.bignumber.equal(validatorDepositAmount);
+
+    // check whether new solo can transfer as well
+    await time.increase(time.duration.seconds(stakingDuration));
+    expect(await validatorTransfers.checkTransferAllowed(newSoloId)).equal(
+      true
+    );
   });
 
   it('updates maintainer fee for transferred validator', async () => {
@@ -265,19 +327,22 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));
 
-    // transfer validator to the new individual
-    let { tx } = await individuals.transferValidator(
+    // transfer validator to the new solo
+    let { tx } = await solos.transferValidator(
       validatorId,
       validatorReward,
-      newIndividualId,
+      newSoloId,
       prevEntityManagerSignature,
       {
         from: operator,
       }
     );
 
-    // check balance updated
-    await checkIndividualManager(individuals, newIndividualId);
+    // check pending solo removed
+    await checkPendingSolo({
+      solos,
+      soloId: newSoloId,
+    });
 
     // calculate debts
     let maintainerDebt = validatorReward
@@ -291,10 +356,10 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       validatorId,
       newMaintainerFee,
       prevEntityId,
-      newEntityId: newIndividualId,
+      newEntityId: newSoloId,
       newStakingDuration: stakingDuration,
-      collectorAddress: individuals.address,
-      validatorsRegistry,
+      collectorAddress: solos.address,
+      validators,
       validatorTransfers,
       userDebt,
       maintainerDebt,
@@ -355,7 +420,7 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
     let expectedBalance = new BN(0);
     let totalUserDebt = new BN(0);
     let totalMaintainerDebt = new BN(0);
-    let individualsCount = new BN(1);
+    let solosCount = new BN(1);
 
     for (const test of tests) {
       // update maintainer fee
@@ -366,25 +431,28 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
       // wait until staking duration has passed
       await time.increase(time.duration.seconds(stakingDuration));
 
-      // transfer validator to the new individual
-      ({ tx } = await individuals.transferValidator(
+      // transfer validator to the new solo
+      ({ tx } = await solos.transferValidator(
         validatorId,
         test.validatorReward,
-        newIndividualId,
+        newSoloId,
         prevEntityManagerSignature,
         {
           from: operator,
         }
       ));
 
-      // check balance updated
-      await checkIndividualManager(individuals, newIndividualId);
+      // check pending solo removed
+      await checkPendingSolo({
+        solos,
+        soloId: newSoloId,
+      });
 
       // increment balance and debts
       expectedBalance.iadd(validatorDepositAmount);
       totalUserDebt.iadd(test.userDebt);
       totalMaintainerDebt.iadd(test.maintainerDebt);
-      individualsCount.iadd(new BN(1));
+      solosCount.iadd(new BN(1));
 
       // check validator transferred
       await checkValidatorTransferred({
@@ -392,10 +460,10 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         validatorId,
         newMaintainerFee: test.newMaintainerFee,
         prevEntityId,
-        newEntityId: newIndividualId,
+        newEntityId: newSoloId,
         newStakingDuration: stakingDuration,
-        collectorAddress: individuals.address,
-        validatorsRegistry,
+        collectorAddress: solos.address,
+        validators,
         validatorTransfers,
         userDebt: test.userDebt,
         maintainerDebt: test.maintainerDebt,
@@ -408,15 +476,15 @@ contract('Individuals (transfer validator)', ([_, ...accounts]) => {
         await balance.current(validatorTransfers.address)
       ).to.be.bignumber.equal(expectedBalance);
 
-      prevEntityId = newIndividualId;
+      prevEntityId = newSoloId;
       prevEntityManagerSignature = await signValidatorTransfer(
         sender,
         prevEntityId
       );
 
-      // add deposit for the next individual
-      newIndividualId = getEntityId(individuals.address, individualsCount);
-      await individuals.addDeposit(recipient, {
+      // add deposit for the next solo
+      newSoloId = getEntityId(solos.address, solosCount);
+      await solos.addDeposit(recipient, {
         from: sender,
         value: validatorDepositAmount,
       });
