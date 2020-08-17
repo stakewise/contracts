@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "./interfaces/IAdmins.sol";
 import "./interfaces/IOperators.sol";
 import "./interfaces/ISettings.sol";
@@ -25,6 +25,9 @@ contract Settings is ISettings, Initializable {
 
     // @dev The deposit amount required to become an Ethereum validator.
     uint128 public override validatorDepositAmount;
+
+    // @dev The non-custodial validator price per second.
+    uint256 public override validatorPrice;
 
     // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
     bytes public override withdrawalCredentials;
@@ -49,6 +52,7 @@ contract Settings is ISettings, Initializable {
         uint16 _maintainerFee,
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
+        uint256 _validatorPrice,
         bytes memory _withdrawalCredentials,
         address _admins,
         address _operators
@@ -59,6 +63,7 @@ contract Settings is ISettings, Initializable {
         maintainerFee = _maintainerFee;
         userDepositMinUnit = _userDepositMinUnit;
         validatorDepositAmount = _validatorDepositAmount;
+        validatorPrice = _validatorPrice;
         withdrawalCredentials = _withdrawalCredentials;
         admins = IAdmins(_admins);
         operators = IOperators(_operators);
@@ -128,10 +133,20 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setContractPaused}.
      */
-    function setContractPaused(address _contract, bool isPaused) external  override {
+    function setContractPaused(address _contract, bool isPaused) external override {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
 
         pausedContracts[_contract] = isPaused;
         emit SettingChanged("pausedContracts");
+    }
+
+    /**
+     * @dev See {ISettings-setValidatorPrice}.
+     */
+    function setValidatorPrice(uint256 _validatorPrice) external override {
+        require(admins.isAdmin(msg.sender), "Permission denied.");
+
+        validatorPrice = _validatorPrice;
+        emit SettingChanged("validatorPrice");
     }
 }

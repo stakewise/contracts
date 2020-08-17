@@ -4,6 +4,7 @@ const { scripts } = require('@openzeppelin/cli');
 const initialSettings = {
   userDepositMinUnit: '1000000000000000',
   validatorDepositAmount: '32000000000000000000',
+  validatorPrice: '3805175038051', // 10 DAI / month
   maintainerFee: '523', // 5.23%,
   maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   withdrawalCredentials:
@@ -23,6 +24,7 @@ async function deploySettingsProxy({
       initialSettings.maintainerFee,
       initialSettings.userDepositMinUnit,
       initialSettings.validatorDepositAmount,
+      initialSettings.validatorPrice,
       initialSettings.withdrawalCredentials,
       adminsProxy,
       operatorsProxy,

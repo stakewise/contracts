@@ -18,6 +18,7 @@ interface ISettings {
     * @param _maintainerFee - percentage fee for using the service.
     * @param _userDepositMinUnit - minimal unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
+    * @param _validatorPrice - price per second of the non-custodial validator.
     * @param _withdrawalCredentials - withdrawal credentials.
     * @param _admins - address of the Admins contract.
     * @param _operators - address of the Operators contract.
@@ -27,7 +28,8 @@ interface ISettings {
         uint16 _maintainerFee,
         uint64 _userDepositMinUnit,
         uint128 _validatorDepositAmount,
-        bytes calldata _withdrawalCredentials,
+        uint256 _validatorPrice,
+        bytes memory _withdrawalCredentials,
         address _admins,
         address _operators
     ) external;
@@ -51,6 +53,11 @@ interface ISettings {
     * @dev Function for getting validator deposit amount.
     */
     function validatorDepositAmount() external view returns (uint128);
+
+    /**
+    * @dev Function for getting non-custodial validator price.
+    */
+    function validatorPrice() external view returns (uint256);
 
     /**
     * @dev Function for getting withdrawal credentials.
@@ -112,4 +119,10 @@ interface ISettings {
     * @param isPaused - defines whether contract is paused or not.
     */
     function setContractPaused(address _contract, bool isPaused) external;
+
+    /**
+    * @dev Function for setting non-custodial validator price.
+    * @param _validatorPrice - new validator price.
+    */
+    function setValidatorPrice(uint256 _validatorPrice) external;
 }

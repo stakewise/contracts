@@ -22,6 +22,7 @@ const { removeNetworkFile } = require('./common/utils');
 const newValues = [
   ['userDepositMinUnit', ether('0.002')],
   ['validatorDepositAmount', ether('30')],
+  ['validatorPrice', new BN(3703171921051)],
   ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
