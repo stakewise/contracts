@@ -5,6 +5,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
 
@@ -14,13 +15,21 @@ const Operators = artifacts.require('Operators');
 const Managers = artifacts.require('Managers');
 
 contract('Withdrawals', ([_, ...accounts]) => {
-  let networkConfig, proxies, validators, wallet, withdrawals, validatorId, vrc;
+  let networkConfig,
+    proxies,
+    validators,
+    wallet,
+    withdrawals,
+    validatorId,
+    vrc,
+    dai;
   let [admin, operator, manager, other, ...otherAccounts] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -32,6 +41,7 @@ contract('Withdrawals', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });

@@ -3,7 +3,7 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/IWallet.sol";
 
 /**

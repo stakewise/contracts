@@ -4,6 +4,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile, registerValidator } = require('../common/utils');
 
@@ -21,10 +22,12 @@ contract('Wallet', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     let vrc = await deployVRC({ from: admin });
+    let dai = await deployDAI(admin, { from: admin });
     let proxies = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     let operators = await Operators.at(proxies.operators);
     await operators.addOperator(operator, { from: admin });

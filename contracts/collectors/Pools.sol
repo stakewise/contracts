@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IValidators.sol";

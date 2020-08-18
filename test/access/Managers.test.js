@@ -17,13 +17,14 @@ const entityId =
   '0xd5399111f6a7d6b0ea29fe682b6046191f613b4bff0c4f7ebb28dd62e6fd5434';
 
 contract('Managers', ([_, ...accounts]) => {
-  let networkConfig, vrc, managers;
+  let networkConfig, vrc, dai, managers;
   let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -35,6 +36,7 @@ contract('Managers', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     managers = await Managers.at(managersProxy);
   });

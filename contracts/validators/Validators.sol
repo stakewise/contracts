@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/IManagers.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidators.sol";
@@ -167,7 +167,7 @@ contract Validators is IValidators, Initializable {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        if(walletInitData.length > 0) {
+        if (walletInitData.length > 0) {
             // solhint-disable-next-line avoid-low-level-calls
             (bool success,) = proxy.call(walletInitData);
             require(success);

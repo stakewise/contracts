@@ -15,6 +15,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -43,6 +44,7 @@ const curEntityMaintainerReward = ether('0.2');
 contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     withdrawals,
     pools,
     settings,
@@ -56,6 +58,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -67,6 +70,7 @@ contract('Withdrawals (resolve debt)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     pools = await Pools.at(proxies.pools);
     validators = await Validators.at(proxies.validators);

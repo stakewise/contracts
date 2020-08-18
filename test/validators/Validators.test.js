@@ -10,6 +10,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   validatorRegistrationArgs,
@@ -37,7 +38,7 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 
 contract('Validators', ([_, ...accounts]) => {
-  let networkConfig, validators, solos, vrc, settings, validatorId;
+  let networkConfig, validators, solos, vrc, dai, settings, validatorId;
   let [admin, operator, manager, sender, anyone] = accounts;
   let users = [admin, operator, anyone];
 
@@ -45,6 +46,7 @@ contract('Validators', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -56,6 +58,7 @@ contract('Validators', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     validators = await Validators.at(proxies.validators);
     solos = await Solos.at(proxies.solos);

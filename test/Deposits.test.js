@@ -5,6 +5,7 @@ const {
   deployLogicContracts,
 } = require('../deployments/common');
 const { deployVRC } = require('../deployments/vrc');
+const { deployDAI } = require('../deployments/tokens');
 const { getEntityId, removeNetworkFile } = require('./common/utils');
 
 const Deposits = artifacts.require('Deposits');
@@ -19,6 +20,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     let vrc = await deployVRC({ from: admin });
+    let dai = await deployDAI(admin, { from: admin });
     let {
       pools: poolsProxy,
       deposits: depositsProxy,
@@ -27,6 +29,7 @@ contract('Deposits', ([_, admin, operator, anyone]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     deposits = await Deposits.at(depositsProxy);
     pools = await Pools.at(poolsProxy);
