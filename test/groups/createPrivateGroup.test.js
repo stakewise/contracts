@@ -10,6 +10,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -28,7 +29,7 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Groups (create private group)', ([_, ...accounts]) => {
-  let networkConfig, vrc, groups, managers, settings;
+  let networkConfig, vrc, dai, groups, managers, settings;
   let [admin, creator, user1, user2, user3] = accounts;
   let groupMembers = [user1, user2, user3];
 
@@ -36,6 +37,7 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -51,6 +53,7 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
     settings = await Settings.at(settingsProxy);
@@ -98,11 +101,15 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
       canTransfer: false,
       groupId,
     });
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+
+    let payments = receipt.logs[1].args.payments;
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: groupId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
+
     expect(receipt.logs[0].args.members).to.have.members(groupMembers);
     expect(
       await managers.canTransferValidator(
@@ -110,6 +117,11 @@ contract('Groups (create private group)', ([_, ...accounts]) => {
         await signValidatorTransfer(creator, groupId)
       )
     ).equal(true);
-    await checkPendingGroup({ groups, groupId, withdrawalCredentials });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
   });
 });

@@ -29,6 +29,7 @@ contract Solos is Initializable {
     /**
     * @dev Structure for storing information about the solo deposit which was not yet sent for staking.
     * @param amount - validator deposit amount.
+    * @param payments - address of the payments contract for the validator.
     * @param withdrawalCredentials - withdrawal credentials of the validator.
     */
     struct Solo {

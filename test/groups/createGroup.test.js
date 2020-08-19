@@ -5,6 +5,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -18,7 +19,7 @@ const Settings = artifacts.require('Settings');
 const Managers = artifacts.require('Managers');
 
 contract('Groups (create group)', ([_, ...accounts]) => {
-  let networkConfig, vrc, groups, managers, settings;
+  let networkConfig, vrc, dai, groups, managers, settings;
   let [admin, creator, user1, user2, user3] = accounts;
   let groupMembers = [user1, user2, user3];
 
@@ -26,6 +27,7 @@ contract('Groups (create group)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -41,6 +43,7 @@ contract('Groups (create group)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
     settings = await Settings.at(settingsProxy);

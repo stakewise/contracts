@@ -1,5 +1,5 @@
 const fs = require('fs');
-const { expectEvent } = require('@openzeppelin/test-helpers');
+const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../../deployments/settings');
@@ -7,6 +7,7 @@ const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
 
 const Pools = artifacts.require('Pools');
 const Solos = artifacts.require('Solos');
+const Payments = artifacts.require('Payments');
 const Validators = artifacts.require('Validators');
 const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 
@@ -52,22 +53,26 @@ async function checkPendingPool(poolsContract, poolId, expectedPending) {
 async function checkPendingGroup({
   groups,
   groupId,
+  payments = constants.ZERO_ADDRESS,
   collectedAmount = new BN(0),
   withdrawalCredentials = null,
 }) {
   let pendingGroup = await groups.pendingGroups(groupId);
   expect(pendingGroup.collectedAmount).to.bignumber.equal(collectedAmount);
+  expect(pendingGroup.payments).to.equal(payments);
   expect(pendingGroup.withdrawalCredentials).equal(withdrawalCredentials);
 }
 
 async function checkPendingSolo({
   solos,
   soloId,
+  payments = constants.ZERO_ADDRESS,
   withdrawalCredentials = null,
   amount = new BN(0),
 } = {}) {
   let pendingSolo = await solos.pendingSolos(soloId);
   expect(pendingSolo.amount).to.bignumber.equal(amount);
+  expect(pendingSolo.payments).to.equal(payments);
   expect(pendingSolo.withdrawalCredentials).equal(withdrawalCredentials);
 }
 
@@ -265,6 +270,11 @@ async function checkValidatorTransferred({
   expect(entityReward.amount).to.be.bignumber.equal(userDebt);
 }
 
+async function checkPayments(paymentsAddress, totalPrice) {
+  let payments = await Payments.at(paymentsAddress);
+  expect(await payments.getTotalPrice()).to.be.bignumber.equal(totalPrice);
+}
+
 async function registerValidator({
   args = validatorRegistrationArgs[0],
   entityId,
@@ -328,6 +338,7 @@ module.exports = {
   checkPendingPool,
   checkPendingGroup,
   checkPendingSolo,
+  checkPayments,
   checkNewPoolCollectedAmount,
   checkCollectorBalance,
   checkValidatorRegistered,

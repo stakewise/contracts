@@ -12,6 +12,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -20,6 +21,7 @@ const {
   checkValidatorRegistered,
   validatorRegistrationArgs,
   signValidatorTransfer,
+  checkPayments,
   getEntityId,
 } = require('../common/utils');
 
@@ -31,6 +33,7 @@ const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const Managers = artifacts.require('Managers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const validatorPrice = new BN(initialSettings.validatorPrice);
 const withdrawalPublicKey =
   '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
 const withdrawalCredentials =
@@ -46,6 +49,7 @@ const stakingDuration = new BN(86400);
 contract('Groups (register validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     validators,
     validatorTransfers,
     groups,
@@ -58,6 +62,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -76,6 +81,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
     validators = await Validators.at(validatorsProxy);
@@ -325,6 +331,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       }
     );
     groupId = receipt.logs[0].args.groupId;
+    let payments = receipt.logs[1].args.payments;
 
     await groups.addDeposit(groupId, recipient, {
       from: sender,
@@ -333,6 +340,7 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId,
+      payments,
       withdrawalCredentials,
       collectedAmount: validatorDepositAmount,
     });
@@ -372,6 +380,9 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
         await signValidatorTransfer(manager, groupId)
       )
     ).equal(true);
+
+    // check whether validator metering has started
+    await checkPayments(payments, validatorPrice);
 
     // wait until staking duration has passed
     await time.increase(time.duration.seconds(stakingDuration));

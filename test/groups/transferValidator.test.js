@@ -13,6 +13,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   validatorRegistrationArgs,
@@ -44,6 +45,7 @@ const withdrawalCredentials =
 contract('Groups (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     validators,
     validatorTransfers,
     groups,
@@ -58,6 +60,7 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -69,6 +72,7 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     groups = await Groups.at(proxies.groups);
     validators = await Validators.at(proxies.validators);

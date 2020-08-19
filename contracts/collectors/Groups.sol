@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IManagers.sol";
 import "../interfaces/IOperators.sol";
@@ -13,6 +13,7 @@ import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IValidators.sol";
 import "../interfaces/IValidatorTransfers.sol";
 import "../interfaces/IDeposits.sol";
+import "../interfaces/IPayments.sol";
 
 /**
  * @title Groups
@@ -29,11 +30,13 @@ contract Groups is Initializable {
     /**
     * @dev Structure for storing information about the group which was not yet sent for staking.
     * @param collectedAmount - total amount collected by the group members.
+    * @param payments - address of the payments contract for the validator.
     * @param withdrawalCredentials - withdrawal credentials of the validator provided by group manager.
     * @param members - mapping for user memberships in a group.
     */
     struct PendingGroup {
         uint256 collectedAmount;
+        IPayments payments;
         bytes withdrawalCredentials;
         mapping(address => bool) members;
     }
@@ -65,6 +68,12 @@ contract Groups is Initializable {
     // @dev Address of the Validator Transfers contract.
     IValidatorTransfers private validatorTransfers;
 
+    // @dev Address of the payments logical contract.
+    address private paymentsImplementation;
+
+    // @dev Address of the DAI contract.
+    address private dai;
+
     /**
     * @dev Event for tracking new groups.
     * @param creator - address of the group creator.
@@ -77,11 +86,13 @@ contract Groups is Initializable {
     /**
     * @dev Event for tracking group own withdrawal public key.
     * @param entityId - ID of the group the key belongs to.
+    * @param payments - address of the payments contract.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the group creator.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
-    event WithdrawalKeyAdded(
+    event PrivateEntityAdded(
         bytes32 indexed entityId,
+        IPayments payments,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
@@ -95,6 +106,8 @@ contract Groups is Initializable {
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
     * @param _validatorTransfers - address of the Validator Transfers contract.
+    * @param _paymentsImplementation - address of the payments logical contract.
+    * @param _dai - address of the DAI contract.
     */
     function initialize(
         IDeposits _deposits,
@@ -103,7 +116,9 @@ contract Groups is Initializable {
         IOperators _operators,
         IValidatorRegistration _validatorRegistration,
         IValidators _validators,
-        IValidatorTransfers _validatorTransfers
+        IValidatorTransfers _validatorTransfers,
+        address _paymentsImplementation,
+        address _dai
     )
         public initializer
     {
@@ -114,6 +129,8 @@ contract Groups is Initializable {
         validatorRegistration = _validatorRegistration;
         validators = _validators;
         validatorTransfers = _validatorTransfers;
+        paymentsImplementation = _paymentsImplementation;
+        dai = _dai;
     }
 
     /**
@@ -172,9 +189,12 @@ contract Groups is Initializable {
         withdrawalCredentials[0] = 0x00;
         pendingGroup.withdrawalCredentials = withdrawalCredentials;
 
+        // deploy payments contract for new private group
+        pendingGroup.payments = IPayments(deployPayments());
+
         // emit events
         emit GroupCreated(msg.sender, false, groupId, _members);
-        emit WithdrawalKeyAdded(groupId, _publicKey, withdrawalCredentials);
+        emit PrivateEntityAdded(groupId, pendingGroup.payments, _publicKey, withdrawalCredentials);
     }
 
     /**
@@ -260,6 +280,9 @@ contract Groups is Initializable {
 
             // set maintainer fee for not private groups
             maintainerFee = settings.maintainerFee();
+        } else {
+            // enable metering for the validator
+            pendingGroup.payments.startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
         }
 
         // cleanup pending group
@@ -327,5 +350,22 @@ contract Groups is Initializable {
             prevEntityReward.sub(maintainerDebt),
             maintainerDebt
         );
+    }
+
+    /**
+    * @dev Function for deploying payments proxy contract.
+    */
+    function deployPayments() private returns (address proxy) {
+        // Adapted from https://github.com/OpenZeppelin/openzeppelin-sdk/blob/v2.8.2/packages/lib/contracts/upgradeability/ProxyFactory.sol#L18
+        bytes20 targetBytes = bytes20(paymentsImplementation);
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            let clone := mload(0x40)
+            mstore(clone, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
+            mstore(add(clone, 0x14), targetBytes)
+            mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
+            proxy := create(0, clone, 0x37)
+        }
+        IPayments(proxy).initialize(operators, managers, settings, dai, address(this));
     }
 }
