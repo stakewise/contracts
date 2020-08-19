@@ -12,6 +12,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   getDepositAmount,
@@ -34,6 +35,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
   let networkConfig,
     deposits,
     vrc,
+    dai,
     pools,
     amount1,
     amount2,
@@ -45,6 +47,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -57,6 +60,7 @@ contract('Pools (cancel deposit)', ([_, ...accounts]) => {
         initialAdmin: admin,
         networkConfig,
         vrc: vrc.options.address,
+        dai: dai.address,
       }
     );
     pools = await Pools.at(poolsProxy);

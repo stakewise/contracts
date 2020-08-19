@@ -12,6 +12,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -37,6 +38,7 @@ const stakingDuration = new BN(86400);
 contract('Pools (register validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     pools,
     validators,
     validatorTransfers,
@@ -56,6 +58,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -73,6 +76,7 @@ contract('Pools (register validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     pools = await Pools.at(poolsProxy);
     validators = await Validators.at(validatorsProxy);

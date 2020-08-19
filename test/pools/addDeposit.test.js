@@ -11,6 +11,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   getDepositAmount,
@@ -29,13 +30,14 @@ const Settings = artifacts.require('Settings');
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Pools (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, pools, settings;
+  let networkConfig, deposits, vrc, dai, pools, settings;
   let [admin, sender1, recipient1, sender2, recipient2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -51,6 +53,7 @@ contract('Pools (add deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     pools = await Pools.at(poolsProxy);
     deposits = await Deposits.at(depositsProxy);
