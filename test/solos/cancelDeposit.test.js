@@ -12,6 +12,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -31,13 +32,14 @@ const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Solos (cancel deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, solos, soloId;
+  let networkConfig, deposits, vrc, dai, solos, soloId;
   let [admin, operator, sender1, recipient1] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -53,6 +55,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
     deposits = await Deposits.at(depositsProxy);

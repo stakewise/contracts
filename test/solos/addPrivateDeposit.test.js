@@ -12,6 +12,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   checkDepositAdded,
@@ -32,13 +33,14 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Solos (add private deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, solos, settings, soloId;
+  let networkConfig, deposits, vrc, dai, solos, settings, soloId;
   let [admin, sender1, sender2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -54,6 +56,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
     deposits = await Deposits.at(depositsProxy);
@@ -125,6 +128,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     for (let i = 1; i < 4; i++) {
       // Check solo deposit added
       let soloId = getEntityId(solos.address, new BN(i));
+      let payments = receipt.logs[0].args.payments;
       await checkDepositAdded({
         transaction: receipt.tx,
         depositsContract: deposits,
@@ -135,12 +139,22 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
         addedAmount: validatorDepositAmount,
         totalAmount: validatorDepositAmount,
       });
+
+      expectEvent(receipt, 'PrivateEntityAdded', {
+        entityId: soloId,
+        payments,
+        withdrawalPublicKey,
+        withdrawalCredentials,
+      });
+
+      await checkPendingSolo({
+        solos,
+        soloId,
+        withdrawalCredentials,
+        payments,
+        amount: validatorDepositAmount,
+      });
     }
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
-      entityId: soloId,
-      withdrawalPublicKey,
-      withdrawalCredentials,
-    });
     await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(3)));
   });
 
@@ -153,6 +167,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
 
     // Check private solo deposit added
     let soloId = getEntityId(solos.address, new BN(1));
+    let payments = receipt.logs[0].args.payments;
     await checkDepositAdded({
       transaction: receipt.tx,
       depositsContract: deposits,
@@ -165,8 +180,9 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     // check validator deposit withdrawal key added
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: soloId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -175,6 +191,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
       solos,
       soloId,
       withdrawalCredentials,
+      payments,
       amount: validatorDepositAmount,
     });
     await checkCollectorBalance(solos, validatorDepositAmount);
@@ -188,6 +205,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     let soloId = getEntityId(solos.address, new BN(1));
+    let payments = receipt.logs[0].args.payments;
     await checkDepositAdded({
       transaction: receipt.tx,
       depositsContract: deposits,
@@ -200,8 +218,9 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     // check validator deposit withdrawal key added
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: soloId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -209,6 +228,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     await checkPendingSolo({
       solos,
       soloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -221,6 +241,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     soloId = getEntityId(solos.address, new BN(2));
+    payments = receipt.logs[0].args.payments;
     await checkDepositAdded({
       transaction: receipt.tx,
       depositsContract: deposits,
@@ -233,8 +254,9 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     // check validator deposit withdrawal key added
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: soloId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -242,6 +264,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     await checkPendingSolo({
       solos,
       soloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -256,6 +279,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     let soloId = getEntityId(solos.address, new BN(1));
+    let payments = receipt.logs[0].args.payments;
     await checkDepositAdded({
       transaction: receipt.tx,
       depositsContract: deposits,
@@ -268,8 +292,9 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     // check validator deposit withdrawal key added
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: soloId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -277,6 +302,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     await checkPendingSolo({
       solos,
       soloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -300,8 +326,9 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     });
 
     // check validator deposit withdrawal key added
-    expectEvent(receipt, 'WithdrawalKeyAdded', {
+    expectEvent(receipt, 'PrivateEntityAdded', {
       entityId: soloId,
+      payments,
       withdrawalPublicKey,
       withdrawalCredentials,
     });
@@ -309,6 +336,7 @@ contract('Solos (add private deposit)', ([_, ...accounts]) => {
     await checkPendingSolo({
       solos,
       soloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });

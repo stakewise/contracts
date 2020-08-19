@@ -12,6 +12,7 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
+const { deployDAI } = require('../../deployments/tokens');
 const {
   checkDepositAdded,
   removeNetworkFile,
@@ -27,13 +28,15 @@ const Settings = artifacts.require('Settings');
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Solos (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, solos, settings;
+  let networkConfig, deposits, vrc, dai, solos, settings;
   let [admin, sender1, recipient1, sender2, recipient2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -49,6 +52,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
     deposits = await Deposits.at(depositsProxy);

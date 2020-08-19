@@ -1,4 +1,8 @@
 const { scripts } = require('@openzeppelin/cli');
+const {
+  ProjectFile,
+  NetworkFile,
+} = require('@openzeppelin/cli/lib/models/files').default;
 
 async function deployPoolsProxy({
   vrc,
@@ -38,9 +42,13 @@ async function deploySolosProxy({
   vrc,
   validatorsProxy,
   validatorTransfersProxy,
+  dai,
   salt,
   networkConfig,
 }) {
+  let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
+  const paymentsImplementation = networkFile.contract('Payments').address;
+
   const proxy = await scripts.create({
     contractAlias: 'Solos',
     methodName: 'initialize',
@@ -52,6 +60,8 @@ async function deploySolosProxy({
       vrc,
       validatorsProxy,
       validatorTransfersProxy,
+      paymentsImplementation,
+      dai,
     ],
     salt,
     ...networkConfig,
@@ -68,9 +78,13 @@ async function deployGroupsProxy({
   vrc,
   validatorsProxy,
   validatorTransfersProxy,
+  dai,
   salt,
   networkConfig,
 }) {
+  let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
+  const paymentsImplementation = networkFile.contract('Payments').address;
+
   const proxy = await scripts.create({
     contractAlias: 'Groups',
     methodName: 'initialize',
@@ -82,6 +96,8 @@ async function deployGroupsProxy({
       vrc,
       validatorsProxy,
       validatorTransfersProxy,
+      paymentsImplementation,
+      dai,
     ],
     salt,
     ...networkConfig,

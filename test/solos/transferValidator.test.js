@@ -13,6 +13,7 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -41,6 +42,7 @@ const withdrawalCredentials =
 contract('Solos (transfer validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     validators,
     validatorTransfers,
     solos,
@@ -55,6 +57,7 @@ contract('Solos (transfer validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -66,6 +69,7 @@ contract('Solos (transfer validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     solos = await Solos.at(proxies.solos);
     validators = await Validators.at(proxies.validators);

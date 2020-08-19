@@ -12,11 +12,13 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
+const { deployDAI } = require('../../deployments/tokens');
 const {
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingSolo,
   checkValidatorRegistered,
+  checkPayments,
   signValidatorTransfer,
   validatorRegistrationArgs,
   getEntityId,
@@ -30,6 +32,7 @@ const ValidatorTransfers = artifacts.require('ValidatorTransfers');
 const Managers = artifacts.require('Managers');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const validatorPrice = new BN(initialSettings.validatorPrice);
 const withdrawalPublicKey =
   '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
 const withdrawalCredentials =
@@ -45,6 +48,7 @@ const stakingDuration = new BN(86400);
 contract('Solos (register validator)', ([_, ...accounts]) => {
   let networkConfig,
     vrc,
+    dai,
     validators,
     validatorTransfers,
     managers,
@@ -56,6 +60,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
+    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -74,6 +79,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
+      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
     validators = await Validators.at(validatorsProxy);
@@ -271,14 +277,16 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
 
   it('registers validators for private solos', async () => {
     // create private solo deposit
-    await solos.addPrivateDeposit(withdrawalPublicKey, {
+    let { logs } = await solos.addPrivateDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
     soloId = getEntityId(solos.address, new BN(2));
+    let payments = logs[0].args.payments;
     await checkPendingSolo({
       solos,
       soloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -323,7 +331,55 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await time.increase(time.duration.seconds(stakingDuration));
     expect(await validatorTransfers.checkTransferAllowed(soloId)).equal(false);
 
+    // check whether validator metering has started
+    await checkPayments(payments, validatorPrice);
+
     // there was already one solo deposit in contract
     await checkCollectorBalance(solos, validatorDepositAmount);
+  });
+
+  it("adds private solo validator price to the user's payments contract", async () => {
+    // create first private solo deposit
+    let { logs } = await solos.addPrivateDeposit(withdrawalPublicKey, {
+      from: sender,
+      value: validatorDepositAmount,
+    });
+    soloId = getEntityId(solos.address, new BN(2));
+    let payments = logs[0].args.payments;
+
+    // register first validator
+    await solos.registerValidator(
+      publicKey,
+      signature,
+      depositDataRoot,
+      soloId,
+      {
+        from: operator,
+      }
+    );
+
+    // check whether first validator metering has started
+    await checkPayments(payments, validatorPrice);
+
+    // create second private solo deposit
+    await solos.addPrivateDeposit(withdrawalPublicKey, {
+      from: sender,
+      value: validatorDepositAmount,
+    });
+
+    // register second validator
+    soloId = getEntityId(solos.address, new BN(3));
+    await solos.registerValidator(
+      '0xb6c1beecd20b4d4e88032adcca1308716d0e5f560c2f61e3a266a8ba78caaeb784fefdab2aa5501eda05682c292f3a45',
+      '0x8212c1edbb9e8d11d5ca4918f2579332123969c741a1e6dfa0ecb1e54229814a17bcdb8f803a651307ab11e653a7b6f6149cc2b393019b917c43c4871ea5fa28a656dba93a349056295e48f4f9ef5c10b04c651377dd8694a24cc311ef3e9080',
+      '0x58bd7f3259b86bebcc8d49732981cb9933174946cd5d417691c3d8de787aba85',
+      soloId,
+      {
+        from: operator,
+      }
+    );
+
+    // check whether second validator metering has started
+    await checkPayments(payments, validatorPrice.mul(new BN(2)));
   });
 });
