@@ -3,6 +3,7 @@
   "rules": {
     "compiler-version": ["error", "0.6.12"],
     "mark-callable-contracts": "off",
-    "no-empty-blocks": "off"
+    "no-empty-blocks": "off",
+    "reason-string": "off"
   }
 }
