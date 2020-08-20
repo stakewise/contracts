@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "openzeppelin compile",
     "deploy": "yarn compile && node scripts/deploy.js",
+    "deployDAI": "npx truffle exec scripts/deployDAI.js --network beta",
     "coverage": "NODE_ENV=test SILENT=true NETWORK=coverage truffle run coverage --network coverage --temp build",
     "test": "./scripts/test.sh",
     "lint": "yarn lint:js && yarn lint:sol && prettier '*.{json,md}'",

@@ -2,22 +2,20 @@ const {
   deployAdminsProxy,
   deployOperatorsProxy,
   deployManagersProxy,
-} = require('../deployments/access');
-const { calculateContractAddress, log } = require('../deployments/common');
-const { deployDepositsProxy } = require('../deployments/deposits');
+} = require('./access');
+const { calculateContractAddress, log } = require('./common');
+const { deployDepositsProxy } = require('./deposits');
 const {
   deployPoolsProxy,
   deploySolosProxy,
   deployGroupsProxy,
-} = require('../deployments/collectors');
-const { deploySettingsProxy } = require('../deployments/settings');
-const { deployWithdrawalsProxy } = require('../deployments/withdrawals');
-const { deployValidatorsProxy } = require('../deployments/validators');
-const {
-  deployValidatorTransfersProxy,
-} = require('../deployments/validatorTransfers');
+} = require('./collectors');
+const { deploySettingsProxy } = require('./settings');
+const { deployWithdrawalsProxy } = require('./withdrawals');
+const { deployValidatorsProxy } = require('./validators');
+const { deployValidatorTransfersProxy } = require('./validatorTransfers');
 
-async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
+async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
   // Calculate Deposits proxy address via create2
   let {
     salt: depositsSalt,
@@ -179,6 +177,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     operatorsProxy,
     managersProxy,
     validatorsProxy,
+    dai,
     validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig,
   });
@@ -198,6 +197,7 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc }) {
     managersProxy,
     operatorsProxy,
     validatorsProxy,
+    dai,
     validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig,
   });

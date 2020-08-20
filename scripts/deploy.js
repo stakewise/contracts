@@ -20,6 +20,7 @@ Loggy.silent(true);
   await deployAllProxies({
     initialAdmin: process.env.INITIAL_ADMIN,
     vrc: process.env.VRC,
+    dai: process.env.DAI,
     networkConfig,
   });
 })();

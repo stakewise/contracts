@@ -9,6 +9,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
+const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile } = require('../common/utils');
 

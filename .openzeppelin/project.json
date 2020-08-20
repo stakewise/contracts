@@ -12,7 +12,8 @@
     "Withdrawals": "Withdrawals",
     "Groups": "Groups",
     "Solos": "Solos",
-    "Wallet": "Wallet"
+    "Wallet": "Wallet",
+    "Payments": "Payments"
   },
   "dependencies": {},
   "name": "stakewise",
