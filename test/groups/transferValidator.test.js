@@ -282,10 +282,16 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
 
   it('fails to transfer validator to private group', async () => {
     // register new private group
-    await groups.createPrivateGroup([other], withdrawalPublicKey, {
-      from: manager,
-    });
+    const { logs } = await groups.createPrivateGroup(
+      [other],
+      withdrawalPublicKey,
+      {
+        from: manager,
+      }
+    );
     let privateGroupId = getEntityId(groups.address, new BN(3));
+    let payments = logs[1].args.payments;
+
     await groups.addDeposit(privateGroupId, recipient, {
       from: manager,
       value: validatorDepositAmount,
@@ -308,6 +314,7 @@ contract('Groups (transfer validator)', ([_, ...accounts]) => {
     await checkPendingGroup({
       groups,
       groupId: privateGroupId,
+      payments,
       withdrawalCredentials,
       collectedAmount: validatorDepositAmount,
     });

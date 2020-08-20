@@ -236,11 +236,12 @@ contract('Solos (transfer validator)', ([_, ...accounts]) => {
 
   it('fails to transfer validator to private solo', async () => {
     // register new private solo
-    await solos.addPrivateDeposit(withdrawalPublicKey, {
+    let { logs } = await solos.addPrivateDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
     let privateSoloId = getEntityId(solos.address, new BN(2));
+    let payments = logs[0].args.payments;
 
     // transfer validator to the new solo
     await expectRevert(
@@ -259,6 +260,7 @@ contract('Solos (transfer validator)', ([_, ...accounts]) => {
     await checkPendingSolo({
       solos,
       soloId: privateSoloId,
+      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
