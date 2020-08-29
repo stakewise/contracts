@@ -16,8 +16,9 @@ interface ISettings {
     * @dev Constructor for initializing the Settings contract.
     * @param _maintainer - address of the maintainer, where the fee is paid.
     * @param _maintainerFee - percentage fee for using the service.
-    * @param _userDepositMinUnit - minimal unit (wei, gwei, etc.) deposit can have.
+    * @param _minDepositUnit - minimum unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
+    * @param _maxDepositAmount - maximum deposit amount.
     * @param _validatorPrice - price per second of the non-custodial validator.
     * @param _withdrawalCredentials - withdrawal credentials.
     * @param _admins - address of the Admins contract.
@@ -26,8 +27,9 @@ interface ISettings {
     function initialize(
         address payable _maintainer,
         uint16 _maintainerFee,
-        uint64 _userDepositMinUnit,
+        uint64 _minDepositUnit,
         uint128 _validatorDepositAmount,
+        uint256 _maxDepositAmount,
         uint256 _validatorPrice,
         bytes memory _withdrawalCredentials,
         address _admins,
@@ -45,14 +47,19 @@ interface ISettings {
     function maintainerFee() external view returns (uint64);
 
     /**
-    * @dev Function for getting user deposit minimal unit.
+    * @dev Function for getting user deposit minimum unit.
     */
-    function userDepositMinUnit() external view returns (uint64);
+    function minDepositUnit() external view returns (uint64);
 
     /**
     * @dev Function for getting validator deposit amount.
     */
     function validatorDepositAmount() external view returns (uint128);
+
+    /**
+    * @dev Function for getting user maximum deposit amount.
+    */
+    function maxDepositAmount() external view returns (uint256);
 
     /**
     * @dev Function for getting non-custodial validator price.
@@ -65,34 +72,16 @@ interface ISettings {
     function withdrawalCredentials() external view returns (bytes memory);
 
     /**
-    * @dev Function for getting staking duration of the collector contract.
-    * @param _collector - address of the collector contract.
-    */
-    function stakingDurations(address _collector) external view returns (uint256);
-
-    /**
     * @dev Function for checking whether the contract is paused or not.
     * @param _contract - address of the contract to check.
     */
     function pausedContracts(address _contract) external view returns (bool);
 
     /**
-    * @dev Function for changing user's deposit minimal unit.
-    * @param newValue - new minimal deposit unit.
+    * @dev Function for changing user's deposit minimum unit.
+    * @param newValue - new minimum deposit unit.
     */
-    function setUserDepositMinUnit(uint64 newValue) external;
-
-    /**
-    * @dev Function for changing validator's deposit amount.
-    * @param newValue - new validator's deposit amount.
-    */
-    function setValidatorDepositAmount(uint128 newValue) external;
-
-    /**
-    * @dev Function for changing withdrawal credentials.
-    * @param newValue - new withdrawal credentials.
-    */
-    function setWithdrawalCredentials(bytes calldata newValue) external;
+    function setMinDepositUnit(uint64 newValue) external;
 
     /**
     * @dev Function for changing the maintainer's address.
@@ -107,18 +96,17 @@ interface ISettings {
     function setMaintainerFee(uint64 newValue) external;
 
     /**
-    * @dev Function for changing staking durations for the collectors.
-    * @param collector - address of the collector.
-    * @param stakingDuration - new staking duration of the collector.
-    */
-    function setStakingDuration(address collector, uint256 stakingDuration) external;
-
-    /**
     * @dev Function for pausing or resuming managed contracts.
     * @param _contract - address of the managed contract.
     * @param isPaused - defines whether contract is paused or not.
     */
     function setContractPaused(address _contract, bool isPaused) external;
+
+    /**
+    * @dev Function for setting maximum deposit amount.
+    * @param newValue - new maximum deposit amount.
+    */
+    function setMaxDepositAmount(uint256 newValue) external;
 
     /**
     * @dev Function for setting non-custodial validator price.

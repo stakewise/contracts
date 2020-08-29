@@ -20,13 +20,11 @@ const {
 const { removeNetworkFile } = require('./common/utils');
 
 const newValues = [
-  ['userDepositMinUnit', ether('0.002')],
-  ['validatorDepositAmount', ether('30')],
+  ['minDepositUnit', ether('0.002')],
+  ['maxDepositAmount', ether('11000')],
   ['validatorPrice', new BN(3703171921051)],
-  ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
-  ['stakingDuration', new BN(31556952)],
   ['contractPaused', true],
 ];
 
@@ -84,20 +82,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'stakingDuration') {
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
-        const receipt = await settings.setStakingDuration(collector, newValue, {
-          from: admin,
-        });
-        expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('stakingDurations').padEnd(66, '0'),
-        });
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(newValue);
-      } else if (setting === 'contractPaused') {
+      if (setting === 'contractPaused') {
         expect(await settings.pausedContracts(collector)).equal(false);
         const receipt = await settings.setContractPaused(collector, newValue, {
           from: admin,
@@ -122,20 +107,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('others cannot change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'stakingDuration') {
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
-        await expectRevert(
-          settings.setStakingDuration(collector, newValue, {
-            from: anyone,
-          }),
-          'Permission denied.'
-        );
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
-      } else if (setting === 'contractPaused') {
+      if (setting === 'contractPaused') {
         expect(await settings.pausedContracts(collector)).equal(false);
         await expectRevert(
           settings.setContractPaused(collector, newValue, {

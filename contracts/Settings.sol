@@ -20,20 +20,20 @@ contract Settings is ISettings, Initializable {
     // @dev The percentage fee users pay from their reward for using the service.
     uint64 public override maintainerFee;
 
-    // @dev The minimal unit (wei, gwei, etc.) deposit can have.
-    uint64 public override userDepositMinUnit;
+    // @dev The minimum unit (wei, gwei, etc.) deposit can have.
+    uint64 public override minDepositUnit;
 
     // @dev The deposit amount required to become an Ethereum validator.
     uint128 public override validatorDepositAmount;
+
+    // @dev The maximum deposit amount.
+    uint256 public override maxDepositAmount;
 
     // @dev The non-custodial validator price per second.
     uint256 public override validatorPrice;
 
     // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
     bytes public override withdrawalCredentials;
-
-    // @dev The mapping between collector and its staking duration.
-    mapping(address => uint256) public override stakingDurations;
 
     // @dev The mapping between the managed contract and whether it is paused or not.
     mapping(address => bool) public override pausedContracts;
@@ -50,8 +50,9 @@ contract Settings is ISettings, Initializable {
     function initialize(
         address payable _maintainer,
         uint16 _maintainerFee,
-        uint64 _userDepositMinUnit,
+        uint64 _minDepositUnit,
         uint128 _validatorDepositAmount,
+        uint256 _maxDepositAmount,
         uint256 _validatorPrice,
         bytes memory _withdrawalCredentials,
         address _admins,
@@ -61,8 +62,9 @@ contract Settings is ISettings, Initializable {
     {
         maintainer = _maintainer;
         maintainerFee = _maintainerFee;
-        userDepositMinUnit = _userDepositMinUnit;
+        minDepositUnit = _minDepositUnit;
         validatorDepositAmount = _validatorDepositAmount;
+        maxDepositAmount = _maxDepositAmount;
         validatorPrice = _validatorPrice;
         withdrawalCredentials = _withdrawalCredentials;
         admins = IAdmins(_admins);
@@ -70,33 +72,23 @@ contract Settings is ISettings, Initializable {
     }
 
     /**
-     * @dev See {ISettings-setUserDepositMinUnit}.
+     * @dev See {ISettings-setMinDepositUnit}.
      */
-    function setUserDepositMinUnit(uint64 newValue) external override {
+    function setMinDepositUnit(uint64 newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
-        userDepositMinUnit = newValue;
-        emit SettingChanged("userDepositMinUnit");
+        minDepositUnit = newValue;
+        emit SettingChanged("minDepositUnit");
     }
 
     /**
-     * @dev See {ISettings-setValidatorDepositAmount}.
+     * @dev See {ISettings-setMaxDepositAmount}.
      */
-    function setValidatorDepositAmount(uint128 newValue) external override {
+    function setMaxDepositAmount(uint256 newValue) external override {
         require(admins.isAdmin(msg.sender), "Permission denied.");
 
-        validatorDepositAmount = newValue;
-        emit SettingChanged("validatorDepositAmount");
-    }
-
-    /**
-     * @dev See {ISettings-setWithdrawalCredentials}.
-     */
-    function setWithdrawalCredentials(bytes calldata newValue) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-
-        withdrawalCredentials = newValue;
-        emit SettingChanged("withdrawalCredentials");
+        maxDepositAmount = newValue;
+        emit SettingChanged("maxDepositAmount");
     }
 
     /**
@@ -118,16 +110,6 @@ contract Settings is ISettings, Initializable {
 
         maintainerFee = newValue;
         emit SettingChanged("maintainerFee");
-    }
-
-    /**
-     * @dev See {ISettings-setStakingDuration}.
-     */
-    function setStakingDuration(address collector, uint256 stakingDuration) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-
-        stakingDurations[collector] = stakingDuration;
-        emit SettingChanged("stakingDurations");
     }
 
     /**

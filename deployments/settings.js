@@ -2,7 +2,8 @@ const { scripts } = require('@openzeppelin/cli');
 
 // TODO: Replace with actual values
 const initialSettings = {
-  userDepositMinUnit: '1000000000000000',
+  minDepositUnit: '1000000000000000', // 0.001 ETH
+  maxDepositAmount: '1000000000000000000000', // 1000 ETH
   validatorDepositAmount: '32000000000000000000',
   validatorPrice: '3805175038051', // 10 DAI / month
   maintainerFee: '523', // 5.23%,
@@ -22,8 +23,9 @@ async function deploySettingsProxy({
     methodArgs: [
       initialSettings.maintainer,
       initialSettings.maintainerFee,
-      initialSettings.userDepositMinUnit,
+      initialSettings.minDepositUnit,
       initialSettings.validatorDepositAmount,
+      initialSettings.maxDepositAmount,
       initialSettings.validatorPrice,
       initialSettings.withdrawalCredentials,
       adminsProxy,
