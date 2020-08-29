@@ -17,9 +17,7 @@ const { removeNetworkFile } = require('../common/utils');
 const Operators = artifacts.require('Operators');
 
 contract('Operators', ([_, ...accounts]) => {
-  let networkConfig;
-  let adminsProxy;
-  let operators;
+  let networkConfig, adminsProxy, operators;
   let [admin, operator, anotherOperator, anyone] = accounts;
 
   before(async () => {
@@ -71,7 +69,7 @@ contract('Operators', ([_, ...accounts]) => {
     it('others cannot assign operator role to an account', async () => {
       await expectRevert(
         operators.addOperator(operator, { from: anyone }),
-        'Only admin users can assign operators.'
+        'Operators: only admin users can assign operators'
       );
       expect(await operators.isOperator(operator)).equal(false);
       expect(await operators.isOperator(anyone)).equal(false);
@@ -81,7 +79,7 @@ contract('Operators', ([_, ...accounts]) => {
       await operators.addOperator(operator, { from: admin });
       await expectRevert(
         operators.addOperator(anotherOperator, { from: operator }),
-        'Only admin users can assign operators.'
+        'Operators: only admin users can assign operators'
       );
       expect(await operators.isOperator(operator)).equal(true);
       expect(await operators.isOperator(anotherOperator)).equal(false);
@@ -97,7 +95,7 @@ contract('Operators', ([_, ...accounts]) => {
     it('anyone cannot remove operators', async () => {
       await expectRevert(
         operators.removeOperator(operator, { from: anyone }),
-        'Only admin users can remove operators.'
+        'Operators: only admin users can remove operators'
       );
       expect(await operators.isOperator(operator)).equal(true);
       expect(await operators.isOperator(anotherOperator)).equal(true);
@@ -106,7 +104,7 @@ contract('Operators', ([_, ...accounts]) => {
     it('operator cannot remove other operators', async () => {
       await expectRevert(
         operators.removeOperator(anotherOperator, { from: operator }),
-        'Only admin users can remove operators.'
+        'Operators: only admin users can remove operators'
       );
       expect(await operators.isOperator(operator)).equal(true);
       expect(await operators.isOperator(anotherOperator)).equal(true);

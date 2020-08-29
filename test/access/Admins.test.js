@@ -14,8 +14,7 @@ const { removeNetworkFile } = require('../common/utils');
 const Admins = artifacts.require('Admins');
 
 contract('Admins', ([_, ...accounts]) => {
-  let networkConfig;
-  let admins;
+  let networkConfig, admins;
   let [admin, otherAdmin, anyone] = accounts;
 
   before(async () => {
@@ -73,7 +72,7 @@ contract('Admins', ([_, ...accounts]) => {
     it('anyone cannot assign admin role to an account', async () => {
       await expectRevert(
         admins.addAdmin(otherAdmin, { from: anyone }),
-        'Caller does not have an Admin role.'
+        'Admins: caller does not have an admin role'
       );
       expect(await admins.isAdmin(otherAdmin)).equal(false);
       expect(await admins.isAdmin(anyone)).equal(false);
@@ -92,7 +91,7 @@ contract('Admins', ([_, ...accounts]) => {
     it('others cannot renounce themselves', async () => {
       await expectRevert(
         admins.renounceAdmin({ from: anyone }),
-        'Caller does not have an Admin role.'
+        'Admins: caller does not have an admin role'
       );
     });
   });

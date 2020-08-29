@@ -22,7 +22,7 @@ contract Admins is IAdmins, Initializable {
     * @dev Modifier for checking whether the caller has an admin role.
     */
     modifier onlyAdmin() {
-        require(isAdmin(msg.sender), "Caller does not have an Admin role.");
+        require(isAdmin(msg.sender), "Admins: caller does not have an admin role");
         _;
     }
 

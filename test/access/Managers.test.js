@@ -4,28 +4,29 @@ const {
   expectEvent,
   expectRevert,
 } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const {
+  deployAdminsProxy,
+  deployManagersProxy,
+} = require('../../deployments/access');
 const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
-const { deployDAI } = require('../../deployments/tokens');
-const { deployVRC } = require('../../deployments/vrc');
 const { removeNetworkFile } = require('../common/utils');
 
 const Managers = artifacts.require('Managers');
-const entityId =
-  '0xd5399111f6a7d6b0ea29fe682b6046191f613b4bff0c4f7ebb28dd62e6fd5434';
 
 contract('Managers', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, managers;
+  let networkConfig, adminsProxy, managers;
   let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
+    adminsProxy = await deployAdminsProxy({
+      networkConfig,
+      initialAdmin: admin,
+    });
   });
 
   after(() => {
@@ -33,13 +34,9 @@ contract('Managers', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    let { managers: managersProxy } = await deployAllProxies({
-      initialAdmin: admin,
-      networkConfig,
-      vrc: vrc.options.address,
-      dai: dai.address,
-    });
-    managers = await Managers.at(managersProxy);
+    managers = await Managers.at(
+      await deployManagersProxy({ networkConfig, adminsProxy })
+    );
   });
 
   describe('assigning', () => {
@@ -74,7 +71,7 @@ contract('Managers', ([_, ...accounts]) => {
     it('others cannot assign manager role to an account', async () => {
       await expectRevert(
         managers.addManager(manager, { from: anyone }),
-        'Only admin users can assign managers.'
+        'Managers: only admin users can assign managers'
       );
       expect(await managers.isManager(manager)).equal(false);
       expect(await managers.isManager(anyone)).equal(false);
@@ -84,21 +81,10 @@ contract('Managers', ([_, ...accounts]) => {
       await managers.addManager(manager, { from: admin });
       await expectRevert(
         managers.addManager(anotherManager, { from: manager }),
-        'Only admin users can assign managers.'
+        'Managers: only admin users can assign managers'
       );
       expect(await managers.isManager(manager)).equal(true);
       expect(await managers.isManager(anotherManager)).equal(false);
-    });
-
-    it('only collectors can assign transfer managers', async () => {
-      for (const user of [manager, admin, anyone]) {
-        await expectRevert(
-          managers.addTransferManager(entityId, anyone, {
-            from: user,
-          }),
-          'Permission denied.'
-        );
-      }
     });
   });
 
@@ -111,7 +97,7 @@ contract('Managers', ([_, ...accounts]) => {
     it('anyone cannot remove managers', async () => {
       await expectRevert(
         managers.removeManager(manager, { from: anyone }),
-        'Only admin users can remove managers.'
+        'Managers: only admin users can remove managers'
       );
       expect(await managers.isManager(manager)).equal(true);
       expect(await managers.isManager(anotherManager)).equal(true);
@@ -120,7 +106,7 @@ contract('Managers', ([_, ...accounts]) => {
     it('manager cannot remove other managers', async () => {
       await expectRevert(
         managers.removeManager(anotherManager, { from: manager }),
-        'Only admin users can remove managers.'
+        'Managers: only admin users can remove managers'
       );
       expect(await managers.isManager(manager)).equal(true);
       expect(await managers.isManager(anotherManager)).equal(true);
