@@ -1,10 +1,5 @@
 const { expect } = require('chai');
-const {
-  expectRevert,
-  constants,
-  time,
-  BN,
-} = require('@openzeppelin/test-helpers');
+const { expectRevert, time, BN } = require('@openzeppelin/test-helpers');
 const {
   deployAdminsProxy,
   deployOperatorsProxy,
@@ -53,7 +48,15 @@ contract('Payments', ([_, ...accounts]) => {
     operatorsProxy,
     managersProxy,
     settingsProxy;
-  let [admin, operator, manager, owner, refundRecipient, anyone] = accounts;
+  let [
+    admin,
+    operator,
+    manager,
+    refundRecipient,
+    solos,
+    groups,
+    anyone,
+  ] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -71,12 +74,7 @@ contract('Payments', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     // deploy and configure manager
-    managersProxy = await deployManagersProxy({
-      networkConfig,
-      adminsProxy,
-      solosProxy: constants.ZERO_ADDRESS,
-      groupsProxy: constants.ZERO_ADDRESS,
-    });
+    managersProxy = await deployManagersProxy({ networkConfig, adminsProxy });
     let managers = await Managers.at(managersProxy);
     await managers.addManager(manager, { from: admin });
 
@@ -101,38 +99,46 @@ contract('Payments', ([_, ...accounts]) => {
       managersProxy,
       settingsProxy,
       dai.address,
-      owner
+      solos,
+      groups
     );
   });
 
-  it('only owner can set refund recipient', async () => {
+  it('only collector can set refund recipient', async () => {
     let users = [admin, operator, manager, anyone];
     for (let i = 0; i < users.length; i++) {
       await expectRevert(
         payments.setRefundRecipient(anyone, {
           from: users[i],
         }),
-        'Permission denied.'
+        'Payments: permission denied'
       );
     }
     await payments.setRefundRecipient(anyone, {
-      from: owner,
+      from: groups,
+    });
+    await payments.setRefundRecipient(anyone, {
+      from: solos,
     });
   });
 
   describe('start metering', () => {
-    it('only owner can start metering new validator', async () => {
+    it('only collector can start metering new validator', async () => {
       let users = [admin, operator, manager, anyone];
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
           payments.startMeteringValidator(validators[0][0], {
             from: users[i],
           }),
-          'Permission denied.'
+          'Payments: permission denied'
         );
       }
       await payments.startMeteringValidator(validators[0][0], {
-        from: owner,
+        from: solos,
+      });
+
+      await payments.startMeteringValidator(validators[1][0], {
+        from: groups,
       });
     });
 
@@ -143,7 +149,7 @@ contract('Payments', ([_, ...accounts]) => {
           from: admin,
         });
         await payments.startMeteringValidator(validatorId, {
-          from: owner,
+          from: solos,
         });
         totalPrice = totalPrice.add(validatorPrice);
         await checkPayments(payments.address, totalPrice);
@@ -158,19 +164,19 @@ contract('Payments', ([_, ...accounts]) => {
           from: admin,
         });
         await payments.startMeteringValidator(validatorId, {
-          from: owner,
+          from: solos,
         });
       }
     });
 
     it('only operator can stop metering validator', async () => {
-      let users = [admin, owner, manager, anyone];
+      let users = [admin, solos, groups, manager, anyone];
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
           payments.stopMeteringValidator(validators[0][0], {
             from: users[i],
           }),
-          'Permission denied.'
+          'Payments: permission denied'
         );
       }
 
@@ -188,7 +194,7 @@ contract('Payments', ([_, ...accounts]) => {
         payments.stopMeteringValidator(validators[0][0], {
           from: operator,
         }),
-        'Metering is already stopped for the validator.'
+        'Payments: metering is already stopped for the validator'
       );
     });
 
@@ -217,7 +223,7 @@ contract('Payments', ([_, ...accounts]) => {
         from: admin,
       });
       let { receipt } = await payments.startMeteringValidator(validatorId, {
-        from: owner,
+        from: solos,
       });
       lastMeteringTimestamp = new BN(
         (await web3.eth.getBlock(receipt.blockNumber)).timestamp
@@ -292,7 +298,7 @@ contract('Payments', ([_, ...accounts]) => {
           from: admin,
         });
         await payments.startMeteringValidator(validatorId, {
-          from: owner,
+          from: solos,
         });
       }
 
@@ -311,13 +317,13 @@ contract('Payments', ([_, ...accounts]) => {
       await dai.transfer(payments.address, totalBill, {
         from: admin,
       });
-      let users = [admin, owner, anyone];
+      let users = [admin, solos, anyone];
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
           payments.withdraw(totalBill, {
             from: users[i],
           }),
-          'Permission denied.'
+          'Payments: permission denied'
         );
       }
 
@@ -415,7 +421,7 @@ contract('Payments', ([_, ...accounts]) => {
           from: admin,
         });
         await payments.startMeteringValidator(validatorId, {
-          from: owner,
+          from: solos,
         });
       }
 
@@ -430,20 +436,20 @@ contract('Payments', ([_, ...accounts]) => {
       totalBill = await payments.getTotalBill(await time.latest());
       totalBalance = totalBill.mul(new BN(3));
       refundAmount = totalBalance.sub(totalBill.mul(new BN(2)));
-      await payments.setRefundRecipient(refundRecipient, { from: owner });
+      await payments.setRefundRecipient(refundRecipient, { from: solos });
     });
 
     it('only refund recipient can claim refund', async () => {
       await dai.transfer(payments.address, totalBalance, {
         from: admin,
       });
-      let users = [admin, owner, manager, anyone];
+      let users = [admin, solos, groups, manager, anyone];
       for (let i = 0; i < users.length; i++) {
         await expectRevert(
           payments.refund(refundAmount, {
             from: users[i],
           }),
-          'Permission denied.'
+          'Payments: permission denied'
         );
       }
     });
@@ -456,7 +462,7 @@ contract('Payments', ([_, ...accounts]) => {
         payments.refund(totalBalance, {
           from: refundRecipient,
         }),
-        'Insufficient balance.'
+        'Payments: insufficient balance'
       );
     });
 
@@ -486,7 +492,7 @@ contract('Payments', ([_, ...accounts]) => {
         payments.refund(totalBalance, {
           from: refundRecipient,
         }),
-        'Insufficient balance.'
+        'Payments: insufficient balance'
       );
     });
 

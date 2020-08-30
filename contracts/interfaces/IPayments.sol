@@ -2,10 +2,6 @@
 
 pragma solidity 0.6.12;
 
-import "./IOperators.sol";
-import "./IManagers.sol";
-import "./ISettings.sol";
-
 /**
  * @dev Interface of the Payments contract.
  */
@@ -16,14 +12,16 @@ interface IPayments {
     * @param _managers - address of the Managers contract.
     * @param _settings - address of the Settings contract.
     * @param _dai - address of the DAI contract.
-    * @param _owner - address of the contract owner.
+    * @param _solos - address of the Solos contract.
+    * @param _groups - address of the Groups contract.
     */
     function initialize(
-        IOperators _operators,
-        IManagers _managers,
-        ISettings _settings,
+        address _operators,
+        address _managers,
+        address _settings,
         address _dai,
-        address _owner
+        address _solos,
+        address _groups
     ) external;
 
     /**
