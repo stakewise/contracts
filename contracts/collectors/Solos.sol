@@ -3,58 +3,44 @@
 pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/ISettings.sol";
-import "../interfaces/IManagers.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IValidators.sol";
-import "../interfaces/IValidatorTransfers.sol";
-import "../interfaces/IDeposits.sol";
 import "../interfaces/IPayments.sol";
 
 /**
  * @title Solos
  *
- * @dev Users can create standalone validators using this contract.
- * They can optionally provide their own withdrawal key. The validator can be registered as soon as deposit is added.
+ * @dev Users can create standalone validators with their own withdrawal key using this contract.
+ * The validator can be registered as soon as deposit is added.
  */
 contract Solos is Initializable {
     using Address for address payable;
-    using Counters for Counters.Counter;
     using SafeMath for uint256;
 
     /**
-    * @dev Structure for storing information about the solo deposit which was not yet sent for staking.
-    * @param amount - validator deposit amount.
-    * @param payments - address of the payments contract for the validator.
-    * @param withdrawalCredentials - withdrawal credentials of the validator.
+    * @dev Structure for storing information about the solo deposits.
+    * @param amount - amount deposited.
+    * @param payments - address of the payments contract for the validators.
+    * @param withdrawalCredentials - withdrawal credentials of the validators.
     */
     struct Solo {
         uint256 amount;
-        IPayments payments;
+        address payments;
         bytes withdrawalCredentials;
     }
 
-    // @dev Maps ID of the pending solo deposit to its information.
-    mapping(bytes32 => Solo) public pendingSolos;
+    // @dev Maps ID of the solo to its information.
+    mapping(bytes32 => Solo) public solos;
 
     // @dev Maps address of the deposit sender to the payments contract.
-    mapping(address => IPayments) private paymentOwners;
-
-    // @dev Total number of solos created.
-    Counters.Counter private solosCounter;
-
-    // @dev Address of the Deposits contract.
-    IDeposits private deposits;
+    mapping(address => address) private paymentOwners;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
-
-    // @dev Address of the Managers contract.
-    IManagers private managers;
 
     // @dev Address of the Operators contract.
     IOperators private operators;
@@ -65,159 +51,124 @@ contract Solos is Initializable {
     // @dev Address of the Validators contract.
     IValidators private validators;
 
-    // @dev Address of the Validator Transfers contract.
-    IValidatorTransfers private validatorTransfers;
-
     // @dev Address of the payments logical contract.
     address private paymentsImplementation;
 
-    // @dev Address of the DAI contract.
-    address private dai;
+    // @dev Payments initialization data for proxy creation.
+    bytes private paymentsInitData;
 
     /**
-    * @dev Event for tracking private solo deposit data.
-    * @param entityId - ID of the private solo deposit.
+    * @dev Event for tracking added deposits.
+    * @param soloId - ID of the solo.
+    * @param sender - address of the deposit sender.
     * @param payments - address of the payments contract.
+    * @param amount - amount added.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the deposit sender.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
     */
-    event PrivateEntityAdded(
-        bytes32 indexed entityId,
-        IPayments payments,
+    event DepositAdded(
+        bytes32 indexed soloId,
+        address sender,
+        address payments,
+        uint256 amount,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
     );
 
     /**
+    * @dev Event for tracking canceled deposits.
+    * @param soloId - ID of the solo.
+    * @param amount - amount canceled.
+    */
+    event DepositCanceled(bytes32 indexed soloId, uint256 amount);
+
+    /**
     * @dev Constructor for initializing the Solos contract.
-    * @param _deposits - address of the Deposits contract.
     * @param _settings - address of the Settings contract.
-    * @param _managers - address of the Managers contract.
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
-    * @param _validatorTransfers - address of the Validator Transfers contract.
     * @param _paymentsImplementation - address of the payments logical contract.
-    * @param _dai - address of the DAI contract.
+    * @param _paymentsInitData - initialization data for payments proxy creation.
     */
     function initialize(
-        IDeposits _deposits,
         ISettings _settings,
-        IManagers _managers,
         IOperators _operators,
         IValidatorRegistration _validatorRegistration,
         IValidators _validators,
-        IValidatorTransfers _validatorTransfers,
         address _paymentsImplementation,
-        address _dai
+        bytes memory _paymentsInitData
     )
         public initializer
     {
-        deposits = _deposits;
         settings = _settings;
-        managers = _managers;
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validators = _validators;
-        validatorTransfers = _validatorTransfers;
         paymentsImplementation = _paymentsImplementation;
-        dai = _dai;
+        paymentsInitData = _paymentsInitData;
     }
 
     /**
     * @dev Function for adding solo deposits.
     * The deposit amount must be divisible by the validator deposit amount.
     * The depositing will be disallowed in case `Solos` contract is paused in `Settings` contract.
-    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
-    */
-    function addDeposit(address _recipient) external payable {
-        require(_recipient != address(0), "Invalid recipient address.");
-        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
-
-        uint256 validatorDepositAmount = settings.validatorDepositAmount();
-        uint256 depositsCount = msg.value.div(validatorDepositAmount);
-        require(msg.value.mod(validatorDepositAmount) == 0 && depositsCount > 0, "Invalid deposit amount.");
-
-        do {
-            // register new solo deposit
-            solosCounter.increment();
-            bytes32 soloId = keccak256(abi.encodePacked(address(this), solosCounter.current()));
-            deposits.addDeposit(soloId, msg.sender, _recipient, validatorDepositAmount);
-
-            Solo storage pendingSolo = pendingSolos[soloId];
-            pendingSolo.amount = validatorDepositAmount;
-
-            // register transfer manager
-            managers.addTransferManager(soloId, msg.sender);
-
-            depositsCount--;
-        } while (depositsCount > 0);
-    }
-
-    /**
-    * @dev Function for adding private solo deposits.
-    * The deposit amount must be divisible by the validator deposit amount.
-    * The depositing will be disallowed in case `Solos` contract is paused in `Settings` contract.
     * @param _publicKey - BLS public key for performing validator withdrawal.
     */
-    function addPrivateDeposit(bytes calldata _publicKey) external payable {
-        require(_publicKey.length == 48, "Invalid BLS withdrawal public key.");
-        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
+    function addDeposit(bytes calldata _publicKey) external payable {
+        require(_publicKey.length == 48, "Solos: invalid BLS withdrawal public key");
+        require(!settings.pausedContracts(address(this)), "Solos: contract is paused");
+        require(msg.value <= settings.maxDepositAmount(), "Solos: deposit amount is too large");
 
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
-        uint256 depositsCount = msg.value.div(validatorDepositAmount);
-        require(msg.value.mod(validatorDepositAmount) == 0 && depositsCount > 0, "Invalid deposit amount.");
+        require(msg.value > 0 && msg.value.mod(validatorDepositAmount) == 0, "Solos: invalid deposit amount");
 
         // calculate withdrawal credentials
         bytes memory withdrawalCredentials = abi.encodePacked(sha256(_publicKey));
         withdrawalCredentials[0] = 0x00;
 
         // deploy contract for validator payments if does not exist
-        IPayments payments = paymentOwners[msg.sender];
-        if (address(payments) == address(0)) {
-            payments = IPayments(deployPayments());
-            payments.setRefundRecipient(msg.sender);
+        address payments = paymentOwners[msg.sender];
+        if (payments == address(0)) {
+            payments = deployPayments();
+            IPayments(payments).setRefundRecipient(msg.sender);
             paymentOwners[msg.sender] = payments;
         }
 
-        do {
-            // register new private solo deposit
-            solosCounter.increment();
-            bytes32 soloId = keccak256(abi.encodePacked(address(this), solosCounter.current()));
-            deposits.addDeposit(soloId, msg.sender, msg.sender, validatorDepositAmount);
+        bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, withdrawalCredentials));
+        Solo storage solo = solos[soloId];
 
-            Solo storage pendingSolo = pendingSolos[soloId];
-            pendingSolo.amount = validatorDepositAmount;
-            pendingSolo.payments = payments;
-            pendingSolo.withdrawalCredentials = withdrawalCredentials;
+        // update solo data
+        solo.amount = solo.amount.add(msg.value);
+        if (solo.payments == address(0)) {
+            solo.payments = payments;
+            solo.withdrawalCredentials = withdrawalCredentials;
+        }
 
-            // emit event
-            emit PrivateEntityAdded(soloId, payments, _publicKey, withdrawalCredentials);
-
-            depositsCount--;
-        } while (depositsCount > 0);
+        // emit event
+        emit DepositAdded(soloId, msg.sender, payments, msg.value, _publicKey, withdrawalCredentials);
     }
 
     /**
     * @dev Function for canceling solo deposits.
-    * The deposit can only be canceled before it will be registered as a validator.
-    * @param _soloId - ID of the solo deposit.
-    * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
-    * For the solo deposit with its own withdrawal key, the recipient is the deposit sender.
+    * The deposit amount can only be canceled before it will be registered as a validator.
+    * @param _withdrawalCredentials - withdrawal credentials of solo validators.
+    * @param _amount - amount to cancel.
     */
-    function cancelDeposit(bytes32 _soloId, address payable _recipient) external {
-        uint256 depositAmount = deposits.getDeposit(_soloId, msg.sender, _recipient);
-        require(depositAmount > 0, "The user does not have a deposit.");
+    function cancelDeposit(bytes calldata _withdrawalCredentials, uint256 _amount) external {
+        require(_withdrawalCredentials.length == 32, "Solos: invalid withdrawal credentials");
 
-        Solo memory pendingSolo = pendingSolos[_soloId];
-        require(pendingSolo.amount > 0, "Cannot cancel deposit which has started staking.");
+        // update balance
+        bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
+        Solo storage solo = solos[soloId];
+        solo.amount = solo.amount.sub(_amount, "Solos: insufficient balance");
+        require(_amount > 0 && solo.amount.mod(settings.validatorDepositAmount()) == 0, "Solos: invalid cancel amount");
 
-        // cancel solo deposit
-        deposits.cancelDeposit(_soloId, msg.sender, _recipient, depositAmount);
-        delete pendingSolos[_soloId];
+        // emit event
+        emit DepositCanceled(soloId, _amount);
 
         // transfer canceled amount to the recipient
-        _recipient.sendValue(depositAmount);
+        msg.sender.sendValue(_amount);
     }
 
     /**
@@ -235,91 +186,23 @@ contract Solos is Initializable {
     )
         external
     {
-        require(operators.isOperator(msg.sender), "Permission denied.");
+        require(operators.isOperator(msg.sender), "Solos: permission denied");
 
-        Solo memory pendingSolo = pendingSolos[_soloId];
-        require(pendingSolo.amount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
+        // update solo balance
+        uint256 validatorDepositAmount = settings.validatorDepositAmount();
+        Solo storage solo = solos[_soloId];
+        solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
 
-        uint256 maintainerFee;
-        bytes memory withdrawalCredentials = pendingSolo.withdrawalCredentials;
-        if (withdrawalCredentials.length == 0) {
-            // set custodial withdrawal credentials
-            withdrawalCredentials = settings.withdrawalCredentials();
-
-            // allow transfer for not private solos
-            validatorTransfers.allowTransfer(_soloId);
-
-            // set maintainer fee for not private solos
-            maintainerFee = settings.maintainerFee();
-        } else {
-            // enable metering for the validator
-            pendingSolo.payments.startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
-        }
-
-        // cleanup pending solo deposit
-        delete pendingSolos[_soloId];
+        // enable metering for the validator
+        IPayments(solo.payments).startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
 
         // register validator
-        validators.register(
+        validators.register(_pubKey, _soloId);
+        validatorRegistration.deposit{value: validatorDepositAmount}(
             _pubKey,
-            withdrawalCredentials,
-            _soloId,
-            pendingSolo.amount,
-            maintainerFee
-        );
-        validatorRegistration.deposit{value: pendingSolo.amount}(
-            _pubKey,
-            withdrawalCredentials,
+            solo.withdrawalCredentials,
             _signature,
             _depositDataRoot
-        );
-    }
-
-    /**
-    * @dev Function for transferring validator ownership to the new solo.
-    * @param _validatorId - ID of the validator to transfer.
-    * @param _validatorReward - validator current reward.
-    * @param _soloId - ID of the solo to register validator for.
-    * @param _managerSignature - ECDSA signature of the previous entity manager if such exists.
-    */
-    function transferValidator(
-        bytes32 _validatorId,
-        uint256 _validatorReward,
-        bytes32 _soloId,
-        bytes calldata _managerSignature
-    )
-        external
-    {
-        require(operators.isOperator(msg.sender), "Permission denied.");
-
-        Solo memory pendingSolo = pendingSolos[_soloId];
-        require(pendingSolo.amount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
-        require(pendingSolo.withdrawalCredentials.length == 0, "Cannot transfer to the private solo.");
-
-        (uint256 depositAmount, uint256 prevMaintainerFee, bytes32 prevEntityId,) = validators.validators(_validatorId);
-        require(managers.canTransferValidator(prevEntityId, _managerSignature), "Invalid transfer manager signature.");
-        require(validatorTransfers.checkTransferAllowed(prevEntityId), "Validator transfer is not allowed.");
-
-        // calculate previous entity reward and fee
-        (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
-        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
-        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
-
-        // allow transfer for the new entity
-        validatorTransfers.allowTransfer(_soloId);
-
-        // cleanup pending solo deposit
-        delete pendingSolos[_soloId];
-
-        // transfer validator to the new solo
-        validators.update(_validatorId, _soloId, settings.maintainerFee());
-
-        // register validator transfer
-        validatorTransfers.registerTransfer{value: depositAmount}(
-            _validatorId,
-            prevEntityId,
-            prevEntityReward.sub(maintainerDebt),
-            maintainerDebt
         );
     }
 
@@ -337,6 +220,8 @@ contract Solos is Initializable {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        IPayments(proxy).initialize(operators, managers, settings, dai, address(this));
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success,) = proxy.call(paymentsInitData);
+        require(success);
     }
 }
