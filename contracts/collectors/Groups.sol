@@ -7,19 +7,16 @@ import "@openzeppelin/contracts-ethereum-package/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../interfaces/ISettings.sol";
-import "../interfaces/IManagers.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IValidators.sol";
-import "../interfaces/IValidatorTransfers.sol";
-import "../interfaces/IDeposits.sol";
 import "../interfaces/IPayments.sol";
 
 /**
  * @title Groups
  *
  * @dev Users can create groups and invite other users to stake together.
- * The group creator can optionally provide a validator withdrawal key.
+ * The group creator provides a validator withdrawal key.
  * The validator can be registered for the group as soon as it collects the validator deposit amount.
  */
 contract Groups is Initializable {
@@ -31,12 +28,12 @@ contract Groups is Initializable {
     * @dev Structure for storing information about the group which was not yet sent for staking.
     * @param collectedAmount - total amount collected by the group members.
     * @param payments - address of the payments contract for the validator.
-    * @param withdrawalCredentials - withdrawal credentials of the validator provided by group manager.
+    * @param withdrawalCredentials - withdrawal credentials of the validator provided by group creator.
     * @param members - mapping for user memberships in a group.
     */
     struct PendingGroup {
         uint256 collectedAmount;
-        IPayments payments;
+        address payments;
         bytes withdrawalCredentials;
         mapping(address => bool) members;
     }
@@ -47,14 +44,11 @@ contract Groups is Initializable {
     // @dev Total number of groups created.
     Counters.Counter private groupsCounter;
 
-    // @dev Address of the Deposits contract.
-    IDeposits private deposits;
+    // @dev Mapping between deposit ID (hash of group ID, sender) and the amount.
+    mapping(bytes32 => uint256) private deposits;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
-
-    // @dev Address of the Managers contract.
-    IManagers private managers;
 
     // @dev Address of the Operators contract.
     IOperators private operators;
@@ -65,111 +59,91 @@ contract Groups is Initializable {
     // @dev Address of the Validators contract.
     IValidators private validators;
 
-    // @dev Address of the Validator Transfers contract.
-    IValidatorTransfers private validatorTransfers;
-
     // @dev Address of the payments logical contract.
     address private paymentsImplementation;
 
-    // @dev Address of the DAI contract.
-    address private dai;
+    // @dev Payments initialization data for proxy creation.
+    bytes private paymentsInitData;
 
     /**
     * @dev Event for tracking new groups.
-    * @param creator - address of the group creator.
-    * @param canTransfer - defines whether group creator can transfer validator.
     * @param groupId - ID of the created group.
-    * @param members - list of group members.
-    */
-    event GroupCreated(address creator, bool canTransfer, bytes32 groupId, address[] members);
-
-    /**
-    * @dev Event for tracking group own withdrawal public key.
-    * @param entityId - ID of the group the key belongs to.
+    * @param creator - address of the group creator.
     * @param payments - address of the payments contract.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the group creator.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
+    * @param members - list of group members.
     */
-    event PrivateEntityAdded(
-        bytes32 indexed entityId,
-        IPayments payments,
+    event GroupCreated(
+        bytes32 indexed groupId,
+        address creator,
+        address payments,
         bytes withdrawalPublicKey,
-        bytes withdrawalCredentials
+        bytes withdrawalCredentials,
+        address[] members
+    );
+
+    /**
+    * @dev Event for tracking added deposits.
+    * @param groupId - ID of the group, the deposit was added to.
+    * @param sender - address of the deposit sender.
+    * @param amount - amount deposited.
+    */
+    event DepositAdded(
+        bytes32 indexed groupId,
+        address sender,
+        uint256 amount
+    );
+
+    /**
+    * @dev Event for tracking canceled deposits.
+    * @param groupId - ID of the group, the deposit was canceled in.
+    * @param sender - address of the deposit sender.
+    * @param amount - amount canceled.
+    */
+    event DepositCanceled(
+        bytes32 indexed groupId,
+        address sender,
+        uint256 amount
     );
 
     /**
     * @dev Constructor for initializing the Groups contract.
-    * @param _deposits - address of the Deposits contract.
     * @param _settings - address of the Settings contract.
-    * @param _managers - address of the Managers contract.
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
-    * @param _validatorTransfers - address of the Validator Transfers contract.
     * @param _paymentsImplementation - address of the payments logical contract.
-    * @param _dai - address of the DAI contract.
+    * @param _paymentsInitData - initialization data for payments proxy creation.
     */
     function initialize(
-        IDeposits _deposits,
         ISettings _settings,
-        IManagers _managers,
         IOperators _operators,
         IValidatorRegistration _validatorRegistration,
         IValidators _validators,
-        IValidatorTransfers _validatorTransfers,
         address _paymentsImplementation,
-        address _dai
+        bytes memory _paymentsInitData
     )
         public initializer
     {
-        deposits = _deposits;
         settings = _settings;
-        managers = _managers;
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validators = _validators;
-        validatorTransfers = _validatorTransfers;
         paymentsImplementation = _paymentsImplementation;
-        dai = _dai;
+        paymentsInitData = _paymentsInitData;
     }
 
     /**
     * @dev Function for creating new groups.
     * It will not be possible to create new groups in case `Groups` contract is paused in `Settings` contract.
     * @param _members - list of group members. Only addresses in the list and the group creator will be able to deposit in the group.
-    */
-    function createGroup(address[] calldata _members) external {
-        require(!settings.pausedContracts(address(this)), "Groups creation is currently disabled.");
-        require(_members.length > 0, "The group members list cannot be empty.");
-
-        // create new group
-        groupsCounter.increment();
-        bytes32 groupId = keccak256(abi.encodePacked(address(this), groupsCounter.current()));
-        PendingGroup storage pendingGroup = pendingGroups[groupId];
-
-        // register group members
-        for (uint i = 0; i < _members.length; i++) {
-            pendingGroup.members[_members[i]] = true;
-        }
-        pendingGroup.members[msg.sender] = true;
-
-        // register transfer manager for the group
-        managers.addTransferManager(groupId, msg.sender);
-
-        // emit event
-        emit GroupCreated(msg.sender, true, groupId, _members);
-    }
-
-    /**
-    * @dev Function for creating new private groups.
-    * It will not be possible to create new groups in case `Groups` contract is paused in `Settings` contract.
-    * @param _members - list of group members. Only addresses in the list and the group creator will be able to deposit in the group.
     * @param _publicKey - BLS public key for performing validator withdrawal.
     */
-    function createPrivateGroup(address[] calldata _members, bytes calldata _publicKey) external {
-        require(_publicKey.length == 48, "Invalid BLS withdrawal public key.");
-        require(!settings.pausedContracts(address(this)), "Private groups creation is currently disabled.");
-        require(_members.length > 0, "The group members list cannot be empty.");
+    function createGroup(address[] calldata _members, bytes calldata _publicKey) external {
+        require(_publicKey.length == 48, "Groups: invalid BLS withdrawal public key");
+        require(_members.length > 0, "Groups: members list cannot be empty");
+        require(!settings.pausedContracts(address(this)), "Groups: contract is paused");
 
         // create new group
         groupsCounter.increment();
@@ -189,64 +163,69 @@ contract Groups is Initializable {
         withdrawalCredentials[0] = 0x00;
         pendingGroup.withdrawalCredentials = withdrawalCredentials;
 
-        // deploy payments contract for new private group
-        pendingGroup.payments = IPayments(deployPayments());
+        // deploy payments contract for new group
+        pendingGroup.payments = deployPayments();
 
-        // emit events
-        emit GroupCreated(msg.sender, false, groupId, _members);
-        emit PrivateEntityAdded(groupId, pendingGroup.payments, _publicKey, withdrawalCredentials);
+        // emit event
+        emit GroupCreated(groupId, msg.sender, pendingGroup.payments, _publicKey, withdrawalCredentials, _members);
     }
 
     /**
-    * @dev Function for adding deposits in groups. The depositing will be disallowed in case
-    * `Groups` contract is paused in `Settings` contract.
-    * @param _groupId - ID of the group the user would like to deposit to.
-    * @param _recipient - address where funds will be sent after the withdrawal or if the deposit will be canceled.
+    * @dev Function for retrieving user deposit.
+    * @param _groupId - ID of the group, the deposit was sent to.
+    * @param _sender - address of the deposit sender.
     */
-    function addDeposit(bytes32 _groupId, address _recipient) external payable {
-        require(_recipient != address(0), "Invalid recipient address.");
-        require(msg.value > 0 && (msg.value).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit amount.");
-        require(!settings.pausedContracts(address(this)), "Depositing is currently disabled.");
+    function depositOf(bytes32 _groupId, address _sender) public view returns (uint256) {
+        return deposits[keccak256(abi.encodePacked(_groupId, _sender))];
+    }
+
+    /**
+    * @dev Function for adding deposits to groups.
+    * The depositing will be disallowed in case `Groups` contract is paused in `Settings` contract.
+    * @param _groupId - ID of the group the user would like to deposit to.
+    */
+    function addDeposit(bytes32 _groupId) external payable {
+        require(msg.value > 0 && msg.value.mod(settings.minDepositUnit()) == 0, "Groups: invalid deposit amount");
+        require(!settings.pausedContracts(address(this)), "Groups: contract is paused");
 
         PendingGroup storage pendingGroup = pendingGroups[_groupId];
-        require(pendingGroup.members[msg.sender], "The sender is not a member or a manager of the group.");
+        require(pendingGroup.members[msg.sender], "Groups: sender is not a member or the group");
 
         require(
             (pendingGroup.collectedAmount).add(msg.value) <= settings.validatorDepositAmount(),
-            "The deposit amount is bigger than the amount required to collect."
+            "Groups: deposit amount is bigger than amount required to collect"
         );
 
-        // register user deposit
-        deposits.addDeposit(_groupId, msg.sender, _recipient, msg.value);
+        // add deposit
+        bytes32 depositId = keccak256(abi.encodePacked(_groupId, msg.sender));
+        deposits[depositId] = deposits[depositId].add(msg.value);
+        emit DepositAdded(_groupId, msg.sender, msg.value);
 
         // update group progress
-        pendingGroup.collectedAmount = (pendingGroup.collectedAmount).add(msg.value);
+        pendingGroup.collectedAmount = pendingGroup.collectedAmount.add(msg.value);
     }
 
     /**
     * @dev Function for canceling deposits in groups.
     * @param _groupId - ID of the group the deposit was added to.
-    * @param _recipient - address where the canceled amount will be transferred (must be the same as when the deposit was made).
     * @param _amount - amount to cancel from the deposit.
     */
-    function cancelDeposit(bytes32 _groupId, address payable _recipient, uint256 _amount) external {
-        require(_amount > 0 && (_amount).mod(settings.userDepositMinUnit()) == 0, "Invalid deposit cancel amount.");
-        require(
-            deposits.getDeposit(_groupId, msg.sender, _recipient) >= _amount,
-            "The user does not have specified deposit cancel amount."
-        );
-
-        PendingGroup storage pendingGroup = pendingGroups[_groupId];
-        require(pendingGroup.collectedAmount >= _amount, "Cannot cancel deposit from group which has started staking.");
+    function cancelDeposit(bytes32 _groupId, uint256 _amount) external {
+        require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Groups: invalid deposit cancel amount");
 
         // cancel user deposit
-        deposits.cancelDeposit(_groupId, msg.sender, _recipient, _amount);
+        bytes32 depositId = keccak256(abi.encodePacked(_groupId, msg.sender));
+        deposits[depositId] = deposits[depositId].sub(_amount, "Groups: deposit cancel amount exceeds balance");
 
         // update group progress
-        pendingGroup.collectedAmount = (pendingGroup.collectedAmount).sub(_amount);
+        PendingGroup storage pendingGroup = pendingGroups[_groupId];
+        pendingGroup.collectedAmount = pendingGroup.collectedAmount.sub(_amount, "Groups: invalid group ID");
 
-        // transfer canceled amount to the recipient
-        _recipient.sendValue(_amount);
+        // emit event
+        emit DepositCanceled(_groupId, msg.sender, _amount);
+
+        // transfer canceled amount to the sender
+        msg.sender.sendValue(_amount);
     }
 
     /**
@@ -264,91 +243,24 @@ contract Groups is Initializable {
     )
         external
     {
-        require(operators.isOperator(msg.sender), "Permission denied.");
+        require(operators.isOperator(msg.sender), "Groups: permission denied");
 
         PendingGroup memory pendingGroup = pendingGroups[_groupId];
-        require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
+        require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Groups: invalid group ID");
 
-        uint256 maintainerFee;
-        bytes memory withdrawalCredentials = pendingGroup.withdrawalCredentials;
-        if (withdrawalCredentials.length == 0) {
-            // set custodial withdrawal credentials
-            withdrawalCredentials = settings.withdrawalCredentials();
-
-            // allow transfer for not private groups
-            validatorTransfers.allowTransfer(_groupId);
-
-            // set maintainer fee for not private groups
-            maintainerFee = settings.maintainerFee();
-        } else {
-            // enable metering for the validator
-            pendingGroup.payments.startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
-        }
+        // enable metering for the validator
+        IPayments(pendingGroup.payments).startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
 
         // cleanup pending group
         delete pendingGroups[_groupId];
 
         // register validator
-        validators.register(
-            _pubKey,
-            withdrawalCredentials,
-            _groupId,
-            pendingGroup.collectedAmount,
-            maintainerFee
-        );
+        validators.register(_pubKey, _groupId);
         validatorRegistration.deposit{value: pendingGroup.collectedAmount}(
             _pubKey,
-            withdrawalCredentials,
+            pendingGroup.withdrawalCredentials,
             _signature,
             _depositDataRoot
-        );
-    }
-
-    /**
-    * @dev Function for transferring validator ownership to the new group.
-    * @param _validatorId - ID of the validator to transfer.
-    * @param _validatorReward - validator current reward.
-    * @param _groupId - ID of the group to register validator for.
-    * @param _managerSignature - ECDSA signature of the previous entity manager if such exists.
-    */
-    function transferValidator(
-        bytes32 _validatorId,
-        uint256 _validatorReward,
-        bytes32 _groupId,
-        bytes calldata _managerSignature
-    )
-        external
-    {
-        require(operators.isOperator(msg.sender), "Permission denied.");
-
-        PendingGroup memory pendingGroup = pendingGroups[_groupId];
-        require(pendingGroup.collectedAmount == settings.validatorDepositAmount(), "Invalid validator deposit amount.");
-        require(pendingGroup.withdrawalCredentials.length == 0, "Cannot transfer to the private group.");
-
-        (, uint256 prevMaintainerFee, bytes32 prevEntityId,) = validators.validators(_validatorId);
-        require(managers.canTransferValidator(prevEntityId, _managerSignature), "Invalid transfer manager signature.");
-        require(validatorTransfers.checkTransferAllowed(prevEntityId), "Validator transfer is not allowed.");
-
-        // calculate previous entity reward and fee
-        (uint256 prevUserDebt, uint256 prevMaintainerDebt,) = validatorTransfers.validatorDebts(_validatorId);
-        uint256 prevEntityReward = _validatorReward.sub(prevUserDebt).sub(prevMaintainerDebt);
-        uint256 maintainerDebt = (prevEntityReward.mul(prevMaintainerFee)).div(10000);
-
-        // allow transfer for the new entity
-        validatorTransfers.allowTransfer(_groupId);
-
-        // cleanup pending group
-        delete pendingGroups[_groupId];
-
-        // reassign validator to the new group
-        validators.update(_validatorId, _groupId, settings.maintainerFee());
-
-        // register validator transfer
-        validatorTransfers.registerTransfer{value: pendingGroup.collectedAmount}(
-            _validatorId,
-            prevEntityId,
-            prevEntityReward.sub(maintainerDebt),
-            maintainerDebt
         );
     }
 
@@ -366,6 +278,8 @@ contract Groups is Initializable {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        IPayments(proxy).initialize(operators, managers, settings, dai, address(this));
+        // solhint-disable-next-line avoid-low-level-calls
+        (bool success,) = proxy.call(paymentsInitData);
+        require(success);
     }
 }

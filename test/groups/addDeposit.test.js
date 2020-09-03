@@ -1,8 +1,10 @@
+const { expect } = require('chai');
 const {
   BN,
   ether,
   constants,
   expectRevert,
+  expectEvent,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const {
@@ -14,22 +16,23 @@ const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   getDepositAmount,
-  checkDepositAdded,
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingGroup,
   getEntityId,
 } = require('../common/utils');
 
-const Deposits = artifacts.require('Deposits');
 const Groups = artifacts.require('Groups');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-
+const withdrawalPublicKey =
+  '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
+const withdrawalCredentials =
+  '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 contract('Groups (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, deposits, vrc, dai, groups, settings, groupId;
-  let [admin, manager, sender1, recipient1, sender2, recipient2] = accounts;
+  let networkConfig, vrc, dai, groups, settings, groupId, payments;
+  let [admin, groupCreator, sender1, sender2, anyone] = accounts;
   let groupMembers = [sender1, sender2];
 
   before(async () => {
@@ -45,7 +48,6 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
 
   beforeEach(async () => {
     let {
-      deposits: depositsProxy,
       groups: groupsProxy,
       settings: settingsProxy,
     } = await deployAllProxies({
@@ -55,59 +57,63 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
-    deposits = await Deposits.at(depositsProxy);
     settings = await Settings.at(settingsProxy);
 
-    await groups.createGroup(groupMembers, {
-      from: manager,
+    let receipt = await groups.createGroup(groupMembers, withdrawalPublicKey, {
+      from: groupCreator,
     });
     groupId = getEntityId(groups.address, new BN(1));
-  });
-
-  it('fails to add a deposit with invalid recipient address', async () => {
-    await expectRevert(
-      groups.addDeposit(groupId, constants.ZERO_ADDRESS, {
-        from: sender1,
-      }),
-      'Invalid recipient address.'
-    );
-    await checkPendingGroup({ groups, groupId });
-    await checkCollectorBalance(groups);
+    payments = receipt.logs[0].args.payments;
   });
 
   it('fails to add a deposit with invalid group ID', async () => {
     await expectRevert(
-      groups.addDeposit(constants.ZERO_BYTES32, recipient1, {
+      groups.addDeposit(constants.ZERO_BYTES32, {
         from: sender1,
         value: ether('1'),
       }),
-      'The sender is not a member or a manager of the group.'
+      'Groups: sender is not a member or the group'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
   it('fails to add a deposit without any amount', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
+      groups.addDeposit(groupId, {
         from: sender1,
         value: ether('0'),
       }),
-      'Invalid deposit amount.'
+      'Groups: invalid deposit amount'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
-  it('fails to add a deposit with unit less than minimal', async () => {
+  it('fails to add a deposit with unit less than minimum', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
+      groups.addDeposit(groupId, {
         from: sender1,
         value: validatorDepositAmount.sub(new BN(1)),
       }),
-      'Invalid deposit amount.'
+      'Groups: invalid deposit amount'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
@@ -118,58 +124,75 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     expect(await settings.pausedContracts(groups.address)).equal(true);
 
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
+      groups.addDeposit(groupId, {
         from: sender1,
         value: validatorDepositAmount,
       }),
-      'Depositing is currently disabled.'
+      'Groups: contract is paused'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
-  it('unregistered group member cannot add deposit', async () => {
+  it('anyone cannot add deposit', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
-        from: recipient1,
+      groups.addDeposit(groupId, {
+        from: anyone,
         value: ether('1'),
       }),
-      'The sender is not a member or a manager of the group.'
+      'Groups: sender is not a member or the group'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
   it('cannot deposit to group which has already collected validator deposit amount', async () => {
-    await groups.addDeposit(groupId, recipient1, {
+    await groups.addDeposit(groupId, {
       from: sender1,
       value: validatorDepositAmount,
     });
 
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
+      groups.addDeposit(groupId, {
         from: sender1,
         value: ether('1'),
       }),
-      'The deposit amount is bigger than the amount required to collect.'
+      'Groups: deposit amount is bigger than amount required to collect'
     );
     await checkPendingGroup({
       groups,
       groupId,
       collectedAmount: validatorDepositAmount,
+      payments,
+      withdrawalCredentials,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
   });
 
   it('cannot deposit amount bigger than validator deposit amount', async () => {
     await expectRevert(
-      groups.addDeposit(groupId, recipient1, {
+      groups.addDeposit(groupId, {
         from: sender1,
         value: validatorDepositAmount.add(ether('1')),
       }),
-      'The deposit amount is bigger than the amount required to collect.'
+      'Groups: deposit amount is bigger than amount required to collect'
     );
-    await checkPendingGroup({ groups, groupId });
+    await checkPendingGroup({
+      groups,
+      groupId,
+      payments,
+      withdrawalCredentials,
+    });
     await checkCollectorBalance(groups);
   });
 
@@ -178,27 +201,27 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
       max: validatorDepositAmount,
     });
     // Send a deposit
-    const { tx } = await groups.addDeposit(groupId, recipient1, {
+    const receipt = await groups.addDeposit(groupId, {
       from: sender1,
       value: depositAmount,
     });
 
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx,
-      depositsContract: deposits,
-      collectorAddress: groups.address,
-      entityId: groupId,
-      senderAddress: sender1,
-      recipientAddress: recipient1,
-      addedAmount: depositAmount,
-      totalAmount: depositAmount,
+    // Check deposit added
+    expect(await groups.depositOf(groupId, sender1)).to.be.bignumber.equal(
+      depositAmount
+    );
+    expectEvent(receipt, 'DepositAdded', {
+      groupId,
+      sender: sender1,
+      amount: depositAmount,
     });
 
     await checkPendingGroup({
       groups,
       groupId,
       collectedAmount: depositAmount,
+      payments,
+      withdrawalCredentials,
     });
     await checkCollectorBalance(groups, depositAmount);
   });
@@ -208,46 +231,44 @@ contract('Groups (add deposit)', ([_, ...accounts]) => {
     const depositAmount1 = getDepositAmount({
       max: validatorDepositAmount,
     });
-    const { tx: tx1 } = await groups.addDeposit(groupId, recipient1, {
-      from: manager,
+    let receipt = await groups.addDeposit(groupId, {
+      from: sender1,
       value: depositAmount1,
     });
 
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx1,
-      depositsContract: deposits,
-      collectorAddress: groups.address,
-      entityId: groupId,
-      senderAddress: manager,
-      recipientAddress: recipient1,
-      addedAmount: depositAmount1,
-      totalAmount: depositAmount1,
+    // Check deposit added
+    expect(await groups.depositOf(groupId, sender1)).to.be.bignumber.equal(
+      depositAmount1
+    );
+    expectEvent(receipt, 'DepositAdded', {
+      groupId,
+      sender: sender1,
+      amount: depositAmount1,
     });
 
     // Send a second deposit
     const depositAmount2 = validatorDepositAmount.sub(depositAmount1);
-    const { tx: tx2 } = await groups.addDeposit(groupId, recipient2, {
+    receipt = await groups.addDeposit(groupId, {
       from: sender2,
       value: depositAmount2,
     });
 
-    // Check deposit added to Deposits contract
-    await checkDepositAdded({
-      transaction: tx2,
-      depositsContract: deposits,
-      collectorAddress: groups.address,
-      entityId: groupId,
-      senderAddress: sender2,
-      recipientAddress: recipient2,
-      addedAmount: depositAmount2,
-      totalAmount: depositAmount2,
+    // Check deposit added
+    expect(await groups.depositOf(groupId, sender2)).to.be.bignumber.equal(
+      depositAmount2
+    );
+    expectEvent(receipt, 'DepositAdded', {
+      groupId,
+      sender: sender2,
+      amount: depositAmount2,
     });
 
     await checkPendingGroup({
       groups,
       groupId,
       collectedAmount: validatorDepositAmount,
+      payments,
+      withdrawalCredentials,
     });
     await checkCollectorBalance(groups, validatorDepositAmount);
   });
