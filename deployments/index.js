@@ -4,40 +4,32 @@ const {
   deployManagersProxy,
 } = require('./access');
 const { calculateContractAddress, log } = require('./common');
-const { deployDepositsProxy } = require('./deposits');
 const {
-  deployPoolsProxy,
+  deployPoolProxy,
   deploySolosProxy,
   deployGroupsProxy,
 } = require('./collectors');
-const { deploySettingsProxy } = require('./settings');
-const { deployWithdrawalsProxy } = require('./withdrawals');
+const { deploySWDToken, deploySWRToken } = require('./tokens');
+const { deploySettingsProxy, initialSettings } = require('./settings');
 const { deployValidatorsProxy } = require('./validators');
-const { deployValidatorTransfersProxy } = require('./validatorTransfers');
 
-async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
-  // Calculate Deposits proxy address via create2
-  let {
-    salt: depositsSalt,
-    contractAddress: depositsCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
-
+async function deployAllProxies({
+  initialAdmin = initialSettings.admin,
+  vrc = initialSettings.VRC,
+  dai = initialSettings.DAIToken,
+  validatorsOracleProxy = initialSettings.validatorsOracle,
+  networkConfig,
+}) {
   // Calculate Validators proxy address via create2
   let {
     salt: validatorsSalt,
     contractAddress: validatorsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
-  // Calculate periodic Pools proxy address via create2
+  // Calculate Pool proxy address via create2
   let {
-    salt: periodicPoolsSalt,
-    contractAddress: periodicPoolsCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
-
-  // Calculate phase 2 Pools proxy address via create2
-  let {
-    salt: phase2PoolsSalt,
-    contractAddress: phase2PoolsCalcProxy,
+    salt: poolSalt,
+    contractAddress: poolCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate Solos proxy address via create2
@@ -52,16 +44,16 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
     contractAddress: groupsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Validator Transfers proxy address via create2
+  // Calculate swrToken proxy address via create2
   let {
-    salt: validatorTransfersSalt,
-    contractAddress: validatorTransfersCalcProxy,
+    salt: swrTokenSalt,
+    contractAddress: swrTokenCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
-  // Calculate Withdrawals proxy addresses via create2
+  // Calculate swdToken proxy address via create2
   let {
-    salt: withdrawalsSalt,
-    contractAddress: withdrawalsCalcProxy,
+    salt: swdTokenSalt,
+    contractAddress: swdTokenCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Deploy Admins proxy
@@ -78,6 +70,13 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
   });
   log(`Operators contract: ${operatorsProxy}`);
 
+  // Deploy Managers proxy
+  let managersProxy = await deployManagersProxy({
+    networkConfig,
+    adminsProxy,
+  });
+  log(`Managers contract: ${managersProxy}`);
+
   // Deploy Settings proxy
   let settingsProxy = await deploySettingsProxy({
     networkConfig,
@@ -86,41 +85,12 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
   });
   log(`Settings contract: ${settingsProxy}`);
 
-  // Deploy Managers proxy
-  let managersProxy = await deployManagersProxy({
-    networkConfig,
-    adminsProxy,
-    solosProxy: solosCalcProxy,
-    groupsProxy: groupsCalcProxy,
-  });
-  log(`Managers contract: ${managersProxy}`);
-
-  // Deploy Deposits proxy
-  let depositsProxy = await deployDepositsProxy({
-    phase2PoolsProxy: phase2PoolsCalcProxy,
-    periodicPoolsProxy: periodicPoolsCalcProxy,
-    solosProxy: solosCalcProxy,
-    groupsProxy: groupsCalcProxy,
-    salt: depositsSalt,
-    networkConfig,
-  });
-  if (depositsProxy !== depositsCalcProxy) {
-    throw new Error(
-      `Deposits contract actual address "${depositsProxy}" does not match expected "${depositsCalcProxy}"`
-    );
-  }
-  log(`Deposits contract: ${depositsProxy}`);
-
   // Deploy Validators proxy
   let validatorsProxy = await deployValidatorsProxy({
     networkConfig,
-    managersProxy,
-    settingsProxy,
-    periodicPoolsProxy: periodicPoolsCalcProxy,
-    phase2PoolsProxy: phase2PoolsCalcProxy,
+    poolProxy: poolCalcProxy,
     solosProxy: solosCalcProxy,
     groupsProxy: groupsCalcProxy,
-    withdrawalsProxy: withdrawalsCalcProxy,
     salt: validatorsSalt,
   });
   if (validatorsProxy !== validatorsCalcProxy) {
@@ -130,55 +100,34 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
   }
   log(`Validators contract: ${validatorsProxy}`);
 
-  // Deploy periodic Pools proxy
-  let periodicPoolsProxy = await deployPoolsProxy({
+  // Deploy Pool proxy
+  let poolProxy = await deployPoolProxy({
     vrc,
-    salt: periodicPoolsSalt,
-    managersProxy,
-    depositsProxy,
+    salt: poolSalt,
+    swdTokenProxy: swdTokenCalcProxy,
     settingsProxy,
     operatorsProxy,
     validatorsProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
     networkConfig,
   });
-  if (periodicPoolsProxy !== periodicPoolsCalcProxy) {
+  if (poolProxy !== poolCalcProxy) {
     throw new Error(
-      `Periodic Pools contract actual address "${periodicPoolsProxy}" does not match expected "${periodicPoolsCalcProxy}"`
+      `Pool contract actual address "${poolProxy}" does not match expected "${poolCalcProxy}"`
     );
   }
-  log(`Periodic Pools contract: ${periodicPoolsProxy}`);
-
-  // Deploy phase 2 Pools proxy
-  let phase2PoolsProxy = await deployPoolsProxy({
-    vrc,
-    salt: phase2PoolsSalt,
-    managersProxy,
-    depositsProxy,
-    settingsProxy,
-    operatorsProxy,
-    validatorsProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
-    networkConfig,
-  });
-  if (phase2PoolsProxy !== phase2PoolsCalcProxy) {
-    throw new Error(
-      `Phase 2 Pools contract actual address "${phase2PoolsProxy}" does not match expected "${phase2PoolsCalcProxy}"`
-    );
-  }
-  log(`Phase 2 Pools contract: ${phase2PoolsProxy}`);
+  log(`Pool contract: ${poolProxy}`);
 
   // Deploy Solos proxy
   let solosProxy = await deploySolosProxy({
-    vrc,
-    salt: solosSalt,
-    depositsProxy,
     settingsProxy,
     operatorsProxy,
     managersProxy,
+    vrc,
     validatorsProxy,
+    solosProxy: solosCalcProxy,
+    groupsProxy: groupsCalcProxy,
     dai,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
+    salt: solosSalt,
     networkConfig,
   });
   if (solosProxy !== solosCalcProxy) {
@@ -190,15 +139,15 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
 
   // Deploy Groups proxy
   let groupsProxy = await deployGroupsProxy({
-    vrc,
-    salt: groupsSalt,
-    depositsProxy,
     settingsProxy,
-    managersProxy,
     operatorsProxy,
+    managersProxy,
+    vrc,
     validatorsProxy,
+    solosProxy: solosCalcProxy,
+    groupsProxy: groupsCalcProxy,
     dai,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
+    salt: groupsSalt,
     networkConfig,
   });
   if (groupsProxy !== groupsCalcProxy) {
@@ -208,56 +157,47 @@ async function deployAllProxies({ initialAdmin, networkConfig, vrc, dai }) {
   }
   log(`Groups contract: ${groupsProxy}`);
 
-  // Deploy Withdrawals proxy
-  let withdrawalsProxy = await deployWithdrawalsProxy({
-    salt: withdrawalsSalt,
-    managersProxy,
-    depositsProxy,
+  // Deploy SWRToken proxy
+  let swrTokenProxy = await deploySWRToken({
+    swdTokenProxy: swdTokenCalcProxy,
     settingsProxy,
+    validatorsOracleProxy,
+    salt: swrTokenSalt,
     networkConfig,
-    validatorsProxy,
-    validatorTransfersProxy: validatorTransfersCalcProxy,
   });
-  if (withdrawalsProxy !== withdrawalsCalcProxy) {
+  if (swrTokenProxy !== swrTokenCalcProxy) {
     throw new Error(
-      `Withdrawals contract actual address "${withdrawalsProxy}" does not match expected "${withdrawalsCalcProxy}"`
+      `SWRToken contract actual address "${swrTokenProxy}" does not match expected "${swrTokenCalcProxy}"`
     );
   }
-  log(`Withdrawals contract: ${withdrawalsProxy}`);
+  log(`SWRToken contract: ${swrTokenProxy}`);
 
-  // Deploy Validator Transfers proxy
-  let validatorTransfersProxy = await deployValidatorTransfersProxy({
-    salt: validatorTransfersSalt,
-    periodicPoolsProxy,
-    phase2PoolsProxy,
-    solosProxy,
-    groupsProxy,
-    withdrawalsProxy,
-    depositsProxy,
+  // Deploy SWDToken proxy
+  let swdTokenProxy = await deploySWDToken({
+    swrTokenProxy,
+    poolProxy,
     settingsProxy,
-    validatorsProxy,
+    salt: swdTokenSalt,
     networkConfig,
   });
-  if (validatorTransfersProxy !== validatorTransfersCalcProxy) {
+  if (swdTokenProxy !== swdTokenCalcProxy) {
     throw new Error(
-      `Validator Transfers contract actual address "${validatorTransfersProxy}" does not match expected "${validatorTransfersCalcProxy}"`
+      `SWDToken contract actual address "${swdTokenProxy}" does not match expected "${swdTokenCalcProxy}"`
     );
   }
-  log(`Validator Transfers contract: ${validatorTransfersProxy}`);
+  log(`SWDToken contract: ${swdTokenProxy}`);
 
   return {
     admins: adminsProxy,
     operators: operatorsProxy,
     managers: managersProxy,
     settings: settingsProxy,
-    deposits: depositsProxy,
     validators: validatorsProxy,
-    validatorTransfers: validatorTransfersProxy,
-    pools: periodicPoolsProxy,
-    phase2Pools: phase2PoolsProxy,
+    pool: poolProxy,
     solos: solosProxy,
     groups: groupsProxy,
-    withdrawals: withdrawalsProxy,
+    swdToken: swdTokenProxy,
+    swrToken: swrTokenProxy,
   };
 }
 

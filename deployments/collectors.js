@@ -1,31 +1,28 @@
 const { scripts } = require('@openzeppelin/cli');
+const { encodeCall } = require('@openzeppelin/upgrades');
 const {
   ProjectFile,
   NetworkFile,
 } = require('@openzeppelin/cli/lib/models/files').default;
 
-async function deployPoolsProxy({
+async function deployPoolProxy({
   vrc,
-  managersProxy,
-  depositsProxy,
+  swdTokenProxy,
   settingsProxy,
   operatorsProxy,
   validatorsProxy,
-  validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Pools',
+    contractAlias: 'Pool',
     methodName: 'initialize',
     methodArgs: [
-      managersProxy,
-      depositsProxy,
+      swdTokenProxy,
       settingsProxy,
       operatorsProxy,
       vrc,
       validatorsProxy,
-      validatorTransfersProxy,
     ],
     salt,
     ...networkConfig,
@@ -35,33 +32,35 @@ async function deployPoolsProxy({
 }
 
 async function deploySolosProxy({
-  depositsProxy,
   settingsProxy,
   operatorsProxy,
   managersProxy,
   vrc,
   validatorsProxy,
-  validatorTransfersProxy,
+  solosProxy,
+  groupsProxy,
   dai,
   salt,
   networkConfig,
 }) {
   let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
   const paymentsImplementation = networkFile.contract('Payments').address;
+  const paymentsInitData = encodeCall(
+    'initialize',
+    ['address', 'address', 'address', 'address', 'address', 'address'],
+    [operatorsProxy, managersProxy, settingsProxy, dai, solosProxy, groupsProxy]
+  );
 
   const proxy = await scripts.create({
     contractAlias: 'Solos',
     methodName: 'initialize',
     methodArgs: [
-      depositsProxy,
       settingsProxy,
-      managersProxy,
       operatorsProxy,
       vrc,
       validatorsProxy,
-      validatorTransfersProxy,
       paymentsImplementation,
-      dai,
+      paymentsInitData,
     ],
     salt,
     ...networkConfig,
@@ -71,33 +70,35 @@ async function deploySolosProxy({
 }
 
 async function deployGroupsProxy({
-  depositsProxy,
   settingsProxy,
   operatorsProxy,
   managersProxy,
   vrc,
   validatorsProxy,
-  validatorTransfersProxy,
+  solosProxy,
+  groupsProxy,
   dai,
   salt,
   networkConfig,
 }) {
   let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
   const paymentsImplementation = networkFile.contract('Payments').address;
+  const paymentsInitData = encodeCall(
+    'initialize',
+    ['address', 'address', 'address', 'address', 'address', 'address'],
+    [operatorsProxy, managersProxy, settingsProxy, dai, solosProxy, groupsProxy]
+  );
 
   const proxy = await scripts.create({
     contractAlias: 'Groups',
     methodName: 'initialize',
     methodArgs: [
-      depositsProxy,
       settingsProxy,
-      managersProxy,
       operatorsProxy,
       vrc,
       validatorsProxy,
-      validatorTransfersProxy,
       paymentsImplementation,
-      dai,
+      paymentsInitData,
     ],
     salt,
     ...networkConfig,
@@ -107,7 +108,7 @@ async function deployGroupsProxy({
 }
 
 module.exports = {
-  deployPoolsProxy,
+  deployPoolProxy,
   deploySolosProxy,
   deployGroupsProxy,
 };
