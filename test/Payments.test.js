@@ -9,7 +9,7 @@ const {
   deploySettingsProxy,
   initialSettings,
 } = require('../deployments/settings');
-const { removeNetworkFile, checkPayments } = require('./common/utils');
+const { removeNetworkFile, checkPayments } = require('./utils');
 const {
   getNetworkConfig,
   deployLogicContracts,

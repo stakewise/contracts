@@ -13,15 +13,13 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   getDepositAmount,
   removeNetworkFile,
   checkCollectorBalance,
   checkPendingGroup,
-  getEntityId,
-} = require('../common/utils');
+} = require('../utils');
 
 const Groups = artifacts.require('Groups');
 const Operators = artifacts.require('Operators');
@@ -41,14 +39,13 @@ const minDepositUnit = new BN(initialSettings.minDepositUnit);
 
 contract('Groups (cancel deposit)', ([_, ...accounts]) => {
   let networkConfig,
-    vrc,
-    dai,
     groups,
     amount1,
     amount2,
     groupBalance,
     groupId,
-    payments;
+    payments,
+    vrc;
   let [admin, operator, sender1, sender2, groupCreator] = accounts;
   let groupMembers = [sender1, sender2];
 
@@ -56,7 +53,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -71,7 +67,6 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
-      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
 
@@ -82,7 +77,7 @@ contract('Groups (cancel deposit)', ([_, ...accounts]) => {
     let receipt = await groups.createGroup(groupMembers, withdrawalPublicKey, {
       from: groupCreator,
     });
-    groupId = getEntityId(groups.address, new BN(1));
+    groupId = web3.utils.soliditySha3(groups.address, new BN(1));
     payments = receipt.logs[0].args.payments;
 
     amount1 = getDepositAmount({

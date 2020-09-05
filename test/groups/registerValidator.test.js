@@ -10,7 +10,6 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
@@ -18,7 +17,7 @@ const {
   checkPendingGroup,
   checkValidatorRegistered,
   checkPayments,
-} = require('../common/utils');
+} = require('../utils');
 
 const Groups = artifacts.require('Groups');
 const Operators = artifacts.require('Operators');
@@ -37,7 +36,7 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 
 contract('Groups (register validator)', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, groups, payments, groupId;
+  let networkConfig, vrc, groups, payments, groupId;
   let [admin, operator, groupCreator, sender, other] = accounts;
   let groupMembers = [sender];
 
@@ -45,7 +44,6 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -60,7 +58,6 @@ contract('Groups (register validator)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
-      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
 

@@ -15,11 +15,7 @@ const {
   initialSettings,
 } = require('../../deployments/settings');
 const { deploySWDToken, deploySWRToken } = require('../../deployments/tokens');
-const {
-  removeNetworkFile,
-  checkSWDToken,
-  checkSWRToken,
-} = require('../common/utils');
+const { removeNetworkFile, checkSWDToken, checkSWRToken } = require('../utils');
 const {
   getNetworkConfig,
   deployLogicContracts,

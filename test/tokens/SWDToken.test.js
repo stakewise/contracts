@@ -12,7 +12,7 @@ const {
 } = require('../../deployments/access');
 const { deploySettingsProxy } = require('../../deployments/settings');
 const { deploySWDToken, deploySWRToken } = require('../../deployments/tokens');
-const { removeNetworkFile, checkSWDToken } = require('../common/utils');
+const { removeNetworkFile, checkSWDToken } = require('../utils');
 const {
   getNetworkConfig,
   deployLogicContracts,

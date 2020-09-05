@@ -12,7 +12,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
-const { removeNetworkFile } = require('../common/utils');
+const { removeNetworkFile } = require('../utils');
 
 const Operators = artifacts.require('Operators');
 

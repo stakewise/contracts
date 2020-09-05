@@ -10,13 +10,7 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../../deployments/common');
-const { deployDAI } = require('../../deployments/tokens');
-const { deployVRC } = require('../../deployments/vrc');
-const {
-  removeNetworkFile,
-  getEntityId,
-  checkPendingGroup,
-} = require('../common/utils');
+const { removeNetworkFile, checkPendingGroup } = require('../utils');
 
 const Groups = artifacts.require('Groups');
 const Settings = artifacts.require('Settings');
@@ -27,15 +21,13 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Groups (create group)', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, groups, settings;
+  let networkConfig, groups, settings;
   let [admin, creator, user1, user2, user3] = accounts;
   let groupMembers = [user1, user2, user3];
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -49,8 +41,6 @@ contract('Groups (create group)', ([_, ...accounts]) => {
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
-      vrc: vrc.options.address,
-      dai: dai.address,
     });
     groups = await Groups.at(groupsProxy);
     settings = await Settings.at(settingsProxy);
@@ -92,7 +82,7 @@ contract('Groups (create group)', ([_, ...accounts]) => {
     );
 
     const payments = receipt.logs[0].args.payments;
-    const groupId = getEntityId(groups.address, new BN(1));
+    const groupId = web3.utils.soliditySha3(groups.address, new BN(1));
     expectEvent(receipt, 'GroupCreated', {
       groupId,
       creator,

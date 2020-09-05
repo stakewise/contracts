@@ -6,18 +6,16 @@ const {
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
 const { deployVRC } = require('../../deployments/vrc');
-const { deployDAI } = require('../../deployments/tokens');
 const {
   removeNetworkFile,
   checkCollectorBalance,
   checkSolo,
   checkValidatorRegistered,
   checkPayments,
-} = require('../common/utils');
+} = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
-const Validators = artifacts.require('Validators');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const validatorPrice = new BN(initialSettings.validatorPrice);
@@ -33,14 +31,13 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 
 contract('Solos (register validator)', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, validators, solos, soloId, payments;
+  let networkConfig, vrc, solos, soloId, payments;
   let [admin, operator, sender, other] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -51,15 +48,12 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     let {
       solos: solosProxy,
       operators: operatorsProxy,
-      validators: validatorsProxy,
     } = await deployAllProxies({
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
-      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
-    validators = await Validators.at(validatorsProxy);
 
     let operators = await Operators.at(operatorsProxy);
     await operators.addOperator(operator, { from: admin });

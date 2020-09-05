@@ -11,13 +11,11 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployDAI } = require('../../deployments/tokens');
-const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
   checkSoloDepositAdded,
-} = require('../common/utils');
+} = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Settings = artifacts.require('Settings');
@@ -29,14 +27,12 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Solos (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, solos, settings;
+  let networkConfig, solos, settings;
   let [admin, sender1, sender2] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -48,8 +44,6 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       {
         initialAdmin: admin,
         networkConfig,
-        vrc: vrc.options.address,
-        dai: dai.address,
       }
     );
     solos = await Solos.at(solosProxy);

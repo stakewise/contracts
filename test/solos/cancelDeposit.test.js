@@ -13,13 +13,12 @@ const {
   deployLogicContracts,
 } = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployDAI } = require('../../deployments/tokens');
 const { deployVRC } = require('../../deployments/vrc');
 const {
   removeNetworkFile,
   checkCollectorBalance,
   checkSolo,
-} = require('../common/utils');
+} = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
@@ -37,14 +36,13 @@ const depositDataRoot =
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Solos (cancel deposit)', ([_, ...accounts]) => {
-  let networkConfig, vrc, dai, solos, soloId, payments;
+  let networkConfig, solos, soloId, payments, vrc;
   let [admin, operator, sender, anyone] = accounts;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
     await deployLogicContracts({ networkConfig });
     vrc = await deployVRC({ from: admin });
-    dai = await deployDAI(admin, { from: admin });
   });
 
   after(() => {
@@ -59,7 +57,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       initialAdmin: admin,
       networkConfig,
       vrc: vrc.options.address,
-      dai: dai.address,
     });
     solos = await Solos.at(solosProxy);
 
