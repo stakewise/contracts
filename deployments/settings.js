@@ -8,6 +8,7 @@ const initialSettings = {
   maintainerFee: '1000', // 10%,
   admin: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
+  allContractsPaused: false,
   // TODO: fix after implementing oracle
   validatorsOracle: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   DAIToken: '0x6b175474e89094c44da98b954eedeac495271d0f',

@@ -26,6 +26,7 @@ const newValues = [
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
   ['contractPaused', true],
+  ['allContractsPaused', true],
 ];
 
 function getSetMethod(setting) {
@@ -74,12 +75,6 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     );
   });
 
-  it('sets parameters on initialization', async () => {
-    for (const [setting, initialValue] of Object.entries(initialSettings)) {
-      assertEqual(await settings[setting](), initialValue);
-    }
-  });
-
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
       if (setting === 'contractPaused') {
@@ -113,7 +108,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
           settings.setContractPaused(collector, newValue, {
             from: anyone,
           }),
-          'Permission denied.'
+          'Settings: permission denied'
         );
         expect(await settings.pausedContracts(collector)).equal(false);
       } else {
@@ -123,7 +118,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
           settings[setMethod](newValue, {
             from: anyone,
           }),
-          'Permission denied.'
+          'Settings: permission denied'
         );
         assertEqual(await settings[setting](), initialSettings[setting]);
       }
@@ -141,12 +136,23 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     expect(await settings.pausedContracts(collector)).equal(true);
   });
 
+  it('admin can pause all contracts', async () => {
+    expect(await settings.pausedContracts(collector)).equal(false);
+    const receipt = await settings.setAllContractsPaused(true, {
+      from: admin,
+    });
+    expectEvent(receipt, 'SettingChanged', {
+      settingName: web3.utils.fromAscii('allContractsPaused').padEnd(66, '0'),
+    });
+    expect(await settings.pausedContracts(collector)).equal(true);
+  });
+
   it("checks that maintainer's fee is less than 100%", async () => {
     await expectRevert(
       settings.setMaintainerFee(new BN(10000), {
         from: admin,
       }),
-      'Invalid value.'
+      'Settings: invalid value'
     );
     assertEqual(await settings.maintainerFee(), initialSettings.maintainerFee);
   });

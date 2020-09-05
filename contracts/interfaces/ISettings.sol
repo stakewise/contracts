@@ -20,6 +20,7 @@ interface ISettings {
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
     * @param _validatorPrice - price per second of the non-custodial validator.
+    * @param _allContractsPaused - defines whether all contracts should be paused.
     * @param _withdrawalCredentials - withdrawal credentials.
     * @param _admins - address of the Admins contract.
     * @param _operators - address of the Operators contract.
@@ -31,6 +32,7 @@ interface ISettings {
         uint128 _validatorDepositAmount,
         uint256 _maxDepositAmount,
         uint256 _validatorPrice,
+        bool _allContractsPaused,
         bytes memory _withdrawalCredentials,
         address _admins,
         address _operators
@@ -72,6 +74,11 @@ interface ISettings {
     function withdrawalCredentials() external view returns (bytes memory);
 
     /**
+    * @dev Function for checking whether all the contracts are paused.
+    */
+    function allContractsPaused() external view returns (bool);
+
+    /**
     * @dev Function for checking whether the contract is paused or not.
     * @param _contract - address of the contract to check.
     */
@@ -101,6 +108,12 @@ interface ISettings {
     * @param isPaused - defines whether contract is paused or not.
     */
     function setContractPaused(address _contract, bool isPaused) external;
+
+    /**
+    * @dev Function for pausing or resuming all managed contracts.
+    * @param paused - defines whether all contracts must be paused or not.
+    */
+    function setAllContractsPaused(bool paused) external;
 
     /**
     * @dev Function for setting maximum deposit amount.

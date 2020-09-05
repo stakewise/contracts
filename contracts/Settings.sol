@@ -35,8 +35,11 @@ contract Settings is ISettings, Initializable {
     // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
     bytes public override withdrawalCredentials;
 
+    // @dev Defines whether all the contracts are paused.
+    bool public override allContractsPaused;
+
     // @dev The mapping between the managed contract and whether it is paused or not.
-    mapping(address => bool) public override pausedContracts;
+    mapping(address => bool) private _pausedContracts;
 
     // @dev Address of the Admins contract.
     IAdmins private admins;
@@ -54,6 +57,7 @@ contract Settings is ISettings, Initializable {
         uint128 _validatorDepositAmount,
         uint256 _maxDepositAmount,
         uint256 _validatorPrice,
+        bool _allContractsPaused,
         bytes memory _withdrawalCredentials,
         address _admins,
         address _operators
@@ -66,16 +70,24 @@ contract Settings is ISettings, Initializable {
         validatorDepositAmount = _validatorDepositAmount;
         maxDepositAmount = _maxDepositAmount;
         validatorPrice = _validatorPrice;
+        allContractsPaused = _allContractsPaused;
         withdrawalCredentials = _withdrawalCredentials;
         admins = IAdmins(_admins);
         operators = IOperators(_operators);
     }
 
     /**
+     * @dev See {ISettings-pausedContracts}.
+     */
+    function pausedContracts(address _contract) external view override returns (bool) {
+        return allContractsPaused || _pausedContracts[_contract];
+    }
+
+    /**
      * @dev See {ISettings-setMinDepositUnit}.
      */
     function setMinDepositUnit(uint64 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         minDepositUnit = newValue;
         emit SettingChanged("minDepositUnit");
@@ -85,7 +97,7 @@ contract Settings is ISettings, Initializable {
      * @dev See {ISettings-setMaxDepositAmount}.
      */
     function setMaxDepositAmount(uint256 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         maxDepositAmount = newValue;
         emit SettingChanged("maxDepositAmount");
@@ -95,7 +107,7 @@ contract Settings is ISettings, Initializable {
      * @dev See {ISettings-setMaintainer}.
      */
     function setMaintainer(address payable newValue) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         maintainer = newValue;
         emit SettingChanged("maintainer");
@@ -105,8 +117,8 @@ contract Settings is ISettings, Initializable {
      * @dev See {ISettings-setMaintainerFee}.
      */
     function setMaintainerFee(uint64 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
-        require(newValue < 10000, "Invalid value.");
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+        require(newValue < 10000, "Settings: invalid value");
 
         maintainerFee = newValue;
         emit SettingChanged("maintainerFee");
@@ -116,17 +128,27 @@ contract Settings is ISettings, Initializable {
      * @dev See {ISettings-setContractPaused}.
      */
     function setContractPaused(address _contract, bool isPaused) external override {
-        require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Permission denied.");
+        require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Settings: permission denied");
 
-        pausedContracts[_contract] = isPaused;
+        _pausedContracts[_contract] = isPaused;
         emit SettingChanged("pausedContracts");
+    }
+
+    /**
+     * @dev See {ISettings-setAllContractsPaused}.
+     */
+    function setAllContractsPaused(bool paused) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        allContractsPaused = paused;
+        emit SettingChanged("allContractsPaused");
     }
 
     /**
      * @dev See {ISettings-setValidatorPrice}.
      */
     function setValidatorPrice(uint256 _validatorPrice) external override {
-        require(admins.isAdmin(msg.sender), "Permission denied.");
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         validatorPrice = _validatorPrice;
         emit SettingChanged("validatorPrice");
