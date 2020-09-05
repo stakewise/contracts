@@ -4,5 +4,5 @@ module.exports = {
     total_accounts: 5000,
     default_balance_ether: 1000000,
   },
-  skipFiles: ['mocks'],
+  skipFiles: ['mocks', 'tokens/BaseERC20.sol'],
 };
