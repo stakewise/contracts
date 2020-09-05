@@ -33,6 +33,7 @@ async function deploySettingsProxy({
       initialSettings.validatorDepositAmount,
       initialSettings.maxDepositAmount,
       initialSettings.validatorPrice,
+      initialSettings.allContractsPaused,
       initialSettings.withdrawalCredentials,
       adminsProxy,
       operatorsProxy,
