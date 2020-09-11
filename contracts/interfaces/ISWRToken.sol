@@ -55,9 +55,9 @@ interface ISWRToken is IERC20 {
     function updateReward(address account) external;
 
     /**
-    * @dev Function for updating validators reward since last update.
+    * @dev Function for updating validators total rewards.
     * Can only be called by Validators Oracle contract.
-    * @param periodRewards - rewards since the last update.
+    * @param newTotalRewards - new total rewards.
     */
-    function updateRewards(int256 periodRewards) external;
+    function updateTotalRewards(int256 newTotalRewards) external;
 }

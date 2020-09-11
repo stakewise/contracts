@@ -116,19 +116,20 @@ contract SWRToken is ISWRToken, BaseERC20 {
     }
 
     /**
-      * @dev See {ISWRToken-updateRewards}.
+      * @dev See {ISWRToken-updateTotalRewards}.
       */
-    function updateRewards(int256 periodRewards) external override {
+    function updateTotalRewards(int256 newTotalRewards) external override {
         require(msg.sender == validatorsOracle, "SWRToken: permission denied");
         require(!settings.pausedContracts(address(this)), "SWRToken: contract is disabled");
 
-        // solhint-disable-next-line not-rely-on-time
-        updateTimestamp = block.timestamp;
-        totalRewards = totalRewards.add(periodRewards);
-
         // calculate reward rate used for account reward calculation
+        int256 periodRewards = newTotalRewards.sub(totalRewards);
         rewardRate = rewardRate.add(periodRewards.mul(1 ether).div(swdToken.totalDeposits().toInt256()));
 
-        emit RewardsUpdated(periodRewards, totalRewards, rewardRate, updateTimestamp);
+        // solhint-disable-next-line not-rely-on-time
+        updateTimestamp = block.timestamp;
+        totalRewards = newTotalRewards;
+
+        emit RewardsUpdated(periodRewards, newTotalRewards, rewardRate, updateTimestamp);
     }
 }

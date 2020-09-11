@@ -95,10 +95,10 @@ contract('SWRToken', ([_, ...accounts]) => {
     });
   });
 
-  describe('updateRewards', () => {
+  describe('updateTotalRewards', () => {
     it('anyone cannot update rewards', async () => {
       await expectRevert(
-        swrToken.updateRewards(ether('10'), {
+        swrToken.updateTotalRewards(ether('10'), {
           from: otherAccounts[0],
         }),
         'SWRToken: permission denied'
@@ -117,7 +117,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       expect(await settings.pausedContracts(swrToken.address)).equal(true);
 
       await expectRevert(
-        swrToken.updateRewards(ether('10'), {
+        swrToken.updateTotalRewards(ether('10'), {
           from: validatorsOracle,
         }),
         'SWRToken: contract is disabled'
@@ -138,7 +138,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         from: pool,
       });
       let value = ether('10');
-      let receipt = await swrToken.updateRewards(value, {
+      let receipt = await swrToken.updateTotalRewards(value, {
         from: validatorsOracle,
       });
 
@@ -160,7 +160,7 @@ contract('SWRToken', ([_, ...accounts]) => {
     it('calculates account rewards correctly', async () => {
       let testCases = [
         {
-          periodReward: ether('0.2971649750296'),
+          totalRewards: ether('0.2971649750296'),
           users: [
             { deposit: ether('2.04'), reward: ether('0.01894426715813700') },
             { deposit: ether('3.771'), reward: ether('0.035019035026144425') },
@@ -176,19 +176,19 @@ contract('SWRToken', ([_, ...accounts]) => {
           ],
         },
         {
-          periodReward: ether('1.93117011188190002'),
+          totalRewards: ether('1.93117011188190002'),
           users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
             deposit: ether('1'),
             reward: ether('0.060349065996309375'),
           }),
         },
         {
-          periodReward: ether('1.0687374575440'),
+          totalRewards: ether('1.0687374575440'),
           users: [{ deposit: ether('32.0'), reward: ether('1.0687374575440') }],
         },
       ];
 
-      for (const { periodReward, users } of testCases) {
+      for (const { totalRewards, users } of testCases) {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
@@ -205,7 +205,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         }
 
         // update rewards
-        await swrToken.updateRewards(periodReward, {
+        await swrToken.updateTotalRewards(totalRewards, {
           from: validatorsOracle,
         });
 
@@ -214,7 +214,7 @@ contract('SWRToken', ([_, ...accounts]) => {
           let { reward, deposit } = users[i];
           await checkSWRToken({
             swrToken,
-            totalSupply: periodReward,
+            totalSupply: totalRewards,
             account: otherAccounts[i],
             balance: reward,
             reward: reward,
@@ -234,7 +234,7 @@ contract('SWRToken', ([_, ...accounts]) => {
     it('calculates account penalties correctly', async () => {
       let testCases = [
         {
-          periodReward: ether('-0.627626464'),
+          totalRewards: ether('-0.627626464'),
           users: [
             {
               deposit: ether('2.255'),
@@ -289,21 +289,21 @@ contract('SWRToken', ([_, ...accounts]) => {
           ],
         },
         {
-          periodReward: ether('-0.243422652'),
+          totalRewards: ether('-0.243422652'),
           users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
             deposit: ether('1'),
             penalisedReturn: ether('0.992393042125'),
           }),
         },
         {
-          periodReward: ether('-2.001935196'),
+          totalRewards: ether('-2.001935196'),
           users: [
             { deposit: ether('32'), penalisedReturn: ether('29.998064804000') },
           ],
         },
       ];
 
-      for (const { periodReward, users } of testCases) {
+      for (const { totalRewards, users } of testCases) {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
@@ -320,7 +320,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         }
 
         // update penalty
-        await swrToken.updateRewards(periodReward, {
+        await swrToken.updateTotalRewards(totalRewards, {
           from: validatorsOracle,
         });
 
@@ -337,7 +337,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
           await checkSWDToken({
             swdToken,
-            totalSupply: validatorDepositAmount.add(periodReward),
+            totalSupply: validatorDepositAmount.add(totalRewards),
             account: otherAccounts[i],
             balance: penalisedReturn,
             deposit,
@@ -360,8 +360,8 @@ contract('SWRToken', ([_, ...accounts]) => {
           { deposit: ether('6'), reward: ether('0') },
           { deposit: ether('29'), reward: ether('0') },
         ],
-        // period reward: 0.695857375275924738
-        // total reward: 0.695857375275924738
+        // period rewards: 0.695857375275924738
+        // total rewards: 0.695857375275924738
         // reward rate: 0.017396434381898118
         [
           { deposit: ether('5'), reward: ether('0.086982171909490590') },
@@ -383,8 +383,8 @@ contract('SWRToken', ([_, ...accounts]) => {
           { deposit: ether('23'), reward: ether('0.60887520336643413') },
           { deposit: ether('4'), reward: ether('0') },
         ],
-        // period reward: -1.060653959130621
-        // total reward: -0.364796583854696262
+        // period rewards: -1.060653959130621
+        // total rewards: -0.364796583854696262
         // reward rate: -0.006709337416525086
         [
           {
@@ -409,8 +409,8 @@ contract('SWRToken', ([_, ...accounts]) => {
             reward: ether('-0.041980635190992378'),
           },
         ],
-        // period reward: 2.1201081573283083
-        // total reward: 1.755311573473612038
+        // period rewards: 2.1201081573283083
+        // total rewards: 1.755311573473612038
         // reward rate: 0.041474938886391011
         [
           {
@@ -483,7 +483,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let periodRewards = ether('0.695857375275924738');
       let totalRewards = periodRewards;
       let rewardRate = ether('0.017396434381898118');
-      let receipt = await swrToken.updateRewards(periodRewards, {
+      let receipt = await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -552,7 +552,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       periodRewards = ether('-1.060653959130621');
       totalRewards = ether('-0.364796583854696262');
       rewardRate = ether('-0.006709337416525086');
-      receipt = await swrToken.updateRewards(periodRewards, {
+      receipt = await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -616,7 +616,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       periodRewards = ether('2.1201081573283083');
       totalRewards = ether('1.755311573473612038');
       rewardRate = ether('0.041474938886391011');
-      receipt = await swrToken.updateRewards(periodRewards, {
+      receipt = await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -661,7 +661,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         from: pool,
       });
 
-      await swrToken.updateRewards(value1.add(value2), {
+      await swrToken.updateTotalRewards(value1.add(value2), {
         from: validatorsOracle,
       });
     });
