@@ -92,11 +92,11 @@ contract SWDToken is ISWDToken, BaseERC20 {
         require(!settings.pausedContracts(address(this)), "SWDToken: contract is disabled");
 
         // start calculating sender rewards with updated deposit amount
-        swrToken.updateReward(sender);
+        swrToken.updateRewardCheckpoint(sender);
         deposits[sender] = deposits[sender].sub(amount);
 
         // start calculating recipient rewards with updated deposit amount
-        swrToken.updateReward(recipient);
+        swrToken.updateRewardCheckpoint(recipient);
         deposits[recipient] = deposits[recipient].add(amount);
 
         emit Transfer(sender, recipient, amount);
@@ -109,7 +109,7 @@ contract SWDToken is ISWDToken, BaseERC20 {
         require(msg.sender == pool, "SWDToken: permission denied");
 
         // start calculating account rewards with updated deposit amount
-        swrToken.updateReward(account);
+        swrToken.updateRewardCheckpoint(account);
         totalDeposits = totalDeposits.add(amount);
         deposits[account] = deposits[account].add(amount);
 
@@ -124,7 +124,7 @@ contract SWDToken is ISWDToken, BaseERC20 {
         require(balanceOf(account) >= amount, "SWDToken: burn amount exceeds balance");
 
         // start calculating account rewards with updated deposit amount
-        swrToken.updateReward(account);
+        swrToken.updateRewardCheckpoint(account);
         totalDeposits = totalDeposits.sub(amount);
         deposits[account] = deposits[account].sub(amount);
 

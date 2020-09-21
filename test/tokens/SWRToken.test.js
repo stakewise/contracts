@@ -788,7 +788,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
   it('anyone cannot update user reward', async () => {
     await expectRevert(
-      swrToken.updateReward(otherAccounts[0], {
+      swrToken.updateRewardCheckpoint(otherAccounts[0], {
         from: otherAccounts[0],
       }),
       'SWRToken: permission denied'

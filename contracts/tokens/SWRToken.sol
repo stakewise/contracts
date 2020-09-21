@@ -21,17 +21,24 @@ contract SWRToken is ISWRToken, BaseERC20 {
     using SafeCast for uint256;
     using SafeCast for int256;
 
+    /**
+    * @dev Structure for storing information about user reward checkpoint.
+    * @param rewardRate - user reward rate checkpoint.
+    * @param reward - user reward checkpoint.
+    */
+    struct Checkpoint {
+        int256 rewardRate;
+        int256 reward;
+    }
+
     // @dev Last rewards update timestamp by validators oracle.
     uint256 public override updateTimestamp;
 
     // @dev Total amount of rewards. Can be negative in case of penalties.
     int256 public override totalRewards;
 
-    // @dev Maps account address to its saved rewards.
-    mapping(address => int256) private rewards;
-
-    // @dev Maps account address to the reward rate used for reward calculation.
-    mapping(address => int256) private rewardRates;
+    // @dev Maps account address to its reward checkpoint.
+    mapping(address => Checkpoint) private checkpoints;
 
     // @dev Address of the SWDToken contract.
     ISWDToken private swdToken;
@@ -74,15 +81,17 @@ contract SWRToken is ISWRToken, BaseERC20 {
       * @dev See {ISWRToken-rewardOf}.
       */
     function rewardOf(address account) public view override returns (int256) {
+        Checkpoint memory cp = checkpoints[account];
+
         int256 curReward;
         uint256 deposit = swdToken.depositOf(account);
         if (deposit != 0) {
             // calculate current reward of the account
-            curReward = deposit.toInt256().mul(rewardRate.sub(rewardRates[account])).div(1 ether);
+            curReward = deposit.toInt256().mul(rewardRate.sub(cp.rewardRate)).div(1 ether);
         }
 
-        // return previously accumulated reward + current reward
-        return rewards[account].add(curReward);
+        // return checkpoint reward + current reward
+        return cp.reward.add(curReward);
     }
 
     /**
@@ -95,29 +104,24 @@ contract SWRToken is ISWRToken, BaseERC20 {
 
         uint256 senderReward = balanceOf(sender);
         require(amount > 0 && senderReward >= amount, "SWRToken: invalid amount");
+        checkpoints[sender] = Checkpoint(rewardRate, senderReward.sub(amount).toInt256());
 
-        rewards[sender] = senderReward.sub(amount).toInt256();
-        rewardRates[sender] = rewardRate;
-
-        rewards[recipient] = rewardOf(recipient).add(amount.toInt256());
-        rewardRates[recipient] = rewardRate;
+        checkpoints[recipient] = Checkpoint(rewardRate, rewardOf(recipient).add(amount.toInt256()));
 
         emit Transfer(sender, recipient, amount);
     }
 
     /**
-     * @dev See {ISWRToken-updateReward}.
+     * @dev See {ISWRToken-updateRewardCheckpoint}.
      */
-    function updateReward(address account) external override {
+    function updateRewardCheckpoint(address account) external override {
         require(msg.sender == address(swdToken), "SWRToken: permission denied");
-
-        rewards[account] = rewardOf(account);
-        rewardRates[account] = rewardRate;
+        checkpoints[account] = Checkpoint(rewardRate, rewardOf(account));
     }
 
     /**
-      * @dev See {ISWRToken-updateTotalRewards}.
-      */
+     * @dev See {ISWRToken-updateTotalRewards}.
+     */
     function updateTotalRewards(int256 newTotalRewards) external override {
         require(msg.sender == validatorsOracle, "SWRToken: permission denied");
         require(!settings.pausedContracts(address(this)), "SWRToken: contract is disabled");

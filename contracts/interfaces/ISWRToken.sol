@@ -48,11 +48,11 @@ interface ISWRToken is IERC20 {
     function rewardOf(address account) external view returns (int256);
 
     /**
-    * @dev Function for updating account's reward to the current value.
+    * @dev Function for updating account's reward checkpoint.
     * Can only be called by SWDToken contract.
-    * @param account - address of the account to update the reward for.
+    * @param account - address of the account to update the reward checkpoint for.
     */
-    function updateReward(address account) external;
+    function updateRewardCheckpoint(address account) external;
 
     /**
     * @dev Function for updating validators total rewards.
