@@ -126,9 +126,23 @@ contract SWRToken is ISWRToken, BaseERC20 {
         require(msg.sender == validatorsOracle, "SWRToken: permission denied");
         require(!settings.pausedContracts(address(this)), "SWRToken: contract is disabled");
 
-        // calculate reward rate used for account reward calculation
         int256 periodRewards = newTotalRewards.sub(totalRewards);
-        rewardRate = rewardRate.add(periodRewards.mul(1 ether).div(swdToken.totalDeposits().toInt256()));
+        int256 maintainerReward;
+        if (periodRewards > 0) {
+            maintainerReward = periodRewards.mul(settings.maintainerFee()).div(10000);
+        }
+
+        // calculate reward rate used for account reward calculation
+        rewardRate = rewardRate.add(periodRewards.sub(maintainerReward).mul(1 ether).div(swdToken.totalDeposits().toInt256()));
+
+        // deduct maintainer fee if period reward is positive
+        if (maintainerReward > 0) {
+           address maintainer = settings.maintainer();
+           checkpoints[maintainer] = Checkpoint(
+                rewardRate,
+                rewardOf(maintainer).add(maintainerReward)
+           );
+        }
 
         // solhint-disable-next-line not-rely-on-time
         updateTimestamp = block.timestamp;

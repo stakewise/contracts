@@ -137,32 +137,44 @@ contract('SWRToken', ([_, ...accounts]) => {
       await swdToken.mint(otherAccounts[0], deposit, {
         from: pool,
       });
-      let value = ether('10');
-      let receipt = await swrToken.updateTotalRewards(value, {
+      let newTotalRewards = ether('10');
+      let maintainerReward = newTotalRewards
+        .mul(new BN(initialSettings.maintainerFee))
+        .div(new BN(10000));
+      let userReward = newTotalRewards.sub(maintainerReward);
+
+      let receipt = await swrToken.updateTotalRewards(newTotalRewards, {
         from: validatorsOracle,
       });
 
       expectEvent(receipt, 'RewardsUpdated', {
-        periodRewards: value,
-        totalRewards: value,
-        rewardRate: value.mul(ether('1')).div(deposit),
+        periodRewards: newTotalRewards,
+        totalRewards: newTotalRewards,
+        rewardRate: userReward.mul(ether('1')).div(deposit),
       });
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value,
+        totalSupply: newTotalRewards,
         account: otherAccounts[0],
-        balance: value,
-        reward: value,
+        balance: userReward,
+        reward: userReward,
+      });
+      await checkSWRToken({
+        swrToken,
+        account: initialSettings.maintainer,
+        balance: maintainerReward,
+        reward: maintainerReward,
       });
     });
 
     it('calculates account rewards correctly', async () => {
       let testCases = [
         {
-          totalRewards: ether('0.2971649750296'),
+          totalRewards: ether('0.330183305588444444'),
+          maintainerReward: ether('0.033018330558844444'),
           users: [
-            { deposit: ether('2.04'), reward: ether('0.01894426715813700') },
+            { deposit: ether('2.04'), reward: ether('0.018944267158137') },
             { deposit: ether('3.771'), reward: ether('0.035019035026144425') },
             { deposit: ether('3.782'), reward: ether('0.03512118548631085') },
             { deposit: ether('3.661'), reward: ether('0.033997530424480175') },
@@ -176,19 +188,21 @@ contract('SWRToken', ([_, ...accounts]) => {
           ],
         },
         {
-          totalRewards: ether('1.93117011188190002'),
+          totalRewards: ether('2.145744568757666688'),
+          maintainerReward: ether('0.214574456875766668'),
           users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
             deposit: ether('1'),
             reward: ether('0.060349065996309375'),
           }),
         },
         {
-          totalRewards: ether('1.0687374575440'),
+          totalRewards: ether('1.187486063937777777'),
+          maintainerReward: ether('0.118748606393777777'),
           users: [{ deposit: ether('32.0'), reward: ether('1.0687374575440') }],
         },
       ];
 
-      for (const { totalRewards, users } of testCases) {
+      for (const { totalRewards, maintainerReward, users } of testCases) {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
@@ -209,12 +223,20 @@ contract('SWRToken', ([_, ...accounts]) => {
           from: validatorsOracle,
         });
 
+        // check maintainer reward
+        await checkSWRToken({
+          swrToken,
+          totalSupply: totalRewards,
+          account: initialSettings.maintainer,
+          balance: maintainerReward,
+          reward: maintainerReward,
+        });
+
         // check rewards and deposits
         for (let i = 0; i < users.length; i++) {
           let { reward, deposit } = users[i];
           await checkSWRToken({
             swrToken,
-            totalSupply: totalRewards,
             account: otherAccounts[i],
             balance: reward,
             reward: reward,
@@ -360,8 +382,9 @@ contract('SWRToken', ([_, ...accounts]) => {
           { deposit: ether('6'), reward: ether('0') },
           { deposit: ether('29'), reward: ether('0') },
         ],
-        // period rewards: 0.695857375275924738
-        // total rewards: 0.695857375275924738
+        // period rewards: 0.773174861417694153
+        // maintainer reward: 0.077317486141769415
+        // total rewards: 0.773174861417694153
         // reward rate: 0.017396434381898118
         [
           { deposit: ether('5'), reward: ether('0.086982171909490590') },
@@ -479,8 +502,9 @@ contract('SWRToken', ([_, ...accounts]) => {
         });
       }
 
-      // 2. period reward: 0.695857375275924738 arrives
-      let periodRewards = ether('0.695857375275924738');
+      // 2. period reward: 0.773174861417694153 arrives
+      let periodRewards = ether('0.773174861417694153');
+      let maintainerReward = ether('0.077317486141769415');
       let totalRewards = periodRewards;
       let rewardRate = ether('0.017396434381898118');
       let receipt = await swrToken.updateTotalRewards(totalRewards, {
@@ -490,6 +514,14 @@ contract('SWRToken', ([_, ...accounts]) => {
         periodRewards,
         totalRewards,
         rewardRate,
+      });
+
+      await checkSWRToken({
+        swrToken,
+        totalSupply: totalRewards,
+        account: initialSettings.maintainer,
+        balance: maintainerReward,
+        reward: maintainerReward,
       });
 
       for (let i = 0; i < tests[2].length; i++) {
@@ -550,7 +582,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       // 4. period reward: -1.060653959130621 arrives
       periodRewards = ether('-1.060653959130621');
-      totalRewards = ether('-0.364796583854696262');
+      totalRewards = totalRewards.add(periodRewards);
       rewardRate = ether('-0.006709337416525086');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
@@ -561,6 +593,14 @@ contract('SWRToken', ([_, ...accounts]) => {
         rewardRate,
       });
 
+      await checkSWRToken({
+        swrToken,
+        totalSupply: new BN(0),
+        account: initialSettings.maintainer,
+        balance: maintainerReward,
+        reward: maintainerReward,
+      });
+
       for (let i = 0; i < tests[4].length; i++) {
         let deposit = tests[4][i].deposit;
         let reward = tests[4][i].reward;
@@ -568,7 +608,6 @@ contract('SWRToken', ([_, ...accounts]) => {
         // perform checks
         await checkSWRToken({
           swrToken,
-          totalSupply: new BN(0),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
@@ -612,9 +651,10 @@ contract('SWRToken', ([_, ...accounts]) => {
         });
       }
 
-      // 6. periodic reward: 2.1201081573283083 arrives
-      periodRewards = ether('2.1201081573283083');
-      totalRewards = ether('1.755311573473612038');
+      // 6. periodic reward: 2.3556757303647870 arrives
+      periodRewards = ether('2.3556757303647870');
+      totalRewards = totalRewards.add(periodRewards);
+      maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
       rewardRate = ether('0.041474938886391011');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
@@ -623,6 +663,14 @@ contract('SWRToken', ([_, ...accounts]) => {
         periodRewards,
         totalRewards,
         rewardRate,
+      });
+
+      await checkSWRToken({
+        swrToken,
+        totalSupply: totalRewards,
+        account: initialSettings.maintainer,
+        balance: maintainerReward,
+        reward: maintainerReward,
       });
 
       for (let i = 0; i < tests[6].length; i++) {
@@ -649,11 +697,17 @@ contract('SWRToken', ([_, ...accounts]) => {
   });
 
   describe('transfer', () => {
-    let value1 = ether('10');
+    let value1 = ether('4');
     let value2 = ether('5');
+    let maintainerReward = ether('1');
+    let totalRewards = value1.add(value2).add(maintainerReward);
     let [sender1, sender2] = otherAccounts;
 
     beforeEach(async () => {
+      await settings.setMaintainerFee(new BN(1000), {
+        from: admin,
+      });
+
       await swdToken.mint(sender1, value1, {
         from: pool,
       });
@@ -661,7 +715,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         from: pool,
       });
 
-      await swrToken.updateTotalRewards(value1.add(value2), {
+      await swrToken.updateTotalRewards(totalRewards, {
         from: validatorsOracle,
       });
     });
@@ -676,7 +730,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
@@ -693,7 +747,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
@@ -710,7 +764,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
@@ -730,7 +784,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
@@ -750,7 +804,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
@@ -770,7 +824,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender1,
         balance: new BN(0),
         deposit: new BN(0),
@@ -778,7 +832,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await checkSWRToken({
         swrToken,
-        totalSupply: value1.add(value2),
+        totalSupply: totalRewards,
         account: sender2,
         balance: value1.add(value2),
         deposit: value2,
