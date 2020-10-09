@@ -27,10 +27,10 @@ contract Settings is ISettings, Initializable {
     uint128 public override validatorDepositAmount;
 
     // @dev The maximum deposit amount.
-    uint256 public override maxDepositAmount;
+    uint128 public override maxDepositAmount;
 
-    // @dev The non-custodial validator price per second.
-    uint256 public override validatorPrice;
+    // @dev The non-custodial validator price per month.
+    uint128 public override validatorPrice;
 
     // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
     bytes public override withdrawalCredentials;
@@ -40,6 +40,9 @@ contract Settings is ISettings, Initializable {
 
     // @dev The mapping between the managed contract and whether it is paused or not.
     mapping(address => bool) private _pausedContracts;
+
+    // @dev The mapping between the token and whether it is supported or not for payments.
+    mapping(address => bool) private _supportedPaymentTokens;
 
     // @dev Address of the Admins contract.
     IAdmins private admins;
@@ -55,8 +58,8 @@ contract Settings is ISettings, Initializable {
         uint16 _maintainerFee,
         uint64 _minDepositUnit,
         uint128 _validatorDepositAmount,
-        uint256 _maxDepositAmount,
-        uint256 _validatorPrice,
+        uint128 _maxDepositAmount,
+        uint128 _validatorPrice,
         bool _allContractsPaused,
         bytes memory _withdrawalCredentials,
         address _admins,
@@ -84,6 +87,13 @@ contract Settings is ISettings, Initializable {
     }
 
     /**
+     * @dev See {ISettings-supportedPaymentTokens}.
+     */
+    function supportedPaymentTokens(address _token) external view override returns (bool) {
+        return _supportedPaymentTokens[_token];
+    }
+
+    /**
      * @dev See {ISettings-setMinDepositUnit}.
      */
     function setMinDepositUnit(uint64 newValue) external override {
@@ -96,7 +106,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setMaxDepositAmount}.
      */
-    function setMaxDepositAmount(uint256 newValue) external override {
+    function setMaxDepositAmount(uint128 newValue) external override {
         require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         maxDepositAmount = newValue;
@@ -125,13 +135,23 @@ contract Settings is ISettings, Initializable {
     }
 
     /**
-     * @dev See {ISettings-setContractPaused}.
+     * @dev See {ISettings-setPausedContracts}.
      */
-    function setContractPaused(address _contract, bool isPaused) external override {
+    function setPausedContracts(address _contract, bool _isPaused) external override {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Settings: permission denied");
 
-        _pausedContracts[_contract] = isPaused;
+        _pausedContracts[_contract] = _isPaused;
         emit SettingChanged("pausedContracts");
+    }
+
+    /**
+     * @dev See {ISettings-setSupportedPaymentTokens}.
+     */
+    function setSupportedPaymentTokens(address _token, bool _isSupported) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        _supportedPaymentTokens[_token] = _isSupported;
+        emit SettingChanged("supportedPaymentTokens");
     }
 
     /**
@@ -147,7 +167,7 @@ contract Settings is ISettings, Initializable {
     /**
      * @dev See {ISettings-setValidatorPrice}.
      */
-    function setValidatorPrice(uint256 _validatorPrice) external override {
+    function setValidatorPrice(uint128 _validatorPrice) external override {
         require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         validatorPrice = _validatorPrice;

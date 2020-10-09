@@ -25,7 +25,8 @@ const newValues = [
   ['validatorPrice', new BN(3703171921051)],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
-  ['contractPaused', true],
+  ['pausedContracts', true],
+  ['supportedPaymentTokens', true],
   ['allContractsPaused', true],
 ];
 
@@ -77,15 +78,19 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'contractPaused') {
-        expect(await settings.pausedContracts(collector)).equal(false);
-        const receipt = await settings.setContractPaused(collector, newValue, {
+      if (
+        setting === 'pausedContracts' ||
+        setting === 'supportedPaymentTokens'
+      ) {
+        await assertEqual(await settings[setting](collector), false);
+        const setMethod = getSetMethod(setting);
+        const receipt = await settings[setMethod](collector, true, {
           from: admin,
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0'),
+          settingName: web3.utils.fromAscii(setting).padEnd(66, '0'),
         });
-        expect(await settings.pausedContracts(collector)).equal(newValue);
+        expect(await settings[setting](collector)).equal(true);
       } else {
         await assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -102,15 +107,19 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('others cannot change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'contractPaused') {
-        expect(await settings.pausedContracts(collector)).equal(false);
+      if (
+        setting === 'pausedContracts' ||
+        setting === 'supportedPaymentTokens'
+      ) {
+        await assertEqual(await settings[setting](collector), false);
+        const setMethod = getSetMethod(setting);
         await expectRevert(
-          settings.setContractPaused(collector, newValue, {
+          settings[setMethod](collector, true, {
             from: anyone,
           }),
           'Settings: permission denied'
         );
-        expect(await settings.pausedContracts(collector)).equal(false);
+        expect(await settings[setting](collector)).equal(false);
       } else {
         assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -127,7 +136,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('operators can pause contracts', async () => {
     expect(await settings.pausedContracts(collector)).equal(false);
-    const receipt = await settings.setContractPaused(collector, true, {
+    const receipt = await settings.setPausedContracts(collector, true, {
       from: operator,
     });
     expectEvent(receipt, 'SettingChanged', {
