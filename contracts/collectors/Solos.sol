@@ -33,14 +33,14 @@ contract Solos is Initializable {
     // @dev Maps ID of the solo to its information.
     mapping(bytes32 => Solo) public solos;
 
+    // @dev Address of the VRC (deployed by Ethereum).
+    IValidatorRegistration public validatorRegistration;
+
     // @dev Address of the Settings contract.
     ISettings private settings;
 
     // @dev Address of the Operators contract.
     IOperators private operators;
-
-    // @dev Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration private validatorRegistration;
 
     // @dev Address of the Validators contract.
     IValidators private validators;

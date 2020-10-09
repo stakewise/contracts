@@ -26,6 +26,9 @@ contract Pool is Initializable {
     // @dev ID of the pool.
     bytes32 private poolId;
 
+    // @dev Address of the VRC (deployed by Ethereum).
+    IValidatorRegistration public validatorRegistration;
+
     // @dev Address of the SWDToken contract.
     ISWDToken private swdToken;
 
@@ -34,9 +37,6 @@ contract Pool is Initializable {
 
     // @dev Address of the Operators contract.
     IOperators private operators;
-
-    // @dev Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration private validatorRegistration;
 
     // @dev Address of the Validators contract.
     IValidators private validators;
