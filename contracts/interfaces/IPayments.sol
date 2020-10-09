@@ -1,67 +1,87 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
+
+/**
+ * @dev ABIEncoderV2 is used to enable encoding/decoding of the array of structs. The pragma
+ * is required, but ABIEncoderV2 is no longer considered experimental as of Solidity 0.6.0
+ */
 
 /**
  * @dev Interface of the Payments contract.
  */
 interface IPayments {
     /**
+    * @dev Structure for passing information about executed payment.
+    * @param billDate - timestamp of the bill date.
+    * @param sender - address of the payment sender.
+    * @param amount - selected token payment amount.
+    */
+    struct Payment {
+        uint256 billDate;
+        address sender;
+        uint256 amount;
+    }
+
+    /**
+    * @dev Event for tracking balance updates.
+    * @param token - address of the updated token.
+    * @param account - address of the updated account.
+    */
+    event BalanceUpdated(address indexed token, address indexed account);
+
+    /**
+    * @dev Event for tracking executed payments.
+    * @param billDate - timestamp of the paid bill.
+    * @param token - address of the token used for payment.
+    * @param sender - address of the payment sender.
+    * @param recipient - address of the payment recipient.
+    * @param amount - amount transferred.
+    */
+    event PaymentSent(
+        uint256 indexed billDate,
+        address indexed token,
+        address indexed sender,
+        address recipient,
+        uint256 amount
+    );
+
+    /**
+    * @dev Function for getting account's selected token contract address.
+    * @param _account - address of account to retrieve the selected token for.
+    */
+    function selectedTokens(address _account) external view returns (address);
+
+    /**
     * @dev Constructor for initializing the Payments contract.
-    * @param _operators - address of the Operators contract.
-    * @param _managers - address of the Managers contract.
     * @param _settings - address of the Settings contract.
-    * @param _dai - address of the DAI contract.
-    * @param _solos - address of the Solos contract.
-    * @param _groups - address of the Groups contract.
+    * @param _managers - address of the Managers contract.
     */
-    function initialize(
-        address _operators,
-        address _managers,
-        address _settings,
-        address _dai,
-        address _solos,
-        address _groups
-    ) external;
+    function initialize(address _settings, address _managers) external;
 
     /**
-    * @dev Function for setting tokens refund recipient.
-    * @param _refundRecipient - new address of the refund recipient.
+    * @dev Function for retrieving account's balance.
+    * @param _account - address of account to retrieve balance for.
     */
-    function setRefundRecipient(address _refundRecipient) external;
+    function balanceOf(address _account) external view returns (uint256);
 
     /**
-    * @dev Function to start metering new validator.
-    * @param _validatorId - ID of the validator (hash of the public key) to start metering.
+    * @dev Function for adding tokens to the account's balance.
+    * @param _token - address of the token to use.
+    * @param _amount - amount of tokens to add.
     */
-    function startMeteringValidator(bytes32 _validatorId) external;
+    function addTokens(address _token, uint256 _amount) external;
 
     /**
-    * @dev Function to stop metering the validator.
-    * @param _validatorId - ID of the validator (hash of the public key) to stop metering.
+    * @dev Function for withdrawing tokens from the account's balance.
+    * @param _amount - amount of tokens to withdraw.
     */
-    function stopMeteringValidator(bytes32 _validatorId) external;
+    function withdrawTokens(uint256 _amount) external;
 
     /**
-    * @dev Function for retrieving total bill until specific timestamp.
-    * @param _timestamp - timestamp in seconds until to retrieve total bill.
+    * @dev Function for executing token payments.
+    * @param _payments - list of payments to execute.
     */
-    function getTotalBill(uint256 _timestamp) external view returns (uint256);
-
-    /**
-    * @dev Function for retrieving total validators price.
-    */
-    function getTotalPrice() external view returns (uint256);
-
-    /**
-    * @dev Function to withdraw tokens to the maintainer.
-    * @param _amount - the amount of tokens to withdraw.
-    */
-    function withdraw(uint256 _amount) external;
-
-    /**
-    * @dev Function to refund tokens back to the user.
-    * @param _amount - the amount of tokens to refund.
-    */
-    function refund(uint256 _amount) external;
+    function executePayments(Payment[] calldata _payments) external;
 }

@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
+
+/**
+ * @dev ABIEncoderV2 is used to enable encoding/decoding of the array of structs. The pragma
+ * is required, but ABIEncoderV2 is no longer considered experimental as of Solidity 0.6.0
+ */
 
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
-import "./interfaces/IOperators.sol";
 import "./interfaces/IManagers.sol";
 import "./interfaces/ISettings.sol";
 import "./interfaces/IPayments.sol";
@@ -15,178 +21,95 @@ import "./interfaces/IPayments.sol";
  *
  * @dev Payments contract is used for billing non-custodial validators.
  */
-contract Payments is IPayments {
+contract Payments is IPayments, Initializable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    // @dev Indicates that the contract has been initialized.
-    bool private initialized;
+    // @dev Maps account address to its selected token contract address.
+    mapping(address => address) public override selectedTokens;
 
-    // @dev Address of the Operators contract.
-    IOperators private operators;
-
-    // @dev Address of the Managers contract.
-    IManagers private managers;
+    // @dev Maps account address to its token balance.
+    mapping(address => uint256) private balances;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
 
-    // @dev Address of the DAI contract.
-    IERC20 private dai;
-
-    // @dev Address of the Solos contract.
-    address private solos;
-
-    // @dev Address of the Groups contract.
-    address private groups;
-
-    // @dev Address of the tokens refund recipient.
-    address private refundRecipient;
-
-    // @dev Last metering timestamp.
-    uint256 private lastMeteringTimestamp;
-
-    // @dev Total price of all the validators.
-    uint256 private totalPrice;
-
-    // @dev Total bill for all the validators.
-    uint256 private totalBill;
-
-    // @dev Maps validator ID (hash of the public key) to its price.
-    mapping(bytes32 => uint256) private validatorPrices;
-
-    // @dev Checks whether the caller is the collector contract.
-    modifier onlyCollectors() {
-        require(msg.sender == groups || msg.sender == solos, "Payments: permission denied");
-        _;
-    }
+    // @dev Address of the Managers contract.
+    IManagers private managers;
 
     /**
      * @dev See {IPayments-initialize}.
      */
-    function initialize(
-        address _operators,
-        address _managers,
-        address _settings,
-        address _dai,
-        address _solos,
-        address _groups
-    )
-        public override
-    {
-        initialized = true;
-        operators = IOperators(_operators);
-        managers = IManagers(_managers);
+    function initialize(address _settings, address _managers) public override initializer {
         settings = ISettings(_settings);
-        dai = IERC20(_dai);
-        solos = _solos;
-        groups = _groups;
+        managers = IManagers(_managers);
     }
 
     /**
-     * @dev See {IPayments-setRefundRecipient}.
+     * @dev See {IPayments-balanceOf}.
      */
-    function setRefundRecipient(address _refundRecipient) external override onlyCollectors {
-        refundRecipient = _refundRecipient;
+    function balanceOf(address _account) external view override returns (uint256) {
+        return balances[_account];
     }
 
     /**
-     * @dev See {IPayments-startMeteringValidator}.
+     * @dev See {IPayments-addTokens}.
      */
-    function startMeteringValidator(bytes32 _validatorId) external override onlyCollectors {
-        // update validators total bill until current timestamp
-        // solhint-disable-next-line not-rely-on-time
-        totalBill = getTotalBill(block.timestamp);
+    function addTokens(address _token, uint256 _amount) external override {
+        require(!settings.pausedContracts(address(this)), "Payments: contract is paused");
+        require(settings.supportedPaymentTokens(_token), "Payments: token is not supported");
 
-        // update last metering timestamp
-        // solhint-disable-next-line not-rely-on-time
-        lastMeteringTimestamp = block.timestamp;
-
-        // start metering new set of validators with the updated price
-        uint256 validatorPrice = settings.validatorPrice();
-        validatorPrices[_validatorId] = validatorPrice;
-        totalPrice = totalPrice.add(validatorPrice);
-    }
-
-    /**
-     * @dev See {IPayments-stopMeteringValidator}.
-     */
-    function stopMeteringValidator(bytes32 _validatorId) external override {
-        require(operators.isOperator(msg.sender), "Payments: permission denied");
-        require(validatorPrices[_validatorId] != 0, "Payments: metering is already stopped for the validator");
-
-        // update validators total bill until current timestamp
-        // solhint-disable-next-line not-rely-on-time
-        totalBill = getTotalBill(block.timestamp);
-
-        // update last metering timestamp
-        // solhint-disable-next-line not-rely-on-time
-        lastMeteringTimestamp = block.timestamp;
-
-        // start metering validators with the updated price
-        totalPrice = totalPrice.sub(validatorPrices[_validatorId]);
-        delete validatorPrices[_validatorId];
-    }
-
-    /**
-     * @dev See {IPayments-getTotalBill}.
-     */
-    function getTotalBill(uint256 _timestamp) public override view returns (uint256) {
-        if (lastMeteringTimestamp != 0) {
-            uint256 duration = _timestamp.sub(lastMeteringTimestamp);
-            if (duration > 0) {
-                return totalBill.add(totalPrice.mul(duration));
+        // setup new selected token
+        address selectedToken = selectedTokens[msg.sender];
+        if (selectedToken != _token) {
+            // withdraw previously used tokens
+            if (balances[msg.sender] > 0) {
+                withdrawTokens(balances[msg.sender]);
             }
+            selectedTokens[msg.sender] = _token;
         }
 
-        return totalBill;
+        // update account's balance
+        balances[msg.sender] = balances[msg.sender].add(_amount);
+        emit BalanceUpdated(_token, msg.sender);
+
+        // transfer tokens to this contract
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     }
 
     /**
-     * @dev See {IPayments-getTotalPrice}.
+     * @dev See {IPayments-withdrawTokens}.
      */
-    function getTotalPrice() external override view returns (uint256) {
-        return totalPrice;
+    function withdrawTokens(uint256 _amount) public override {
+        require(_amount > 0, "Payments: invalid amount");
+
+        // update account's balance
+        balances[msg.sender] = balances[msg.sender].sub(_amount, "Payments: insufficient tokens balance");
+
+        address selectedToken = selectedTokens[msg.sender];
+        emit BalanceUpdated(selectedToken, msg.sender);
+
+        // transfer tokens to account
+        IERC20(selectedToken).safeTransfer(msg.sender, _amount);
     }
 
     /**
-     * @dev See {IPayments-withdraw}.
+     * @dev See {IPayments-executePayments}.
      */
-    function withdraw(uint256 _amount) external override {
+    function executePayments(Payment[] calldata _payments) external override {
         require(managers.isManager(msg.sender), "Payments: permission denied");
 
-        // update validators total bill until current timestamp
-        // solhint-disable-next-line not-rely-on-time
-        totalBill = getTotalBill(block.timestamp);
+        address maintainer = settings.maintainer();
+        for (uint256 i = 0; i < _payments.length; i++) {
+            Payment calldata p = _payments[i];
+            balances[p.sender] = balances[p.sender].sub(p.amount, "Payments: insufficient balance");
 
-        // update last metering timestamp
-        // solhint-disable-next-line not-rely-on-time
-        lastMeteringTimestamp = block.timestamp;
+            // emit event
+            address token = selectedTokens[p.sender];
+            emit PaymentSent(p.billDate, token, p.sender, maintainer, p.amount);
 
-        // deduct withdrawn amount from the total bill
-        totalBill = totalBill.sub(_amount);
-
-        // transfer payment to the maintainer
-        dai.safeTransfer(settings.maintainer(), _amount);
-    }
-
-    /**
-     * @dev See {IPayments-refund}.
-     */
-    function refund(uint256 _amount) external override {
-        require(msg.sender == refundRecipient, "Payments: permission denied");
-
-        // update validators total bill until current timestamp
-        // solhint-disable-next-line not-rely-on-time
-        totalBill = getTotalBill(block.timestamp);
-
-        // check whether contract has enough tokens balance
-        require(dai.balanceOf(address(this)).sub(totalBill) >= _amount, "Payments: insufficient balance");
-
-        // update last metering timestamp
-        // solhint-disable-next-line not-rely-on-time
-        lastMeteringTimestamp = block.timestamp;
-
-        dai.safeTransfer(refundRecipient, _amount);
+            // execute payment
+            IERC20(token).safeTransfer(maintainer, p.amount);
+        }
     }
 }

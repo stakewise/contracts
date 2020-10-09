@@ -1,11 +1,10 @@
 const { BN } = require('@openzeppelin/test-helpers');
 const { Contracts, ZWeb3 } = require('@openzeppelin/upgrades');
-const { getNetworkConfig } = require('../deployments/common');
+const { initialSettings } = require('../deployments/settings');
 
 async function main() {
   // Initialize network connection
   ZWeb3.initialize(web3.currentProvider);
-  let networkConfig = await getNetworkConfig();
 
   // deploy DAI contract
   const name = 'DAI';
@@ -16,9 +15,9 @@ async function main() {
   let dai = await ERC20Mock.new(
     name,
     symbol,
-    process.env.INITIAL_HOLDER,
+    initialSettings.admin,
     initialSupply.toString(),
-    networkConfig.txParams
+    { gas: 4712388, gasPrice: 100000000000 }
   );
   console.log(`DAI contract address: ${dai.address}`);
 }

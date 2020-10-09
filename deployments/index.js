@@ -4,19 +4,15 @@ const {
   deployManagersProxy,
 } = require('./access');
 const { calculateContractAddress, log } = require('./common');
-const {
-  deployPoolProxy,
-  deploySolosProxy,
-  deployGroupsProxy,
-} = require('./collectors');
-const { deploySWDToken, deploySWRToken } = require('./tokens');
+const { deployPoolProxy, deploySolosProxy } = require('./collectors');
+const { deploySWDTokenProxy, deploySWRTokenProxy } = require('./tokens');
+const { deployPaymentsProxy } = require('./payments');
 const { deploySettingsProxy, initialSettings } = require('./settings');
 const { deployValidatorsProxy } = require('./validators');
 
 async function deployAllProxies({
   initialAdmin = initialSettings.admin,
   vrc = initialSettings.VRC,
-  dai = initialSettings.DAIToken,
   validatorsOracleProxy = initialSettings.validatorsOracle,
   networkConfig,
 }) {
@@ -36,12 +32,6 @@ async function deployAllProxies({
   let {
     salt: solosSalt,
     contractAddress: solosCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
-
-  // Calculate Groups proxy address via create2
-  let {
-    salt: groupsSalt,
-    contractAddress: groupsCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
   // Calculate swrToken proxy address via create2
@@ -90,7 +80,6 @@ async function deployAllProxies({
     networkConfig,
     poolProxy: poolCalcProxy,
     solosProxy: solosCalcProxy,
-    groupsProxy: groupsCalcProxy,
     salt: validatorsSalt,
   });
   if (validatorsProxy !== validatorsCalcProxy) {
@@ -121,12 +110,8 @@ async function deployAllProxies({
   let solosProxy = await deploySolosProxy({
     settingsProxy,
     operatorsProxy,
-    managersProxy,
     vrc,
     validatorsProxy,
-    solosProxy: solosCalcProxy,
-    groupsProxy: groupsCalcProxy,
-    dai,
     salt: solosSalt,
     networkConfig,
   });
@@ -137,28 +122,8 @@ async function deployAllProxies({
   }
   log(`Solos contract: ${solosProxy}`);
 
-  // Deploy Groups proxy
-  let groupsProxy = await deployGroupsProxy({
-    settingsProxy,
-    operatorsProxy,
-    managersProxy,
-    vrc,
-    validatorsProxy,
-    solosProxy: solosCalcProxy,
-    groupsProxy: groupsCalcProxy,
-    dai,
-    salt: groupsSalt,
-    networkConfig,
-  });
-  if (groupsProxy !== groupsCalcProxy) {
-    throw new Error(
-      `Groups contract actual address "${groupsProxy}" does not match expected "${groupsCalcProxy}"`
-    );
-  }
-  log(`Groups contract: ${groupsProxy}`);
-
   // Deploy SWRToken proxy
-  let swrTokenProxy = await deploySWRToken({
+  let swrTokenProxy = await deploySWRTokenProxy({
     swdTokenProxy: swdTokenCalcProxy,
     settingsProxy,
     validatorsOracleProxy,
@@ -173,7 +138,7 @@ async function deployAllProxies({
   log(`SWRToken contract: ${swrTokenProxy}`);
 
   // Deploy SWDToken proxy
-  let swdTokenProxy = await deploySWDToken({
+  let swdTokenProxy = await deploySWDTokenProxy({
     swrTokenProxy,
     poolProxy,
     settingsProxy,
@@ -187,6 +152,14 @@ async function deployAllProxies({
   }
   log(`SWDToken contract: ${swdTokenProxy}`);
 
+  // Deploy Payments proxy
+  let paymentsProxy = await deployPaymentsProxy({
+    settingsProxy,
+    managersProxy,
+    networkConfig,
+  });
+  log(`Payments contract: ${paymentsProxy}`);
+
   return {
     admins: adminsProxy,
     operators: operatorsProxy,
@@ -195,7 +168,6 @@ async function deployAllProxies({
     validators: validatorsProxy,
     pool: poolProxy,
     solos: solosProxy,
-    groups: groupsProxy,
     swdToken: swdTokenProxy,
     swrToken: swrTokenProxy,
   };
