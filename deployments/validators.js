@@ -4,13 +4,12 @@ async function deployValidatorsProxy({
   networkConfig,
   poolProxy,
   solosProxy,
-  groupsProxy,
   salt,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Validators',
     methodName: 'initialize',
-    methodArgs: [poolProxy, solosProxy, groupsProxy],
+    methodArgs: [poolProxy, solosProxy],
     salt,
     ...networkConfig,
   });

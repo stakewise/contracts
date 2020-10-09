@@ -9,7 +9,7 @@ async function deployDAI(initialHolder, params = {}) {
   return ERC20Mock.new(name, symbol, initialHolder, initialSupply, params);
 }
 
-async function deploySWDToken({
+async function deploySWDTokenProxy({
   swrTokenProxy,
   settingsProxy,
   poolProxy,
@@ -27,7 +27,7 @@ async function deploySWDToken({
   return proxy.address;
 }
 
-async function deploySWRToken({
+async function deploySWRTokenProxy({
   swdTokenProxy,
   settingsProxy,
   validatorsOracleProxy,
@@ -47,6 +47,6 @@ async function deploySWRToken({
 
 module.exports = {
   deployDAI,
-  deploySWDToken,
-  deploySWRToken,
+  deploySWDTokenProxy,
+  deploySWRTokenProxy,
 };

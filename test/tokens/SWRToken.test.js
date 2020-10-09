@@ -14,7 +14,10 @@ const {
   deploySettingsProxy,
   initialSettings,
 } = require('../../deployments/settings');
-const { deploySWDToken, deploySWRToken } = require('../../deployments/tokens');
+const {
+  deploySWDTokenProxy,
+  deploySWRTokenProxy,
+} = require('../../deployments/tokens');
 const { removeNetworkFile, checkSWDToken, checkSWRToken } = require('../utils');
 const {
   getNetworkConfig,
@@ -43,7 +46,7 @@ async function deployTokens({
     contractAddress: swdTokenCalcProxy,
   } = await calculateContractAddress({ networkConfig });
 
-  let swrTokenProxy = await deploySWRToken({
+  let swrTokenProxy = await deploySWRTokenProxy({
     swdTokenProxy: swdTokenCalcProxy,
     settingsProxy: settings.address,
     validatorsOracleProxy: validatorsOracle,
@@ -52,7 +55,7 @@ async function deployTokens({
   });
   let swrToken = await SWRToken.at(swrTokenProxy);
 
-  let swdTokenProxy = await deploySWDToken({
+  let swdTokenProxy = await deploySWDTokenProxy({
     swrTokenProxy,
     settingsProxy: settings.address,
     poolProxy: pool,
@@ -113,7 +116,9 @@ contract('SWRToken', ([_, ...accounts]) => {
     });
 
     it('cannot update rewards when contract paused', async () => {
-      await settings.setContractPaused(swrToken.address, true, { from: admin });
+      await settings.setPausedContracts(swrToken.address, true, {
+        from: admin,
+      });
       expect(await settings.pausedContracts(swrToken.address)).equal(true);
 
       await expectRevert(
@@ -772,7 +777,9 @@ contract('SWRToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setContractPaused(swrToken.address, true, { from: admin });
+      await settings.setPausedContracts(swrToken.address, true, {
+        from: admin,
+      });
       expect(await settings.pausedContracts(swrToken.address)).equal(true);
 
       await expectRevert(
@@ -789,7 +796,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         balance: value1,
         reward: value1,
       });
-      await settings.setContractPaused(swrToken.address, false, {
+      await settings.setPausedContracts(swrToken.address, false, {
         from: admin,
       });
     });

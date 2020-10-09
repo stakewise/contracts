@@ -9,7 +9,6 @@ import "../interfaces/ISettings.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IValidators.sol";
-import "../interfaces/IPayments.sol";
 
 /**
  * @title Solos
@@ -24,20 +23,15 @@ contract Solos is Initializable {
     /**
     * @dev Structure for storing information about the solo deposits.
     * @param amount - amount deposited.
-    * @param payments - address of the payments contract for the validators.
     * @param withdrawalCredentials - withdrawal credentials of the validators.
     */
     struct Solo {
         uint256 amount;
-        address payments;
         bytes withdrawalCredentials;
     }
 
     // @dev Maps ID of the solo to its information.
     mapping(bytes32 => Solo) public solos;
-
-    // @dev Maps address of the deposit sender to the payments contract.
-    mapping(address => address) private paymentOwners;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -51,17 +45,10 @@ contract Solos is Initializable {
     // @dev Address of the Validators contract.
     IValidators private validators;
 
-    // @dev Address of the payments logical contract.
-    address private paymentsImplementation;
-
-    // @dev Payments initialization data for proxy creation.
-    bytes private paymentsInitData;
-
     /**
     * @dev Event for tracking added deposits.
     * @param soloId - ID of the solo.
     * @param sender - address of the deposit sender.
-    * @param payments - address of the payments contract.
     * @param amount - amount added.
     * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the deposit sender.
     * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
@@ -69,7 +56,6 @@ contract Solos is Initializable {
     event DepositAdded(
         bytes32 indexed soloId,
         address sender,
-        address payments,
         uint256 amount,
         bytes withdrawalPublicKey,
         bytes withdrawalCredentials
@@ -88,16 +74,12 @@ contract Solos is Initializable {
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
-    * @param _paymentsImplementation - address of the payments logical contract.
-    * @param _paymentsInitData - initialization data for payments proxy creation.
     */
     function initialize(
         ISettings _settings,
         IOperators _operators,
         IValidatorRegistration _validatorRegistration,
-        IValidators _validators,
-        address _paymentsImplementation,
-        bytes memory _paymentsInitData
+        IValidators _validators
     )
         public initializer
     {
@@ -105,8 +87,6 @@ contract Solos is Initializable {
         operators = _operators;
         validatorRegistration = _validatorRegistration;
         validators = _validators;
-        paymentsImplementation = _paymentsImplementation;
-        paymentsInitData = _paymentsInitData;
     }
 
     /**
@@ -127,26 +107,17 @@ contract Solos is Initializable {
         bytes memory withdrawalCredentials = abi.encodePacked(sha256(_publicKey));
         withdrawalCredentials[0] = 0x00;
 
-        // deploy contract for validator payments if does not exist
-        address payments = paymentOwners[msg.sender];
-        if (payments == address(0)) {
-            payments = deployPayments();
-            IPayments(payments).setRefundRecipient(msg.sender);
-            paymentOwners[msg.sender] = payments;
-        }
-
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, withdrawalCredentials));
         Solo storage solo = solos[soloId];
 
         // update solo data
         solo.amount = solo.amount.add(msg.value);
-        if (solo.payments == address(0)) {
-            solo.payments = payments;
+        if (solo.withdrawalCredentials.length != 32) {
             solo.withdrawalCredentials = withdrawalCredentials;
         }
 
         // emit event
-        emit DepositAdded(soloId, msg.sender, payments, msg.value, _publicKey, withdrawalCredentials);
+        emit DepositAdded(soloId, msg.sender, msg.value, _publicKey, withdrawalCredentials);
     }
 
     /**
@@ -193,9 +164,6 @@ contract Solos is Initializable {
         Solo storage solo = solos[_soloId];
         solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
 
-        // enable metering for the validator
-        IPayments(solo.payments).startMeteringValidator(keccak256(abi.encodePacked(_pubKey)));
-
         // register validator
         validators.register(_pubKey, _soloId);
         validatorRegistration.deposit{value: validatorDepositAmount}(
@@ -204,24 +172,5 @@ contract Solos is Initializable {
             _signature,
             _depositDataRoot
         );
-    }
-
-    /**
-    * @dev Function for deploying payments proxy contract.
-    */
-    function deployPayments() private returns (address proxy) {
-        // Adapted from https://github.com/OpenZeppelin/openzeppelin-sdk/blob/v2.8.2/packages/lib/contracts/upgradeability/ProxyFactory.sol#L18
-        bytes20 targetBytes = bytes20(paymentsImplementation);
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            let clone := mload(0x40)
-            mstore(clone, 0x3d602d80600a3d3981f3363d3d373d3d3d363d73000000000000000000000000)
-            mstore(add(clone, 0x14), targetBytes)
-            mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
-            proxy := create(0, clone, 0x37)
-        }
-        // solhint-disable-next-line avoid-low-level-calls
-        (bool success,) = proxy.call(paymentsInitData);
-        require(success);
     }
 }

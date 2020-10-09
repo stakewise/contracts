@@ -62,7 +62,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
   });
 
   it('fails to add a deposit to paused contract', async () => {
-    await settings.setContractPaused(solos.address, true, {
+    await settings.setPausedContracts(solos.address, true, {
       from: admin,
     });
     expect(await settings.pausedContracts(solos.address)).equal(true);
@@ -117,12 +117,10 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       from: sender1,
       value: depositAmount,
     });
-    let payments = receipt.logs[0].args.payments;
 
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -138,13 +136,11 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       from: sender1,
       value: validatorDepositAmount,
     });
-    let payments = receipt.logs[0].args.payments;
 
     // Check solo deposit added
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -163,7 +159,6 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -179,13 +174,11 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       from: sender1,
       value: validatorDepositAmount,
     });
-    let payments1 = receipt.logs[0].args.payments;
 
     // Check solo deposit added
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments: payments1,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -199,13 +192,11 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       from: sender2,
       value: validatorDepositAmount,
     });
-    let payments2 = receipt.logs[0].args.payments;
 
     // Check solo deposit added
     await checkSoloDepositAdded({
       receipt,
       sender: sender2,
-      payments: payments2,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -221,13 +212,11 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       from: sender1,
       value: validatorDepositAmount,
     });
-    let payments = receipt.logs[0].args.payments;
 
     // Check solo deposit added
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments,
       solos,
       withdrawalPublicKey,
       withdrawalCredentials,
@@ -250,7 +239,6 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     await checkSoloDepositAdded({
       receipt,
       sender: sender1,
-      payments,
       solos,
       withdrawalPublicKey: withdrawalPublicKey2,
       withdrawalCredentials: withdrawalCredentials2,

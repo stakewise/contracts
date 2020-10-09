@@ -14,7 +14,7 @@ import "./interfaces/IValidators.sol";
  */
 contract Validators is IValidators, Initializable {
     // @dev Maps hash of the public key to whether it was already used.
-    mapping(bytes32 => bool) private publicKeys;
+    mapping(bytes32 => bool) public override publicKeys;
 
     // @dev Address of the Pool contract.
     address private pool;
@@ -22,22 +22,18 @@ contract Validators is IValidators, Initializable {
     // @dev Address of the Solos contract.
     address private solos;
 
-    // @dev Address of the Groups contract.
-    address private groups;
-
     // @dev Checks whether the caller is the collector contract.
     modifier onlyCollectors() {
-        require(msg.sender == groups || msg.sender == solos || msg.sender == pool, "Validators: permission denied");
+        require(msg.sender == solos || msg.sender == pool, "Validators: permission denied");
         _;
     }
 
     /**
      * @dev See {IValidators-initialize}.
      */
-    function initialize(address _pool, address _solos, address _groups) public override initializer {
+    function initialize(address _pool, address _solos) public override initializer {
         pool = _pool;
         solos = _solos;
-        groups = _groups;
     }
 
     /**

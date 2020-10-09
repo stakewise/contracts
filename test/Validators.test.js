@@ -11,7 +11,7 @@ const Validators = artifacts.require('Validators');
 const publicKey =
   '0xb07ef3635f585b5baeb057a45e7337ab5ba2b1205b43fac3a46e0add8aab242b0fb35a54373ad809405ca05c9cbf34c7';
 
-contract('Validators', ([_, pool, solos, groups, anyone]) => {
+contract('Validators', ([_, pool, solos, anyone]) => {
   let networkConfig, validators;
 
   before(async () => {
@@ -29,7 +29,6 @@ contract('Validators', ([_, pool, solos, groups, anyone]) => {
         networkConfig,
         poolProxy: pool,
         solosProxy: solos,
-        groupsProxy: groups,
       })
     );
   });

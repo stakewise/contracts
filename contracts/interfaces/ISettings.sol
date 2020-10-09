@@ -19,7 +19,7 @@ interface ISettings {
     * @param _minDepositUnit - minimum unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
-    * @param _validatorPrice - price per second of the non-custodial validator.
+    * @param _validatorPrice - price per month of the non-custodial validator.
     * @param _allContractsPaused - defines whether all contracts should be paused.
     * @param _withdrawalCredentials - withdrawal credentials.
     * @param _admins - address of the Admins contract.
@@ -30,8 +30,8 @@ interface ISettings {
         uint16 _maintainerFee,
         uint64 _minDepositUnit,
         uint128 _validatorDepositAmount,
-        uint256 _maxDepositAmount,
-        uint256 _validatorPrice,
+        uint128 _maxDepositAmount,
+        uint128 _validatorPrice,
         bool _allContractsPaused,
         bytes memory _withdrawalCredentials,
         address _admins,
@@ -61,12 +61,12 @@ interface ISettings {
     /**
     * @dev Function for getting user maximum deposit amount.
     */
-    function maxDepositAmount() external view returns (uint256);
+    function maxDepositAmount() external view returns (uint128);
 
     /**
     * @dev Function for getting non-custodial validator price.
     */
-    function validatorPrice() external view returns (uint256);
+    function validatorPrice() external view returns (uint128);
 
     /**
     * @dev Function for getting withdrawal credentials.
@@ -83,6 +83,12 @@ interface ISettings {
     * @param _contract - address of the contract to check.
     */
     function pausedContracts(address _contract) external view returns (bool);
+
+    /**
+    * @dev Function for checking whether payments with the token is supported or not.
+    * @param _token - address of the token contract to check.
+    */
+    function supportedPaymentTokens(address _token) external view returns (bool);
 
     /**
     * @dev Function for changing user's deposit minimum unit.
@@ -105,9 +111,16 @@ interface ISettings {
     /**
     * @dev Function for pausing or resuming managed contracts.
     * @param _contract - address of the managed contract.
-    * @param isPaused - defines whether contract is paused or not.
+    * @param _isPaused - defines whether contract is paused or not.
     */
-    function setContractPaused(address _contract, bool isPaused) external;
+    function setPausedContracts(address _contract, bool _isPaused) external;
+
+    /**
+    * @dev Function for enabling or disabling support for token payments.
+    * @param _token - address of the token contract.
+    * @param _isSupported - defines whether token is supported or not.
+    */
+    function setSupportedPaymentTokens(address _token, bool _isSupported) external;
 
     /**
     * @dev Function for pausing or resuming all managed contracts.
@@ -119,11 +132,11 @@ interface ISettings {
     * @dev Function for setting maximum deposit amount.
     * @param newValue - new maximum deposit amount.
     */
-    function setMaxDepositAmount(uint256 newValue) external;
+    function setMaxDepositAmount(uint128 newValue) external;
 
     /**
     * @dev Function for setting non-custodial validator price.
     * @param _validatorPrice - new validator price.
     */
-    function setValidatorPrice(uint256 _validatorPrice) external;
+    function setValidatorPrice(uint128 _validatorPrice) external;
 }

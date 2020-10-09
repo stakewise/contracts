@@ -21,16 +21,6 @@ contract SWRToken is ISWRToken, BaseERC20 {
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    /**
-    * @dev Structure for storing information about user reward checkpoint.
-    * @param rewardRate - user reward rate checkpoint.
-    * @param reward - user reward checkpoint.
-    */
-    struct Checkpoint {
-        int256 rewardRate;
-        int256 reward;
-    }
-
     // @dev Last rewards update timestamp by validators oracle.
     uint256 public override updateTimestamp;
 

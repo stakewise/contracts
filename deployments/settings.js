@@ -4,7 +4,7 @@ const initialSettings = {
   minDepositUnit: '1000000000000000', // 0.001 ETH
   maxDepositAmount: '1000000000000000000000', // 1000 ETH
   validatorDepositAmount: '32000000000000000000', // 32 ETH
-  validatorPrice: '3805175038051', // 10 DAI / month
+  validatorPrice: '10000000000000000000', // 10 DAI / month
   maintainerFee: '1000', // 10%,
   admin: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',

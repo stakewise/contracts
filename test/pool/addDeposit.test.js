@@ -75,7 +75,7 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
   });
 
   it('fails to add a deposit to paused pool', async () => {
-    await settings.setContractPaused(pool.address, true, {
+    await settings.setPausedContracts(pool.address, true, {
       from: admin,
     });
     expect(await settings.pausedContracts(pool.address)).equal(true);

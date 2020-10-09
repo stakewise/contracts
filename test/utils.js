@@ -4,7 +4,6 @@ const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../deployments/settings');
 
-const Payments = artifacts.require('Payments');
 const Validators = artifacts.require('Validators');
 
 function getDepositAmount({
@@ -27,29 +26,14 @@ function removeNetworkFile(network) {
   }
 }
 
-async function checkPendingGroup({
-  groups,
-  groupId,
-  payments = constants.ZERO_ADDRESS,
-  collectedAmount = new BN(0),
-  withdrawalCredentials = null,
-}) {
-  let pendingGroup = await groups.pendingGroups(groupId);
-  expect(pendingGroup.collectedAmount).to.bignumber.equal(collectedAmount);
-  expect(pendingGroup.payments).to.equal(payments);
-  expect(pendingGroup.withdrawalCredentials).equal(withdrawalCredentials);
-}
-
 async function checkSolo({
   solos,
   soloId,
-  payments = constants.ZERO_ADDRESS,
   withdrawalCredentials = constants.ZERO_BYTES32,
   amount = new BN(0),
 } = {}) {
   let solo = await solos.solos(soloId);
   expect(solo.amount).to.bignumber.equal(amount);
-  expect(solo.payments).to.equal(payments);
   expect(solo.withdrawalCredentials).equal(withdrawalCredentials);
 }
 
@@ -74,7 +58,6 @@ async function checkSoloDepositAdded({
   receipt,
   solos,
   sender,
-  payments,
   withdrawalPublicKey,
   withdrawalCredentials,
   addedAmount,
@@ -90,7 +73,6 @@ async function checkSoloDepositAdded({
     soloId,
     sender: sender,
     amount: addedAmount,
-    payments,
     withdrawalPublicKey,
     withdrawalCredentials,
   });
@@ -98,7 +80,6 @@ async function checkSoloDepositAdded({
   await checkSolo({
     solos,
     soloId,
-    payments,
     withdrawalCredentials,
     amount: totalAmount,
   });
@@ -178,14 +159,7 @@ async function checkSWRToken({
   }
 }
 
-async function checkPayments(paymentsAddress, totalPrice) {
-  let payments = await Payments.at(paymentsAddress);
-  expect(await payments.getTotalPrice()).to.be.bignumber.equal(totalPrice);
-}
-
 module.exports = {
-  checkPendingGroup,
-  checkPayments,
   checkCollectorBalance,
   checkSolo,
   checkSoloDepositAdded,

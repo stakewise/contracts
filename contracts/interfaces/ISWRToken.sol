@@ -9,6 +9,16 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/IERC20.so
  */
 interface ISWRToken is IERC20 {
     /**
+    * @dev Structure for storing information about user reward checkpoint.
+    * @param rewardRate - user reward rate checkpoint.
+    * @param reward - user reward checkpoint.
+    */
+    struct Checkpoint {
+        int256 rewardRate;
+        int256 reward;
+    }
+
+    /**
     * @dev Event for tracking rewards update by validators oracle.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.

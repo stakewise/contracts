@@ -1,9 +1,4 @@
 const { scripts } = require('@openzeppelin/cli');
-const { encodeCall } = require('@openzeppelin/upgrades');
-const {
-  ProjectFile,
-  NetworkFile,
-} = require('@openzeppelin/cli/lib/models/files').default;
 
 async function deployPoolProxy({
   vrc,
@@ -34,72 +29,15 @@ async function deployPoolProxy({
 async function deploySolosProxy({
   settingsProxy,
   operatorsProxy,
-  managersProxy,
   vrc,
   validatorsProxy,
-  solosProxy,
-  groupsProxy,
-  dai,
   salt,
   networkConfig,
 }) {
-  let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
-  const paymentsImplementation = networkFile.contract('Payments').address;
-  const paymentsInitData = encodeCall(
-    'initialize',
-    ['address', 'address', 'address', 'address', 'address', 'address'],
-    [operatorsProxy, managersProxy, settingsProxy, dai, solosProxy, groupsProxy]
-  );
-
   const proxy = await scripts.create({
     contractAlias: 'Solos',
     methodName: 'initialize',
-    methodArgs: [
-      settingsProxy,
-      operatorsProxy,
-      vrc,
-      validatorsProxy,
-      paymentsImplementation,
-      paymentsInitData,
-    ],
-    salt,
-    ...networkConfig,
-  });
-
-  return proxy.address;
-}
-
-async function deployGroupsProxy({
-  settingsProxy,
-  operatorsProxy,
-  managersProxy,
-  vrc,
-  validatorsProxy,
-  solosProxy,
-  groupsProxy,
-  dai,
-  salt,
-  networkConfig,
-}) {
-  let networkFile = new NetworkFile(new ProjectFile(), networkConfig.network);
-  const paymentsImplementation = networkFile.contract('Payments').address;
-  const paymentsInitData = encodeCall(
-    'initialize',
-    ['address', 'address', 'address', 'address', 'address', 'address'],
-    [operatorsProxy, managersProxy, settingsProxy, dai, solosProxy, groupsProxy]
-  );
-
-  const proxy = await scripts.create({
-    contractAlias: 'Groups',
-    methodName: 'initialize',
-    methodArgs: [
-      settingsProxy,
-      operatorsProxy,
-      vrc,
-      validatorsProxy,
-      paymentsImplementation,
-      paymentsInitData,
-    ],
+    methodArgs: [settingsProxy, operatorsProxy, vrc, validatorsProxy],
     salt,
     ...networkConfig,
   });
@@ -110,5 +48,4 @@ async function deployGroupsProxy({
 module.exports = {
   deployPoolProxy,
   deploySolosProxy,
-  deployGroupsProxy,
 };

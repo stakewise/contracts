@@ -11,7 +11,10 @@ const {
   deployOperatorsProxy,
 } = require('../../deployments/access');
 const { deploySettingsProxy } = require('../../deployments/settings');
-const { deploySWDToken, deploySWRToken } = require('../../deployments/tokens');
+const {
+  deploySWDTokenProxy,
+  deploySWRTokenProxy,
+} = require('../../deployments/tokens');
 const { removeNetworkFile, checkSWDToken } = require('../utils');
 const {
   getNetworkConfig,
@@ -56,7 +59,7 @@ contract('SWDToken', ([_, ...accounts]) => {
       contractAddress: swdTokenCalcProxy,
     } = await calculateContractAddress({ networkConfig });
 
-    let swrTokenProxy = await deploySWRToken({
+    let swrTokenProxy = await deploySWRTokenProxy({
       swdTokenProxy: swdTokenCalcProxy,
       settingsProxy: settings.address,
       validatorsOracleProxy: validatorsOracle,
@@ -64,7 +67,7 @@ contract('SWDToken', ([_, ...accounts]) => {
       networkConfig,
     });
 
-    let swdTokenProxy = await deploySWDToken({
+    let swdTokenProxy = await deploySWDTokenProxy({
       swrTokenProxy,
       settingsProxy: settings.address,
       poolProxy: pool,
@@ -235,7 +238,9 @@ contract('SWDToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setContractPaused(swdToken.address, true, { from: admin });
+      await settings.setPausedContracts(swdToken.address, true, {
+        from: admin,
+      });
       expect(await settings.pausedContracts(swdToken.address)).equal(true);
 
       await expectRevert(
@@ -252,7 +257,7 @@ contract('SWDToken', ([_, ...accounts]) => {
         balance: value,
         deposit: value,
       });
-      await settings.setContractPaused(swdToken.address, false, {
+      await settings.setPausedContracts(swdToken.address, false, {
         from: admin,
       });
     });

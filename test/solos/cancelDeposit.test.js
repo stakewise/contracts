@@ -36,7 +36,7 @@ const depositDataRoot =
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Solos (cancel deposit)', ([_, ...accounts]) => {
-  let networkConfig, solos, soloId, payments, vrc;
+  let networkConfig, solos, soloId, vrc;
   let [admin, operator, sender, anyone] = accounts;
 
   before(async () => {
@@ -64,11 +64,10 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     // create new solo
-    let receipt = await solos.addDeposit(withdrawalPublicKey, {
+    await solos.addDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
-    payments = receipt.logs[0].args.payments;
     soloId = web3.utils.soliditySha3(
       solos.address,
       sender,
@@ -86,7 +85,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -103,7 +101,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -120,7 +117,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -141,7 +137,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -158,7 +153,6 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -182,7 +176,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       }),
       'Solos: insufficient balance'
     );
-    await checkSolo({ solos, soloId, withdrawalCredentials, payments });
+    await checkSolo({ solos, soloId, withdrawalCredentials });
     await checkCollectorBalance(solos);
   });
 
@@ -196,7 +190,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       }),
       'Solos: insufficient balance'
     );
-    await checkSolo({ solos, soloId, withdrawalCredentials, payments });
+    await checkSolo({ solos, soloId, withdrawalCredentials });
     await checkCollectorBalance(solos);
   });
 
@@ -213,7 +207,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       soloId,
       amount: validatorDepositAmount,
     });
-    await checkSolo({ solos, soloId, withdrawalCredentials, payments });
+    await checkSolo({ solos, soloId, withdrawalCredentials });
     await checkCollectorBalance(solos);
 
     // Check recipient balance changed

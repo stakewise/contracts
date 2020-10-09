@@ -15,11 +15,12 @@ const {
 
 const Pool = artifacts.require('Pool');
 const SWDToken = artifacts.require('SWDToken');
+const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-contract('Pool (withdraw deposit)', ([_, sender1, sender2]) => {
-  let networkConfig, pool, swdToken, deposit1, deposit2, totalSupply;
+contract('Pool (withdraw deposit)', ([_, admin, sender1, sender2]) => {
+  let networkConfig, pool, swdToken, settings, deposit1, deposit2, totalSupply;
 
   before(async () => {
     networkConfig = await getNetworkConfig();
@@ -31,10 +32,16 @@ contract('Pool (withdraw deposit)', ([_, sender1, sender2]) => {
   });
 
   beforeEach(async () => {
-    let { pool: poolProxy, swdToken: swdTokenProxy } = await deployAllProxies({
+    let {
+      pool: poolProxy,
+      swdToken: swdTokenProxy,
+      settings: settingsProxy,
+    } = await deployAllProxies({
+      initialAdmin: admin,
       networkConfig,
     });
     pool = await Pool.at(poolProxy);
+    settings = await Settings.at(settingsProxy);
     swdToken = await SWDToken.at(swdTokenProxy);
 
     deposit1 = validatorDepositAmount;
@@ -75,6 +82,20 @@ contract('Pool (withdraw deposit)', ([_, sender1, sender2]) => {
     await expectRevert(
       pool.withdrawDeposit(deposit2.add(ether('1')), { from: sender1 }),
       'Pool: insufficient collected amount'
+    );
+    await checkCollectorBalance(pool, totalSupply);
+    await checkPoolCollectedAmount(pool, totalSupply);
+  });
+
+  it('fails to withdraw deposit from paused pool', async () => {
+    await settings.setPausedContracts(pool.address, true, {
+      from: admin,
+    });
+    expect(await settings.pausedContracts(pool.address)).equal(true);
+
+    await expectRevert(
+      pool.withdrawDeposit(deposit2, { from: sender1 }),
+      'Pool: contract is disabled'
     );
     await checkCollectorBalance(pool, totalSupply);
     await checkPoolCollectedAmount(pool, totalSupply);

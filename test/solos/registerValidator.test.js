@@ -11,14 +11,12 @@ const {
   checkCollectorBalance,
   checkSolo,
   checkValidatorRegistered,
-  checkPayments,
 } = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const validatorPrice = new BN(initialSettings.validatorPrice);
 const withdrawalPublicKey =
   '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
 const withdrawalCredentials =
@@ -31,7 +29,7 @@ const depositDataRoot =
   '0x6da4c3b16280ff263d7b32cfcd039c6cf72a3db0d8ef3651370e0aba5277ce2f';
 
 contract('Solos (register validator)', ([_, ...accounts]) => {
-  let networkConfig, vrc, solos, soloId, payments;
+  let networkConfig, vrc, solos, soloId;
   let [admin, operator, sender, other] = accounts;
 
   before(async () => {
@@ -59,11 +57,10 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     // create new solo
-    let receipt = await solos.addDeposit(withdrawalPublicKey, {
+    await solos.addDeposit(withdrawalPublicKey, {
       from: sender,
       value: validatorDepositAmount,
     });
-    payments = receipt.logs[0].args.payments;
     soloId = web3.utils.soliditySha3(
       solos.address,
       sender,
@@ -87,7 +84,6 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -104,7 +100,6 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -130,7 +125,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
+
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -146,7 +141,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
+
       withdrawalCredentials,
       amount: validatorDepositAmount,
     });
@@ -167,7 +162,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkSolo({
       solos,
       soloId,
-      payments,
+
       withdrawalCredentials,
     });
     await checkCollectorBalance(solos);
@@ -202,45 +197,6 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       withdrawalCredentials,
     });
 
-    // check whether validator metering has started
-    await checkPayments(payments, validatorPrice);
-
     await checkCollectorBalance(solos);
-  });
-
-  it("adds validator price to the user's payments contract", async () => {
-    // register first validator
-    await solos.registerValidator(
-      publicKey,
-      signature,
-      depositDataRoot,
-      soloId,
-      {
-        from: operator,
-      }
-    );
-
-    // check whether first validator metering has started
-    await checkPayments(payments, validatorPrice);
-
-    // create second deposit
-    await solos.addDeposit(withdrawalPublicKey, {
-      from: sender,
-      value: validatorDepositAmount,
-    });
-
-    // register second validator
-    await solos.registerValidator(
-      '0xb6c1beecd20b4d4e88032adcca1308716d0e5f560c2f61e3a266a8ba78caaeb784fefdab2aa5501eda05682c292f3a45',
-      '0x8212c1edbb9e8d11d5ca4918f2579332123969c741a1e6dfa0ecb1e54229814a17bcdb8f803a651307ab11e653a7b6f6149cc2b393019b917c43c4871ea5fa28a656dba93a349056295e48f4f9ef5c10b04c651377dd8694a24cc311ef3e9080',
-      '0x58bd7f3259b86bebcc8d49732981cb9933174946cd5d417691c3d8de787aba85',
-      soloId,
-      {
-        from: operator,
-      }
-    );
-
-    // check whether second validator metering has started
-    await checkPayments(payments, validatorPrice.mul(new BN(2)));
   });
 });
