@@ -45,7 +45,7 @@ function assertEqual(value1, value2) {
 const Settings = artifacts.require('Settings');
 const Operators = artifacts.require('Operators');
 
-contract('Settings', ([_, admin, operator, collector, anyone]) => {
+contract('Settings', ([_, admin, operator, collector, token, anyone]) => {
   let adminsProxy;
   let operatorsProxy;
   let networkConfig;
@@ -78,10 +78,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (
-        setting === 'pausedContracts' ||
-        setting === 'supportedPaymentTokens'
-      ) {
+      if (setting === 'pausedContracts') {
         await assertEqual(await settings[setting](collector), false);
         const setMethod = getSetMethod(setting);
         const receipt = await settings[setMethod](collector, true, {
@@ -91,6 +88,16 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
           settingName: web3.utils.fromAscii(setting).padEnd(66, '0'),
         });
         expect(await settings[setting](collector)).equal(true);
+      } else if (setting === 'supportedPaymentTokens') {
+        await assertEqual(await settings[setting](token), false);
+        const setMethod = getSetMethod(setting);
+        const receipt = await settings[setMethod](token, true, {
+          from: admin,
+        });
+        expectEvent(receipt, 'PaymentTokenUpdated', {
+          token,
+        });
+        expect(await settings[setting](token)).equal(true);
       } else {
         await assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);

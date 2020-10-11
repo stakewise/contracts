@@ -4,6 +4,7 @@ pragma solidity 0.6.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "./interfaces/IValidators.sol";
+import "./interfaces/ISettings.sol";
 
 
 /**
@@ -22,6 +23,9 @@ contract Validators is IValidators, Initializable {
     // @dev Address of the Solos contract.
     address private solos;
 
+    // @dev Address of the Settings contract.
+    ISettings private settings;
+
     // @dev Checks whether the caller is the collector contract.
     modifier onlyCollectors() {
         require(msg.sender == solos || msg.sender == pool, "Validators: permission denied");
@@ -31,19 +35,21 @@ contract Validators is IValidators, Initializable {
     /**
      * @dev See {IValidators-initialize}.
      */
-    function initialize(address _pool, address _solos) public override initializer {
+    function initialize(address _pool, address _solos, address _settings) public override initializer {
         pool = _pool;
         solos = _solos;
+        settings = ISettings(_settings);
     }
 
     /**
      * @dev See {IValidators-register}.
      */
     function register(bytes calldata _pubKey, bytes32 _entityId) external override onlyCollectors {
+        require(!settings.pausedContracts(address(this)), "Validators: contract is disabled");
         bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
         require(!publicKeys[validatorId], "Validators: public key has been already used");
 
         publicKeys[validatorId] = true;
-        emit ValidatorRegistered(_entityId, _pubKey);
+        emit ValidatorRegistered(_entityId, _pubKey, settings.validatorPrice());
     }
 }

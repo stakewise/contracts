@@ -115,6 +115,7 @@ async function checkValidatorRegistered({
     {
       pubKey: pubKey,
       entityId,
+      price: initialSettings.validatorPrice,
     }
   );
 }

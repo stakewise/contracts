@@ -151,7 +151,7 @@ contract Settings is ISettings, Initializable {
         require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
         _supportedPaymentTokens[_token] = _isSupported;
-        emit SettingChanged("supportedPaymentTokens");
+        emit PaymentTokenUpdated(_token);
     }
 
     /**

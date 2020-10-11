@@ -16,15 +16,17 @@ interface IValidators {
     * @dev Event for tracking registered validators.
     * @param entityId - ID of the entity where the deposit was accumulated.
     * @param pubKey - validator public key.
+    * @param price - validator monthly price.
     */
-    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey);
+    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint128 price);
 
     /**
     * @dev Constructor for initializing the Validators contract.
     * @param _pool - address of the Pool contract.
     * @param _solos - address of the Solos contract.
+    * @param _settings - address of the Settings contract.
     */
-    function initialize(address _pool, address _solos) external;
+    function initialize(address _pool, address _solos, address _settings) external;
 
     /**
     * @dev Function for registering validators. Can only be called by collectors.

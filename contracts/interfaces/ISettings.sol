@@ -13,6 +13,12 @@ interface ISettings {
     event SettingChanged(bytes32 settingName);
 
     /**
+    * @dev Event for tracking added/removed payment tokens.
+    * @param token - address of updated payment token.
+    */
+    event PaymentTokenUpdated(address token);
+
+    /**
     * @dev Constructor for initializing the Settings contract.
     * @param _maintainer - address of the maintainer, where the fee is paid.
     * @param _maintainerFee - percentage fee for using the service.

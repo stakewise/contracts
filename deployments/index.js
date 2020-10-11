@@ -80,6 +80,7 @@ async function deployAllProxies({
     networkConfig,
     poolProxy: poolCalcProxy,
     solosProxy: solosCalcProxy,
+    settingsProxy,
     salt: validatorsSalt,
   });
   if (validatorsProxy !== validatorsCalcProxy) {
