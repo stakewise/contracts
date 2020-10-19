@@ -27,7 +27,7 @@ contract Solos is Initializable {
     */
     struct Solo {
         uint256 amount;
-        bytes withdrawalCredentials;
+        bytes32 withdrawalCredentials;
     }
 
     // @dev Maps ID of the solo to its information.
@@ -50,15 +50,13 @@ contract Solos is Initializable {
     * @param soloId - ID of the solo.
     * @param sender - address of the deposit sender.
     * @param amount - amount added.
-    * @param withdrawalPublicKey - BLS public key to use for the validator withdrawal, submitted by the deposit sender.
-    * @param withdrawalCredentials - withdrawal credentials based on submitted BLS public key.
+    * @param withdrawalCredentials - withdrawal credentials submitted by deposit owner.
     */
     event DepositAdded(
         bytes32 indexed soloId,
         address sender,
         uint256 amount,
-        bytes withdrawalPublicKey,
-        bytes withdrawalCredentials
+        bytes32 withdrawalCredentials
     );
 
     /**
@@ -93,31 +91,27 @@ contract Solos is Initializable {
     * @dev Function for adding solo deposits.
     * The deposit amount must be divisible by the validator deposit amount.
     * The depositing will be disallowed in case `Solos` contract is paused in `Settings` contract.
-    * @param _publicKey - BLS public key for performing validator withdrawal.
+    * @param _withdrawalCredentials - withdrawal credentials for performing validator withdrawal.
     */
-    function addDeposit(bytes calldata _publicKey) external payable {
-        require(_publicKey.length == 48, "Solos: invalid BLS withdrawal public key");
+    function addDeposit(bytes32 _withdrawalCredentials) external payable {
+        require(_withdrawalCredentials != "" && _withdrawalCredentials[0] == 0x00, "Solos: invalid withdrawal credentials");
         require(!settings.pausedContracts(address(this)), "Solos: contract is paused");
         require(msg.value <= settings.maxDepositAmount(), "Solos: deposit amount is too large");
 
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
         require(msg.value > 0 && msg.value.mod(validatorDepositAmount) == 0, "Solos: invalid deposit amount");
 
-        // calculate withdrawal credentials
-        bytes memory withdrawalCredentials = abi.encodePacked(sha256(_publicKey));
-        withdrawalCredentials[0] = 0x00;
-
-        bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, withdrawalCredentials));
+        bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
         Solo storage solo = solos[soloId];
 
         // update solo data
         solo.amount = solo.amount.add(msg.value);
-        if (solo.withdrawalCredentials.length != 32) {
-            solo.withdrawalCredentials = withdrawalCredentials;
+        if (solo.withdrawalCredentials == "") {
+            solo.withdrawalCredentials = _withdrawalCredentials;
         }
 
         // emit event
-        emit DepositAdded(soloId, msg.sender, msg.value, _publicKey, withdrawalCredentials);
+        emit DepositAdded(soloId, msg.sender, msg.value, _withdrawalCredentials);
     }
 
     /**
@@ -126,9 +120,7 @@ contract Solos is Initializable {
     * @param _withdrawalCredentials - withdrawal credentials of solo validators.
     * @param _amount - amount to cancel.
     */
-    function cancelDeposit(bytes calldata _withdrawalCredentials, uint256 _amount) external {
-        require(_withdrawalCredentials.length == 32, "Solos: invalid withdrawal credentials");
-
+    function cancelDeposit(bytes32 _withdrawalCredentials, uint256 _amount) external {
         // update balance
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
         Solo storage solo = solos[soloId];
@@ -168,7 +160,7 @@ contract Solos is Initializable {
         validators.register(_pubKey, _soloId);
         validatorRegistration.deposit{value: validatorDepositAmount}(
             _pubKey,
-            solo.withdrawalCredentials,
+            abi.encodePacked(solo.withdrawalCredentials),
             _signature,
             _depositDataRoot
         );

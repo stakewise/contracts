@@ -17,8 +17,6 @@ const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const withdrawalPublicKey =
-  '0x940fc4559b53d4566d9693c23ec6b80d7f663fddf9b1c06490cc64602dae1fa6abf2086fdf2b0da703e0e392e0d0528c';
 const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 const signature =
@@ -57,7 +55,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await operators.addOperator(operator, { from: admin });
 
     // create new solo
-    await solos.addDeposit(withdrawalPublicKey, {
+    await solos.addDeposit(withdrawalCredentials, {
       from: sender,
       value: validatorDepositAmount,
     });
@@ -107,7 +105,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
   });
 
   it('fails to register validator with used public key', async () => {
-    await solos.addDeposit(withdrawalPublicKey, {
+    await solos.addDeposit(withdrawalCredentials, {
       from: sender,
       value: validatorDepositAmount,
     });

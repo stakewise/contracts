@@ -58,7 +58,6 @@ async function checkSoloDepositAdded({
   receipt,
   solos,
   sender,
-  withdrawalPublicKey,
   withdrawalCredentials,
   addedAmount,
   totalAmount,
@@ -73,7 +72,6 @@ async function checkSoloDepositAdded({
     soloId,
     sender: sender,
     amount: addedAmount,
-    withdrawalPublicKey,
     withdrawalCredentials,
   });
 
