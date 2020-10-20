@@ -11,38 +11,21 @@ import "./interfaces/ISettings.sol";
  * @title Settings
  *
  * @dev Contract for storing global settings.
- * Can mostly be changed by accounts with an admin role.
+ * Can be changed by accounts with an admin role.
+ * Contracts can be paused by operators.
  */
 contract Settings is ISettings, Initializable {
-    // @dev The address of the application owner, where the fee will be paid.
-    address payable public override maintainer;
+    // @dev The mapping between the setting name and its uint256 value.
+    mapping(bytes32 => uint256) private uintSettings;
 
-    // @dev The percentage fee users pay from their reward for using the service.
-    uint64 public override maintainerFee;
+    // @dev The mapping between the setting name and its address value.
+    mapping(bytes32 => address) private addressSettings;
 
-    // @dev The minimum unit (wei, gwei, etc.) deposit can have.
-    uint64 public override minDepositUnit;
+    // @dev The mapping between the setting name and its bytes32 value.
+    mapping(bytes32 => bytes32) private bytes32Settings;
 
-    // @dev The deposit amount required to become an Ethereum validator.
-    uint128 public override validatorDepositAmount;
-
-    // @dev The maximum deposit amount.
-    uint128 public override maxDepositAmount;
-
-    // @dev The non-custodial validator price per month.
-    uint128 public override validatorPrice;
-
-    // @dev The withdrawal credentials used to initiate validator withdrawal from the beacon chain.
-    bytes public override withdrawalCredentials;
-
-    // @dev Defines whether all the contracts are paused.
-    bool public override allContractsPaused;
-
-    // @dev The mapping between the managed contract and whether it is paused or not.
-    mapping(address => bool) private _pausedContracts;
-
-    // @dev The mapping between the token and whether it is supported or not for payments.
-    mapping(address => bool) private _supportedPaymentTokens;
+    // @dev The mapping between the setting name and its bool value.
+    mapping(bytes32 => bool) private boolSettings;
 
     // @dev Address of the Admins contract.
     IAdmins private admins;
@@ -54,84 +37,136 @@ contract Settings is ISettings, Initializable {
      * @dev See {ISettings-initialize}.
      */
     function initialize(
-        address payable _maintainer,
-        uint16 _maintainerFee,
-        uint64 _minDepositUnit,
-        uint128 _validatorDepositAmount,
-        uint128 _maxDepositAmount,
-        uint128 _validatorPrice,
         bool _allContractsPaused,
-        bytes memory _withdrawalCredentials,
+        uint256 _maintainerFee,
+        uint256 _minDepositUnit,
+        uint256 _validatorDepositAmount,
+        uint256 _maxDepositAmount,
+        uint256 _validatorPrice,
+        address _maintainer,
         address _admins,
-        address _operators
+        address _operators,
+        bytes32 _withdrawalCredentials
     )
         public override initializer
     {
-        maintainer = _maintainer;
-        maintainerFee = _maintainerFee;
-        minDepositUnit = _minDepositUnit;
-        validatorDepositAmount = _validatorDepositAmount;
-        maxDepositAmount = _maxDepositAmount;
-        validatorPrice = _validatorPrice;
-        allContractsPaused = _allContractsPaused;
-        withdrawalCredentials = _withdrawalCredentials;
+        boolSettings[keccak256(abi.encodePacked("allContractsPaused"))] = _allContractsPaused;
+        uintSettings[keccak256(abi.encodePacked("maintainerFee"))] = _maintainerFee;
+        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = _minDepositUnit;
+        uintSettings[keccak256(abi.encodePacked("validatorDepositAmount"))] = _validatorDepositAmount;
+        uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = _maxDepositAmount;
+        uintSettings[keccak256(abi.encodePacked("validatorPrice"))] = _validatorPrice;
+        addressSettings[keccak256(abi.encodePacked("maintainer"))] = _maintainer;
         admins = IAdmins(_admins);
         operators = IOperators(_operators);
+        bytes32Settings[keccak256(abi.encodePacked("withdrawalCredentials"))] = _withdrawalCredentials;
+    }
+
+    /**
+     * @dev See {ISettings-validatorDepositAmount}.
+     */
+    function validatorDepositAmount() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("validatorDepositAmount"))];
+    }
+
+    /**
+     * @dev See {ISettings-withdrawalCredentials}.
+     */
+    function withdrawalCredentials() external view override returns (bytes32) {
+        return bytes32Settings[keccak256(abi.encodePacked("withdrawalCredentials"))];
+    }
+
+    /**
+     * @dev See {ISettings-minDepositUnit}.
+     */
+    function minDepositUnit() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("minDepositUnit"))];
+    }
+
+    /**
+     * @dev See {ISettings-setMinDepositUnit}.
+     */
+    function setMinDepositUnit(uint256 newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = newValue;
+        emit SettingChanged("minDepositUnit");
+    }
+
+    /**
+     * @dev See {ISettings-maxDepositAmount}.
+     */
+    function maxDepositAmount() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))];
+    }
+
+    /**
+     * @dev See {ISettings-setMaxDepositAmount}.
+     */
+    function setMaxDepositAmount(uint256 newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = newValue;
+        emit SettingChanged("maxDepositAmount");
+    }
+
+    /**
+     * @dev See {ISettings-validatorPrice}.
+     */
+    function validatorPrice() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("validatorPrice"))];
+    }
+
+    /**
+     * @dev See {ISettings-setValidatorPrice}.
+     */
+    function setValidatorPrice(uint256 _validatorPrice) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        uintSettings[keccak256(abi.encodePacked("validatorPrice"))] = _validatorPrice;
+        emit SettingChanged("validatorPrice");
+    }
+
+    /**
+     * @dev See {ISettings-maintainer}.
+     */
+    function maintainer() external view override returns (address) {
+        return addressSettings[keccak256(abi.encodePacked("maintainer"))];
+    }
+
+    /**
+     * @dev See {ISettings-setMaintainer}.
+     */
+    function setMaintainer(address newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        addressSettings[keccak256(abi.encodePacked("maintainer"))] = newValue;
+        emit SettingChanged("maintainer");
+    }
+
+    /**
+     * @dev See {ISettings-maintainerFee}.
+     */
+    function maintainerFee() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("maintainerFee"))];
+    }
+
+    /**
+     * @dev See {ISettings-setMaintainerFee}.
+     */
+    function setMaintainerFee(uint256 newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+        require(newValue < 10000, "Settings: invalid value");
+
+        uintSettings[keccak256(abi.encodePacked("maintainerFee"))] = newValue;
+        emit SettingChanged("maintainerFee");
     }
 
     /**
      * @dev See {ISettings-pausedContracts}.
      */
     function pausedContracts(address _contract) external view override returns (bool) {
-        return allContractsPaused || _pausedContracts[_contract];
-    }
-
-    /**
-     * @dev See {ISettings-supportedPaymentTokens}.
-     */
-    function supportedPaymentTokens(address _token) external view override returns (bool) {
-        return _supportedPaymentTokens[_token];
-    }
-
-    /**
-     * @dev See {ISettings-setMinDepositUnit}.
-     */
-    function setMinDepositUnit(uint64 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        minDepositUnit = newValue;
-        emit SettingChanged("minDepositUnit");
-    }
-
-    /**
-     * @dev See {ISettings-setMaxDepositAmount}.
-     */
-    function setMaxDepositAmount(uint128 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        maxDepositAmount = newValue;
-        emit SettingChanged("maxDepositAmount");
-    }
-
-    /**
-     * @dev See {ISettings-setMaintainer}.
-     */
-    function setMaintainer(address payable newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        maintainer = newValue;
-        emit SettingChanged("maintainer");
-    }
-
-    /**
-     * @dev See {ISettings-setMaintainerFee}.
-     */
-    function setMaintainerFee(uint64 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-        require(newValue < 10000, "Settings: invalid value");
-
-        maintainerFee = newValue;
-        emit SettingChanged("maintainerFee");
+        return allContractsPaused() || boolSettings[keccak256(abi.encodePacked("pausedContracts", _contract))];
     }
 
     /**
@@ -140,8 +175,15 @@ contract Settings is ISettings, Initializable {
     function setPausedContracts(address _contract, bool _isPaused) external override {
         require(admins.isAdmin(msg.sender) || operators.isOperator(msg.sender), "Settings: permission denied");
 
-        _pausedContracts[_contract] = _isPaused;
+        boolSettings[keccak256(abi.encodePacked("pausedContracts", _contract))] = _isPaused;
         emit SettingChanged("pausedContracts");
+    }
+
+    /**
+     * @dev See {ISettings-supportedPaymentTokens}.
+     */
+    function supportedPaymentTokens(address _token) external view override returns (bool) {
+        return boolSettings[keccak256(abi.encodePacked("supportedPaymentTokens", _token))];
     }
 
     /**
@@ -150,8 +192,15 @@ contract Settings is ISettings, Initializable {
     function setSupportedPaymentTokens(address _token, bool _isSupported) external override {
         require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
-        _supportedPaymentTokens[_token] = _isSupported;
+        boolSettings[keccak256(abi.encodePacked("supportedPaymentTokens", _token))] = _isSupported;
         emit PaymentTokenUpdated(_token);
+    }
+
+    /**
+     * @dev See {ISettings-allContractsPaused}.
+     */
+    function allContractsPaused() public view override returns (bool) {
+        return boolSettings[keccak256(abi.encodePacked("allContractsPaused"))];
     }
 
     /**
@@ -160,17 +209,7 @@ contract Settings is ISettings, Initializable {
     function setAllContractsPaused(bool paused) external override {
         require(admins.isAdmin(msg.sender), "Settings: permission denied");
 
-        allContractsPaused = paused;
+        boolSettings[keccak256(abi.encodePacked("allContractsPaused"))] = paused;
         emit SettingChanged("allContractsPaused");
-    }
-
-    /**
-     * @dev See {ISettings-setValidatorPrice}.
-     */
-    function setValidatorPrice(uint128 _validatorPrice) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        validatorPrice = _validatorPrice;
-        emit SettingChanged("validatorPrice");
     }
 }

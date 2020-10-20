@@ -20,69 +20,35 @@ interface ISettings {
 
     /**
     * @dev Constructor for initializing the Settings contract.
-    * @param _maintainer - address of the maintainer, where the fee is paid.
+    * @param _allContractsPaused - defines whether all contracts should be paused.
     * @param _maintainerFee - percentage fee for using the service.
     * @param _minDepositUnit - minimum unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
     * @param _validatorPrice - price per month of the non-custodial validator.
-    * @param _allContractsPaused - defines whether all contracts should be paused.
-    * @param _withdrawalCredentials - withdrawal credentials.
+    * @param _maintainer - address of the maintainer, where the fee is paid.
     * @param _admins - address of the Admins contract.
     * @param _operators - address of the Operators contract.
+    * @param _withdrawalCredentials - withdrawal credentials.
     */
     function initialize(
-        address payable _maintainer,
-        uint16 _maintainerFee,
-        uint64 _minDepositUnit,
-        uint128 _validatorDepositAmount,
-        uint128 _maxDepositAmount,
-        uint128 _validatorPrice,
         bool _allContractsPaused,
-        bytes memory _withdrawalCredentials,
+        uint256 _maintainerFee,
+        uint256 _minDepositUnit,
+        uint256 _validatorDepositAmount,
+        uint256 _maxDepositAmount,
+        uint256 _validatorPrice,
+        address _maintainer,
         address _admins,
-        address _operators
+        address _operators,
+        bytes32 _withdrawalCredentials
     ) external;
 
     /**
-    * @dev Function for getting maintainer address.
+    * @dev Function for getting the withdrawal credentials used to
+    * initiate pool validators withdrawal from the beacon chain.
     */
-    function maintainer() external view returns (address payable);
-
-    /**
-    * @dev Function for getting maintainer fee.
-    */
-    function maintainerFee() external view returns (uint64);
-
-    /**
-    * @dev Function for getting user deposit minimum unit.
-    */
-    function minDepositUnit() external view returns (uint64);
-
-    /**
-    * @dev Function for getting validator deposit amount.
-    */
-    function validatorDepositAmount() external view returns (uint128);
-
-    /**
-    * @dev Function for getting user maximum deposit amount.
-    */
-    function maxDepositAmount() external view returns (uint128);
-
-    /**
-    * @dev Function for getting non-custodial validator price.
-    */
-    function validatorPrice() external view returns (uint128);
-
-    /**
-    * @dev Function for getting withdrawal credentials.
-    */
-    function withdrawalCredentials() external view returns (bytes memory);
-
-    /**
-    * @dev Function for checking whether all the contracts are paused.
-    */
-    function allContractsPaused() external view returns (bool);
+    function withdrawalCredentials() external view returns (bytes32);
 
     /**
     * @dev Function for checking whether the contract is paused or not.
@@ -97,22 +63,42 @@ interface ISettings {
     function supportedPaymentTokens(address _token) external view returns (bool);
 
     /**
+    * @dev Function for getting the deposit amount required to become an Ethereum validator.
+    */
+    function validatorDepositAmount() external view returns (uint256);
+
+    /**
+    * @dev Function for getting user deposit minimum unit.
+    */
+    function minDepositUnit() external view returns (uint256);
+
+    /**
     * @dev Function for changing user's deposit minimum unit.
     * @param newValue - new minimum deposit unit.
     */
-    function setMinDepositUnit(uint64 newValue) external;
+    function setMinDepositUnit(uint256 newValue) external;
+
+    /**
+    * @dev Function for getting the address of the application owner, where the fee will be paid.
+    */
+    function maintainer() external view returns (address);
 
     /**
     * @dev Function for changing the maintainer's address.
     * @param newValue - new maintainer's address.
     */
-    function setMaintainer(address payable newValue) external;
+    function setMaintainer(address newValue) external;
+
+    /**
+    * @dev Function for getting maintainer fee. The percentage fee users pay from their reward for using the pool.
+    */
+    function maintainerFee() external view returns (uint256);
 
     /**
     * @dev Function for changing the maintainer's fee.
     * @param newValue - new maintainer's fee. Must be less than 10000 (100.00%).
     */
-    function setMaintainerFee(uint64 newValue) external;
+    function setMaintainerFee(uint256 newValue) external;
 
     /**
     * @dev Function for pausing or resuming managed contracts.
@@ -129,20 +115,35 @@ interface ISettings {
     function setSupportedPaymentTokens(address _token, bool _isSupported) external;
 
     /**
+    * @dev Function for checking whether all the contracts are paused.
+    */
+    function allContractsPaused() external view returns (bool);
+
+    /**
     * @dev Function for pausing or resuming all managed contracts.
     * @param paused - defines whether all contracts must be paused or not.
     */
     function setAllContractsPaused(bool paused) external;
 
     /**
+    * @dev Function for getting user maximum deposit amount.
+    */
+    function maxDepositAmount() external view returns (uint256);
+
+    /**
     * @dev Function for setting maximum deposit amount.
     * @param newValue - new maximum deposit amount.
     */
-    function setMaxDepositAmount(uint128 newValue) external;
+    function setMaxDepositAmount(uint256 newValue) external;
+
+    /**
+    * @dev Function for getting non-custodial validator price per month.
+    */
+    function validatorPrice() external view returns (uint256);
 
     /**
     * @dev Function for setting non-custodial validator price.
     * @param _validatorPrice - new validator price.
     */
-    function setValidatorPrice(uint128 _validatorPrice) external;
+    function setValidatorPrice(uint256 _validatorPrice) external;
 }

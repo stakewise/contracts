@@ -119,7 +119,7 @@ contract SWRToken is ISWRToken, BaseERC20 {
         int256 periodRewards = newTotalRewards.sub(totalRewards);
         int256 maintainerReward;
         if (periodRewards > 0) {
-            maintainerReward = periodRewards.mul(settings.maintainerFee()).div(10000);
+            maintainerReward = periodRewards.mul(settings.maintainerFee().toInt256()).div(10000);
         }
 
         // calculate reward rate used for account reward calculation

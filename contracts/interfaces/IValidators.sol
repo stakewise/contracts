@@ -18,7 +18,7 @@ interface IValidators {
     * @param pubKey - validator public key.
     * @param price - validator monthly price.
     */
-    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint128 price);
+    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint256 price);
 
     /**
     * @dev Constructor for initializing the Validators contract.
