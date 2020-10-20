@@ -1,27 +1,23 @@
 const { scripts } = require('@openzeppelin/cli');
 
-async function deployPoolsProxy({
+async function deployPoolProxy({
   vrc,
-  managersProxy,
-  depositsProxy,
+  swdTokenProxy,
   settingsProxy,
   operatorsProxy,
   validatorsProxy,
-  validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Pools',
+    contractAlias: 'Pool',
     methodName: 'initialize',
     methodArgs: [
-      managersProxy,
-      depositsProxy,
+      swdTokenProxy,
       settingsProxy,
       operatorsProxy,
       vrc,
       validatorsProxy,
-      validatorTransfersProxy,
     ],
     salt,
     ...networkConfig,
@@ -31,58 +27,17 @@ async function deployPoolsProxy({
 }
 
 async function deploySolosProxy({
-  depositsProxy,
   settingsProxy,
   operatorsProxy,
-  managersProxy,
   vrc,
   validatorsProxy,
-  validatorTransfersProxy,
   salt,
   networkConfig,
 }) {
   const proxy = await scripts.create({
     contractAlias: 'Solos',
     methodName: 'initialize',
-    methodArgs: [
-      depositsProxy,
-      settingsProxy,
-      managersProxy,
-      operatorsProxy,
-      vrc,
-      validatorsProxy,
-      validatorTransfersProxy,
-    ],
-    salt,
-    ...networkConfig,
-  });
-
-  return proxy.address;
-}
-
-async function deployGroupsProxy({
-  depositsProxy,
-  settingsProxy,
-  operatorsProxy,
-  managersProxy,
-  vrc,
-  validatorsProxy,
-  validatorTransfersProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'Groups',
-    methodName: 'initialize',
-    methodArgs: [
-      depositsProxy,
-      settingsProxy,
-      managersProxy,
-      operatorsProxy,
-      vrc,
-      validatorsProxy,
-      validatorTransfersProxy,
-    ],
+    methodArgs: [settingsProxy, operatorsProxy, vrc, validatorsProxy],
     salt,
     ...networkConfig,
   });
@@ -91,7 +46,6 @@ async function deployGroupsProxy({
 }
 
 module.exports = {
-  deployPoolsProxy,
+  deployPoolProxy,
   deploySolosProxy,
-  deployGroupsProxy,
 };

@@ -20,32 +20,15 @@ interface IManagers {
 
     /**
     * @dev Constructor for initializing the Managers contract.
-    * @param _solos - address of the Solos contract.
-    * @param _groups - address of the Groups contract.
     * @param _admins - address of the Admins contract.
     */
-    function initialize(address _solos, address _groups, address _admins) external;
+    function initialize(address _admins) external;
 
     /**
     * @dev Function for checking whether an account has a manager role.
     * @param _account - account to check.
     */
     function isManager(address _account) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether validator ownership can be transferred.
-    * @param _entityId - ID of the entity to transfer validator from.
-    * @param _signature - signature of the entity transfer manager.
-    */
-    function canTransferValidator(bytes32 _entityId, bytes calldata _signature) external view returns (bool);
-
-    /**
-    * @dev Function for assigning a transfer manager to the entity.
-    * Can only be called by the collector contracts.
-    * @param _entityId - ID of the entity to assign transfer manager for.
-    * @param _account - account to assign a transfer manager role to.
-    */
-    function addTransferManager(bytes32 _entityId, address _account) external;
 
     /**
     * @dev Function for adding a manager role to the account.

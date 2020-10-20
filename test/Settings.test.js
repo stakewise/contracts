@@ -17,16 +17,17 @@ const {
   getNetworkConfig,
   deployLogicContracts,
 } = require('../deployments/common');
-const { removeNetworkFile } = require('./common/utils');
+const { removeNetworkFile } = require('./utils');
 
 const newValues = [
-  ['userDepositMinUnit', ether('0.002')],
-  ['validatorDepositAmount', ether('30')],
-  ['withdrawalCredentials', web3.utils.asciiToHex('\x02'.repeat(32))],
+  ['minDepositUnit', ether('0.002')],
+  ['maxDepositAmount', ether('11000')],
+  ['validatorPrice', new BN(3703171921051)],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],
   ['maintainerFee', new BN(100)],
-  ['stakingDuration', new BN(31556952)],
-  ['contractPaused', true],
+  ['pausedContracts', true],
+  ['supportedPaymentTokens', true],
+  ['allContractsPaused', true],
 ];
 
 function getSetMethod(setting) {
@@ -44,7 +45,7 @@ function assertEqual(value1, value2) {
 const Settings = artifacts.require('Settings');
 const Operators = artifacts.require('Operators');
 
-contract('Settings', ([_, admin, operator, collector, anyone]) => {
+contract('Settings', ([_, admin, operator, collector, token, anyone]) => {
   let adminsProxy;
   let operatorsProxy;
   let networkConfig;
@@ -75,36 +76,28 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
     );
   });
 
-  it('sets parameters on initialization', async () => {
-    for (const [setting, initialValue] of Object.entries(initialSettings)) {
-      assertEqual(await settings[setting](), initialValue);
-    }
-  });
-
   it('admins can change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'stakingDuration') {
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
-        const receipt = await settings.setStakingDuration(collector, newValue, {
+      if (setting === 'pausedContracts') {
+        await assertEqual(await settings[setting](collector), false);
+        const setMethod = getSetMethod(setting);
+        const receipt = await settings[setMethod](collector, true, {
           from: admin,
         });
         expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('stakingDurations').padEnd(66, '0'),
+          settingName: web3.utils.fromAscii(setting).padEnd(66, '0'),
         });
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(newValue);
-      } else if (setting === 'contractPaused') {
-        expect(await settings.pausedContracts(collector)).equal(false);
-        const receipt = await settings.setContractPaused(collector, newValue, {
+        expect(await settings[setting](collector)).equal(true);
+      } else if (setting === 'supportedPaymentTokens') {
+        await assertEqual(await settings[setting](token), false);
+        const setMethod = getSetMethod(setting);
+        const receipt = await settings[setMethod](token, true, {
           from: admin,
         });
-        expectEvent(receipt, 'SettingChanged', {
-          settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0'),
+        expectEvent(receipt, 'PaymentTokenUpdated', {
+          token,
         });
-        expect(await settings.pausedContracts(collector)).equal(newValue);
+        expect(await settings[setting](token)).equal(true);
       } else {
         await assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -121,28 +114,19 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('others cannot change settings', async () => {
     for (const [setting, newValue] of newValues) {
-      if (setting === 'stakingDuration') {
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
+      if (
+        setting === 'pausedContracts' ||
+        setting === 'supportedPaymentTokens'
+      ) {
+        await assertEqual(await settings[setting](collector), false);
+        const setMethod = getSetMethod(setting);
         await expectRevert(
-          settings.setStakingDuration(collector, newValue, {
+          settings[setMethod](collector, true, {
             from: anyone,
           }),
-          'Permission denied.'
+          'Settings: permission denied'
         );
-        expect(
-          await settings.stakingDurations(collector)
-        ).to.be.bignumber.equal(new BN(0));
-      } else if (setting === 'contractPaused') {
-        expect(await settings.pausedContracts(collector)).equal(false);
-        await expectRevert(
-          settings.setContractPaused(collector, newValue, {
-            from: anyone,
-          }),
-          'Permission denied.'
-        );
-        expect(await settings.pausedContracts(collector)).equal(false);
+        expect(await settings[setting](collector)).equal(false);
       } else {
         assertEqual(await settings[setting](), initialSettings[setting]);
         const setMethod = getSetMethod(setting);
@@ -150,7 +134,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
           settings[setMethod](newValue, {
             from: anyone,
           }),
-          'Permission denied.'
+          'Settings: permission denied'
         );
         assertEqual(await settings[setting](), initialSettings[setting]);
       }
@@ -159,11 +143,22 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
 
   it('operators can pause contracts', async () => {
     expect(await settings.pausedContracts(collector)).equal(false);
-    const receipt = await settings.setContractPaused(collector, true, {
+    const receipt = await settings.setPausedContracts(collector, true, {
       from: operator,
     });
     expectEvent(receipt, 'SettingChanged', {
       settingName: web3.utils.fromAscii('pausedContracts').padEnd(66, '0'),
+    });
+    expect(await settings.pausedContracts(collector)).equal(true);
+  });
+
+  it('admin can pause all contracts', async () => {
+    expect(await settings.pausedContracts(collector)).equal(false);
+    const receipt = await settings.setAllContractsPaused(true, {
+      from: admin,
+    });
+    expectEvent(receipt, 'SettingChanged', {
+      settingName: web3.utils.fromAscii('allContractsPaused').padEnd(66, '0'),
     });
     expect(await settings.pausedContracts(collector)).equal(true);
   });
@@ -173,7 +168,7 @@ contract('Settings', ([_, admin, operator, collector, anyone]) => {
       settings.setMaintainerFee(new BN(10000), {
         from: admin,
       }),
-      'Invalid value.'
+      'Settings: invalid value'
     );
     assertEqual(await settings.maintainerFee(), initialSettings.maintainerFee);
   });

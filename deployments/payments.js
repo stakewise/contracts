@@ -1,17 +1,14 @@
 const { scripts } = require('@openzeppelin/cli');
 
-async function deployValidatorsProxy({
+async function deployPaymentsProxy({
   networkConfig,
-  poolProxy,
-  solosProxy,
   settingsProxy,
-  salt,
+  managersProxy,
 }) {
   const proxy = await scripts.create({
-    contractAlias: 'Validators',
+    contractAlias: 'Payments',
     methodName: 'initialize',
-    methodArgs: [poolProxy, solosProxy, settingsProxy],
-    salt,
+    methodArgs: [settingsProxy, managersProxy],
     ...networkConfig,
   });
 
@@ -19,5 +16,5 @@ async function deployValidatorsProxy({
 }
 
 module.exports = {
-  deployValidatorsProxy,
+  deployPaymentsProxy,
 };

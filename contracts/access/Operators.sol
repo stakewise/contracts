@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
 import "../libraries/Roles.sol";
 import "../interfaces/IAdmins.sol";
 import "../interfaces/IOperators.sol";
@@ -40,7 +40,7 @@ contract Operators is IOperators, Initializable {
      * @dev See {IOperators-addOperator}.
      */
     function addOperator(address _account) external override {
-        require(admins.isAdmin(msg.sender), "Only admin users can assign operators.");
+        require(admins.isAdmin(msg.sender), "Operators: only admin users can assign operators");
         operators.add(_account);
         emit OperatorAdded(_account);
     }
@@ -49,7 +49,7 @@ contract Operators is IOperators, Initializable {
      * @dev See {IOperators-removeOperator}.
      */
     function removeOperator(address _account) external override {
-        require(admins.isAdmin(msg.sender), "Only admin users can remove operators.");
+        require(admins.isAdmin(msg.sender), "Operators: only admin users can remove operators");
         operators.remove(_account);
         emit OperatorRemoved(_account);
     }

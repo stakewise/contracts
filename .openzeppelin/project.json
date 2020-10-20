@@ -5,14 +5,12 @@
     "Operators": "Operators",
     "Managers": "Managers",
     "Settings": "Settings",
-    "Pools": "Pools",
-    "Deposits": "Deposits",
+    "Pool": "Pool",
     "Validators": "Validators",
-    "ValidatorTransfers": "ValidatorTransfers",
-    "Withdrawals": "Withdrawals",
-    "Groups": "Groups",
     "Solos": "Solos",
-    "Wallet": "Wallet"
+    "Payments": "Payments",
+    "SWDToken": "SWDToken",
+    "SWRToken": "SWRToken"
   },
   "dependencies": {},
   "name": "stakewise",

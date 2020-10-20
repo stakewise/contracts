@@ -17,9 +17,5 @@ Loggy.silent(true);
   await deployLogicContracts({ networkConfig });
 
   // Deploy all proxies
-  await deployAllProxies({
-    initialAdmin: process.env.INITIAL_ADMIN,
-    vrc: process.env.VRC,
-    networkConfig,
-  });
+  await deployAllProxies({ networkConfig });
 })();
