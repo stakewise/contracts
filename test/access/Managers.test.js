@@ -5,38 +5,22 @@ const {
   expectRevert,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAdminsProxy,
-  deployManagersProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeManagers,
 } = require('../../deployments/access');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
-const { removeNetworkFile } = require('../utils');
 
 const Managers = artifacts.require('Managers');
 
 contract('Managers', ([_, ...accounts]) => {
-  let networkConfig, adminsProxy, managers;
+  let admins, managers;
   let [admin, manager, anotherManager, anyone] = accounts;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
+    admins = await deployAndInitializeAdmins(admin);
   });
 
   beforeEach(async () => {
-    managers = await Managers.at(
-      await deployManagersProxy({ networkConfig, adminsProxy })
-    );
+    managers = await Managers.at(await deployAndInitializeManagers(admins));
   });
 
   describe('assigning', () => {
