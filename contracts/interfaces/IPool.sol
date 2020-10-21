@@ -2,8 +2,6 @@
 
 pragma solidity 0.6.12;
 
-import "./IValidatorRegistration.sol";
-
 /**
  * @dev Interface of the Pool contract.
  */
@@ -32,7 +30,7 @@ interface IPool {
     /**
     * @dev Function for retrieving the validator registration contract address.
     */
-    function validatorRegistration() external view returns (IValidatorRegistration);
+    function validatorRegistrationContract() external view returns (address);
 
     /**
     * @dev Function for adding deposits to the pool.

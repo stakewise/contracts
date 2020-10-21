@@ -1,51 +1,63 @@
-const { scripts } = require('@openzeppelin/cli');
+const { ethers } = require('@nomiclabs/buidler');
+const { deployProxyWithoutInitialize } = require('./common');
 
-async function deployPoolProxy({
-  vrc,
-  swdTokenProxy,
-  settingsProxy,
-  operatorsProxy,
-  validatorsProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'Pool',
-    methodName: 'initialize',
-    methodArgs: [
-      swdTokenProxy,
-      settingsProxy,
-      operatorsProxy,
-      vrc,
-      validatorsProxy,
-    ],
-    salt,
-    ...networkConfig,
+async function deployPool() {
+  const Pool = await ethers.getContractFactory('Pool');
+  const proxy = await deployProxyWithoutInitialize(Pool, {
+    unsafeAllowCustomTypes: true,
   });
-
   return proxy.address;
 }
 
-async function deploySolosProxy({
-  settingsProxy,
-  operatorsProxy,
-  vrc,
-  validatorsProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'Solos',
-    methodName: 'initialize',
-    methodArgs: [settingsProxy, operatorsProxy, vrc, validatorsProxy],
-    salt,
-    ...networkConfig,
-  });
+async function initializePool(
+  poolContractAddress,
+  swdTokenContractAddress,
+  settingsContractAddress,
+  operatorsContractAddress,
+  vrcContractAddress,
+  validatorsContractAddress
+) {
+  let Pool = await ethers.getContractFactory('Pool');
+  Pool = Pool.attach(poolContractAddress);
 
+  return Pool.initialize(
+    swdTokenContractAddress,
+    settingsContractAddress,
+    operatorsContractAddress,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
+}
+
+async function deploySolos() {
+  const Solos = await ethers.getContractFactory('Solos');
+  const proxy = await deployProxyWithoutInitialize(Solos, {
+    unsafeAllowCustomTypes: true,
+  });
   return proxy.address;
+}
+
+async function initializeSolos(
+  solosContractAddress,
+  settingsContractAddress,
+  operatorsContractAddress,
+  vrcContractAddress,
+  validatorsContractAddress
+) {
+  let Solos = await ethers.getContractFactory('Solos');
+  Solos = Solos.attach(solosContractAddress);
+
+  return Solos.initialize(
+    settingsContractAddress,
+    operatorsContractAddress,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
 }
 
 module.exports = {
-  deployPoolProxy,
-  deploySolosProxy,
+  deployPool,
+  initializePool,
+  deploySolos,
+  initializeSolos,
 };

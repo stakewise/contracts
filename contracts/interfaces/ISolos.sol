@@ -2,8 +2,6 @@
 
 pragma solidity 0.6.12;
 
-import "./IValidatorRegistration.sol";
-
 /**
  * @dev Interface of the Solos contract.
  */
@@ -48,7 +46,7 @@ interface ISolos {
     /**
     * @dev Function for retrieving the validator registration contract address.
     */
-    function validatorRegistration() external view returns (IValidatorRegistration);
+    function validatorRegistrationContract() external view returns (address);
 
     /**
     * @dev Constructor for initializing the Solos contract.

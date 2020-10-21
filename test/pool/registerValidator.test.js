@@ -1,13 +1,8 @@
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployVRC } = require('../../deployments/vrc');
+const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
-  removeNetworkFile,
   checkCollectorBalance,
   checkPoolCollectedAmount,
   checkValidatorRegistered,
@@ -22,31 +17,25 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 
 contract('Pool (register validator)', ([_, ...accounts]) => {
-  let networkConfig, vrc, pool, poolId;
+  let vrc, pool, poolId;
   let [admin, operator, sender1, sender2, other] = accounts;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC({ from: admin });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
+    vrc = new web3.eth.Contract(vrcAbi, await deployAndInitializeVRC());
   });
 
   beforeEach(async () => {
-    let { pool: poolProxy, operators: operatorsProxy } = await deployAllProxies(
-      {
-        initialAdmin: admin,
-        networkConfig,
-        vrc: vrc.options.address,
-      }
-    );
-    pool = await Pool.at(poolProxy);
+    let {
+      pool: poolContractAddress,
+      operators: operatorsContractAddress,
+    } = await deployAllProxies({
+      initialAdmin: admin,
+      vrcContractAddress: vrc.options.address,
+    });
+    pool = await Pool.at(poolContractAddress);
     poolId = web3.utils.soliditySha3(pool.address);
 
-    let operators = await Operators.at(operatorsProxy);
+    let operators = await Operators.at(operatorsContractAddress);
     await operators.addOperator(operator, { from: admin });
 
     // register pool

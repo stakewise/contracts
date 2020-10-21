@@ -3,12 +3,7 @@ const { BN, ether, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
-const {
   getDepositAmount,
-  removeNetworkFile,
   checkCollectorBalance,
   checkPoolCollectedAmount,
   checkSWDToken,
@@ -19,29 +14,17 @@ const Settings = artifacts.require('Settings');
 const SWDToken = artifacts.require('SWDToken');
 
 contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
-  let networkConfig, pool, settings, swdToken;
-
-  before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
-  });
+  let pool, settings, swdToken;
 
   beforeEach(async () => {
     let {
-      pool: poolProxy,
-      settings: settingsProxy,
-      swdToken: swdTokenProxy,
-    } = await deployAllProxies({
-      initialAdmin: admin,
-      networkConfig,
-    });
-    pool = await Pool.at(poolProxy);
-    settings = await Settings.at(settingsProxy);
-    swdToken = await SWDToken.at(swdTokenProxy);
+      pool: poolContractAddress,
+      settings: settingsContractAddress,
+      swdToken: swdTokenContractAddress,
+    } = await deployAllProxies({ initialAdmin: admin });
+    pool = await Pool.at(poolContractAddress);
+    settings = await Settings.at(settingsContractAddress);
+    swdToken = await SWDToken.at(swdTokenContractAddress);
   });
 
   it('fails to add a deposit with zero amount', async () => {

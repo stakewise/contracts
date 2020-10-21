@@ -8,17 +8,9 @@ const {
   balance,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const { deployVRC } = require('../../deployments/vrc');
-const {
-  removeNetworkFile,
-  checkCollectorBalance,
-  checkSolo,
-} = require('../utils');
+const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
+const { checkCollectorBalance, checkSolo } = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Operators = artifacts.require('Operators');
@@ -34,31 +26,24 @@ const depositDataRoot =
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Solos (cancel deposit)', ([_, ...accounts]) => {
-  let networkConfig, solos, soloId, vrc;
+  let solos, soloId, vrc;
   let [admin, operator, sender, anyone] = accounts;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    vrc = await deployVRC({ from: admin });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
+    vrc = new web3.eth.Contract(vrcAbi, await deployAndInitializeVRC());
   });
 
   beforeEach(async () => {
     let {
-      solos: solosProxy,
-      operators: operatorsProxy,
+      solos: solosContractAddress,
+      operators: operatorsContractAddress,
     } = await deployAllProxies({
       initialAdmin: admin,
-      networkConfig,
-      vrc: vrc.options.address,
+      vrcContractAddress: vrc.options.address,
     });
-    solos = await Solos.at(solosProxy);
+    solos = await Solos.at(solosContractAddress);
 
-    let operators = await Operators.at(operatorsProxy);
+    let operators = await Operators.at(operatorsContractAddress);
     await operators.addOperator(operator, { from: admin });
 
     // create new solo

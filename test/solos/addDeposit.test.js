@@ -6,16 +6,8 @@ const {
   expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAllProxies } = require('../../deployments');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
 const { initialSettings } = require('../../deployments/settings');
-const {
-  removeNetworkFile,
-  checkCollectorBalance,
-  checkSoloDepositAdded,
-} = require('../utils');
+const { checkCollectorBalance, checkSoloDepositAdded } = require('../utils');
 
 const Solos = artifacts.require('Solos');
 const Settings = artifacts.require('Settings');
@@ -25,27 +17,18 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Solos (add deposit)', ([_, ...accounts]) => {
-  let networkConfig, solos, settings;
+  let solos, settings;
   let [admin, sender1, sender2] = accounts;
 
-  before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
-  });
-
   beforeEach(async () => {
-    let { solos: solosProxy, settings: settingsProxy } = await deployAllProxies(
-      {
-        initialAdmin: admin,
-        networkConfig,
-      }
-    );
-    solos = await Solos.at(solosProxy);
-    settings = await Settings.at(settingsProxy);
+    let {
+      solos: solosContractAddress,
+      settings: settingsContractAddress,
+    } = await deployAllProxies({
+      initialAdmin: admin,
+    });
+    solos = await Solos.at(solosContractAddress);
+    settings = await Settings.at(settingsContractAddress);
   });
 
   it('fails to add a deposit with invalid withdrawal credentials', async () => {

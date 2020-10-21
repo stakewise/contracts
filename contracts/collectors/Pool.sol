@@ -2,9 +2,9 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "../interfaces/ISWDToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
@@ -22,10 +22,10 @@ contract Pool is IPool, Initializable {
     using Address for address payable;
 
     // @dev Total amount collected.
-    uint256 public override collectedAmount;
+    uint256 private _collectedAmount;
 
     // @dev Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration public override validatorRegistration;
+    IValidatorRegistration private validatorRegistration;
 
     // @dev ID of the pool.
     bytes32 private poolId;
@@ -41,6 +41,20 @@ contract Pool is IPool, Initializable {
 
     // @dev Address of the Validators contract.
     IValidators private validators;
+
+    /**
+     * @dev See {IPool-collectedAmount}.
+     */
+    function collectedAmount() external view override returns (uint256) {
+        return _collectedAmount;
+    }
+
+    /**
+     * @dev See {IPool-validatorRegistrationContract}.
+     */
+    function validatorRegistrationContract() external view override returns (address) {
+        return address(validatorRegistration);
+    }
 
     /**
      * @dev See {IPool-initialize}.
@@ -72,7 +86,7 @@ contract Pool is IPool, Initializable {
         require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
 
         // update pool collected amount
-        collectedAmount = collectedAmount.add(msg.value);
+        _collectedAmount = _collectedAmount.add(msg.value);
 
         // mint new deposit tokens
         swdToken.mint(msg.sender, msg.value);
@@ -82,7 +96,7 @@ contract Pool is IPool, Initializable {
      * @dev See {IPool-withdrawDeposit}.
      */
     function withdrawDeposit(uint256 _amount) external override {
-        require(collectedAmount.mod(settings.validatorDepositAmount()) >= _amount, "Pool: insufficient collected amount");
+        require(_collectedAmount.mod(settings.validatorDepositAmount()) >= _amount, "Pool: insufficient collected amount");
         require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Pool: invalid withdrawal amount");
         require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
 
@@ -90,7 +104,7 @@ contract Pool is IPool, Initializable {
         swdToken.burn(msg.sender, _amount);
 
         // update pool collected amount
-        collectedAmount = collectedAmount.sub(_amount);
+        _collectedAmount = _collectedAmount.sub(_amount);
 
         // transfer ETH to the tokens owner
         msg.sender.sendValue(_amount);
@@ -104,8 +118,8 @@ contract Pool is IPool, Initializable {
 
         // reduce pool collected amount
         uint256 depositAmount = settings.validatorDepositAmount();
-        require(collectedAmount >= depositAmount, "Pool: insufficient collected amount");
-        collectedAmount = collectedAmount.sub(depositAmount);
+        require(_collectedAmount >= depositAmount, "Pool: insufficient collected amount");
+        _collectedAmount = _collectedAmount.sub(depositAmount);
 
         // register validator
         validators.register(_pubKey, poolId);
