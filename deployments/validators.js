@@ -1,23 +1,29 @@
-const { scripts } = require('@openzeppelin/cli');
+const { ethers } = require('@nomiclabs/buidler');
+const { deployProxyWithoutInitialize } = require('./common');
 
-async function deployValidatorsProxy({
-  networkConfig,
-  poolProxy,
-  solosProxy,
-  settingsProxy,
-  salt,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'Validators',
-    methodName: 'initialize',
-    methodArgs: [poolProxy, solosProxy, settingsProxy],
-    salt,
-    ...networkConfig,
-  });
-
+async function deployValidators() {
+  const Validators = await ethers.getContractFactory('Validators');
+  const proxy = await deployProxyWithoutInitialize(Validators);
   return proxy.address;
 }
 
+async function initializeValidators(
+  validatorsContractAddress,
+  poolContractAddress,
+  solosContractAddress,
+  settingsContractAddress
+) {
+  let Validators = await ethers.getContractFactory('Validators');
+  Validators = Validators.attach(validatorsContractAddress);
+
+  return Validators.initialize(
+    poolContractAddress,
+    solosContractAddress,
+    settingsContractAddress
+  );
+}
+
 module.exports = {
-  deployValidatorsProxy,
+  deployValidators,
+  initializeValidators,
 };

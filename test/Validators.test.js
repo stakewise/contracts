@@ -1,18 +1,16 @@
 const { expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../deployments/common');
-const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeOperators,
 } = require('../deployments/access');
 const {
   initialSettings,
-  deploySettingsProxy,
+  deployAndInitializeSettings,
 } = require('../deployments/settings');
-const { deployValidatorsProxy } = require('../deployments/validators');
-const { removeNetworkFile } = require('./utils');
+const {
+  deployValidators,
+  initializeValidators,
+} = require('../deployments/validators');
 
 const Validators = artifacts.require('Validators');
 const Settings = artifacts.require('Settings');
@@ -20,82 +18,69 @@ const Settings = artifacts.require('Settings');
 const publicKey =
   '0xb07ef3635f585b5baeb057a45e7337ab5ba2b1205b43fac3a46e0add8aab242b0fb35a54373ad809405ca05c9cbf34c7';
 
-contract('Validators', ([_, pool, solos, admin, anyone]) => {
-  let networkConfig, validators, settings;
+contract(
+  'Validators',
+  ([_, poolContractAddress, solosContractAddress, admin, anyone]) => {
+    let validators, settings;
 
-  before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-  });
+    beforeEach(async () => {
+      let adminsContractAddress = await deployAndInitializeAdmins(admin);
+      let operatorsContractAddress = await deployAndInitializeOperators(
+        adminsContractAddress
+      );
+      settings = await Settings.at(
+        await deployAndInitializeSettings(
+          adminsContractAddress,
+          operatorsContractAddress
+        )
+      );
 
-  after(() => {
-    removeNetworkFile(networkConfig.network);
-  });
-
-  beforeEach(async () => {
-    let adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
+      validators = await Validators.at(await deployValidators());
+      await initializeValidators(
+        validators.address,
+        poolContractAddress,
+        solosContractAddress,
+        settings.address
+      );
     });
 
-    let operatorsProxy = await deployOperatorsProxy({
-      networkConfig,
-      adminsProxy,
+    it('only collectors can register validators', async () => {
+      await expectRevert(
+        validators.register(
+          web3.utils.fromAscii('\x11'.repeat(48)),
+          web3.utils.soliditySha3('collector', 1),
+          {
+            from: anyone,
+          }
+        ),
+        'Validators: permission denied'
+      );
+
+      let entityId = web3.utils.soliditySha3('collector', 1);
+      let receipt = await validators.register(publicKey, entityId, {
+        from: solosContractAddress,
+      });
+      expectEvent(receipt, 'ValidatorRegistered', {
+        entityId,
+        pubKey: publicKey,
+        price: initialSettings.validatorPrice,
+      });
     });
 
-    let settingsProxy = await deploySettingsProxy({
-      networkConfig,
-      adminsProxy,
-      operatorsProxy,
+    it('fails to register validator with paused contract', async () => {
+      await settings.setPausedContracts(validators.address, true, {
+        from: admin,
+      });
+      await expectRevert(
+        validators.register(
+          web3.utils.fromAscii('\x11'.repeat(48)),
+          web3.utils.soliditySha3('collector', 1),
+          {
+            from: solosContractAddress,
+          }
+        ),
+        'Validators: contract is disabled'
+      );
     });
-
-    validators = await Validators.at(
-      await deployValidatorsProxy({
-        networkConfig,
-        poolProxy: pool,
-        solosProxy: solos,
-        settingsProxy,
-      })
-    );
-    settings = await Settings.at(settingsProxy);
-  });
-
-  it('only collectors can register validators', async () => {
-    await expectRevert(
-      validators.register(
-        web3.utils.fromAscii('\x11'.repeat(48)),
-        web3.utils.soliditySha3('collector', 1),
-        {
-          from: anyone,
-        }
-      ),
-      'Validators: permission denied'
-    );
-
-    let entityId = web3.utils.soliditySha3('collector', 1);
-    let receipt = await validators.register(publicKey, entityId, {
-      from: solos,
-    });
-    expectEvent(receipt, 'ValidatorRegistered', {
-      entityId,
-      pubKey: publicKey,
-      price: initialSettings.validatorPrice,
-    });
-  });
-
-  it('fails to register validator with paused contract', async () => {
-    await settings.setPausedContracts(validators.address, true, {
-      from: admin,
-    });
-    await expectRevert(
-      validators.register(
-        web3.utils.fromAscii('\x11'.repeat(48)),
-        web3.utils.soliditySha3('collector', 1),
-        {
-          from: solos,
-        }
-      ),
-      'Validators: contract is disabled'
-    );
-  });
-});
+  }
+);

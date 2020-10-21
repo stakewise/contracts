@@ -1,47 +1,54 @@
-const { ConfigManager, scripts } = require('@openzeppelin/cli');
-const { ZWeb3 } = require('@openzeppelin/upgrades');
-function log(message) {
-  if (process.env.SILENT !== 'true') {
-    console.log(message);
-  }
-}
+const bre = require('@nomiclabs/buidler');
+const {
+  readValidations,
+} = require('@openzeppelin/buidler-upgrades/dist/validations');
+const {
+  assertUpgradeSafe,
+  getStorageLayout,
+  fetchOrDeploy,
+  fetchOrDeployAdmin,
+  getVersion,
+  getUnlinkedBytecode,
+} = require('@openzeppelin/upgrades-core');
+const { deploy } = require('@openzeppelin/buidler-upgrades/dist/utils/deploy');
+const {
+  getProxyFactory,
+  getProxyAdminFactory,
+} = require('@openzeppelin/buidler-upgrades/dist/proxy-factory');
 
-async function getNetworkConfig({ network = 'development' } = {}) {
-  let networkConfig = await ConfigManager.initNetworkConfiguration({
-    network: process.env.NETWORK || network,
+// FIXME: https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/203
+// Overrides from https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/master/packages/plugin-buidler/src/deploy-proxy.ts#L29
+async function deployProxy(ImplFactory, opts = {}) {
+  const { provider } = bre.network;
+  const validations = await readValidations(bre);
+
+  const unlinkedBytecode = getUnlinkedBytecode(
+    validations,
+    ImplFactory.bytecode
+  );
+  const version = getVersion(unlinkedBytecode, ImplFactory.bytecode);
+  assertUpgradeSafe(validations, version, opts);
+
+  const impl = await fetchOrDeploy(version, provider, async () => {
+    const deployment = await deploy(ImplFactory);
+    const layout = getStorageLayout(validations, version);
+    return { ...deployment, layout };
   });
 
-  log(`Initialized session on network "${networkConfig.network}"`);
-  return networkConfig;
-}
+  const AdminFactory = await getProxyAdminFactory(bre, ImplFactory.signer);
+  const adminAddress = await fetchOrDeployAdmin(provider, () =>
+    deploy(AdminFactory)
+  );
 
-async function deployLogicContracts({ networkConfig }) {
-  await scripts.push({
-    deployProxyAdmin: true,
-    ...networkConfig,
-  });
-}
+  const ProxyFactory = await getProxyFactory(bre, ImplFactory.signer);
+  const proxy = await ProxyFactory.deploy(impl, adminAddress, '0x');
 
-async function calculateContractAddress({ networkConfig }) {
-  let salt = Math.round(Math.random() * 100000);
-  let contractAddress = await scripts.queryDeployment({
-    salt,
-    ...networkConfig,
-  });
-  while ((await ZWeb3.eth.getCode(contractAddress)) !== '0x') {
-    salt = Math.round(Math.random() * 100000);
-    contractAddress = await scripts.queryDeployment({
-      salt,
-      ...networkConfig,
-    });
-  }
-
-  return { salt, contractAddress };
+  const inst = ImplFactory.attach(proxy.address);
+  // noinspection JSConstantReassignment
+  inst.deployTransaction = proxy.deployTransaction;
+  return inst;
 }
 
 module.exports = {
-  log,
-  getNetworkConfig,
-  deployLogicContracts,
-  calculateContractAddress,
+  deployProxyWithoutInitialize: deployProxy,
 };
