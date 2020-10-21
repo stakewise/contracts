@@ -7,74 +7,55 @@ const {
   ether,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
-  deployManagersProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeManagers,
+  deployAndInitializeOperators,
 } = require('../deployments/access');
-const { deployPaymentsProxy } = require('../deployments/payments');
+const { deployAndInitializePayments } = require('../deployments/payments');
 const {
-  deploySettingsProxy,
+  deployAndInitializeSettings,
   initialSettings,
 } = require('../deployments/settings');
-const { removeNetworkFile } = require('./utils');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../deployments/common');
-const { deployDAI } = require('../deployments/tokens');
+const { deployAndInitializeERC20Mock } = require('../deployments/tokens');
+
 const Managers = artifacts.require('Managers');
 const Payments = artifacts.require('Payments');
 const Settings = artifacts.require('Settings');
+const ERC20Mock = artifacts.require('ERC20Mock');
 
 contract('Payments', ([_, ...accounts]) => {
-  let networkConfig, payments, settings, dai, managersProxy, settingsProxy;
+  let payments, settings, daiToken, managers;
   let [admin, manager, sender1, sender2, anyone] = accounts;
   let balance = ether('1');
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-
-    // deploy admins proxy
-    let adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
+    // deploy admins
+    let adminsAddress = await deployAndInitializeAdmins(admin);
 
     // deploy and configure manager
-    managersProxy = await deployManagersProxy({ networkConfig, adminsProxy });
-    let managers = await Managers.at(managersProxy);
+    managers = await Managers.at(
+      await deployAndInitializeManagers(adminsAddress)
+    );
     await managers.addManager(manager, { from: admin });
 
     // deploy settings
-    let operatorsProxy = await deployOperatorsProxy({
-      networkConfig,
-      adminsProxy,
-    });
-    settingsProxy = await deploySettingsProxy({
-      networkConfig,
-      adminsProxy,
-      operatorsProxy,
-    });
-    settings = await Settings.at(settingsProxy);
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
+    let operatorsAddress = await deployAndInitializeOperators(adminsAddress);
+    settings = await Settings.at(
+      await deployAndInitializeSettings(adminsAddress, operatorsAddress)
+    );
   });
 
   beforeEach(async () => {
-    dai = await deployDAI(admin, { from: admin });
-    await settings.setSupportedPaymentTokens(dai.address, true, {
+    daiToken = await ERC20Mock.at(
+      await deployAndInitializeERC20Mock(admin, 'DAI Token', 'DAI')
+    );
+    await settings.setSupportedPaymentTokens(daiToken.address, true, {
       from: admin,
     });
 
-    let paymentsProxy = await deployPaymentsProxy({
-      networkConfig,
-      managersProxy,
-      settingsProxy,
-    });
-    payments = await Payments.at(paymentsProxy);
+    payments = await Payments.at(
+      await deployAndInitializePayments(settings.address, managers.address)
+    );
   });
 
   describe('adding tokens', () => {
@@ -83,7 +64,7 @@ contract('Payments', ([_, ...accounts]) => {
         from: admin,
       });
       await expectRevert(
-        payments.addTokens(dai.address, balance, {
+        payments.addTokens(daiToken.address, balance, {
           from: sender1,
         }),
         'Payments: contract is paused'
@@ -111,11 +92,11 @@ contract('Payments', ([_, ...accounts]) => {
 
     it('fails to transfer with low balance', async () => {
       for (const user of [sender1, sender2]) {
-        await dai.approve(payments.address, balance, {
+        await daiToken.approve(payments.address, balance, {
           from: user,
         });
         await expectRevert.unspecified(
-          payments.addTokens(dai.address, balance, {
+          payments.addTokens(daiToken.address, balance, {
             from: user,
           })
         );
@@ -123,7 +104,9 @@ contract('Payments', ([_, ...accounts]) => {
     });
 
     it('withdraws previous tokens when adding different ones', async () => {
-      let token2 = await deployDAI(admin, { from: admin });
+      let token2 = await ERC20Mock.at(
+        await deployAndInitializeERC20Mock(admin, 'DAI Token 2', 'DAI2')
+      );
       await settings.setSupportedPaymentTokens(token2.address, true, {
         from: admin,
       });
@@ -132,12 +115,12 @@ contract('Payments', ([_, ...accounts]) => {
         await token2.approve(payments.address, balance, {
           from: user,
         });
-        await dai.approve(payments.address, balance, {
+        await daiToken.approve(payments.address, balance, {
           from: user,
         });
 
         // transfer tokens
-        await dai.transfer(user, balance, {
+        await daiToken.transfer(user, balance, {
           from: admin,
         });
         await token2.transfer(user, balance, {
@@ -150,7 +133,7 @@ contract('Payments', ([_, ...accounts]) => {
         });
 
         // transfer second tokens
-        let receipt = await payments.addTokens(dai.address, balance, {
+        let receipt = await payments.addTokens(daiToken.address, balance, {
           from: user,
         });
 
@@ -159,38 +142,38 @@ contract('Payments', ([_, ...accounts]) => {
           account: user,
         });
         expectEvent(receipt, 'BalanceUpdated', {
-          token: dai.address,
+          token: daiToken.address,
           account: user,
         });
         expect(await payments.balanceOf(user)).to.bignumber.equal(balance);
-        expect(await payments.selectedTokens(user)).to.equal(dai.address);
+        expect(await payments.selectedTokens(user)).to.equal(daiToken.address);
       }
     });
 
     it('adds tokens to the current balance', async () => {
       for (const user of [sender1, sender2]) {
-        await dai.approve(payments.address, balance.mul(new BN(2)), {
+        await daiToken.approve(payments.address, balance.mul(new BN(2)), {
           from: user,
         });
-        await dai.transfer(user, balance.mul(new BN(2)), {
+        await daiToken.transfer(user, balance.mul(new BN(2)), {
           from: admin,
         });
 
-        let receipt = await payments.addTokens(dai.address, balance, {
+        let receipt = await payments.addTokens(daiToken.address, balance, {
           from: user,
         });
 
         expectEvent(receipt, 'BalanceUpdated', {
-          token: dai.address,
+          token: daiToken.address,
           account: user,
         });
         expect(await payments.balanceOf(user)).to.bignumber.equal(balance);
 
-        receipt = await payments.addTokens(dai.address, balance, {
+        receipt = await payments.addTokens(daiToken.address, balance, {
           from: user,
         });
         expectEvent(receipt, 'BalanceUpdated', {
-          token: dai.address,
+          token: daiToken.address,
           account: user,
         });
         expect(await payments.balanceOf(user)).to.bignumber.equal(
@@ -203,13 +186,13 @@ contract('Payments', ([_, ...accounts]) => {
   describe('withdraw tokens', () => {
     beforeEach(async () => {
       for (const user of [sender1, sender2]) {
-        await dai.approve(payments.address, balance, {
+        await daiToken.approve(payments.address, balance, {
           from: user,
         });
-        await dai.transfer(user, balance, {
+        await daiToken.transfer(user, balance, {
           from: admin,
         });
-        await payments.addTokens(dai.address, balance, {
+        await payments.addTokens(daiToken.address, balance, {
           from: user,
         });
       }
@@ -240,7 +223,7 @@ contract('Payments', ([_, ...accounts]) => {
         });
 
         expectEvent(receipt, 'BalanceUpdated', {
-          token: dai.address,
+          token: daiToken.address,
           account: user,
         });
         expect(await payments.balanceOf(user)).to.bignumber.equal(new BN(0));
@@ -253,13 +236,13 @@ contract('Payments', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       for (const user of [sender1, sender2]) {
-        await dai.approve(payments.address, balance, {
+        await daiToken.approve(payments.address, balance, {
           from: user,
         });
-        await dai.transfer(user, balance, {
+        await daiToken.transfer(user, balance, {
           from: admin,
         });
-        await payments.addTokens(dai.address, balance, {
+        await payments.addTokens(daiToken.address, balance, {
           from: user,
         });
         let billDate = await time.latest();
@@ -314,7 +297,7 @@ contract('Payments', ([_, ...accounts]) => {
         );
       }
       expect(
-        await dai.balanceOf(initialSettings.maintainer)
+        await daiToken.balanceOf(initialSettings.maintainer)
       ).to.bignumber.equal(balance.mul(new BN(2)));
     });
   });
