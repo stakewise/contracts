@@ -6,18 +6,13 @@ const {
   expectRevert,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeOperators,
 } = require('../deployments/access');
 const {
-  deploySettingsProxy,
+  deployAndInitializeSettings,
   initialSettings,
 } = require('../deployments/settings');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../deployments/common');
-const { removeNetworkFile } = require('./utils');
 
 const newValues = [
   ['minDepositUnit', ether('0.002')],
@@ -46,33 +41,23 @@ const Settings = artifacts.require('Settings');
 const Operators = artifacts.require('Operators');
 
 contract('Settings', ([_, admin, operator, collector, token, anyone]) => {
-  let adminsProxy;
-  let operatorsProxy;
-  let networkConfig;
-  let settings;
+  let adminsContractAddress, operatorsProxyAddress, settings;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
-    operatorsProxy = await deployOperatorsProxy({
-      networkConfig,
-      adminsProxy,
-    });
-    let operators = await Operators.at(operatorsProxy);
+    adminsContractAddress = await deployAndInitializeAdmins(admin);
+    operatorsProxyAddress = await deployAndInitializeOperators(
+      adminsContractAddress
+    );
+    let operators = await Operators.at(operatorsProxyAddress);
     await operators.addOperator(operator, { from: admin });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
   });
 
   beforeEach(async () => {
     settings = await Settings.at(
-      await deploySettingsProxy({ networkConfig, adminsProxy, operatorsProxy })
+      await deployAndInitializeSettings(
+        adminsContractAddress,
+        operatorsProxyAddress
+      )
     );
   });
 
