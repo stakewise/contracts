@@ -1,9 +1,9 @@
-const { ethers } = require('@nomiclabs/buidler');
-const { deployProxyWithoutInitialize } = require('./common');
+const { ethers, upgrades } = require('@nomiclabs/buidler');
 
 async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');
-  const proxy = await deployProxyWithoutInitialize(Pool, {
+  const proxy = await upgrades.deployProxy(Pool, [], {
+    initializer: false,
     unsafeAllowCustomTypes: true,
   });
   return proxy.address;
@@ -31,8 +31,9 @@ async function initializePool(
 
 async function deploySolos() {
   const Solos = await ethers.getContractFactory('Solos');
-  const proxy = await deployProxyWithoutInitialize(Solos, {
+  const proxy = await upgrades.deployProxy(Solos, [], {
     unsafeAllowCustomTypes: true,
+    initializer: false,
   });
   return proxy.address;
 }

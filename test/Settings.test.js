@@ -41,14 +41,14 @@ const Settings = artifacts.require('Settings');
 const Operators = artifacts.require('Operators');
 
 contract('Settings', ([_, admin, operator, collector, token, anyone]) => {
-  let adminsContractAddress, operatorsProxyAddress, settings;
+  let adminsContractAddress, operatorsContractAddress, settings;
 
   before(async () => {
     adminsContractAddress = await deployAndInitializeAdmins(admin);
-    operatorsProxyAddress = await deployAndInitializeOperators(
+    operatorsContractAddress = await deployAndInitializeOperators(
       adminsContractAddress
     );
-    let operators = await Operators.at(operatorsProxyAddress);
+    let operators = await Operators.at(operatorsContractAddress);
     await operators.addOperator(operator, { from: admin });
   });
 
@@ -56,7 +56,7 @@ contract('Settings', ([_, admin, operator, collector, token, anyone]) => {
     settings = await Settings.at(
       await deployAndInitializeSettings(
         adminsContractAddress,
-        operatorsProxyAddress
+        operatorsContractAddress
       )
     );
   });

@@ -7,23 +7,20 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeOperators,
 } = require('../../deployments/access');
 const {
-  deploySettingsProxy,
+  deployAndInitializeSettings,
   initialSettings,
 } = require('../../deployments/settings');
 const {
-  deploySWDTokenProxy,
-  deploySWRTokenProxy,
+  deploySWDToken,
+  deploySWRToken,
+  initializeSWDToken,
+  initializeSWRToken,
 } = require('../../deployments/tokens');
-const { removeNetworkFile, checkSWDToken, checkSWRToken } = require('../utils');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-  calculateContractAddress,
-} = require('../../deployments/common');
+const { checkSWDToken, checkSWRToken } = require('../utils');
 
 const SWDToken = artifacts.require('SWDToken');
 const SWRToken = artifacts.require('SWRToken');
@@ -33,68 +30,57 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 async function deployTokens({
   settings,
-  validatorsOracle,
-  pool,
-  networkConfig,
+  validatorsOracleContractAddress,
+  poolContractAddress,
 }) {
-  let { salt: swrTokenSalt } = await calculateContractAddress({
-    networkConfig,
-  });
+  const swdTokenContractAddress = await deploySWDToken();
+  const swrTokenContractAddress = await deploySWRToken();
+  await initializeSWDToken(
+    swdTokenContractAddress,
+    swrTokenContractAddress,
+    settings.address,
+    poolContractAddress
+  );
+  await initializeSWRToken(
+    swrTokenContractAddress,
+    swdTokenContractAddress,
+    settings.address,
+    validatorsOracleContractAddress
+  );
 
-  let {
-    salt: swdTokenSalt,
-    contractAddress: swdTokenCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
-
-  let swrTokenProxy = await deploySWRTokenProxy({
-    swdTokenProxy: swdTokenCalcProxy,
-    settingsProxy: settings.address,
-    validatorsOracleProxy: validatorsOracle,
-    salt: swrTokenSalt,
-    networkConfig,
-  });
-  let swrToken = await SWRToken.at(swrTokenProxy);
-
-  let swdTokenProxy = await deploySWDTokenProxy({
-    swrTokenProxy,
-    settingsProxy: settings.address,
-    poolProxy: pool,
-    salt: swdTokenSalt,
-    networkConfig,
-  });
-  return [swrToken, await SWDToken.at(swdTokenProxy)];
+  return [
+    await SWRToken.at(swrTokenContractAddress),
+    await SWDToken.at(swdTokenContractAddress),
+  ];
 }
 
 contract('SWRToken', ([_, ...accounts]) => {
-  let networkConfig, settings, swdToken, swrToken;
-  let [pool, admin, validatorsOracle, ...otherAccounts] = accounts;
+  let settings, swdToken, swrToken;
+  let [
+    poolContractAddress,
+    admin,
+    validatorsOracleContractAddress,
+    ...otherAccounts
+  ] = accounts;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    let adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
-    let operatorsProxy = await deployOperatorsProxy({
-      networkConfig,
-      adminsProxy,
-    });
-    settings = await Settings.at(
-      await deploySettingsProxy({ networkConfig, adminsProxy, operatorsProxy })
+    let adminsContractAddress = await deployAndInitializeAdmins(admin);
+    let operatorsContractAddress = await deployAndInitializeOperators(
+      adminsContractAddress
     );
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
+    settings = await Settings.at(
+      await deployAndInitializeSettings(
+        adminsContractAddress,
+        operatorsContractAddress
+      )
+    );
   });
 
   beforeEach(async () => {
     [swrToken, swdToken] = await deployTokens({
       settings,
-      validatorsOracle,
-      pool,
-      networkConfig,
+      validatorsOracleContractAddress,
+      poolContractAddress,
     });
   });
 
@@ -123,7 +109,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       await expectRevert(
         swrToken.updateTotalRewards(ether('10'), {
-          from: validatorsOracle,
+          from: validatorsOracleContractAddress,
         }),
         'SWRToken: contract is disabled'
       );
@@ -140,7 +126,7 @@ contract('SWRToken', ([_, ...accounts]) => {
     it('validators oracle can update rewards', async () => {
       let deposit = ether('32');
       await swdToken.mint(otherAccounts[0], deposit, {
-        from: pool,
+        from: poolContractAddress,
       });
       let newTotalRewards = ether('10');
       let maintainerReward = newTotalRewards
@@ -149,7 +135,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let userReward = newTotalRewards.sub(maintainerReward);
 
       let receipt = await swrToken.updateTotalRewards(newTotalRewards, {
-        from: validatorsOracle,
+        from: validatorsOracleContractAddress,
       });
 
       expectEvent(receipt, 'RewardsUpdated', {
@@ -195,9 +181,9 @@ contract('SWRToken', ([_, ...accounts]) => {
         {
           totalRewards: ether('2.145744568757666688'),
           maintainerReward: ether('0.214574456875766668'),
-          users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
-            deposit: ether('1'),
-            reward: ether('0.060349065996309375'),
+          users: Array(validatorDepositAmount.div(ether('4')).toNumber()).fill({
+            deposit: ether('4'),
+            reward: ether('0.2413962639852375'),
           }),
         },
         {
@@ -211,21 +197,20 @@ contract('SWRToken', ([_, ...accounts]) => {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
-          validatorsOracle,
-          pool,
-          networkConfig,
+          validatorsOracleContractAddress,
+          poolContractAddress,
         });
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
           await swdToken.mint(otherAccounts[i], users[i].deposit, {
-            from: pool,
+            from: poolContractAddress,
           });
         }
 
         // update rewards
         await swrToken.updateTotalRewards(totalRewards, {
-          from: validatorsOracle,
+          from: validatorsOracleContractAddress,
         });
 
         // check maintainer reward
@@ -317,9 +302,9 @@ contract('SWRToken', ([_, ...accounts]) => {
         },
         {
           totalRewards: ether('-0.243422652'),
-          users: Array(validatorDepositAmount.div(ether('1')).toNumber()).fill({
-            deposit: ether('1'),
-            penalisedReturn: ether('0.992393042125'),
+          users: Array(validatorDepositAmount.div(ether('4')).toNumber()).fill({
+            deposit: ether('4'),
+            penalisedReturn: ether('3.9695721685'),
           }),
         },
         {
@@ -334,21 +319,20 @@ contract('SWRToken', ([_, ...accounts]) => {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
-          validatorsOracle,
-          pool,
-          networkConfig,
+          validatorsOracleContractAddress,
+          poolContractAddress,
         });
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
           await swdToken.mint(otherAccounts[i], users[i].deposit, {
-            from: pool,
+            from: poolContractAddress,
           });
         }
 
         // update penalty
         await swrToken.updateTotalRewards(totalRewards, {
-          from: validatorsOracle,
+          from: validatorsOracleContractAddress,
         });
 
         // check rewards and deposits
@@ -462,7 +446,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
         totalDeposits = totalDeposits.add(deposit);
         await swdToken.mint(otherAccounts[i], deposit, {
-          from: pool,
+          from: poolContractAddress,
         });
 
         // perform checks
@@ -513,7 +497,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let totalRewards = periodRewards;
       let rewardRate = ether('0.017396434381898118');
       let receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracle,
+        from: validatorsOracleContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -560,7 +544,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       });
       // user3 creates new deposit with 4 SWD
       await swdToken.mint(otherAccounts[3], ether('4'), {
-        from: pool,
+        from: poolContractAddress,
       });
       totalDeposits = totalDeposits.add(ether('4'));
 
@@ -590,7 +574,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       totalRewards = totalRewards.add(periodRewards);
       rewardRate = ether('-0.006709337416525086');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracle,
+        from: validatorsOracleContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -662,7 +646,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
       rewardRate = ether('0.041474938886391011');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracle,
+        from: validatorsOracleContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -714,14 +698,14 @@ contract('SWRToken', ([_, ...accounts]) => {
       });
 
       await swdToken.mint(sender1, value1, {
-        from: pool,
+        from: poolContractAddress,
       });
       await swdToken.mint(sender2, value2, {
-        from: pool,
+        from: poolContractAddress,
       });
 
       await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracle,
+        from: validatorsOracleContractAddress,
       });
     });
 

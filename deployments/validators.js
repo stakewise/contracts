@@ -1,9 +1,10 @@
-const { ethers } = require('@nomiclabs/buidler');
-const { deployProxyWithoutInitialize } = require('./common');
+const { ethers, upgrades } = require('@nomiclabs/buidler');
 
 async function deployValidators() {
   const Validators = await ethers.getContractFactory('Validators');
-  const proxy = await deployProxyWithoutInitialize(Validators);
+  const proxy = await upgrades.deployProxy(Validators, [], {
+    initializer: false,
+  });
   return proxy.address;
 }
 

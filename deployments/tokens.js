@@ -1,52 +1,71 @@
-const { scripts } = require('@openzeppelin/cli');
-const { BN } = require('@openzeppelin/test-helpers');
+const { ethers, upgrades } = require('@nomiclabs/buidler');
 
-async function deployDAI(initialHolder, params = {}) {
-  const ERC20Mock = artifacts.require('ERC20MockUpgradeSafe');
-  const name = 'DAI';
-  const symbol = 'DAI';
-  const initialSupply = new BN(100000000).mul(new BN(10).pow(new BN(18)));
-  return ERC20Mock.new(name, symbol, initialHolder, initialSupply, params);
+async function deployAndInitializeERC20Mock(ownerAddress, name, symbol) {
+  const ERC20Mock = await ethers.getContractFactory('ERC20Mock');
+  const erc20Mock = await ERC20Mock.deploy();
+  await erc20Mock.initialize(
+    ownerAddress,
+    '100000000000000000000000000', // 100000000 ETH
+    name,
+    symbol
+  );
+  return erc20Mock.address;
 }
 
-async function deploySWDTokenProxy({
-  swrTokenProxy,
-  settingsProxy,
-  poolProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'SWDToken',
-    methodName: 'initialize',
-    methodArgs: [swrTokenProxy, settingsProxy, poolProxy],
-    salt,
-    ...networkConfig,
+async function deploySWDToken() {
+  const SWDToken = await ethers.getContractFactory('SWDToken');
+  const proxy = await upgrades.deployProxy(SWDToken, [], {
+    initializer: false,
+    unsafeAllowCustomTypes: true,
   });
-
   return proxy.address;
 }
 
-async function deploySWRTokenProxy({
-  swdTokenProxy,
-  settingsProxy,
-  validatorsOracleProxy,
-  salt,
-  networkConfig,
-}) {
-  const proxy = await scripts.create({
-    contractAlias: 'SWRToken',
-    methodName: 'initialize',
-    methodArgs: [swdTokenProxy, settingsProxy, validatorsOracleProxy],
-    salt,
-    ...networkConfig,
-  });
+async function initializeSWDToken(
+  swdTokenContractAddress,
+  swrTokenContractAddress,
+  settingsContractAddress,
+  poolContractAddress
+) {
+  let SWDToken = await ethers.getContractFactory('SWDToken');
+  SWDToken = SWDToken.attach(swdTokenContractAddress);
 
+  return SWDToken.initialize(
+    swrTokenContractAddress,
+    settingsContractAddress,
+    poolContractAddress
+  );
+}
+
+async function deploySWRToken() {
+  const SWRToken = await ethers.getContractFactory('SWRToken');
+  const proxy = await upgrades.deployProxy(SWRToken, [], {
+    initializer: false,
+    unsafeAllowCustomTypes: true,
+  });
   return proxy.address;
+}
+
+async function initializeSWRToken(
+  swrTokenContractAddress,
+  swdTokenContractAddress,
+  settingsContractAddress,
+  validatorsOracleContractAddress
+) {
+  let SWRToken = await ethers.getContractFactory('SWRToken');
+  SWRToken = SWRToken.attach(swrTokenContractAddress);
+
+  return SWRToken.initialize(
+    swdTokenContractAddress,
+    settingsContractAddress,
+    validatorsOracleContractAddress
+  );
 }
 
 module.exports = {
-  deployDAI,
-  deploySWDTokenProxy,
-  deploySWRTokenProxy,
+  deployAndInitializeERC20Mock,
+  deploySWDToken,
+  initializeSWDToken,
+  deploySWRToken,
+  initializeSWRToken,
 };

@@ -1,5 +1,5 @@
 const { BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
@@ -31,15 +31,15 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
 
   beforeEach(async () => {
     let {
-      solos: solosProxy,
-      operators: operatorsProxy,
-    } = await deployAllProxies({
+      solos: solosContractAddress,
+      operators: operatorsContractAddress,
+    } = await deployAllContracts({
       initialAdmin: admin,
       vrcContractAddress: vrc.options.address,
     });
-    solos = await Solos.at(solosProxy);
+    solos = await Solos.at(solosContractAddress);
 
-    let operators = await Operators.at(operatorsProxy);
+    let operators = await Operators.at(operatorsContractAddress);
     await operators.addOperator(operator, { from: admin });
 
     // create new solo

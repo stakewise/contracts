@@ -1,5 +1,5 @@
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
@@ -28,7 +28,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
     let {
       pool: poolContractAddress,
       operators: operatorsContractAddress,
-    } = await deployAllProxies({
+    } = await deployAllContracts({
       initialAdmin: admin,
       vrcContractAddress: vrc.options.address,
     });

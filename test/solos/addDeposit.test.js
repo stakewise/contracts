@@ -5,7 +5,7 @@ const {
   constants,
   expectRevert,
 } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const { checkCollectorBalance, checkSoloDepositAdded } = require('../utils');
 
@@ -24,7 +24,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     let {
       solos: solosContractAddress,
       settings: settingsContractAddress,
-    } = await deployAllProxies({
+    } = await deployAllContracts({
       initialAdmin: admin,
     });
     solos = await Solos.at(solosContractAddress);

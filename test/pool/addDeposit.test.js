@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { BN, ether, expectRevert } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const {
   getDepositAmount,
@@ -21,7 +21,7 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       pool: poolContractAddress,
       settings: settingsContractAddress,
       swdToken: swdTokenContractAddress,
-    } = await deployAllProxies({ initialAdmin: admin });
+    } = await deployAllContracts({ initialAdmin: admin });
     pool = await Pool.at(poolContractAddress);
     settings = await Settings.at(settingsContractAddress);
     swdToken = await SWDToken.at(swdTokenContractAddress);

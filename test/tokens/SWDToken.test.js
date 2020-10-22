@@ -7,74 +7,61 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeOperators,
 } = require('../../deployments/access');
-const { deploySettingsProxy } = require('../../deployments/settings');
+const { deployAndInitializeSettings } = require('../../deployments/settings');
 const {
-  deploySWDTokenProxy,
-  deploySWRTokenProxy,
+  deploySWDToken,
+  deploySWRToken,
+  initializeSWDToken,
+  initializeSWRToken,
 } = require('../../deployments/tokens');
-const { removeNetworkFile, checkSWDToken } = require('../utils');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-  calculateContractAddress,
-} = require('../../deployments/common');
+const { checkSWDToken } = require('../utils');
 
 const SWDToken = artifacts.require('SWDToken');
 const Settings = artifacts.require('Settings');
 
 contract('SWDToken', ([_, ...accounts]) => {
-  let networkConfig, settings, swdToken;
-  let [pool, admin, validatorsOracle, sender1, sender2] = accounts;
+  let settings, swdToken;
+  let [
+    poolContractAddress,
+    admin,
+    validatorsOracleContractAddress,
+    sender1,
+    sender2,
+  ] = accounts;
 
   before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-    let adminsProxy = await deployAdminsProxy({
-      networkConfig,
-      initialAdmin: admin,
-    });
-    let operatorsProxy = await deployOperatorsProxy({
-      networkConfig,
-      adminsProxy,
-    });
+    let adminsContractAddress = await deployAndInitializeAdmins(admin);
+    let operatorsContractAddress = await deployAndInitializeOperators(
+      adminsContractAddress
+    );
     settings = await Settings.at(
-      await deploySettingsProxy({ networkConfig, adminsProxy, operatorsProxy })
+      await deployAndInitializeSettings(
+        adminsContractAddress,
+        operatorsContractAddress
+      )
     );
   });
 
-  after(() => {
-    removeNetworkFile(networkConfig.network);
-  });
-
   beforeEach(async () => {
-    let { salt: swrTokenSalt } = await calculateContractAddress({
-      networkConfig,
-    });
+    const swdTokenContractAddress = await deploySWDToken();
+    const swrTokenContractAddress = await deploySWRToken();
+    await initializeSWDToken(
+      swdTokenContractAddress,
+      swrTokenContractAddress,
+      settings.address,
+      poolContractAddress
+    );
+    await initializeSWRToken(
+      swrTokenContractAddress,
+      swdTokenContractAddress,
+      settings.address,
+      validatorsOracleContractAddress
+    );
 
-    let {
-      salt: swdTokenSalt,
-      contractAddress: swdTokenCalcProxy,
-    } = await calculateContractAddress({ networkConfig });
-
-    let swrTokenProxy = await deploySWRTokenProxy({
-      swdTokenProxy: swdTokenCalcProxy,
-      settingsProxy: settings.address,
-      validatorsOracleProxy: validatorsOracle,
-      salt: swrTokenSalt,
-      networkConfig,
-    });
-
-    let swdTokenProxy = await deploySWDTokenProxy({
-      swrTokenProxy,
-      settingsProxy: settings.address,
-      poolProxy: pool,
-      salt: swdTokenSalt,
-      networkConfig,
-    });
-    swdToken = await SWDToken.at(swdTokenProxy);
+    swdToken = await SWDToken.at(swdTokenContractAddress);
   });
 
   describe('mint', () => {
@@ -97,7 +84,7 @@ contract('SWDToken', ([_, ...accounts]) => {
     it('pool can mint SWD tokens', async () => {
       let value = ether('10');
       let receipt = await swdToken.mint(sender1, value, {
-        from: pool,
+        from: poolContractAddress,
       });
       expectEvent(receipt, 'Transfer', {
         from: constants.ZERO_ADDRESS,
@@ -120,7 +107,7 @@ contract('SWDToken', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       await swdToken.mint(sender1, value, {
-        from: pool,
+        from: poolContractAddress,
       });
     });
 
@@ -143,7 +130,7 @@ contract('SWDToken', ([_, ...accounts]) => {
     it('cannot burn more than SWD balance', async () => {
       await expectRevert(
         swdToken.burn(sender1, value.add(ether('1')), {
-          from: pool,
+          from: poolContractAddress,
         }),
         'SWDToken: burn amount exceeds balance'
       );
@@ -159,7 +146,7 @@ contract('SWDToken', ([_, ...accounts]) => {
 
     it('pool can burn SWD tokens', async () => {
       let receipt = await swdToken.burn(sender1, value, {
-        from: pool,
+        from: poolContractAddress,
       });
       expectEvent(receipt, 'Transfer', {
         from: sender1,
@@ -182,7 +169,7 @@ contract('SWDToken', ([_, ...accounts]) => {
 
     beforeEach(async () => {
       await swdToken.mint(sender1, value, {
-        from: pool,
+        from: poolContractAddress,
       });
     });
 

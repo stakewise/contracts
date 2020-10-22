@@ -2,9 +2,9 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SignedSafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SignedSafeMath.sol";
+import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "../interfaces/ISWDToken.sol";
 import "../interfaces/ISWRToken.sol";
 import "../interfaces/ISettings.sol";
@@ -37,8 +37,8 @@ contract SWDToken is ISWDToken, BaseERC20 {
     ISettings private settings;
 
     /**
-      * @dev See {SWDToken-initialize}.
-      */
+     * @dev See {SWDToken-initialize}.
+     */
     function initialize(address _swrToken, address _settings, address _pool) public override initializer {
         super.initialize("StakeWise Deposit Token", "SWD");
         swrToken = ISWRToken(_swrToken);
@@ -76,8 +76,8 @@ contract SWDToken is ISWDToken, BaseERC20 {
     }
 
     /**
-    * @dev See {ISWDToken-depositOf}.
-    */
+     * @dev See {ISWDToken-depositOf}.
+     */
     function depositOf(address account) external view override returns (uint256) {
         return deposits[account];
     }

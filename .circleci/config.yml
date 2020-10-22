@@ -62,7 +62,7 @@ jobs:
           at: /tmp/workspace
       - run:
           name: Run tests
-          command: yarn test
+          command: yarn test:gas
       - run:
           name: Report gas changes
           command: npx codechecks

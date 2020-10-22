@@ -7,7 +7,7 @@ const {
   constants,
   balance,
 } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const { checkCollectorBalance, checkSolo } = require('../utils');
@@ -37,7 +37,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     let {
       solos: solosContractAddress,
       operators: operatorsContractAddress,
-    } = await deployAllProxies({
+    } = await deployAllContracts({
       initialAdmin: admin,
       vrcContractAddress: vrc.options.address,
     });

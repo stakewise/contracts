@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
@@ -18,12 +17,6 @@ function getDepositAmount({
   return randomDeposit.sub(
     randomDeposit.mod(new BN(initialSettings.minDepositUnit))
   );
-}
-
-function removeNetworkFile(network) {
-  if (fs.existsSync(`.openzeppelin/${network}.json`)) {
-    fs.unlinkSync(`.openzeppelin/${network}.json`);
-  }
 }
 
 async function checkSolo({
@@ -163,7 +156,6 @@ module.exports = {
   checkSolo,
   checkSoloDepositAdded,
   checkValidatorRegistered,
-  removeNetworkFile,
   getDepositAmount,
   checkPoolCollectedAmount,
   checkSWDToken,
