@@ -42,7 +42,8 @@ jobs:
       - persist_to_workspace:
           root: /tmp/workspace
           paths:
-            - build
+            - artifacts
+            - cache
 
   lint:
     executor: default
