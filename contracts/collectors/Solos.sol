@@ -22,7 +22,7 @@ contract Solos is ISolos, Initializable {
     using SafeMath for uint256;
 
     // @dev Maps ID of the solo to its information.
-    mapping(bytes32 => Solo) private _solos;
+    mapping(bytes32 => Solo) public override solos;
 
     // @dev Address of the VRC (deployed by Ethereum).
     IValidatorRegistration private validatorRegistration;
@@ -35,14 +35,6 @@ contract Solos is ISolos, Initializable {
 
     // @dev Address of the Validators contract.
     IValidators private validators;
-
-    /**
-     * @dev See {ISolos-solos}.
-     */
-    function solos(bytes32 _soloId) external view override returns (uint256 amount, bytes32 withdrawalCredentials) {
-        Solo storage solo = _solos[_soloId];
-        return (solo.amount, solo.withdrawalCredentials);
-    }
 
     /**
      * @dev See {ISolos-validatorRegistrationContract}.
@@ -80,7 +72,7 @@ contract Solos is ISolos, Initializable {
         require(msg.value > 0 && msg.value.mod(validatorDepositAmount) == 0, "Solos: invalid deposit amount");
 
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
-        Solo storage solo = _solos[soloId];
+        Solo storage solo = solos[soloId];
 
         // update solo data
         solo.amount = solo.amount.add(msg.value);
@@ -98,7 +90,7 @@ contract Solos is ISolos, Initializable {
     function cancelDeposit(bytes32 _withdrawalCredentials, uint256 _amount) external override {
         // update balance
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
-        Solo storage solo = _solos[soloId];
+        Solo storage solo = solos[soloId];
         solo.amount = solo.amount.sub(_amount, "Solos: insufficient balance");
         require(_amount > 0 && solo.amount.mod(settings.validatorDepositAmount()) == 0, "Solos: invalid cancel amount");
 
@@ -124,7 +116,7 @@ contract Solos is ISolos, Initializable {
 
         // update solo balance
         uint256 validatorDepositAmount = settings.validatorDepositAmount();
-        Solo storage solo = _solos[_soloId];
+        Solo storage solo = solos[_soloId];
         solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
 
         // register validator

@@ -33,9 +33,6 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md}": [
-      "prettier --write"
-    ],
     "*.sol": [
       "solhint --max-warnings 0 'contracts/**/*.sol'"
     ]
