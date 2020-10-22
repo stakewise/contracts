@@ -72,6 +72,7 @@ task('test')
         gray(`Enabling ${yellow('gas')} reports, tests will run slower`)
       );
       bre.config.gasReporter.enabled = true;
+      bre.config.mocha.timeout = 180000;
     }
 
     // suppress logs for tests
@@ -97,14 +98,12 @@ module.exports = {
       blockGasLimit: 0x1fffffffffffff,
       gasPrice: GAS_PRICE,
       allowUnlimitedContractSize: true,
-      timeout: 180000,
     },
     local: {
       url: 'http://localhost:8545',
       blockGasLimit: 0x1fffffffffffff,
       gasPrice: GAS_PRICE,
       allowUnlimitedContractSize: true,
-      timeout: 180000,
     },
   },
   throwOnTransactionFailures: true,
