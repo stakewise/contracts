@@ -25,7 +25,7 @@ contract Solos is ISolos, Initializable {
     mapping(bytes32 => Solo) public override solos;
 
     // @dev Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration private validatorRegistration;
+    IValidatorRegistration public override validatorRegistration;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -35,13 +35,6 @@ contract Solos is ISolos, Initializable {
 
     // @dev Address of the Validators contract.
     IValidators private validators;
-
-    /**
-     * @dev See {ISolos-validatorRegistrationContract}.
-     */
-    function validatorRegistrationContract() external view override returns (address) {
-        return address(validatorRegistration);
-    }
 
     /**
      * @dev See {ISolos-initialize}.
