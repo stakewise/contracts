@@ -89,7 +89,7 @@ contract SWDToken is ISWDToken, BaseERC20 {
         require(sender != address(0), "SWDToken: transfer from the zero address");
         require(recipient != address(0), "SWDToken: transfer to the zero address");
         require(amount > 0 && balanceOf(sender) >= amount, "SWDToken: invalid amount");
-        require(!settings.pausedContracts(address(this)), "SWDToken: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "SWDToken: contract is paused");
 
         // start calculating sender rewards with updated deposit amount
         swrToken.updateRewardCheckpoint(sender);

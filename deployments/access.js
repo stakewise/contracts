@@ -24,8 +24,35 @@ async function deployAndInitializeManagers(adminsContractAddress) {
   return proxy.address;
 }
 
+async function deployValidatorsOracle() {
+  const ValidatorsOracle = await ethers.getContractFactory('ValidatorsOracle');
+  const proxy = await upgrades.deployProxy(ValidatorsOracle, [], {
+    unsafeAllowCustomTypes: true,
+    initializer: false,
+  });
+  return proxy.address;
+}
+
+async function initializeValidatorsOracle(
+  validatorsOracleContractAddress,
+  adminsContractAddress,
+  settingsContractAddress,
+  swrTokenContractAddress
+) {
+  let ValidatorsOracle = await ethers.getContractFactory('ValidatorsOracle');
+  ValidatorsOracle = ValidatorsOracle.attach(validatorsOracleContractAddress);
+
+  return ValidatorsOracle.initialize(
+    adminsContractAddress,
+    settingsContractAddress,
+    swrTokenContractAddress
+  );
+}
+
 module.exports = {
   deployAndInitializeAdmins,
   deployAndInitializeOperators,
   deployAndInitializeManagers,
+  deployValidatorsOracle,
+  initializeValidatorsOracle,
 };

@@ -111,7 +111,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         swrToken.updateTotalRewards(ether('10'), {
           from: validatorsOracleContractAddress,
         }),
-        'SWRToken: contract is disabled'
+        'SWRToken: contract is paused'
       );
 
       await checkSWRToken({
@@ -770,7 +770,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         swrToken.transfer(sender2, value1, {
           from: sender1,
         }),
-        'SWRToken: contract is disabled'
+        'SWRToken: contract is paused'
       );
 
       await checkSWRToken({

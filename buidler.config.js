@@ -126,6 +126,7 @@ module.exports = {
       'ISWRToken',
       'IValidatorRegistration',
       'IValidators',
+      'IValidatorsOracle',
       'ISolos',
       'IPool',
     ],

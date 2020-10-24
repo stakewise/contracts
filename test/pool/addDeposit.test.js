@@ -68,7 +68,7 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
         from: sender1,
         value: ether('1'),
       }),
-      'Pool: contract is disabled'
+      'Pool: contract is paused'
     );
     await checkCollectorBalance(pool);
     await checkPoolCollectedAmount(pool);

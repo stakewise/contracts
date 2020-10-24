@@ -79,7 +79,7 @@ contract(
             from: solosContractAddress,
           }
         ),
-        'Validators: contract is disabled'
+        'Validators: contract is paused'
       );
     });
   }

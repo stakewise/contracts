@@ -5,6 +5,8 @@ const {
   deployAndInitializeAdmins,
   deployAndInitializeManagers,
   deployAndInitializeOperators,
+  deployValidatorsOracle,
+  initializeValidatorsOracle,
 } = require('./access');
 const { deployValidators, initializeValidators } = require('./validators');
 const { deployAndInitializeSettings, initialSettings } = require('./settings');
@@ -31,7 +33,6 @@ function log(message) {
 async function deployAllContracts({
   initialAdmin = initialSettings.admin,
   vrcContractAddress = initialSettings.VRC,
-  validatorsOracleContractAddress = initialSettings.validatorsOracleContractAddress,
 } = {}) {
   // Deploy and initialize Admins contract
   const adminsContractAddress = await deployAndInitializeAdmins(initialAdmin);
@@ -81,6 +82,15 @@ async function deployAllContracts({
   const swrTokenContractAddress = await deploySWRToken();
   log(white(`Deployed SWR Token contract: ${green(swrTokenContractAddress)}`));
 
+  const validatorsOracleContractAddress = await deployValidatorsOracle();
+  log(
+    white(
+      `Deployed Validators Oracle contract: ${green(
+        validatorsOracleContractAddress
+      )}`
+    )
+  );
+
   // Initialize contracts
   await initializeValidators(
     validatorsContractAddress,
@@ -125,12 +135,21 @@ async function deployAllContracts({
   );
   log(white('Initialized SWR Token contract'));
 
+  await initializeValidatorsOracle(
+    validatorsOracleContractAddress,
+    adminsContractAddress,
+    settingsContractAddress,
+    swrTokenContractAddress
+  );
+  log(white('Initialized Validators Oracle contract'));
+
   return {
     admins: adminsContractAddress,
     operators: operatorsContractAddress,
     managers: managersContractAddress,
     settings: settingsContractAddress,
     validators: validatorsContractAddress,
+    validatorsOracle: validatorsOracleContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
     swdToken: swdTokenContractAddress,

@@ -90,7 +90,7 @@ contract SWRToken is ISWRToken, BaseERC20 {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "SWRToken: transfer from the zero address");
         require(recipient != address(0), "SWRToken: transfer to the zero address");
-        require(!settings.pausedContracts(address(this)), "SWRToken: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "SWRToken: contract is paused");
 
         uint256 senderReward = balanceOf(sender);
         require(amount > 0 && senderReward >= amount, "SWRToken: invalid amount");
@@ -114,7 +114,7 @@ contract SWRToken is ISWRToken, BaseERC20 {
      */
     function updateTotalRewards(int256 newTotalRewards) external override {
         require(msg.sender == validatorsOracle, "SWRToken: permission denied");
-        require(!settings.pausedContracts(address(this)), "SWRToken: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "SWRToken: contract is paused");
 
         int256 periodRewards = newTotalRewards.sub(totalRewards);
         int256 maintainerReward;

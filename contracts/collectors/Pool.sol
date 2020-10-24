@@ -69,7 +69,7 @@ contract Pool is IPool, Initializable {
     function addDeposit() external payable override {
         require(msg.value > 0 && msg.value.mod(settings.minDepositUnit()) == 0, "Pool: invalid deposit amount");
         require(msg.value <= settings.maxDepositAmount(), "Pool: deposit amount is too large");
-        require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
 
         // update pool collected amount
         collectedAmount = collectedAmount.add(msg.value);
@@ -84,7 +84,7 @@ contract Pool is IPool, Initializable {
     function withdrawDeposit(uint256 _amount) external override {
         require(collectedAmount.mod(settings.validatorDepositAmount()) >= _amount, "Pool: insufficient collected amount");
         require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Pool: invalid withdrawal amount");
-        require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
 
         // burn sender deposit tokens
         swdToken.burn(msg.sender, _amount);

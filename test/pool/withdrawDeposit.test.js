@@ -80,7 +80,7 @@ contract('Pool (withdraw deposit)', ([_, admin, sender1, sender2]) => {
 
     await expectRevert(
       pool.withdrawDeposit(deposit2, { from: sender1 }),
-      'Pool: contract is disabled'
+      'Pool: contract is paused'
     );
     await checkCollectorBalance(pool, totalSupply);
     await checkPoolCollectedAmount(pool, totalSupply);

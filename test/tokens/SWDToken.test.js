@@ -234,7 +234,7 @@ contract('SWDToken', ([_, ...accounts]) => {
         swdToken.transfer(sender2, value, {
           from: sender1,
         }),
-        'SWDToken: contract is disabled'
+        'SWDToken: contract is paused'
       );
 
       await checkSWDToken({

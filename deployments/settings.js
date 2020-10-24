@@ -7,8 +7,6 @@ const initialSettings = {
   admin: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   allContractsPaused: false,
-  // TODO: remove after implementing oracle
-  validatorsOracleContractAddress: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   // TODO: update to mainnet address
   VRC: '0x07b39F4fDE4A38bACe212b546dAc87C58DfE3fDC',
   withdrawalCredentials:
