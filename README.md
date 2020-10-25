@@ -4,10 +4,10 @@
 [![CodeCov](https://codecov.io/gh/stakewise/contracts/branch/master/graph/badge.svg)](https://codecov.io/gh/stakewise/contracts)
 [![Discord](https://user-images.githubusercontent.com/7288322/34471967-1df7808a-efbb-11e7-9088-ed0b04151291.png)](https://discord.gg/2BSdr2g)
 
-The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
+The StakeWise smart contracts for tokenized staking and non-custodial validators.
 
 - **Extensible:** It is possible to create your own contract with logic for accumulating validator deposit amount.
-- **Upgradable:** By using [OpenZeppelin SDK](https://github.com/OpenZeppelin/openzeppelin-sdk), it's possible to fix bugs and critical issues when the contracts are deployed to the production network.
+- **Upgradable:** By using [OpenZeppelin Upgrades](https://github.com/OpenZeppelin/openzeppelin-upgrades), it's possible to fix bugs and critical issues when the contracts are deployed to the production network.
 - **Role-based access:** By having [Operators](./contracts/access/Operators.sol), [Admins](./contracts/access/Admins.sol), and [Managers](./contracts/access/Managers.sol) contracts, it is possible to restrict user capabilities.
 - **Integration friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
 - **Configurable:** Any global setting can be managed through the separate [Settings](./contracts/Settings.sol) contract.
@@ -17,51 +17,35 @@ The StakeWise smart contracts for provisioning Ethereum 2.0 Validators.
 1. Install dependencies:
 
    ```shell script
-   yarn install --prod
-   ```
-
-2. Compile contracts:
-
-   ```shell script
-   yarn run compile
-   ```
-
-3. Define network parameters in `truffle-config.js`. For example:
-
-   ```javascript
-   module.exports = {
-     networks: {
-       ropsten: {
-         provider: function () {
-           return new HDWalletProvider(
-             mnemonic,
-             'https://ropsten.infura.io/v3/YOUR-PROJECT-ID'
-           );
-         },
-         network_id: '3',
-       },
-     },
-   };
-   ```
-
-4. If you are deploying to the network without `VRC`, run the following commands:
-
-   ```shell script
    yarn install
-   truffle exec scripts/deployVRC.js --network ropsten
    ```
 
-5. Deploy contracts to the selected network:
+2. Compile optimized contracts:
 
    ```shell script
-   NETWORK=ropsten INITIAL_ADMIN=<address> VRC=<address> yarn deploy
+   yarn compile --optimizer
    ```
 
-   where `NETWORK` is the name of the network from `truffle-config.js`,
-   `INITIAL_ADMIN` is the first account capable of calling functions restricted only to admins (see [Admins contract](./contracts/access/Admins.sol)),
-   `VRC` is the address of Ethereum 2.0 [Deposit Contract](https://github.com/ethereum/eth2.0-specs/tree/dev/deposit_contract).
+3. Define network parameters in `buidler.config.js`. Learn more at [Buidler config options](https://hardhat.org/config/#available-config-options).
 
-   The network file will be created at `.openzeppelin` directory.
+4. Change [initial settings](./deployments/settings.js) accordingly.
+
+5. If you are deploying to the network without [ETH2 deposit contract](https://github.com/ethereum/eth2.0-specs/tree/dev/solidity_deposit_contract), run the following commands:
+
+   ```shell script
+   yarn deployVRC --network rinkeby
+   ```
+
+6. If you are deploying to the network without `DAI contract`, run the following commands:
+   ```shell script
+   yarn deployDAI --network rinkeby
+   ```
+
+7. Deploy StakeWise contracts to the selected network:
+
+   ```shell script
+   yarn deploy --network rinkeby
+   ```
 
 ## Documentation
 
