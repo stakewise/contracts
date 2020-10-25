@@ -5,8 +5,8 @@ const {
   deployAndInitializeAdmins,
   deployAndInitializeManagers,
   deployAndInitializeOperators,
-  deployValidatorsOracle,
-  initializeValidatorsOracle,
+  deployBalanceReporters,
+  initializeBalanceReporters,
 } = require('./access');
 const { deployValidators, initializeValidators } = require('./validators');
 const { deployAndInitializeSettings, initialSettings } = require('./settings');
@@ -82,11 +82,11 @@ async function deployAllContracts({
   const swrTokenContractAddress = await deploySWRToken();
   log(white(`Deployed SWR Token contract: ${green(swrTokenContractAddress)}`));
 
-  const validatorsOracleContractAddress = await deployValidatorsOracle();
+  const balanceReportersContractAddress = await deployBalanceReporters();
   log(
     white(
-      `Deployed Validators Oracle contract: ${green(
-        validatorsOracleContractAddress
+      `Deployed Balance Reporters contract: ${green(
+        balanceReportersContractAddress
       )}`
     )
   );
@@ -131,17 +131,17 @@ async function deployAllContracts({
     swrTokenContractAddress,
     swdTokenContractAddress,
     settingsContractAddress,
-    validatorsOracleContractAddress
+    balanceReportersContractAddress
   );
   log(white('Initialized SWR Token contract'));
 
-  await initializeValidatorsOracle(
-    validatorsOracleContractAddress,
+  await initializeBalanceReporters(
+    balanceReportersContractAddress,
     adminsContractAddress,
     settingsContractAddress,
     swrTokenContractAddress
   );
-  log(white('Initialized Validators Oracle contract'));
+  log(white('Initialized Balance Reporters contract'));
 
   return {
     admins: adminsContractAddress,
@@ -149,7 +149,7 @@ async function deployAllContracts({
     managers: managersContractAddress,
     settings: settingsContractAddress,
     validators: validatorsContractAddress,
-    validatorsOracle: validatorsOracleContractAddress,
+    balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
     swdToken: swdTokenContractAddress,

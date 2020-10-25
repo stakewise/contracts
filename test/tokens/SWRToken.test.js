@@ -30,7 +30,7 @@ const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 async function deployTokens({
   settings,
-  validatorsOracleContractAddress,
+  balanceReportersContractAddress,
   poolContractAddress,
 }) {
   const swdTokenContractAddress = await deploySWDToken();
@@ -45,7 +45,7 @@ async function deployTokens({
     swrTokenContractAddress,
     swdTokenContractAddress,
     settings.address,
-    validatorsOracleContractAddress
+    balanceReportersContractAddress
   );
 
   return [
@@ -59,7 +59,7 @@ contract('SWRToken', ([_, ...accounts]) => {
   let [
     poolContractAddress,
     admin,
-    validatorsOracleContractAddress,
+    balanceReportersContractAddress,
     ...otherAccounts
   ] = accounts;
 
@@ -79,7 +79,7 @@ contract('SWRToken', ([_, ...accounts]) => {
   beforeEach(async () => {
     [swrToken, swdToken] = await deployTokens({
       settings,
-      validatorsOracleContractAddress,
+      balanceReportersContractAddress,
       poolContractAddress,
     });
   });
@@ -101,29 +101,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       });
     });
 
-    it('cannot update rewards when contract paused', async () => {
-      await settings.setPausedContracts(swrToken.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(swrToken.address)).equal(true);
-
-      await expectRevert(
-        swrToken.updateTotalRewards(ether('10'), {
-          from: validatorsOracleContractAddress,
-        }),
-        'SWRToken: contract is paused'
-      );
-
-      await checkSWRToken({
-        swrToken,
-        totalSupply: new BN(0),
-        account: otherAccounts[0],
-        balance: new BN(0),
-        reward: new BN(0),
-      });
-    });
-
-    it('validators oracle can update rewards', async () => {
+    it('balance reporters can update rewards', async () => {
       let deposit = ether('32');
       await swdToken.mint(otherAccounts[0], deposit, {
         from: poolContractAddress,
@@ -135,7 +113,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let userReward = newTotalRewards.sub(maintainerReward);
 
       let receipt = await swrToken.updateTotalRewards(newTotalRewards, {
-        from: validatorsOracleContractAddress,
+        from: balanceReportersContractAddress,
       });
 
       expectEvent(receipt, 'RewardsUpdated', {
@@ -197,7 +175,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
-          validatorsOracleContractAddress,
+          balanceReportersContractAddress,
           poolContractAddress,
         });
 
@@ -210,7 +188,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
         // update rewards
         await swrToken.updateTotalRewards(totalRewards, {
-          from: validatorsOracleContractAddress,
+          from: balanceReportersContractAddress,
         });
 
         // check maintainer reward
@@ -319,7 +297,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         // redeploy tokens
         [swrToken, swdToken] = await deployTokens({
           settings,
-          validatorsOracleContractAddress,
+          balanceReportersContractAddress,
           poolContractAddress,
         });
 
@@ -332,7 +310,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
         // update penalty
         await swrToken.updateTotalRewards(totalRewards, {
-          from: validatorsOracleContractAddress,
+          from: balanceReportersContractAddress,
         });
 
         // check rewards and deposits
@@ -497,7 +475,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let totalRewards = periodRewards;
       let rewardRate = ether('0.017396434381898118');
       let receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracleContractAddress,
+        from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -574,7 +552,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       totalRewards = totalRewards.add(periodRewards);
       rewardRate = ether('-0.006709337416525086');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracleContractAddress,
+        from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -646,7 +624,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
       rewardRate = ether('0.041474938886391011');
       receipt = await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracleContractAddress,
+        from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -705,7 +683,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       });
 
       await swrToken.updateTotalRewards(totalRewards, {
-        from: validatorsOracleContractAddress,
+        from: balanceReportersContractAddress,
       });
     });
 

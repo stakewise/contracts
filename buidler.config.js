@@ -117,6 +117,7 @@ module.exports = {
     path: './abi',
     only: [
       'IAdmins',
+      'IBalanceReporters',
       'IManagers',
       'IOperators',
       'IPayments',
@@ -126,7 +127,6 @@ module.exports = {
       'ISWRToken',
       'IValidatorRegistration',
       'IValidators',
-      'IValidatorsOracle',
       'ISolos',
       'IPool',
     ],

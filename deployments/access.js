@@ -24,25 +24,25 @@ async function deployAndInitializeManagers(adminsContractAddress) {
   return proxy.address;
 }
 
-async function deployValidatorsOracle() {
-  const ValidatorsOracle = await ethers.getContractFactory('ValidatorsOracle');
-  const proxy = await upgrades.deployProxy(ValidatorsOracle, [], {
+async function deployBalanceReporters() {
+  const BalanceReporters = await ethers.getContractFactory('BalanceReporters');
+  const proxy = await upgrades.deployProxy(BalanceReporters, [], {
     unsafeAllowCustomTypes: true,
     initializer: false,
   });
   return proxy.address;
 }
 
-async function initializeValidatorsOracle(
-  validatorsOracleContractAddress,
+async function initializeBalanceReporters(
+  balanceReportersContractAddress,
   adminsContractAddress,
   settingsContractAddress,
   swrTokenContractAddress
 ) {
-  let ValidatorsOracle = await ethers.getContractFactory('ValidatorsOracle');
-  ValidatorsOracle = ValidatorsOracle.attach(validatorsOracleContractAddress);
+  let BalanceReporters = await ethers.getContractFactory('BalanceReporters');
+  BalanceReporters = BalanceReporters.attach(balanceReportersContractAddress);
 
-  return ValidatorsOracle.initialize(
+  return BalanceReporters.initialize(
     adminsContractAddress,
     settingsContractAddress,
     swrTokenContractAddress
@@ -53,6 +53,6 @@ module.exports = {
   deployAndInitializeAdmins,
   deployAndInitializeOperators,
   deployAndInitializeManagers,
-  deployValidatorsOracle,
-  initializeValidatorsOracle,
+  deployBalanceReporters,
+  initializeBalanceReporters,
 };

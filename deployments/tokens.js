@@ -50,7 +50,7 @@ async function initializeSWRToken(
   swrTokenContractAddress,
   swdTokenContractAddress,
   settingsContractAddress,
-  validatorsOracleContractAddress
+  balanceReportersContractAddress
 ) {
   let SWRToken = await ethers.getContractFactory('SWRToken');
   SWRToken = SWRToken.attach(swrTokenContractAddress);
@@ -58,7 +58,7 @@ async function initializeSWRToken(
   return SWRToken.initialize(
     swdTokenContractAddress,
     settingsContractAddress,
-    validatorsOracleContractAddress
+    balanceReportersContractAddress
   );
 }
 

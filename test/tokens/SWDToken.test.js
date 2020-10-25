@@ -27,7 +27,7 @@ contract('SWDToken', ([_, ...accounts]) => {
   let [
     poolContractAddress,
     admin,
-    validatorsOracleContractAddress,
+    balanceReportersContractAddress,
     sender1,
     sender2,
   ] = accounts;
@@ -58,7 +58,7 @@ contract('SWDToken', ([_, ...accounts]) => {
       swrTokenContractAddress,
       swdTokenContractAddress,
       settings.address,
-      validatorsOracleContractAddress
+      balanceReportersContractAddress
     );
 
     swdToken = await SWDToken.at(swdTokenContractAddress);

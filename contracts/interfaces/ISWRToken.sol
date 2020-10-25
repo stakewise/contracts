@@ -19,11 +19,11 @@ interface ISWRToken is IERC20 {
     }
 
     /**
-    * @dev Event for tracking rewards update by validators oracle.
+    * @dev Event for tracking rewards update by balance reporters.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardRate - calculated reward rate used for account reward calculation.
-    * @param updateTimestamp - last rewards update timestamp by validators oracle.
+    * @param updateTimestamp - last rewards update timestamp by balance reporters.
     */
     event RewardsUpdated(
         int256 periodRewards,
@@ -36,9 +36,9 @@ interface ISWRToken is IERC20 {
     * @dev Constructor for initializing the SWRToken contract.
     * @param _swdToken - address of the SWDToken contract.
     * @param _settings - address of the Settings contract.
-    * @param _validatorsOracle - address of the Validators Oracle contract.
+    * @param _balanceReporters - address of the BalanceReporters contract.
     */
-    function initialize(address _swdToken, address _settings, address _validatorsOracle) external;
+    function initialize(address _swdToken, address _settings, address _balanceReporters) external;
 
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
@@ -66,7 +66,7 @@ interface ISWRToken is IERC20 {
 
     /**
     * @dev Function for updating validators total rewards.
-    * Can only be called by Validators Oracle contract.
+    * Can only be called by Balance Reporters contract.
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(int256 newTotalRewards) external;

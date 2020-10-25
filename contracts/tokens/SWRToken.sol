@@ -21,7 +21,7 @@ contract SWRToken is ISWRToken, BaseERC20 {
     using SafeCast for uint256;
     using SafeCast for int256;
 
-    // @dev Last rewards update timestamp by validators oracle.
+    // @dev Last rewards update timestamp by balance reporters.
     uint256 public override updateTimestamp;
 
     // @dev Total amount of rewards. Can be negative in case of penalties.
@@ -36,8 +36,8 @@ contract SWRToken is ISWRToken, BaseERC20 {
     // @dev Address of the Settings contract.
     ISettings private settings;
 
-    // @dev Address of the ValidatorsOracle contract.
-    address private validatorsOracle;
+    // @dev Address of the BalanceReporters contract.
+    address private balanceReporters;
 
     // @dev Reward rate for user reward calculation. Can be negative in case of the penalties.
     int256 private rewardRate;
@@ -45,11 +45,11 @@ contract SWRToken is ISWRToken, BaseERC20 {
     /**
       * @dev See {ISWRToken-initialize}.
       */
-    function initialize(address _swdToken, address _settings, address _validatorsOracle) public override initializer {
+    function initialize(address _swdToken, address _settings, address _balanceReporters) public override initializer {
         super.initialize("StakeWise Reward Token", "SWR");
         swdToken = ISWDToken(_swdToken);
         settings = ISettings(_settings);
-        validatorsOracle = _validatorsOracle;
+        balanceReporters = _balanceReporters;
     }
 
     /**
@@ -113,8 +113,7 @@ contract SWRToken is ISWRToken, BaseERC20 {
      * @dev See {ISWRToken-updateTotalRewards}.
      */
     function updateTotalRewards(int256 newTotalRewards) external override {
-        require(msg.sender == validatorsOracle, "SWRToken: permission denied");
-        require(!settings.pausedContracts(address(this)), "SWRToken: contract is paused");
+        require(msg.sender == balanceReporters, "SWRToken: permission denied");
 
         int256 periodRewards = newTotalRewards.sub(totalRewards);
         int256 maintainerReward;
