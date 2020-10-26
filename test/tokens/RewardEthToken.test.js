@@ -15,15 +15,15 @@ const {
   initialSettings,
 } = require('../../deployments/settings');
 const {
-  deploySWDToken,
-  deploySWRToken,
-  initializeSWDToken,
-  initializeSWRToken,
+  deployStakingEthToken,
+  deployRewardEthToken,
+  initializeStakingEthToken,
+  initializeRewardEthToken,
 } = require('../../deployments/tokens');
-const { checkSWDToken, checkSWRToken } = require('../utils');
+const { checkStakingEthToken, checkRewardEthToken } = require('../utils');
 
-const SWDToken = artifacts.require('SWDToken');
-const SWRToken = artifacts.require('SWRToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
+const RewardEthToken = artifacts.require('RewardEthToken');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
@@ -33,29 +33,29 @@ async function deployTokens({
   balanceReportersContractAddress,
   poolContractAddress,
 }) {
-  const swdTokenContractAddress = await deploySWDToken();
-  const swrTokenContractAddress = await deploySWRToken();
-  await initializeSWDToken(
-    swdTokenContractAddress,
-    swrTokenContractAddress,
+  const stakingEthTokenContractAddress = await deployStakingEthToken();
+  const rewardEthTokenContractAddress = await deployRewardEthToken();
+  await initializeStakingEthToken(
+    stakingEthTokenContractAddress,
+    rewardEthTokenContractAddress,
     settings.address,
     poolContractAddress
   );
-  await initializeSWRToken(
-    swrTokenContractAddress,
-    swdTokenContractAddress,
+  await initializeRewardEthToken(
+    rewardEthTokenContractAddress,
+    stakingEthTokenContractAddress,
     settings.address,
     balanceReportersContractAddress
   );
 
   return [
-    await SWRToken.at(swrTokenContractAddress),
-    await SWDToken.at(swdTokenContractAddress),
+    await RewardEthToken.at(rewardEthTokenContractAddress),
+    await StakingEthToken.at(stakingEthTokenContractAddress),
   ];
 }
 
-contract('SWRToken', ([_, ...accounts]) => {
-  let settings, swdToken, swrToken;
+contract('RewardEthToken', ([_, ...accounts]) => {
+  let settings, stakingEthToken, rewardEthToken;
   let [
     poolContractAddress,
     admin,
@@ -77,7 +77,7 @@ contract('SWRToken', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    [swrToken, swdToken] = await deployTokens({
+    [rewardEthToken, stakingEthToken] = await deployTokens({
       settings,
       balanceReportersContractAddress,
       poolContractAddress,
@@ -87,13 +87,13 @@ contract('SWRToken', ([_, ...accounts]) => {
   describe('updateTotalRewards', () => {
     it('anyone cannot update rewards', async () => {
       await expectRevert(
-        swrToken.updateTotalRewards(ether('10'), {
+        rewardEthToken.updateTotalRewards(ether('10'), {
           from: otherAccounts[0],
         }),
-        'SWRToken: permission denied'
+        'RewardEthToken: permission denied'
       );
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: new BN(0),
         account: otherAccounts[0],
         balance: new BN(0),
@@ -103,7 +103,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
     it('balance reporters can update rewards', async () => {
       let deposit = ether('32');
-      await swdToken.mint(otherAccounts[0], deposit, {
+      await stakingEthToken.mint(otherAccounts[0], deposit, {
         from: poolContractAddress,
       });
       let newTotalRewards = ether('10');
@@ -112,7 +112,7 @@ contract('SWRToken', ([_, ...accounts]) => {
         .div(new BN(10000));
       let userReward = newTotalRewards.sub(maintainerReward);
 
-      let receipt = await swrToken.updateTotalRewards(newTotalRewards, {
+      let receipt = await rewardEthToken.updateTotalRewards(newTotalRewards, {
         from: balanceReportersContractAddress,
       });
 
@@ -122,15 +122,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         rewardRate: userReward.mul(ether('1')).div(deposit),
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: newTotalRewards,
         account: otherAccounts[0],
         balance: userReward,
         reward: userReward,
       });
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         account: initialSettings.maintainer,
         balance: maintainerReward,
         reward: maintainerReward,
@@ -173,7 +173,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       for (const { totalRewards, maintainerReward, users } of testCases) {
         // redeploy tokens
-        [swrToken, swdToken] = await deployTokens({
+        [rewardEthToken, stakingEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
           poolContractAddress,
@@ -181,19 +181,19 @@ contract('SWRToken', ([_, ...accounts]) => {
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
-          await swdToken.mint(otherAccounts[i], users[i].deposit, {
+          await stakingEthToken.mint(otherAccounts[i], users[i].deposit, {
             from: poolContractAddress,
           });
         }
 
         // update rewards
-        await swrToken.updateTotalRewards(totalRewards, {
+        await rewardEthToken.updateTotalRewards(totalRewards, {
           from: balanceReportersContractAddress,
         });
 
         // check maintainer reward
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: totalRewards,
           account: initialSettings.maintainer,
           balance: maintainerReward,
@@ -203,15 +203,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         // check rewards and deposits
         for (let i = 0; i < users.length; i++) {
           let { reward, deposit } = users[i];
-          await checkSWRToken({
-            swrToken,
+          await checkRewardEthToken({
+            rewardEthToken,
             account: otherAccounts[i],
             balance: reward,
             reward: reward,
           });
 
-          await checkSWDToken({
-            swdToken,
+          await checkStakingEthToken({
+            stakingEthToken,
             totalSupply: validatorDepositAmount,
             account: otherAccounts[i],
             balance: deposit,
@@ -295,7 +295,7 @@ contract('SWRToken', ([_, ...accounts]) => {
 
       for (const { totalRewards, users } of testCases) {
         // redeploy tokens
-        [swrToken, swdToken] = await deployTokens({
+        [rewardEthToken, stakingEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
           poolContractAddress,
@@ -303,29 +303,29 @@ contract('SWRToken', ([_, ...accounts]) => {
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
-          await swdToken.mint(otherAccounts[i], users[i].deposit, {
+          await stakingEthToken.mint(otherAccounts[i], users[i].deposit, {
             from: poolContractAddress,
           });
         }
 
         // update penalty
-        await swrToken.updateTotalRewards(totalRewards, {
+        await rewardEthToken.updateTotalRewards(totalRewards, {
           from: balanceReportersContractAddress,
         });
 
         // check rewards and deposits
         for (let i = 0; i < users.length; i++) {
           let { penalisedReturn, deposit } = users[i];
-          await checkSWRToken({
-            swrToken,
+          await checkRewardEthToken({
+            rewardEthToken,
             totalSupply: new BN(0),
             account: otherAccounts[i],
             balance: new BN(0),
             reward: penalisedReturn.sub(deposit),
           });
 
-          await checkSWDToken({
-            swdToken,
+          await checkStakingEthToken({
+            stakingEthToken,
             totalSupply: validatorDepositAmount.add(totalRewards),
             account: otherAccounts[i],
             balance: penalisedReturn,
@@ -343,7 +343,7 @@ contract('SWRToken', ([_, ...accounts]) => {
           { deposit: ether('10'), reward: ether('0') },
           { deposit: ether('25'), reward: ether('0') },
         ],
-        // user1 transfers 4 SWD to user2
+        // user1 transfers 4 stETH to user2
         [
           { deposit: ether('5'), reward: ether('0') },
           { deposit: ether('6'), reward: ether('0') },
@@ -361,9 +361,9 @@ contract('SWRToken', ([_, ...accounts]) => {
             reward: ether('0.504496597075045422'),
           },
         ],
-        // user2 transfer 6 SWD to user0
-        // user1 transfers 0.104378606291388710 SWR to user2
-        // user3 creates new deposit with 4 SWD
+        // user2 transfer 6 stETH to user0
+        // user1 transfers 0.104378606291388710 rwETH to user2
+        // user3 creates new deposit with 4 stETH
         [
           {
             deposit: ether('11'),
@@ -385,8 +385,8 @@ contract('SWRToken', ([_, ...accounts]) => {
           { deposit: ether('23'), reward: ether('0.054442452002700438') },
           { deposit: ether('4'), reward: ether('-0.096423087193692816') },
         ],
-        // user3 transfers 3.903576912806307184 SWD to user0
-        // user2 transfers 0.054442452002700438 SWR to user3
+        // user3 transfers 3.903576912806307184 stETH to user0
+        // user2 transfers 0.054442452002700438 rwETH to user3
         [
           {
             deposit: ether('14.903576912806307184'),
@@ -423,20 +423,20 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[0][i].reward;
 
         totalDeposits = totalDeposits.add(deposit);
-        await swdToken.mint(otherAccounts[i], deposit, {
+        await stakingEthToken.mint(otherAccounts[i], deposit, {
           from: poolContractAddress,
         });
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: new BN(0),
           account: otherAccounts[i],
           balance: reward,
           reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -444,8 +444,8 @@ contract('SWRToken', ([_, ...accounts]) => {
         });
       }
 
-      // 1. user1 transfers 4 SWD to user2
-      await swdToken.transfer(otherAccounts[2], ether('4'), {
+      // 1. user1 transfers 4 stETH to user2
+      await stakingEthToken.transfer(otherAccounts[2], ether('4'), {
         from: otherAccounts[1],
       });
       for (let i = 0; i < tests[1].length; i++) {
@@ -453,15 +453,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[1][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: new BN(0),
           account: otherAccounts[i],
           balance: reward,
           reward: reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -474,7 +474,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       let maintainerReward = ether('0.077317486141769415');
       let totalRewards = periodRewards;
       let rewardRate = ether('0.017396434381898118');
-      let receipt = await swrToken.updateTotalRewards(totalRewards, {
+      let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -483,8 +483,8 @@ contract('SWRToken', ([_, ...accounts]) => {
         rewardRate,
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: initialSettings.maintainer,
         balance: maintainerReward,
@@ -496,15 +496,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[2][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: totalRewards,
           account: otherAccounts[i],
           balance: reward,
           reward: reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -512,16 +512,20 @@ contract('SWRToken', ([_, ...accounts]) => {
         });
       }
 
-      // 3. user2 transfer 6 SWD to user0
-      await swdToken.transfer(otherAccounts[0], ether('6'), {
+      // 3. user2 transfer 6 stETH to user0
+      await stakingEthToken.transfer(otherAccounts[0], ether('6'), {
         from: otherAccounts[2],
       });
-      // user1 transfers 0.104378606291388708 SWR to user2
-      await swrToken.transfer(otherAccounts[2], ether('0.104378606291388708'), {
-        from: otherAccounts[1],
-      });
-      // user3 creates new deposit with 4 SWD
-      await swdToken.mint(otherAccounts[3], ether('4'), {
+      // user1 transfers 0.104378606291388708 rwETH to user2
+      await rewardEthToken.transfer(
+        otherAccounts[2],
+        ether('0.104378606291388708'),
+        {
+          from: otherAccounts[1],
+        }
+      );
+      // user3 creates new deposit with 4 stETH
+      await stakingEthToken.mint(otherAccounts[3], ether('4'), {
         from: poolContractAddress,
       });
       totalDeposits = totalDeposits.add(ether('4'));
@@ -531,15 +535,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[3][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: totalRewards,
           account: otherAccounts[i],
           balance: reward,
           reward: reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -551,7 +555,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       periodRewards = ether('-1.060653959130621');
       totalRewards = totalRewards.add(periodRewards);
       rewardRate = ether('-0.006709337416525086');
-      receipt = await swrToken.updateTotalRewards(totalRewards, {
+      receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -560,8 +564,8 @@ contract('SWRToken', ([_, ...accounts]) => {
         rewardRate,
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: new BN(0),
         account: initialSettings.maintainer,
         balance: maintainerReward,
@@ -573,14 +577,14 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[4][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits.add(totalRewards),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -588,29 +592,37 @@ contract('SWRToken', ([_, ...accounts]) => {
         });
       }
 
-      // 5. user3 transfers 3.903576912806307184 SWD to user0
-      await swdToken.transfer(otherAccounts[0], ether('3.903576912806307184'), {
-        from: otherAccounts[3],
-      });
-      // user2 transfers 0.054442452002700438 SWR to user3
-      await swrToken.transfer(otherAccounts[3], ether('0.054442452002700438'), {
-        from: otherAccounts[2],
-      });
+      // 5. user3 transfers 3.903576912806307184 stETH to user0
+      await stakingEthToken.transfer(
+        otherAccounts[0],
+        ether('3.903576912806307184'),
+        {
+          from: otherAccounts[3],
+        }
+      );
+      // user2 transfers 0.054442452002700438 rwETH to user3
+      await rewardEthToken.transfer(
+        otherAccounts[3],
+        ether('0.054442452002700438'),
+        {
+          from: otherAccounts[2],
+        }
+      );
 
       for (let i = 0; i < tests[5].length; i++) {
         let deposit = tests[5][i].deposit;
         let reward = tests[5][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: new BN(0),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits.add(totalRewards),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -623,7 +635,7 @@ contract('SWRToken', ([_, ...accounts]) => {
       totalRewards = totalRewards.add(periodRewards);
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
       rewardRate = ether('0.041474938886391011');
-      receipt = await swrToken.updateTotalRewards(totalRewards, {
+      receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
@@ -632,8 +644,8 @@ contract('SWRToken', ([_, ...accounts]) => {
         rewardRate,
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: initialSettings.maintainer,
         balance: maintainerReward,
@@ -645,15 +657,15 @@ contract('SWRToken', ([_, ...accounts]) => {
         let reward = tests[6][i].reward;
 
         // perform checks
-        await checkSWRToken({
-          swrToken,
+        await checkRewardEthToken({
+          rewardEthToken,
           totalSupply: totalRewards,
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkSWDToken({
-          swdToken,
+        await checkStakingEthToken({
+          stakingEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -675,28 +687,28 @@ contract('SWRToken', ([_, ...accounts]) => {
         from: admin,
       });
 
-      await swdToken.mint(sender1, value1, {
+      await stakingEthToken.mint(sender1, value1, {
         from: poolContractAddress,
       });
-      await swdToken.mint(sender2, value2, {
+      await stakingEthToken.mint(sender2, value2, {
         from: poolContractAddress,
       });
 
-      await swrToken.updateTotalRewards(totalRewards, {
+      await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
     });
 
     it('cannot transfer to zero address', async () => {
       await expectRevert(
-        swrToken.transfer(constants.ZERO_ADDRESS, value1, {
+        rewardEthToken.transfer(constants.ZERO_ADDRESS, value1, {
           from: sender1,
         }),
-        'SWRToken: transfer to the zero address'
+        'RewardEthToken: transfer to the zero address'
       );
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: value1,
@@ -706,14 +718,14 @@ contract('SWRToken', ([_, ...accounts]) => {
 
     it('cannot transfer from zero address', async () => {
       await expectRevert(
-        swrToken.transferFrom(constants.ZERO_ADDRESS, sender2, value1, {
+        rewardEthToken.transferFrom(constants.ZERO_ADDRESS, sender2, value1, {
           from: sender1,
         }),
-        'SWRToken: transfer from the zero address'
+        'RewardEthToken: transfer from the zero address'
       );
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: value1,
@@ -723,14 +735,14 @@ contract('SWRToken', ([_, ...accounts]) => {
 
     it('cannot transfer zero amount', async () => {
       await expectRevert(
-        swrToken.transfer(sender2, ether('0'), {
+        rewardEthToken.transfer(sender2, ether('0'), {
           from: sender1,
         }),
-        'SWRToken: invalid amount'
+        'RewardEthToken: invalid amount'
       );
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: value1,
@@ -739,40 +751,42 @@ contract('SWRToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setPausedContracts(swrToken.address, true, {
+      await settings.setPausedContracts(rewardEthToken.address, true, {
         from: admin,
       });
-      expect(await settings.pausedContracts(swrToken.address)).equal(true);
-
-      await expectRevert(
-        swrToken.transfer(sender2, value1, {
-          from: sender1,
-        }),
-        'SWRToken: contract is paused'
+      expect(await settings.pausedContracts(rewardEthToken.address)).equal(
+        true
       );
 
-      await checkSWRToken({
-        swrToken,
+      await expectRevert(
+        rewardEthToken.transfer(sender2, value1, {
+          from: sender1,
+        }),
+        'RewardEthToken: contract is paused'
+      );
+
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: value1,
         reward: value1,
       });
-      await settings.setPausedContracts(swrToken.address, false, {
+      await settings.setPausedContracts(rewardEthToken.address, false, {
         from: admin,
       });
     });
 
     it('cannot transfer amount bigger than balance', async () => {
       await expectRevert(
-        swrToken.transfer(sender2, value1.add(ether('1')), {
+        rewardEthToken.transfer(sender2, value1.add(ether('1')), {
           from: sender1,
         }),
-        'SWRToken: invalid amount'
+        'RewardEthToken: invalid amount'
       );
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: value1,
@@ -780,8 +794,8 @@ contract('SWRToken', ([_, ...accounts]) => {
       });
     });
 
-    it('can transfer SWR tokens to different account', async () => {
-      let receipt = await swrToken.transfer(sender2, value1, {
+    it('can transfer rwETH tokens to different account', async () => {
+      let receipt = await rewardEthToken.transfer(sender2, value1, {
         from: sender1,
       });
 
@@ -791,16 +805,16 @@ contract('SWRToken', ([_, ...accounts]) => {
         value: value1,
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender1,
         balance: new BN(0),
         deposit: new BN(0),
       });
 
-      await checkSWRToken({
-        swrToken,
+      await checkRewardEthToken({
+        rewardEthToken,
         totalSupply: totalRewards,
         account: sender2,
         balance: value1.add(value2),
@@ -811,10 +825,10 @@ contract('SWRToken', ([_, ...accounts]) => {
 
   it('anyone cannot update user reward', async () => {
     await expectRevert(
-      swrToken.updateRewardCheckpoint(otherAccounts[0], {
+      rewardEthToken.updateRewardCheckpoint(otherAccounts[0], {
         from: otherAccounts[0],
       }),
-      'SWRToken: permission denied'
+      'RewardEthToken: permission denied'
     );
   });
 });

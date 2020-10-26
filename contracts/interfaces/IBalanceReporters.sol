@@ -22,7 +22,7 @@ interface IBalanceReporters {
     * @dev Event for tracking removed reporters.
     * @param reporter - address of the account which submitted vote.
     * @param newTotalRewards - submitted value of total rewards.
-    * @param updateTimestamp - timestamp of the SWR Token last update.
+    * @param updateTimestamp - timestamp of the RewardEthToken last update.
     */
     event VoteSubmitted(address indexed reporter, int256 newTotalRewards, uint256 updateTimestamp);
 
@@ -30,9 +30,9 @@ interface IBalanceReporters {
     * @dev Constructor for initializing the BalanceReporters contract.
     * @param _admins - address of the Admins contract.
     * @param _settings - address of the Settings contract.
-    * @param _swrToken - address of the SWRToken contract.
+    * @param _rewardEthToken - address of the RewardEthToken contract.
     */
-    function initialize(address _admins, address _settings, address _swrToken) external;
+    function initialize(address _admins, address _settings, address _rewardEthToken) external;
 
     /**
     * @dev Function for checking whether an account has a reporter role.
@@ -62,7 +62,7 @@ interface IBalanceReporters {
     function removeReporter(address _account) external;
 
     /**
-    * @dev Function for voting for new SWR Token total rewards.
+    * @dev Function for voting for new RewardEthToken total rewards.
     * Can only be called by an account with a reporter role.
     * @param _newTotalRewards - total rewards to give a vote for.
     */

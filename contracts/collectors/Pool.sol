@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "../interfaces/ISWDToken.sol";
+import "../interfaces/IStakingEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IOperators.sol";
@@ -30,8 +30,8 @@ contract Pool is IPool, Initializable {
     // @dev ID of the pool.
     bytes32 private poolId;
 
-    // @dev Address of the SWDToken contract.
-    ISWDToken private swdToken;
+    // @dev Address of the StakingEthToken contract.
+    IStakingEthToken private stakingEthToken;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -46,7 +46,7 @@ contract Pool is IPool, Initializable {
      * @dev See {IPool-initialize}.
      */
     function initialize(
-        address _swdToken,
+        address _stakingEthToken,
         address _settings,
         address _operators,
         address _validatorRegistration,
@@ -54,7 +54,7 @@ contract Pool is IPool, Initializable {
     )
         public override initializer
     {
-        swdToken = ISWDToken(_swdToken);
+        stakingEthToken = IStakingEthToken(_stakingEthToken);
         settings = ISettings(_settings);
         operators = IOperators(_operators);
         validatorRegistration = IValidatorRegistration(_validatorRegistration);
@@ -74,8 +74,8 @@ contract Pool is IPool, Initializable {
         // update pool collected amount
         collectedAmount = collectedAmount.add(msg.value);
 
-        // mint new deposit tokens
-        swdToken.mint(msg.sender, msg.value);
+        // mint new staking tokens
+        stakingEthToken.mint(msg.sender, msg.value);
     }
 
     /**
@@ -86,8 +86,8 @@ contract Pool is IPool, Initializable {
         require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Pool: invalid withdrawal amount");
         require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
 
-        // burn sender deposit tokens
-        swdToken.burn(msg.sender, _amount);
+        // burn sender staking tokens
+        stakingEthToken.burn(msg.sender, _amount);
 
         // update pool collected amount
         collectedAmount = collectedAmount.sub(_amount);

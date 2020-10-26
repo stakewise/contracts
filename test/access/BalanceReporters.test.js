@@ -14,20 +14,20 @@ const {
 } = require('../../deployments/access');
 const { deployAndInitializeSettings } = require('../../deployments/settings');
 const {
-  deploySWRToken,
-  deploySWDToken,
-  initializeSWRToken,
-  initializeSWDToken,
+  deployRewardEthToken,
+  deployStakingEthToken,
+  initializeRewardEthToken,
+  initializeStakingEthToken,
 } = require('../../deployments/tokens');
 
 const Admins = artifacts.require('Admins');
-const SWRToken = artifacts.require('SWRToken');
-const SWDToken = artifacts.require('SWDToken');
+const RewardEthToken = artifacts.require('RewardEthToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
 const Settings = artifacts.require('Settings');
 const BalanceReporters = artifacts.require('BalanceReporters');
 
 contract('BalanceReporters', ([_, ...accounts]) => {
-  let admins, settings, balanceReporters, swrToken, swdToken;
+  let admins, settings, balanceReporters, rewardEthToken, stakingEthToken;
   let [
     admin,
     reporter,
@@ -51,18 +51,18 @@ contract('BalanceReporters', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    const swdTokenContractAddress = await deploySWDToken();
-    const swrTokenContractAddress = await deploySWRToken();
+    const stakingEthTokenContractAddress = await deployStakingEthToken();
+    const rewardEthTokenContractAddress = await deployRewardEthToken();
     const balanceReportersContractAddress = await deployBalanceReporters();
-    await initializeSWDToken(
-      swdTokenContractAddress,
-      swrTokenContractAddress,
+    await initializeStakingEthToken(
+      stakingEthTokenContractAddress,
+      rewardEthTokenContractAddress,
       settings.address,
       poolContractAddress
     );
-    await initializeSWRToken(
-      swrTokenContractAddress,
-      swdTokenContractAddress,
+    await initializeRewardEthToken(
+      rewardEthTokenContractAddress,
+      stakingEthTokenContractAddress,
       settings.address,
       balanceReportersContractAddress
     );
@@ -71,14 +71,14 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       balanceReportersContractAddress,
       admins.address,
       settings.address,
-      swrTokenContractAddress
+      rewardEthTokenContractAddress
     );
 
     balanceReporters = await BalanceReporters.at(
       balanceReportersContractAddress
     );
-    swrToken = await SWRToken.at(swrTokenContractAddress);
-    swdToken = await SWDToken.at(swdTokenContractAddress);
+    rewardEthToken = await RewardEthToken.at(rewardEthTokenContractAddress);
+    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
   });
 
   describe('assigning', () => {
@@ -183,7 +183,9 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       await balanceReporters.addReporter(reporter2, { from: admin });
       await balanceReporters.addReporter(reporter3, { from: admin });
 
-      await swdToken.mint(anyone, ether('32'), { from: poolContractAddress });
+      await stakingEthToken.mint(anyone, ether('32'), {
+        from: poolContractAddress,
+      });
     });
 
     it('fails to vote when contract is paused', async () => {
@@ -200,7 +202,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'BalanceReporters: contract is paused'
       );
-      expect(await swrToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('only reporter can submit new total rewards', async () => {
@@ -210,7 +212,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'BalanceReporters: permission denied'
       );
-      expect(await swrToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('cannot vote for the same total rewards twice', async () => {
@@ -226,7 +228,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'BalanceReporters: vote was already submitted'
       );
-      expect(await swrToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('does not submit rewards when not enough votes', async () => {
@@ -241,7 +243,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       expect(await balanceReporters.hasVoted(reporter1, ether('1'))).to.equal(
         true
       );
-      expect(await swrToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('submits total rewards when enough votes collected', async () => {
@@ -267,7 +269,9 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         newTotalRewards: ether('1'),
         updateTimestamp: new BN(0),
       });
-      expect(await swrToken.totalRewards()).to.bignumber.equal(ether('1'));
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
+        ether('1')
+      );
     });
   });
 });

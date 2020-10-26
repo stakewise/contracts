@@ -12,51 +12,51 @@ async function deployAndInitializeERC20Mock(ownerAddress, name, symbol) {
   return erc20Mock.address;
 }
 
-async function deploySWDToken() {
-  const SWDToken = await ethers.getContractFactory('SWDToken');
-  const proxy = await upgrades.deployProxy(SWDToken, [], {
+async function deployStakingEthToken() {
+  const StakingEthToken = await ethers.getContractFactory('StakingEthToken');
+  const proxy = await upgrades.deployProxy(StakingEthToken, [], {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
   return proxy.address;
 }
 
-async function initializeSWDToken(
-  swdTokenContractAddress,
-  swrTokenContractAddress,
+async function initializeStakingEthToken(
+  stakingEthTokenContractAddress,
+  rewardEthTokenContractAddress,
   settingsContractAddress,
   poolContractAddress
 ) {
-  let SWDToken = await ethers.getContractFactory('SWDToken');
-  SWDToken = SWDToken.attach(swdTokenContractAddress);
+  let StakingEthToken = await ethers.getContractFactory('StakingEthToken');
+  StakingEthToken = StakingEthToken.attach(stakingEthTokenContractAddress);
 
-  return SWDToken.initialize(
-    swrTokenContractAddress,
+  return StakingEthToken.initialize(
+    rewardEthTokenContractAddress,
     settingsContractAddress,
     poolContractAddress
   );
 }
 
-async function deploySWRToken() {
-  const SWRToken = await ethers.getContractFactory('SWRToken');
-  const proxy = await upgrades.deployProxy(SWRToken, [], {
+async function deployRewardEthToken() {
+  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
+  const proxy = await upgrades.deployProxy(RewardEthToken, [], {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
   return proxy.address;
 }
 
-async function initializeSWRToken(
-  swrTokenContractAddress,
-  swdTokenContractAddress,
+async function initializeRewardEthToken(
+  rewardEthTokenContractAddress,
+  stakingEthTokenContractAddress,
   settingsContractAddress,
   balanceReportersContractAddress
 ) {
-  let SWRToken = await ethers.getContractFactory('SWRToken');
-  SWRToken = SWRToken.attach(swrTokenContractAddress);
+  let RewardEthToken = await ethers.getContractFactory('RewardEthToken');
+  RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
 
-  return SWRToken.initialize(
-    swdTokenContractAddress,
+  return RewardEthToken.initialize(
+    stakingEthTokenContractAddress,
     settingsContractAddress,
     balanceReportersContractAddress
   );
@@ -64,8 +64,8 @@ async function initializeSWRToken(
 
 module.exports = {
   deployAndInitializeERC20Mock,
-  deploySWDToken,
-  initializeSWDToken,
-  deploySWRToken,
-  initializeSWRToken,
+  deployStakingEthToken,
+  initializeStakingEthToken,
+  deployRewardEthToken,
+  initializeRewardEthToken,
 };

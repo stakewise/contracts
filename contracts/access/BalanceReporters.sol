@@ -7,14 +7,14 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "../libraries/Roles.sol";
 import "../interfaces/IAdmins.sol";
 import "../interfaces/ISettings.sol";
-import "../interfaces/ISWRToken.sol";
+import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IValidators.sol";
 import "../interfaces/IBalanceReporters.sol";
 
 /**
  * @title BalanceReporters
  *
- * @dev Balance reporters contract stores accounts responsible for submitting pool total rewards to SWRToken contract.
+ * @dev Balance reporters contract stores accounts responsible for submitting pool total rewards to RewardEthToken contract.
  * Rewards are updated only when a threshold of inputs from different reporters received.
  */
 contract BalanceReporters is IBalanceReporters, Initializable {
@@ -36,10 +36,10 @@ contract BalanceReporters is IBalanceReporters, Initializable {
     // @dev Address of the Settings contract.
     ISettings private settings;
 
-    // @dev Address of the SWRToken contract.
-    ISWRToken private swrToken;
+    // @dev Address of the RewardEthToken contract.
+    IRewardEthToken private rewardEthToken;
 
-    // @dev Threshold of votes required to update SWRToken rewards.
+    // @dev Threshold of votes required to update RewardEthToken rewards.
     uint256 private votesThreshold;
 
     // @dev Total number of reporters.
@@ -56,10 +56,10 @@ contract BalanceReporters is IBalanceReporters, Initializable {
     /**
      * @dev See {IBalanceReporters-initialize}.
      */
-    function initialize(address _admins, address _settings, address _swrToken) public override initializer {
+    function initialize(address _admins, address _settings, address _rewardEthToken) public override initializer {
         admins = IAdmins(_admins);
         settings = ISettings(_settings);
-        swrToken = ISWRToken(_swrToken);
+        rewardEthToken = IRewardEthToken(_rewardEthToken);
 
         // require 66% of reporters to agree to submit new total rewards
         votesThreshold = 666666666666666666;
@@ -76,7 +76,7 @@ contract BalanceReporters is IBalanceReporters, Initializable {
      * @dev See {IBalanceReporters-hasVoted}.
      */
     function hasVoted(address _account, int256 _newTotalRewards) public override view returns (bool) {
-        bytes32 voteId = keccak256(abi.encodePacked(_account, swrToken.updateTimestamp(), _newTotalRewards));
+        bytes32 voteId = keccak256(abi.encodePacked(_account, rewardEthToken.updateTimestamp(), _newTotalRewards));
         return submittedVotes[voteId];
     }
 
@@ -106,7 +106,7 @@ contract BalanceReporters is IBalanceReporters, Initializable {
     function voteForTotalRewards(int256 _newTotalRewards) external override onlyReporter {
         require(!settings.pausedContracts(address(this)), "BalanceReporters: contract is paused");
 
-        uint256 updateTimestamp = swrToken.updateTimestamp();
+        uint256 updateTimestamp = rewardEthToken.updateTimestamp();
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, updateTimestamp, _newTotalRewards));
         require(!submittedVotes[voteId], "BalanceReporters: vote was already submitted");
 
@@ -115,10 +115,10 @@ contract BalanceReporters is IBalanceReporters, Initializable {
         candidates[_newTotalRewards] = candidates[_newTotalRewards].add(1);
         emit VoteSubmitted(msg.sender, _newTotalRewards, updateTimestamp);
 
-        // update SWR Token rewards only if enough votes accumulated
+        // update rewards only if enough votes accumulated
         if (candidates[_newTotalRewards].mul(1 ether).div(totalReporters) >= votesThreshold) {
             delete candidates[_newTotalRewards];
-            swrToken.updateTotalRewards(_newTotalRewards);
+            rewardEthToken.updateTotalRewards(_newTotalRewards);
         }
     }
 }

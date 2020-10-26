@@ -12,18 +12,18 @@ const {
 } = require('../../deployments/access');
 const { deployAndInitializeSettings } = require('../../deployments/settings');
 const {
-  deploySWDToken,
-  deploySWRToken,
-  initializeSWDToken,
-  initializeSWRToken,
+  deployStakingEthToken,
+  deployRewardEthToken,
+  initializeStakingEthToken,
+  initializeRewardEthToken,
 } = require('../../deployments/tokens');
-const { checkSWDToken } = require('../utils');
+const { checkStakingEthToken } = require('../utils');
 
-const SWDToken = artifacts.require('SWDToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
 const Settings = artifacts.require('Settings');
 
-contract('SWDToken', ([_, ...accounts]) => {
-  let settings, swdToken;
+contract('StakingEthToken', ([_, ...accounts]) => {
+  let settings, stakingEthToken;
   let [
     poolContractAddress,
     admin,
@@ -46,34 +46,34 @@ contract('SWDToken', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    const swdTokenContractAddress = await deploySWDToken();
-    const swrTokenContractAddress = await deploySWRToken();
-    await initializeSWDToken(
-      swdTokenContractAddress,
-      swrTokenContractAddress,
+    const stakingEthTokenContractAddress = await deployStakingEthToken();
+    const rewardEthTokenContractAddress = await deployRewardEthToken();
+    await initializeStakingEthToken(
+      stakingEthTokenContractAddress,
+      rewardEthTokenContractAddress,
       settings.address,
       poolContractAddress
     );
-    await initializeSWRToken(
-      swrTokenContractAddress,
-      swdTokenContractAddress,
+    await initializeRewardEthToken(
+      rewardEthTokenContractAddress,
+      stakingEthTokenContractAddress,
       settings.address,
       balanceReportersContractAddress
     );
 
-    swdToken = await SWDToken.at(swdTokenContractAddress);
+    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
   });
 
   describe('mint', () => {
-    it('anyone cannot mint SWD tokens', async () => {
+    it('anyone cannot mint stETH tokens', async () => {
       await expectRevert(
-        swdToken.mint(sender1, ether('10'), {
+        stakingEthToken.mint(sender1, ether('10'), {
           from: sender1,
         }),
-        'SWDToken: permission denied'
+        'StakingEthToken: permission denied'
       );
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: new BN(0),
         account: sender1,
         balance: new BN(0),
@@ -81,9 +81,9 @@ contract('SWDToken', ([_, ...accounts]) => {
       });
     });
 
-    it('pool can mint SWD tokens', async () => {
+    it('pool can mint stETH tokens', async () => {
       let value = ether('10');
-      let receipt = await swdToken.mint(sender1, value, {
+      let receipt = await stakingEthToken.mint(sender1, value, {
         from: poolContractAddress,
       });
       expectEvent(receipt, 'Transfer', {
@@ -92,8 +92,8 @@ contract('SWDToken', ([_, ...accounts]) => {
         value,
       });
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -106,20 +106,20 @@ contract('SWDToken', ([_, ...accounts]) => {
     let value = ether('10');
 
     beforeEach(async () => {
-      await swdToken.mint(sender1, value, {
+      await stakingEthToken.mint(sender1, value, {
         from: poolContractAddress,
       });
     });
 
-    it('anyone cannot burn SWD tokens', async () => {
+    it('anyone cannot burn stETH tokens', async () => {
       await expectRevert(
-        swdToken.burn(sender1, value, {
+        stakingEthToken.burn(sender1, value, {
           from: sender1,
         }),
-        'SWDToken: permission denied'
+        'StakingEthToken: permission denied'
       );
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -127,16 +127,16 @@ contract('SWDToken', ([_, ...accounts]) => {
       });
     });
 
-    it('cannot burn more than SWD balance', async () => {
+    it('cannot burn more than stETH balance', async () => {
       await expectRevert(
-        swdToken.burn(sender1, value.add(ether('1')), {
+        stakingEthToken.burn(sender1, value.add(ether('1')), {
           from: poolContractAddress,
         }),
-        'SWDToken: burn amount exceeds balance'
+        'StakingEthToken: burn amount exceeds balance'
       );
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -144,8 +144,8 @@ contract('SWDToken', ([_, ...accounts]) => {
       });
     });
 
-    it('pool can burn SWD tokens', async () => {
-      let receipt = await swdToken.burn(sender1, value, {
+    it('pool can burn stETH tokens', async () => {
+      let receipt = await stakingEthToken.burn(sender1, value, {
         from: poolContractAddress,
       });
       expectEvent(receipt, 'Transfer', {
@@ -154,8 +154,8 @@ contract('SWDToken', ([_, ...accounts]) => {
         value,
       });
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: new BN(0),
         account: sender1,
         balance: new BN(0),
@@ -168,21 +168,21 @@ contract('SWDToken', ([_, ...accounts]) => {
     let value = ether('10');
 
     beforeEach(async () => {
-      await swdToken.mint(sender1, value, {
+      await stakingEthToken.mint(sender1, value, {
         from: poolContractAddress,
       });
     });
 
     it('cannot transfer to zero address', async () => {
       await expectRevert(
-        swdToken.transfer(constants.ZERO_ADDRESS, value, {
+        stakingEthToken.transfer(constants.ZERO_ADDRESS, value, {
           from: sender1,
         }),
-        'SWDToken: transfer to the zero address'
+        'StakingEthToken: transfer to the zero address'
       );
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -192,14 +192,14 @@ contract('SWDToken', ([_, ...accounts]) => {
 
     it('cannot transfer from zero address', async () => {
       await expectRevert(
-        swdToken.transferFrom(constants.ZERO_ADDRESS, sender2, value, {
+        stakingEthToken.transferFrom(constants.ZERO_ADDRESS, sender2, value, {
           from: sender1,
         }),
-        'SWDToken: transfer from the zero address'
+        'StakingEthToken: transfer from the zero address'
       );
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -209,14 +209,14 @@ contract('SWDToken', ([_, ...accounts]) => {
 
     it('cannot transfer zero amount', async () => {
       await expectRevert(
-        swdToken.transfer(sender2, ether('0'), {
+        stakingEthToken.transfer(sender2, ether('0'), {
           from: sender1,
         }),
-        'SWDToken: invalid amount'
+        'StakingEthToken: invalid amount'
       );
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -225,40 +225,42 @@ contract('SWDToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setPausedContracts(swdToken.address, true, {
+      await settings.setPausedContracts(stakingEthToken.address, true, {
         from: admin,
       });
-      expect(await settings.pausedContracts(swdToken.address)).equal(true);
-
-      await expectRevert(
-        swdToken.transfer(sender2, value, {
-          from: sender1,
-        }),
-        'SWDToken: contract is paused'
+      expect(await settings.pausedContracts(stakingEthToken.address)).equal(
+        true
       );
 
-      await checkSWDToken({
-        swdToken,
+      await expectRevert(
+        stakingEthToken.transfer(sender2, value, {
+          from: sender1,
+        }),
+        'StakingEthToken: contract is paused'
+      );
+
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
         deposit: value,
       });
-      await settings.setPausedContracts(swdToken.address, false, {
+      await settings.setPausedContracts(stakingEthToken.address, false, {
         from: admin,
       });
     });
 
     it('cannot transfer amount bigger than balance', async () => {
       await expectRevert(
-        swdToken.transfer(sender2, value.add(ether('1')), {
+        stakingEthToken.transfer(sender2, value.add(ether('1')), {
           from: sender1,
         }),
-        'SWDToken: invalid amount'
+        'StakingEthToken: invalid amount'
       );
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: value,
@@ -266,8 +268,8 @@ contract('SWDToken', ([_, ...accounts]) => {
       });
     });
 
-    it('can transfer SWD tokens to different account', async () => {
-      let receipt = await swdToken.transfer(sender2, value, {
+    it('can transfer stETH tokens to different account', async () => {
+      let receipt = await stakingEthToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -277,16 +279,16 @@ contract('SWDToken', ([_, ...accounts]) => {
         value,
       });
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender1,
         balance: new BN(0),
         deposit: new BN(0),
       });
 
-      await checkSWDToken({
-        swdToken,
+      await checkStakingEthToken({
+        stakingEthToken,
         totalSupply: value,
         account: sender2,
         balance: value,

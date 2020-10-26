@@ -5,16 +5,16 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @dev Interface of the SWDToken contract.
+ * @dev Interface of the StakingEthToken contract.
  */
-interface ISWDToken is IERC20 {
+interface IStakingEthToken is IERC20 {
     /**
-    * @dev Constructor for initializing the SWDToken contract.
-    * @param _swrToken - address of the SWRToken contract.
+    * @dev Constructor for initializing the StakingEthToken contract.
+    * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _settings - address of the Settings contract.
     * @param _pool - address of the Pool contract.
     */
-    function initialize(address _swrToken, address _settings, address _pool) external;
+    function initialize(address _rewardEthToken, address _settings, address _pool) external;
 
     /**
     * @dev Function for retrieving the total deposits amount.

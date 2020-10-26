@@ -37,7 +37,7 @@ async function initializeBalanceReporters(
   balanceReportersContractAddress,
   adminsContractAddress,
   settingsContractAddress,
-  swrTokenContractAddress
+  rewardEthTokenContractAddress
 ) {
   let BalanceReporters = await ethers.getContractFactory('BalanceReporters');
   BalanceReporters = BalanceReporters.attach(balanceReportersContractAddress);
@@ -45,7 +45,7 @@ async function initializeBalanceReporters(
   return BalanceReporters.initialize(
     adminsContractAddress,
     settingsContractAddress,
-    swrTokenContractAddress
+    rewardEthTokenContractAddress
   );
 }
 

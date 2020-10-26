@@ -5,29 +5,29 @@ const {
   getDepositAmount,
   checkCollectorBalance,
   checkPoolCollectedAmount,
-  checkSWDToken,
+  checkStakingEthToken,
 } = require('../utils');
 
 const Pool = artifacts.require('Pool');
-const SWDToken = artifacts.require('SWDToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
 contract('Pool (withdraw deposit)', ([_, admin, sender1, sender2]) => {
-  let pool, swdToken, settings, deposit1, deposit2, totalSupply;
+  let pool, stakingEthToken, settings, deposit1, deposit2, totalSupply;
 
   beforeEach(async () => {
     let {
       pool: poolContractAddress,
-      swdToken: swdTokenContractAddress,
+      stakingEthToken: stakingEthTokenContractAddress,
       settings: settingsContractAddress,
     } = await deployAllContracts({
       initialAdmin: admin,
     });
     pool = await Pool.at(poolContractAddress);
     settings = await Settings.at(settingsContractAddress);
-    swdToken = await SWDToken.at(swdTokenContractAddress);
+    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
 
     deposit1 = validatorDepositAmount;
     await pool.addDeposit({
@@ -88,8 +88,8 @@ contract('Pool (withdraw deposit)', ([_, admin, sender1, sender2]) => {
 
   it('can withdraw deposit amount', async () => {
     await pool.withdrawDeposit(deposit2, { from: sender1 });
-    await checkSWDToken({
-      swdToken,
+    await checkStakingEthToken({
+      stakingEthToken,
       totalSupply: totalSupply.sub(deposit2),
       account: sender1,
       balance: deposit1.sub(deposit2),

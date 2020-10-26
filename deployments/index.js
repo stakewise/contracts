@@ -17,10 +17,10 @@ const {
   initializePool,
 } = require('./collectors');
 const {
-  deploySWRToken,
-  deploySWDToken,
-  initializeSWRToken,
-  initializeSWDToken,
+  deployRewardEthToken,
+  deployStakingEthToken,
+  initializeRewardEthToken,
+  initializeStakingEthToken,
 } = require('./tokens');
 const { deployAndInitializePayments } = require('./payments');
 
@@ -76,16 +76,28 @@ async function deployAllContracts({
   const solosContractAddress = await deploySolos();
   log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
-  const swdTokenContractAddress = await deploySWDToken();
-  log(white(`Deployed SWD Token contract: ${green(swdTokenContractAddress)}`));
+  const stakingEthTokenContractAddress = await deployStakingEthToken();
+  log(
+    white(
+      `Deployed StakingEthToken contract: ${green(
+        stakingEthTokenContractAddress
+      )}`
+    )
+  );
 
-  const swrTokenContractAddress = await deploySWRToken();
-  log(white(`Deployed SWR Token contract: ${green(swrTokenContractAddress)}`));
+  const rewardEthTokenContractAddress = await deployRewardEthToken();
+  log(
+    white(
+      `Deployed RewardEthToken contract: ${green(
+        rewardEthTokenContractAddress
+      )}`
+    )
+  );
 
   const balanceReportersContractAddress = await deployBalanceReporters();
   log(
     white(
-      `Deployed Balance Reporters contract: ${green(
+      `Deployed BalanceReporters contract: ${green(
         balanceReportersContractAddress
       )}`
     )
@@ -102,7 +114,7 @@ async function deployAllContracts({
 
   await initializePool(
     poolContractAddress,
-    swdTokenContractAddress,
+    stakingEthTokenContractAddress,
     settingsContractAddress,
     operatorsContractAddress,
     vrcContractAddress,
@@ -119,29 +131,29 @@ async function deployAllContracts({
   );
   log(white('Initialized Solos contract'));
 
-  await initializeSWDToken(
-    swdTokenContractAddress,
-    swrTokenContractAddress,
+  await initializeStakingEthToken(
+    stakingEthTokenContractAddress,
+    rewardEthTokenContractAddress,
     settingsContractAddress,
     poolContractAddress
   );
-  log(white('Initialized SWD Token contract'));
+  log(white('Initialized StakingEthToken contract'));
 
-  await initializeSWRToken(
-    swrTokenContractAddress,
-    swdTokenContractAddress,
+  await initializeRewardEthToken(
+    rewardEthTokenContractAddress,
+    stakingEthTokenContractAddress,
     settingsContractAddress,
     balanceReportersContractAddress
   );
-  log(white('Initialized SWR Token contract'));
+  log(white('Initialized RewardEthToken contract'));
 
   await initializeBalanceReporters(
     balanceReportersContractAddress,
     adminsContractAddress,
     settingsContractAddress,
-    swrTokenContractAddress
+    rewardEthTokenContractAddress
   );
-  log(white('Initialized Balance Reporters contract'));
+  log(white('Initialized BalanceReporters contract'));
 
   return {
     admins: adminsContractAddress,
@@ -152,8 +164,8 @@ async function deployAllContracts({
     balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
-    swdToken: swdTokenContractAddress,
-    swrToken: swrTokenContractAddress,
+    stakingEthToken: stakingEthTokenContractAddress,
+    rewardEthToken: rewardEthTokenContractAddress,
   };
 }
 

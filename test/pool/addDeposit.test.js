@@ -6,25 +6,25 @@ const {
   getDepositAmount,
   checkCollectorBalance,
   checkPoolCollectedAmount,
-  checkSWDToken,
+  checkStakingEthToken,
 } = require('../utils');
 
 const Pool = artifacts.require('Pool');
 const Settings = artifacts.require('Settings');
-const SWDToken = artifacts.require('SWDToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
 
 contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
-  let pool, settings, swdToken;
+  let pool, settings, stakingEthToken;
 
   beforeEach(async () => {
     let {
       pool: poolContractAddress,
       settings: settingsContractAddress,
-      swdToken: swdTokenContractAddress,
+      stakingEthToken: stakingEthTokenContractAddress,
     } = await deployAllContracts({ initialAdmin: admin });
     pool = await Pool.at(poolContractAddress);
     settings = await Settings.at(settingsContractAddress);
-    swdToken = await SWDToken.at(swdTokenContractAddress);
+    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
   });
 
   it('fails to add a deposit with zero amount', async () => {
@@ -82,8 +82,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       from: sender1,
       value: depositAmount1,
     });
-    await checkSWDToken({
-      swdToken,
+    await checkStakingEthToken({
+      stakingEthToken,
       totalSupply: depositAmount1,
       account: sender1,
       balance: depositAmount1,
@@ -97,8 +97,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       value: depositAmount2,
     });
     totalSupply = totalSupply.add(depositAmount2);
-    await checkSWDToken({
-      swdToken,
+    await checkStakingEthToken({
+      stakingEthToken,
       totalSupply,
       account: sender2,
       balance: depositAmount2,

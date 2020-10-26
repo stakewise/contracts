@@ -10,14 +10,14 @@ import "./IValidatorRegistration.sol";
 interface IPool {
     /**
     * @dev Constructor for initializing the Pool contract.
-    * @param _swdToken - address of the SWDToken contract.
+    * @param _stakingEthToken - address of the StakingEthToken contract.
     * @param _settings - address of the Settings contract.
     * @param _operators - address of the Operators contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
     */
     function initialize(
-        address _swdToken,
+        address _stakingEthToken,
         address _settings,
         address _operators,
         address _validatorRegistration,
