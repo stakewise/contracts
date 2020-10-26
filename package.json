@@ -19,9 +19,9 @@
     "slither": "pip3 install --user slither-analyzer && slither .",
     "test": "buidler test",
     "test:gas": "./scripts/test.sh",
-    "deploy": "yarn compile --optimizer && npx buidler run scripts/deploy.js",
-    "deployDAI": "yarn compile --optimizer && npx buidler run scripts/deployDAI.js",
-    "deployVRC": "npx buidler run scripts/deployVRC.js"
+    "deploy": "yarn compile --optimizer && npx buidler run --no-compile scripts/deploy.js",
+    "deployDAI": "yarn compile --optimizer && npx buidler run --no-compile scripts/deployDAI.js",
+    "deployVRC": "npx buidler run --no-compile scripts/deployVRC.js"
   },
   "husky": {
     "hooks": {

@@ -4,7 +4,7 @@ const initialSettings = {
   validatorDepositAmount: '32000000000000000000', // 32 ETH
   validatorPrice: '10000000000000000000', // 10 DAI / month
   maintainerFee: '1000', // 10%,
-  admin: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
+  admin: '0x08C96cfD285D039EdEB1a7c5CaF9ef0D0EE38c52',
   maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
   allContractsPaused: false,
   // TODO: update to mainnet address
