@@ -30,12 +30,12 @@ async function initializePool(
 }
 
 async function deploySolos() {
+  // Solos is deployed without proxy as it's non-custodial
   const Solos = await ethers.getContractFactory('Solos');
-  const proxy = await upgrades.deployProxy(Solos, [], {
-    unsafeAllowCustomTypes: true,
-    initializer: false,
-  });
-  return proxy.address;
+  const solos = await Solos.deploy();
+
+  await solos.deployed();
+  return solos.address;
 }
 
 async function initializeSolos(
