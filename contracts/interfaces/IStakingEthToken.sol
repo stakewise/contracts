@@ -34,12 +34,4 @@ interface IStakingEthToken is IERC20 {
     * @param amount - amount of tokens to assign.
     */
     function mint(address account, uint256 amount) external;
-
-    /**
-    * @dev Function for removing `amount` tokens from `account`.
-    * Can only be called by Pool contract.
-    * @param account - address of the account to burn tokens from.
-    * @param amount - amount of tokens to burn.
-    */
-    function burn(address account, uint256 amount) external;
 }

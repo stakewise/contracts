@@ -79,24 +79,6 @@ contract Pool is IPool, Initializable {
     }
 
     /**
-     * @dev See {IPool-withdrawDeposit}.
-     */
-    function withdrawDeposit(uint256 _amount) external override {
-        require(collectedAmount.mod(settings.validatorDepositAmount()) >= _amount, "Pool: insufficient collected amount");
-        require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Pool: invalid withdrawal amount");
-        require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
-
-        // burn sender staking tokens
-        stakingEthToken.burn(msg.sender, _amount);
-
-        // update pool collected amount
-        collectedAmount = collectedAmount.sub(_amount);
-
-        // transfer ETH to the tokens owner
-        msg.sender.sendValue(_amount);
-    }
-
-    /**
      * @dev See {IPool-registerValidator}.
      */
     function registerValidator(bytes calldata _pubKey, bytes calldata _signature, bytes32 _depositDataRoot) external override {

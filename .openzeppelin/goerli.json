@@ -1,0 +1,730 @@
+{
+  "manifestVersion": "3.1",
+  "impls": {
+    "1d01dfb2ffafcf0d246ea77b9f03381b639ebecd990335407823c485dfe23486": {
+      "address": "0x137D3fC02159228aC6422EC02bCc5a5f3D6da206",
+      "txHash": "0xcfdb806dde6e7e9813b5bd5136bed50a99becc4a926ae57cdb7951ac922375cf",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Admins",
+            "label": "admins",
+            "type": "t_struct(Role)4258_storage",
+            "src": "contracts/access/Admins.sol:19"
+          }
+        ],
+        "types": {
+          "t_struct(Role)4258_storage": {
+            "label": "struct Roles.Role"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "e3f35dd3556f201d09bdd1743292df6630334e36f0b08d8301a2ff55b59f12d7": {
+      "address": "0x1a888097C528cF2eF0960bb09dd4D234E922E3bc",
+      "txHash": "0x19eb6be6b5f44ec9b14a309458555a01659a108f1868dcbbae807c38be848364",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Managers",
+            "label": "managers",
+            "type": "t_struct(Role)4258_storage",
+            "src": "contracts/access/Managers.sol:20"
+          },
+          {
+            "contract": "Managers",
+            "label": "admins",
+            "type": "t_contract(IAdmins)3570",
+            "src": "contracts/access/Managers.sol:23"
+          }
+        ],
+        "types": {
+          "t_struct(Role)4258_storage": {
+            "label": "struct Roles.Role"
+          },
+          "t_contract(IAdmins)3570": {
+            "label": "contract IAdmins"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "cd6dc955ed7a17453a0477de1adef3130bdd24d3f817945586b4733a3584f34c": {
+      "address": "0xBC44D9cE7918163b72BEc815CE9405f7C6110C97",
+      "txHash": "0x6cd4312c442888e51f08fbe7814fbb859673116dd0ef15d5b04b225ff2a6a1d0",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Operators",
+            "label": "operators",
+            "type": "t_struct(Role)4258_storage",
+            "src": "contracts/access/Operators.sol:20"
+          },
+          {
+            "contract": "Operators",
+            "label": "admins",
+            "type": "t_contract(IAdmins)3570",
+            "src": "contracts/access/Operators.sol:23"
+          }
+        ],
+        "types": {
+          "t_struct(Role)4258_storage": {
+            "label": "struct Roles.Role"
+          },
+          "t_contract(IAdmins)3570": {
+            "label": "contract IAdmins"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "1513b9e37e1eb296517aacfde6584d8752b01b28b20c59c50992badf306825f3": {
+      "address": "0x53b17F04765DA7B24E424aD58e658b28549Ec9E2",
+      "txHash": "0x8a419d005296ad437b87fcb8292205d2f4fbdbc1ee97b8af27e9f6c7feb472c8",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Settings",
+            "label": "uintSettings",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "src": "contracts/Settings.sol:19"
+          },
+          {
+            "contract": "Settings",
+            "label": "addressSettings",
+            "type": "t_mapping(t_bytes32,t_address)",
+            "src": "contracts/Settings.sol:22"
+          },
+          {
+            "contract": "Settings",
+            "label": "bytes32Settings",
+            "type": "t_mapping(t_bytes32,t_bytes32)",
+            "src": "contracts/Settings.sol:25"
+          },
+          {
+            "contract": "Settings",
+            "label": "boolSettings",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "src": "contracts/Settings.sol:28"
+          },
+          {
+            "contract": "Settings",
+            "label": "admins",
+            "type": "t_contract(IAdmins)3570",
+            "src": "contracts/Settings.sol:31"
+          },
+          {
+            "contract": "Settings",
+            "label": "operators",
+            "type": "t_contract(IOperators)3719",
+            "src": "contracts/Settings.sol:34"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)"
+          },
+          "t_mapping(t_bytes32,t_address)": {
+            "label": "mapping(bytes32 => address)"
+          },
+          "t_mapping(t_bytes32,t_bytes32)": {
+            "label": "mapping(bytes32 => bytes32)"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)"
+          },
+          "t_contract(IAdmins)3570": {
+            "label": "contract IAdmins"
+          },
+          "t_contract(IOperators)3719": {
+            "label": "contract IOperators"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "0b6e44d13dae21e54222e77ef9a5fb4209d5c263a826363c6f84f29edb2d6749": {
+      "address": "0xbea05495a9fE31a7f6c90E62c4311e3048226C9b",
+      "txHash": "0x01edd166bcd7611111cee73ad1fc69b88a7dd180dfe40c6afebb43103c876d37",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Payments",
+            "label": "selectedTokens",
+            "type": "t_mapping(t_address,t_address)",
+            "src": "contracts/Payments.sol:29"
+          },
+          {
+            "contract": "Payments",
+            "label": "balances",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/Payments.sol:32"
+          },
+          {
+            "contract": "Payments",
+            "label": "settings",
+            "type": "t_contract(ISettings)4066",
+            "src": "contracts/Payments.sol:35"
+          },
+          {
+            "contract": "Payments",
+            "label": "managers",
+            "type": "t_contract(IManagers)3679",
+            "src": "contracts/Payments.sol:38"
+          }
+        ],
+        "types": {
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_contract(ISettings)4066": {
+            "label": "contract ISettings"
+          },
+          "t_contract(IManagers)3679": {
+            "label": "contract IManagers"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "1d4cf7bfbc6eca86e13580fadc97b2bc16037fa04ab54c32246097b238b87c26": {
+      "address": "0x21907CB32780E9718eA00a790dFE990D23293B8e",
+      "txHash": "0x8bf53fc4e1ff3e339e5d4952142eb04a7624c951f07ad1e704d8f4b3109d2d1d",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Validators",
+            "label": "publicKeys",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "src": "contracts/Validators.sol:18"
+          },
+          {
+            "contract": "Validators",
+            "label": "pool",
+            "type": "t_address",
+            "src": "contracts/Validators.sol:21"
+          },
+          {
+            "contract": "Validators",
+            "label": "solos",
+            "type": "t_address",
+            "src": "contracts/Validators.sol:24"
+          },
+          {
+            "contract": "Validators",
+            "label": "settings",
+            "type": "t_contract(ISettings)4066",
+            "src": "contracts/Validators.sol:27"
+          }
+        ],
+        "types": {
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(ISettings)4066": {
+            "label": "contract ISettings"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "8485ae64aff89327c9dec362340b31273ae4a457094cd35894189d28d5b359fd": {
+      "address": "0x1f38fAc52Db4Ff913717a83e0Dd46AE567Cda533",
+      "txHash": "0x0fd89f460d91c08399fe97798114cc46eadb8ac194a951b8dd40b7c120c5b383",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "Pool",
+            "label": "collectedAmount",
+            "type": "t_uint256",
+            "src": "contracts/collectors/Pool.sol:25"
+          },
+          {
+            "contract": "Pool",
+            "label": "validatorRegistration",
+            "type": "t_contract(IValidatorRegistration)4126",
+            "src": "contracts/collectors/Pool.sol:28"
+          },
+          {
+            "contract": "Pool",
+            "label": "poolId",
+            "type": "t_bytes32",
+            "src": "contracts/collectors/Pool.sol:31"
+          },
+          {
+            "contract": "Pool",
+            "label": "stakingEthToken",
+            "type": "t_contract(IStakingEthToken)4110",
+            "src": "contracts/collectors/Pool.sol:34"
+          },
+          {
+            "contract": "Pool",
+            "label": "settings",
+            "type": "t_contract(ISettings)3989",
+            "src": "contracts/collectors/Pool.sol:37"
+          },
+          {
+            "contract": "Pool",
+            "label": "operators",
+            "type": "t_contract(IOperators)3648",
+            "src": "contracts/collectors/Pool.sol:40"
+          },
+          {
+            "contract": "Pool",
+            "label": "validators",
+            "type": "t_contract(IValidators)4165",
+            "src": "contracts/collectors/Pool.sol:43"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_contract(IValidatorRegistration)4126": {
+            "label": "contract IValidatorRegistration"
+          },
+          "t_bytes32": {
+            "label": "bytes32"
+          },
+          "t_contract(IStakingEthToken)4110": {
+            "label": "contract IStakingEthToken"
+          },
+          "t_contract(ISettings)3989": {
+            "label": "contract ISettings"
+          },
+          "t_contract(IOperators)3648": {
+            "label": "contract IOperators"
+          },
+          "t_contract(IValidators)4165": {
+            "label": "contract IValidators"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "2865587a44a5efac819800aa7b5335c12d563bb4c08f2de529034a6f89687033": {
+      "address": "0x31B62Ee18B6e3944F38011D8A54515965EA58D42",
+      "txHash": "0xc7de52d9823cb4bc029297dcb424b7feb4790f1e7aa4fc40882ca22bdac737a7",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "contracts/tokens/BaseERC20.sol:33"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "contracts/tokens/BaseERC20.sol:35"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "contracts/tokens/BaseERC20.sol:36"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "contracts/tokens/BaseERC20.sol:37"
+          },
+          {
+            "contract": "StakingEthToken",
+            "label": "totalDeposits",
+            "type": "t_uint256",
+            "src": "contracts/tokens/StakingEthToken.sol:25"
+          },
+          {
+            "contract": "StakingEthToken",
+            "label": "deposits",
+            "type": "t_mapping(t_address,t_uint256)",
+            "src": "contracts/tokens/StakingEthToken.sol:28"
+          },
+          {
+            "contract": "StakingEthToken",
+            "label": "pool",
+            "type": "t_address",
+            "src": "contracts/tokens/StakingEthToken.sol:31"
+          },
+          {
+            "contract": "StakingEthToken",
+            "label": "rewardEthToken",
+            "type": "t_contract(IRewardEthToken)3835",
+            "src": "contracts/tokens/StakingEthToken.sol:34"
+          },
+          {
+            "contract": "StakingEthToken",
+            "label": "settings",
+            "type": "t_contract(ISettings)3989",
+            "src": "contracts/tokens/StakingEthToken.sol:37"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_contract(IRewardEthToken)3835": {
+            "label": "contract IRewardEthToken"
+          },
+          "t_contract(ISettings)3989": {
+            "label": "contract ISettings"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "cc6dd4cb989ecc93828d9e30074486116635cfbda830cd61d23211b531c2515f": {
+      "address": "0x5a9C5D8454E1f9a3a4985F8bf7771C8679E930c1",
+      "txHash": "0x7581980e7493dffb9a643c80e8362a9b0b745daa9f87a2931fbe0e58013b2414",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_allowances",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "src": "contracts/tokens/BaseERC20.sol:33"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_name",
+            "type": "t_string_storage",
+            "src": "contracts/tokens/BaseERC20.sol:35"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_symbol",
+            "type": "t_string_storage",
+            "src": "contracts/tokens/BaseERC20.sol:36"
+          },
+          {
+            "contract": "BaseERC20",
+            "label": "_decimals",
+            "type": "t_uint8",
+            "src": "contracts/tokens/BaseERC20.sol:37"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "updateTimestamp",
+            "type": "t_uint256",
+            "src": "contracts/tokens/RewardEthToken.sol:25"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "totalRewards",
+            "type": "t_int256",
+            "src": "contracts/tokens/RewardEthToken.sol:28"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "checkpoints",
+            "type": "t_mapping(t_address,t_struct(Checkpoint)3858_storage)",
+            "src": "contracts/tokens/RewardEthToken.sol:31"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "stakingEthToken",
+            "type": "t_contract(IStakingEthToken)4195",
+            "src": "contracts/tokens/RewardEthToken.sol:34"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "settings",
+            "type": "t_contract(ISettings)4066",
+            "src": "contracts/tokens/RewardEthToken.sol:37"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "balanceReporters",
+            "type": "t_address",
+            "src": "contracts/tokens/RewardEthToken.sol:40"
+          },
+          {
+            "contract": "RewardEthToken",
+            "label": "rewardRate",
+            "type": "t_int256",
+            "src": "contracts/tokens/RewardEthToken.sol:43"
+          }
+        ],
+        "types": {
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_int256": {
+            "label": "int256"
+          },
+          "t_mapping(t_address,t_struct(Checkpoint)3858_storage)": {
+            "label": "mapping(address => struct IRewardEthToken.Checkpoint)"
+          },
+          "t_contract(IStakingEthToken)4195": {
+            "label": "contract IStakingEthToken"
+          },
+          "t_contract(ISettings)4066": {
+            "label": "contract ISettings"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_uint8": {
+            "label": "uint8"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    },
+    "44236b31a9335f2d580b70f3e86879f164bf62fb6ee0fbab65a3ff335b695bef": {
+      "address": "0x1CED86b078e24e45B047800c66C9F3ea7Ee227f4",
+      "txHash": "0x495bd75f5bbf6e478b39cd1c185acdbcf4e77d251fdf39e96f65dcc223a64195",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:23"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts/proxy/Initializable.sol:28"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "reporters",
+            "type": "t_struct(Role)4258_storage",
+            "src": "contracts/access/BalanceReporters.sol:25"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "submittedVotes",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "src": "contracts/access/BalanceReporters.sol:28"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "candidates",
+            "type": "t_mapping(t_int256,t_uint256)",
+            "src": "contracts/access/BalanceReporters.sol:31"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "admins",
+            "type": "t_contract(IAdmins)3570",
+            "src": "contracts/access/BalanceReporters.sol:34"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "settings",
+            "type": "t_contract(ISettings)4066",
+            "src": "contracts/access/BalanceReporters.sol:37"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "rewardEthToken",
+            "type": "t_contract(IRewardEthToken)3912",
+            "src": "contracts/access/BalanceReporters.sol:40"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "votesThreshold",
+            "type": "t_uint256",
+            "src": "contracts/access/BalanceReporters.sol:43"
+          },
+          {
+            "contract": "BalanceReporters",
+            "label": "totalReporters",
+            "type": "t_uint256",
+            "src": "contracts/access/BalanceReporters.sol:46"
+          }
+        ],
+        "types": {
+          "t_struct(Role)4258_storage": {
+            "label": "struct Roles.Role"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)"
+          },
+          "t_mapping(t_int256,t_uint256)": {
+            "label": "mapping(int256 => uint256)"
+          },
+          "t_contract(IAdmins)3570": {
+            "label": "contract IAdmins"
+          },
+          "t_contract(ISettings)4066": {
+            "label": "contract ISettings"
+          },
+          "t_contract(IRewardEthToken)3912": {
+            "label": "contract IRewardEthToken"
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    }
+  },
+  "admin": {
+    "address": "0xcB24395F423E80b68D937E44f95625508B4129f7",
+    "txHash": "0xb819e198d90afd39158ecf27eb5f6bede7f1a783ba3a38dd653101284d0fc619"
+  }
+}

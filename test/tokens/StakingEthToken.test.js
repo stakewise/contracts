@@ -102,68 +102,6 @@ contract('StakingEthToken', ([_, ...accounts]) => {
     });
   });
 
-  describe('burn', () => {
-    let value = ether('10');
-
-    beforeEach(async () => {
-      await stakingEthToken.mint(sender1, value, {
-        from: poolContractAddress,
-      });
-    });
-
-    it('anyone cannot burn stETH tokens', async () => {
-      await expectRevert(
-        stakingEthToken.burn(sender1, value, {
-          from: sender1,
-        }),
-        'StakingEthToken: permission denied'
-      );
-      await checkStakingEthToken({
-        stakingEthToken,
-        totalSupply: value,
-        account: sender1,
-        balance: value,
-        deposit: value,
-      });
-    });
-
-    it('cannot burn more than stETH balance', async () => {
-      await expectRevert(
-        stakingEthToken.burn(sender1, value.add(ether('1')), {
-          from: poolContractAddress,
-        }),
-        'StakingEthToken: burn amount exceeds balance'
-      );
-
-      await checkStakingEthToken({
-        stakingEthToken,
-        totalSupply: value,
-        account: sender1,
-        balance: value,
-        deposit: value,
-      });
-    });
-
-    it('pool can burn stETH tokens', async () => {
-      let receipt = await stakingEthToken.burn(sender1, value, {
-        from: poolContractAddress,
-      });
-      expectEvent(receipt, 'Transfer', {
-        from: sender1,
-        to: constants.ZERO_ADDRESS,
-        value,
-      });
-
-      await checkStakingEthToken({
-        stakingEthToken,
-        totalSupply: new BN(0),
-        account: sender1,
-        balance: new BN(0),
-        deposit: new BN(0),
-      });
-    });
-  });
-
   describe('transfer', () => {
     let value = ether('10');
 

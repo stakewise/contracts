@@ -115,19 +115,4 @@ contract StakingEthToken is IStakingEthToken, BaseERC20 {
 
         emit Transfer(address(0), account, amount);
     }
-
-    /**
-     * @dev See {IStakingEthToken-burn}.
-     */
-    function burn(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakingEthToken: permission denied");
-        require(balanceOf(account) >= amount, "StakingEthToken: burn amount exceeds balance");
-
-        // start calculating account rewards with updated deposit amount
-        rewardEthToken.updateRewardCheckpoint(account);
-        totalDeposits = totalDeposits.sub(amount);
-        deposits[account] = deposits[account].sub(amount);
-
-        emit Transfer(account, address(0), amount);
-    }
 }
