@@ -12,25 +12,25 @@ async function deployAndInitializeERC20Mock(ownerAddress, name, symbol) {
   return erc20Mock.address;
 }
 
-async function deployStakingEthToken() {
-  const StakingEthToken = await ethers.getContractFactory('StakingEthToken');
-  const proxy = await upgrades.deployProxy(StakingEthToken, [], {
+async function deployStakedEthToken() {
+  const StakedEthToken = await ethers.getContractFactory('StakedEthToken');
+  const proxy = await upgrades.deployProxy(StakedEthToken, [], {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
   return proxy.address;
 }
 
-async function initializeStakingEthToken(
-  stakingEthTokenContractAddress,
+async function initializeStakedEthToken(
+  stakedEthTokenContractAddress,
   rewardEthTokenContractAddress,
   settingsContractAddress,
   poolContractAddress
 ) {
-  let StakingEthToken = await ethers.getContractFactory('StakingEthToken');
-  StakingEthToken = StakingEthToken.attach(stakingEthTokenContractAddress);
+  let StakedEthToken = await ethers.getContractFactory('StakedEthToken');
+  StakedEthToken = StakedEthToken.attach(stakedEthTokenContractAddress);
 
-  return StakingEthToken.initialize(
+  return StakedEthToken.initialize(
     rewardEthTokenContractAddress,
     settingsContractAddress,
     poolContractAddress
@@ -48,7 +48,7 @@ async function deployRewardEthToken() {
 
 async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
-  stakingEthTokenContractAddress,
+  stakedEthTokenContractAddress,
   settingsContractAddress,
   balanceReportersContractAddress
 ) {
@@ -56,7 +56,7 @@ async function initializeRewardEthToken(
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
 
   return RewardEthToken.initialize(
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
     balanceReportersContractAddress
   );
@@ -64,8 +64,8 @@ async function initializeRewardEthToken(
 
 module.exports = {
   deployAndInitializeERC20Mock,
-  deployStakingEthToken,
-  initializeStakingEthToken,
+  deployStakedEthToken,
+  initializeStakedEthToken,
   deployRewardEthToken,
   initializeRewardEthToken,
 };

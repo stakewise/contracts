@@ -34,11 +34,11 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Constructor for initializing the RewardEthToken contract.
-    * @param _stakingEthToken - address of the StakingEthToken contract.
+    * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _settings - address of the Settings contract.
     * @param _balanceReporters - address of the BalanceReporters contract.
     */
-    function initialize(address _stakingEthToken, address _settings, address _balanceReporters) external;
+    function initialize(address _stakedEthToken, address _settings, address _balanceReporters) external;
 
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
@@ -59,7 +59,7 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Function for updating account's reward checkpoint.
-    * Can only be called by StakingEthToken contract.
+    * Can only be called by StakedEthToken contract.
     * @param account - address of the account to update the reward checkpoint for.
     */
     function updateRewardCheckpoint(address account) external;

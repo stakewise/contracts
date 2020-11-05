@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "../interfaces/IStakingEthToken.sol";
+import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "./BaseERC20.sol";
@@ -30,8 +30,8 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
     // @dev Maps account address to its reward checkpoint.
     mapping(address => Checkpoint) private checkpoints;
 
-    // @dev Address of the StakingEthToken contract.
-    IStakingEthToken private stakingEthToken;
+    // @dev Address of the StakedEthToken contract.
+    IStakedEthToken private stakedEthToken;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -45,9 +45,9 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
     /**
       * @dev See {IRewardEthToken-initialize}.
       */
-    function initialize(address _stakingEthToken, address _settings, address _balanceReporters) public override initializer {
+    function initialize(address _stakedEthToken, address _settings, address _balanceReporters) public override initializer {
         super.initialize("StakeWise Reward ETH", "rwETH");
-        stakingEthToken = IStakingEthToken(_stakingEthToken);
+        stakedEthToken = IStakedEthToken(_stakedEthToken);
         settings = ISettings(_settings);
         balanceReporters = _balanceReporters;
     }
@@ -74,7 +74,7 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
         Checkpoint memory cp = checkpoints[account];
 
         int256 curReward;
-        uint256 deposit = stakingEthToken.depositOf(account);
+        uint256 deposit = stakedEthToken.depositOf(account);
         if (deposit != 0) {
             // calculate current reward of the account
             curReward = deposit.toInt256().mul(rewardRate.sub(cp.rewardRate)).div(1 ether);
@@ -105,7 +105,7 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        require(msg.sender == address(stakingEthToken), "RewardEthToken: permission denied");
+        require(msg.sender == address(stakedEthToken), "RewardEthToken: permission denied");
         checkpoints[account] = Checkpoint(rewardRate, rewardOf(account));
     }
 
@@ -122,7 +122,7 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
         }
 
         // calculate reward rate used for account reward calculation
-        rewardRate = rewardRate.add(periodRewards.sub(maintainerReward).mul(1 ether).div(stakingEthToken.totalDeposits().toInt256()));
+        rewardRate = rewardRate.add(periodRewards.sub(maintainerReward).mul(1 ether).div(stakedEthToken.totalDeposits().toInt256()));
 
         // deduct maintainer fee if period reward is positive
         if (maintainerReward > 0) {

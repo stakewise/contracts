@@ -15,7 +15,6 @@ const {
 } = require('../deployments/settings');
 
 const newValues = [
-  ['minDepositUnit', ether('0.002')],
   ['maxDepositAmount', ether('11000')],
   ['validatorPrice', new BN(3703171921051)],
   ['maintainer', '0xF4904844B4aF87f4036E77Ad1697bEcf703c8439'],

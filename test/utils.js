@@ -6,17 +6,13 @@ const { initialSettings } = require('../deployments/settings');
 const Validators = artifacts.require('Validators');
 
 function getDepositAmount({
-  min = new BN(initialSettings.minDepositUnit),
-  max = ether('320'),
+  min = new BN('1'),
+  max = new BN(initialSettings.maxDepositAmount),
 } = {}) {
-  let randomDeposit = ether(Math.random().toFixed(8))
+  return ether(Math.random().toFixed(8))
     .mul(max.sub(min))
     .div(ether('1'))
     .add(min);
-
-  return randomDeposit.sub(
-    randomDeposit.mod(new BN(initialSettings.minDepositUnit))
-  );
 }
 
 async function checkSolo({
@@ -111,27 +107,27 @@ async function checkValidatorRegistered({
   );
 }
 
-async function checkStakingEthToken({
-  stakingEthToken,
+async function checkStakedEthToken({
+  stakedEthToken,
   totalSupply,
   account,
   deposit,
   balance,
 }) {
   if (totalSupply != null) {
-    expect(await stakingEthToken.totalSupply()).to.be.bignumber.equal(
+    expect(await stakedEthToken.totalSupply()).to.be.bignumber.equal(
       totalSupply
     );
   }
 
   if (account != null && deposit != null) {
-    expect(await stakingEthToken.depositOf(account)).to.be.bignumber.equal(
+    expect(await stakedEthToken.depositOf(account)).to.be.bignumber.equal(
       deposit
     );
   }
 
   if (account != null && balance != null) {
-    expect(await stakingEthToken.balanceOf(account)).to.be.bignumber.equal(
+    expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
       balance
     );
   }
@@ -170,6 +166,6 @@ module.exports = {
   checkValidatorRegistered,
   getDepositAmount,
   checkPoolCollectedAmount,
-  checkStakingEthToken,
+  checkStakedEthToken,
   checkRewardEthToken,
 };

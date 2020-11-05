@@ -1,5 +1,4 @@
 const initialSettings = {
-  minDepositUnit: '1000000000000000', // 0.001 ETH
   maxDepositAmount: '1000000000000000000000', // 1000 ETH
   validatorDepositAmount: '32000000000000000000', // 32 ETH
   validatorPrice: '10000000000000000000', // 10 DAI / month
@@ -21,7 +20,6 @@ async function deployAndInitializeSettings(
   const proxy = await upgrades.deployProxy(Settings, [
     initialSettings.allContractsPaused,
     initialSettings.maintainerFee,
-    initialSettings.minDepositUnit,
     initialSettings.validatorDepositAmount,
     initialSettings.maxDepositAmount,
     initialSettings.validatorPrice,

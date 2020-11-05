@@ -39,7 +39,6 @@ contract Settings is ISettings, Initializable {
     function initialize(
         bool _allContractsPaused,
         uint256 _maintainerFee,
-        uint256 _minDepositUnit,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
         uint256 _validatorPrice,
@@ -52,7 +51,6 @@ contract Settings is ISettings, Initializable {
     {
         boolSettings[keccak256(abi.encodePacked("allContractsPaused"))] = _allContractsPaused;
         uintSettings[keccak256(abi.encodePacked("maintainerFee"))] = _maintainerFee;
-        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = _minDepositUnit;
         uintSettings[keccak256(abi.encodePacked("validatorDepositAmount"))] = _validatorDepositAmount;
         uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = _maxDepositAmount;
         uintSettings[keccak256(abi.encodePacked("validatorPrice"))] = _validatorPrice;
@@ -74,23 +72,6 @@ contract Settings is ISettings, Initializable {
      */
     function withdrawalCredentials() external view override returns (bytes32) {
         return bytes32Settings[keccak256(abi.encodePacked("withdrawalCredentials"))];
-    }
-
-    /**
-     * @dev See {ISettings-minDepositUnit}.
-     */
-    function minDepositUnit() external view override returns (uint256) {
-        return uintSettings[keccak256(abi.encodePacked("minDepositUnit"))];
-    }
-
-    /**
-     * @dev See {ISettings-setMinDepositUnit}.
-     */
-    function setMinDepositUnit(uint256 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = newValue;
-        emit SettingChanged("minDepositUnit");
     }
 
     /**

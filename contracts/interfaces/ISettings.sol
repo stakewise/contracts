@@ -22,7 +22,6 @@ interface ISettings {
     * @dev Constructor for initializing the Settings contract.
     * @param _allContractsPaused - defines whether all contracts should be paused.
     * @param _maintainerFee - percentage fee for using the service.
-    * @param _minDepositUnit - minimum unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
     * @param _validatorPrice - price per month of the non-custodial validator.
@@ -34,7 +33,6 @@ interface ISettings {
     function initialize(
         bool _allContractsPaused,
         uint256 _maintainerFee,
-        uint256 _minDepositUnit,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
         uint256 _validatorPrice,
@@ -66,17 +64,6 @@ interface ISettings {
     * @dev Function for getting the deposit amount required to become an Ethereum validator.
     */
     function validatorDepositAmount() external view returns (uint256);
-
-    /**
-    * @dev Function for getting user deposit minimum unit.
-    */
-    function minDepositUnit() external view returns (uint256);
-
-    /**
-    * @dev Function for changing user's deposit minimum unit.
-    * @param newValue - new minimum deposit unit.
-    */
-    function setMinDepositUnit(uint256 newValue) external;
 
     /**
     * @dev Function for getting the address of the application owner, where the fee will be paid.

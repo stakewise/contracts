@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "../interfaces/IStakingEthToken.sol";
+import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IOperators.sol";
@@ -30,8 +30,8 @@ contract Pool is IPool, Initializable {
     // @dev ID of the pool.
     bytes32 private poolId;
 
-    // @dev Address of the StakingEthToken contract.
-    IStakingEthToken private stakingEthToken;
+    // @dev Address of the StakedEthToken contract.
+    IStakedEthToken private stakedEthToken;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -46,7 +46,7 @@ contract Pool is IPool, Initializable {
      * @dev See {IPool-initialize}.
      */
     function initialize(
-        address _stakingEthToken,
+        address _stakedEthToken,
         address _settings,
         address _operators,
         address _validatorRegistration,
@@ -54,7 +54,7 @@ contract Pool is IPool, Initializable {
     )
         public override initializer
     {
-        stakingEthToken = IStakingEthToken(_stakingEthToken);
+        stakedEthToken = IStakedEthToken(_stakedEthToken);
         settings = ISettings(_settings);
         operators = IOperators(_operators);
         validatorRegistration = IValidatorRegistration(_validatorRegistration);
@@ -67,15 +67,15 @@ contract Pool is IPool, Initializable {
      * @dev See {IPool-addDeposit}.
      */
     function addDeposit() external payable override {
-        require(msg.value > 0 && msg.value.mod(settings.minDepositUnit()) == 0, "Pool: invalid deposit amount");
+        require(msg.value > 0, "Pool: invalid deposit amount");
         require(msg.value <= settings.maxDepositAmount(), "Pool: deposit amount is too large");
         require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
 
         // update pool collected amount
         collectedAmount = collectedAmount.add(msg.value);
 
-        // mint new staking tokens
-        stakingEthToken.mint(msg.sender, msg.value);
+        // mint new staked tokens
+        stakedEthToken.mint(msg.sender, msg.value);
     }
 
     /**

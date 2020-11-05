@@ -18,9 +18,9 @@ const {
 } = require('./collectors');
 const {
   deployRewardEthToken,
-  deployStakingEthToken,
+  deployStakedEthToken,
   initializeRewardEthToken,
-  initializeStakingEthToken,
+  initializeStakedEthToken,
 } = require('./tokens');
 const { deployAndInitializePayments } = require('./payments');
 
@@ -76,11 +76,11 @@ async function deployAllContracts({
   const solosContractAddress = await deploySolos();
   log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
-  const stakingEthTokenContractAddress = await deployStakingEthToken();
+  const stakedEthTokenContractAddress = await deployStakedEthToken();
   log(
     white(
-      `Deployed StakingEthToken contract: ${green(
-        stakingEthTokenContractAddress
+      `Deployed StakedEthToken contract: ${green(
+        stakedEthTokenContractAddress
       )}`
     )
   );
@@ -114,7 +114,7 @@ async function deployAllContracts({
 
   await initializePool(
     poolContractAddress,
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
     operatorsContractAddress,
     vrcContractAddress,
@@ -131,17 +131,17 @@ async function deployAllContracts({
   );
   log(white('Initialized Solos contract'));
 
-  await initializeStakingEthToken(
-    stakingEthTokenContractAddress,
+  await initializeStakedEthToken(
+    stakedEthTokenContractAddress,
     rewardEthTokenContractAddress,
     settingsContractAddress,
     poolContractAddress
   );
-  log(white('Initialized StakingEthToken contract'));
+  log(white('Initialized StakedEthToken contract'));
 
   await initializeRewardEthToken(
     rewardEthTokenContractAddress,
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
     balanceReportersContractAddress
   );
@@ -164,7 +164,7 @@ async function deployAllContracts({
     balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
-    stakingEthToken: stakingEthTokenContractAddress,
+    stakedEthToken: stakedEthTokenContractAddress,
     rewardEthToken: rewardEthTokenContractAddress,
   };
 }
