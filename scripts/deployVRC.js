@@ -1,17 +1,14 @@
-const { abi, bytecode } = require('../deployments/vrc');
+const { white, green } = require('chalk');
+const { deployAndInitializeVRC } = require('../deployments/vrc');
 
-module.exports = async function (callback) {
-  try {
-    let vrc = new web3.eth.Contract(abi);
-    vrc.setProvider(web3.currentProvider);
+async function main() {
+  let vrcAddress = await deployAndInitializeVRC();
+  console.log(white(`Deployed VRC contract: ${green(vrcAddress)}`));
+}
 
-    let sender = process.env.FROM || (await web3.eth.getAccounts())[0];
-    let gas = await vrc.deploy({ data: bytecode }).estimateGas();
-
-    vrc = await vrc.deploy({ data: bytecode }).send({ from: sender, gas });
-    console.log(`VRC deployed at address: ${vrc.options.address}`);
-    callback();
-  } catch (e) {
-    callback(e);
-  }
-};
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

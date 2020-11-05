@@ -31,3 +31,8 @@ build
 
 # IntelliJ IDE
 .idea
+
+# artifacts
+cache
+artifacts
+.openzeppelin/unknown-*.json

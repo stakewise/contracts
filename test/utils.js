@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
@@ -18,12 +17,6 @@ function getDepositAmount({
   return randomDeposit.sub(
     randomDeposit.mod(new BN(initialSettings.minDepositUnit))
   );
-}
-
-function removeNetworkFile(network) {
-  if (fs.existsSync(`.openzeppelin/${network}.json`)) {
-    fs.unlinkSync(`.openzeppelin/${network}.json`);
-  }
 }
 
 async function checkSolo({
@@ -118,43 +111,55 @@ async function checkValidatorRegistered({
   );
 }
 
-async function checkSWDToken({
-  swdToken,
+async function checkStakingEthToken({
+  stakingEthToken,
   totalSupply,
   account,
   deposit,
   balance,
 }) {
   if (totalSupply != null) {
-    expect(await swdToken.totalSupply()).to.be.bignumber.equal(totalSupply);
+    expect(await stakingEthToken.totalSupply()).to.be.bignumber.equal(
+      totalSupply
+    );
   }
 
   if (account != null && deposit != null) {
-    expect(await swdToken.depositOf(account)).to.be.bignumber.equal(deposit);
+    expect(await stakingEthToken.depositOf(account)).to.be.bignumber.equal(
+      deposit
+    );
   }
 
   if (account != null && balance != null) {
-    expect(await swdToken.balanceOf(account)).to.be.bignumber.equal(balance);
+    expect(await stakingEthToken.balanceOf(account)).to.be.bignumber.equal(
+      balance
+    );
   }
 }
 
-async function checkSWRToken({
-  swrToken,
+async function checkRewardEthToken({
+  rewardEthToken,
   totalSupply,
   account,
   reward,
   balance,
 }) {
   if (totalSupply != null) {
-    expect(await swrToken.totalSupply()).to.be.bignumber.equal(totalSupply);
+    expect(await rewardEthToken.totalSupply()).to.be.bignumber.equal(
+      totalSupply
+    );
   }
 
   if (account != null && reward != null) {
-    expect(await swrToken.rewardOf(account)).to.be.bignumber.equal(reward);
+    expect(await rewardEthToken.rewardOf(account)).to.be.bignumber.equal(
+      reward
+    );
   }
 
   if (account != null && balance != null) {
-    expect(await swrToken.balanceOf(account)).to.be.bignumber.equal(balance);
+    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
+      balance
+    );
   }
 }
 
@@ -163,9 +168,8 @@ module.exports = {
   checkSolo,
   checkSoloDepositAdded,
   checkValidatorRegistered,
-  removeNetworkFile,
   getDepositAmount,
   checkPoolCollectedAmount,
-  checkSWDToken,
-  checkSWRToken,
+  checkStakingEthToken,
+  checkRewardEthToken,
 };

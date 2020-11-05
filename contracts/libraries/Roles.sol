@@ -5,7 +5,7 @@ pragma solidity 0.6.12;
 /**
  * @title Roles
  * @dev Library for managing addresses assigned to a Role.
- * Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts-ethereum-package/blob/v2.5.0/contracts/access/Roles.sol
+ * Adapted from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v2.5.1/contracts/access/Roles.sol
  */
 library Roles {
     struct Role {

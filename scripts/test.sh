@@ -34,4 +34,4 @@ else
   echo "Ganache launched!"
 fi
 
-NODE_ENV=test SILENT=true node_modules/.bin/truffle test --network development "$@"
+npx buidler test --gas --optimizer --network local "$@"

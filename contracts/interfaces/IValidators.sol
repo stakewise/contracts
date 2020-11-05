@@ -8,9 +8,9 @@ pragma solidity 0.6.12;
 interface IValidators {
     /**
     * @dev Function for checking whether public key was already used.
-    * @param publicKey - hash of public key to check.
+    * @param _publicKey - hash of public key to check.
     */
-    function publicKeys(bytes32 publicKey) external view returns (bool);
+    function publicKeys(bytes32 _publicKey) external view returns (bool);
 
     /**
     * @dev Event for tracking registered validators.
@@ -18,7 +18,7 @@ interface IValidators {
     * @param pubKey - validator public key.
     * @param price - validator monthly price.
     */
-    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint128 price);
+    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint256 price);
 
     /**
     * @dev Constructor for initializing the Validators contract.

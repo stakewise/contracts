@@ -1,179 +1,174 @@
+const bre = require('@nomiclabs/buidler');
+const { white, green } = require('chalk');
+
 const {
-  deployAdminsProxy,
-  deployOperatorsProxy,
-  deployManagersProxy,
+  deployAndInitializeAdmins,
+  deployAndInitializeManagers,
+  deployAndInitializeOperators,
+  deployBalanceReporters,
+  initializeBalanceReporters,
 } = require('./access');
-const { calculateContractAddress, log } = require('./common');
-const { deployPoolProxy, deploySolosProxy } = require('./collectors');
-const { deploySWDTokenProxy, deploySWRTokenProxy } = require('./tokens');
-const { deployPaymentsProxy } = require('./payments');
-const { deploySettingsProxy, initialSettings } = require('./settings');
-const { deployValidatorsProxy } = require('./validators');
+const { deployValidators, initializeValidators } = require('./validators');
+const { deployAndInitializeSettings, initialSettings } = require('./settings');
+const {
+  deploySolos,
+  deployPool,
+  initializeSolos,
+  initializePool,
+} = require('./collectors');
+const {
+  deployRewardEthToken,
+  deployStakingEthToken,
+  initializeRewardEthToken,
+  initializeStakingEthToken,
+} = require('./tokens');
+const { deployAndInitializePayments } = require('./payments');
 
-async function deployAllProxies({
+function log(message) {
+  if (bre.config != null && bre.config.suppressLogs !== true) {
+    console.log(message);
+  }
+}
+
+async function deployAllContracts({
   initialAdmin = initialSettings.admin,
-  vrc = initialSettings.VRC,
-  validatorsOracleProxy = initialSettings.validatorsOracle,
-  networkConfig,
-}) {
-  // Calculate Validators proxy address via create2
-  let {
-    salt: validatorsSalt,
-    contractAddress: validatorsCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
+  vrcContractAddress = initialSettings.VRC,
+} = {}) {
+  // Deploy and initialize Admins contract
+  const adminsContractAddress = await deployAndInitializeAdmins(initialAdmin);
+  log(white(`Deployed Admins contract: ${green(adminsContractAddress)}`));
 
-  // Calculate Pool proxy address via create2
-  let {
-    salt: poolSalt,
-    contractAddress: poolCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
+  // Deploy and initialize Managers contract
+  const managersContractAddress = await deployAndInitializeManagers(
+    adminsContractAddress
+  );
+  log(white(`Deployed Managers contract: ${green(managersContractAddress)}`));
 
-  // Calculate Solos proxy address via create2
-  let {
-    salt: solosSalt,
-    contractAddress: solosCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
+  // Deploy and initialize Operators contract
+  const operatorsContractAddress = await deployAndInitializeOperators(
+    adminsContractAddress
+  );
+  log(white(`Deployed Operators contract: ${green(operatorsContractAddress)}`));
 
-  // Calculate swrToken proxy address via create2
-  let {
-    salt: swrTokenSalt,
-    contractAddress: swrTokenCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
+  // Deploy and initialize Settings contract
+  const settingsContractAddress = await deployAndInitializeSettings(
+    adminsContractAddress,
+    operatorsContractAddress
+  );
+  log(white(`Deployed Settings contract: ${green(settingsContractAddress)}`));
 
-  // Calculate swdToken proxy address via create2
-  let {
-    salt: swdTokenSalt,
-    contractAddress: swdTokenCalcProxy,
-  } = await calculateContractAddress({ networkConfig });
+  // Deploy and initialize Payments contract
+  const paymentsContractAddress = await deployAndInitializePayments(
+    settingsContractAddress,
+    managersContractAddress
+  );
+  log(white(`Deployed Payments contract: ${green(paymentsContractAddress)}`));
 
-  // Deploy Admins proxy
-  let adminsProxy = await deployAdminsProxy({
-    networkConfig,
-    initialAdmin,
-  });
-  log(`Admins contract: ${adminsProxy}`);
+  // Deploy contracts
+  const validatorsContractAddress = await deployValidators();
+  log(
+    white(`Deployed Validators contract: ${green(validatorsContractAddress)}`)
+  );
 
-  // Deploy Operators proxy
-  let operatorsProxy = await deployOperatorsProxy({
-    networkConfig,
-    adminsProxy,
-  });
-  log(`Operators contract: ${operatorsProxy}`);
+  const poolContractAddress = await deployPool();
+  log(white(`Deployed Pool contract: ${green(poolContractAddress)}`));
 
-  // Deploy Managers proxy
-  let managersProxy = await deployManagersProxy({
-    networkConfig,
-    adminsProxy,
-  });
-  log(`Managers contract: ${managersProxy}`);
+  const solosContractAddress = await deploySolos();
+  log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
-  // Deploy Settings proxy
-  let settingsProxy = await deploySettingsProxy({
-    networkConfig,
-    adminsProxy,
-    operatorsProxy,
-  });
-  log(`Settings contract: ${settingsProxy}`);
+  const stakingEthTokenContractAddress = await deployStakingEthToken();
+  log(
+    white(
+      `Deployed StakingEthToken contract: ${green(
+        stakingEthTokenContractAddress
+      )}`
+    )
+  );
 
-  // Deploy Validators proxy
-  let validatorsProxy = await deployValidatorsProxy({
-    networkConfig,
-    poolProxy: poolCalcProxy,
-    solosProxy: solosCalcProxy,
-    settingsProxy,
-    salt: validatorsSalt,
-  });
-  if (validatorsProxy !== validatorsCalcProxy) {
-    throw new Error(
-      `Validators contract actual address "${validatorsProxy}" does not match expected "${validatorsCalcProxy}"`
-    );
-  }
-  log(`Validators contract: ${validatorsProxy}`);
+  const rewardEthTokenContractAddress = await deployRewardEthToken();
+  log(
+    white(
+      `Deployed RewardEthToken contract: ${green(
+        rewardEthTokenContractAddress
+      )}`
+    )
+  );
 
-  // Deploy Pool proxy
-  let poolProxy = await deployPoolProxy({
-    vrc,
-    salt: poolSalt,
-    swdTokenProxy: swdTokenCalcProxy,
-    settingsProxy,
-    operatorsProxy,
-    validatorsProxy,
-    networkConfig,
-  });
-  if (poolProxy !== poolCalcProxy) {
-    throw new Error(
-      `Pool contract actual address "${poolProxy}" does not match expected "${poolCalcProxy}"`
-    );
-  }
-  log(`Pool contract: ${poolProxy}`);
+  const balanceReportersContractAddress = await deployBalanceReporters();
+  log(
+    white(
+      `Deployed BalanceReporters contract: ${green(
+        balanceReportersContractAddress
+      )}`
+    )
+  );
 
-  // Deploy Solos proxy
-  let solosProxy = await deploySolosProxy({
-    settingsProxy,
-    operatorsProxy,
-    vrc,
-    validatorsProxy,
-    salt: solosSalt,
-    networkConfig,
-  });
-  if (solosProxy !== solosCalcProxy) {
-    throw new Error(
-      `Solos contract actual address "${solosProxy}" does not match expected "${solosCalcProxy}"`
-    );
-  }
-  log(`Solos contract: ${solosProxy}`);
+  // Initialize contracts
+  await initializeValidators(
+    validatorsContractAddress,
+    poolContractAddress,
+    solosContractAddress,
+    settingsContractAddress
+  );
+  log(white('Initialized Validators contract'));
 
-  // Deploy SWRToken proxy
-  let swrTokenProxy = await deploySWRTokenProxy({
-    swdTokenProxy: swdTokenCalcProxy,
-    settingsProxy,
-    validatorsOracleProxy,
-    salt: swrTokenSalt,
-    networkConfig,
-  });
-  if (swrTokenProxy !== swrTokenCalcProxy) {
-    throw new Error(
-      `SWRToken contract actual address "${swrTokenProxy}" does not match expected "${swrTokenCalcProxy}"`
-    );
-  }
-  log(`SWRToken contract: ${swrTokenProxy}`);
+  await initializePool(
+    poolContractAddress,
+    stakingEthTokenContractAddress,
+    settingsContractAddress,
+    operatorsContractAddress,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
+  log(white('Initialized Pool contract'));
 
-  // Deploy SWDToken proxy
-  let swdTokenProxy = await deploySWDTokenProxy({
-    swrTokenProxy,
-    poolProxy,
-    settingsProxy,
-    salt: swdTokenSalt,
-    networkConfig,
-  });
-  if (swdTokenProxy !== swdTokenCalcProxy) {
-    throw new Error(
-      `SWDToken contract actual address "${swdTokenProxy}" does not match expected "${swdTokenCalcProxy}"`
-    );
-  }
-  log(`SWDToken contract: ${swdTokenProxy}`);
+  await initializeSolos(
+    solosContractAddress,
+    settingsContractAddress,
+    operatorsContractAddress,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
+  log(white('Initialized Solos contract'));
 
-  // Deploy Payments proxy
-  let paymentsProxy = await deployPaymentsProxy({
-    settingsProxy,
-    managersProxy,
-    networkConfig,
-  });
-  log(`Payments contract: ${paymentsProxy}`);
+  await initializeStakingEthToken(
+    stakingEthTokenContractAddress,
+    rewardEthTokenContractAddress,
+    settingsContractAddress,
+    poolContractAddress
+  );
+  log(white('Initialized StakingEthToken contract'));
+
+  await initializeRewardEthToken(
+    rewardEthTokenContractAddress,
+    stakingEthTokenContractAddress,
+    settingsContractAddress,
+    balanceReportersContractAddress
+  );
+  log(white('Initialized RewardEthToken contract'));
+
+  await initializeBalanceReporters(
+    balanceReportersContractAddress,
+    adminsContractAddress,
+    settingsContractAddress,
+    rewardEthTokenContractAddress
+  );
+  log(white('Initialized BalanceReporters contract'));
 
   return {
-    admins: adminsProxy,
-    operators: operatorsProxy,
-    managers: managersProxy,
-    settings: settingsProxy,
-    validators: validatorsProxy,
-    pool: poolProxy,
-    solos: solosProxy,
-    swdToken: swdTokenProxy,
-    swrToken: swrTokenProxy,
+    admins: adminsContractAddress,
+    operators: operatorsContractAddress,
+    managers: managersContractAddress,
+    settings: settingsContractAddress,
+    validators: validatorsContractAddress,
+    balanceReporters: balanceReportersContractAddress,
+    pool: poolContractAddress,
+    solos: solosContractAddress,
+    stakingEthToken: stakingEthTokenContractAddress,
+    rewardEthToken: rewardEthTokenContractAddress,
   };
 }
 
 module.exports = {
-  deployAllProxies,
+  deployAllContracts,
 };

@@ -2,35 +2,36 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/utils/Address.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
-import "../interfaces/ISWDToken.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "../interfaces/IStakingEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidators.sol";
+import "../interfaces/IPool.sol";
 
 /**
  * @title Pool
  *
  * @dev Pool contract accumulates deposits from the users, mints tokens and register validators.
  */
-contract Pool is Initializable {
+contract Pool is IPool, Initializable {
     using SafeMath for uint256;
     using Address for address payable;
 
     // @dev Total amount collected.
-    uint256 public collectedAmount;
+    uint256 public override collectedAmount;
+
+    // @dev Address of the VRC (deployed by Ethereum).
+    IValidatorRegistration public override validatorRegistration;
 
     // @dev ID of the pool.
     bytes32 private poolId;
 
-    // @dev Address of the VRC (deployed by Ethereum).
-    IValidatorRegistration public validatorRegistration;
-
-    // @dev Address of the SWDToken contract.
-    ISWDToken private swdToken;
+    // @dev Address of the StakingEthToken contract.
+    IStakingEthToken private stakingEthToken;
 
     // @dev Address of the Settings contract.
     ISettings private settings;
@@ -42,74 +43,45 @@ contract Pool is Initializable {
     IValidators private validators;
 
     /**
-    * @dev Constructor for initializing the Pool contract.
-    * @param _swdToken - address of the SWDToken contract.
-    * @param _settings - address of the Settings contract.
-    * @param _operators - address of the Operators contract.
-    * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
-    * @param _validators - address of the Validators contract.
-    */
+     * @dev See {IPool-initialize}.
+     */
     function initialize(
-        ISWDToken _swdToken,
-        ISettings _settings,
-        IOperators _operators,
-        IValidatorRegistration _validatorRegistration,
-        IValidators _validators
+        address _stakingEthToken,
+        address _settings,
+        address _operators,
+        address _validatorRegistration,
+        address _validators
     )
-        public initializer
+        public override initializer
     {
-        swdToken = _swdToken;
-        settings = _settings;
-        operators = _operators;
-        validatorRegistration = _validatorRegistration;
-        validators = _validators;
+        stakingEthToken = IStakingEthToken(_stakingEthToken);
+        settings = ISettings(_settings);
+        operators = IOperators(_operators);
+        validatorRegistration = IValidatorRegistration(_validatorRegistration);
+        validators = IValidators(_validators);
         // there is only one pool instance, the ID is static
         poolId = keccak256(abi.encodePacked(address(this)));
     }
 
     /**
-    * @dev Function for adding deposits to the pool.
-    * The depositing will be disallowed in case `Pool` contract is paused in `Settings` contract.
-    */
-    function addDeposit() external payable {
+     * @dev See {IPool-addDeposit}.
+     */
+    function addDeposit() external payable override {
         require(msg.value > 0 && msg.value.mod(settings.minDepositUnit()) == 0, "Pool: invalid deposit amount");
         require(msg.value <= settings.maxDepositAmount(), "Pool: deposit amount is too large");
-        require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
+        require(!settings.pausedContracts(address(this)), "Pool: contract is paused");
 
         // update pool collected amount
         collectedAmount = collectedAmount.add(msg.value);
 
-        // mint new deposit tokens
-        swdToken.mint(msg.sender, msg.value);
+        // mint new staking tokens
+        stakingEthToken.mint(msg.sender, msg.value);
     }
 
     /**
-    * @dev Function for withdrawing deposits.
-    * The deposit can only be withdrawn if there is less than `validatorDepositAmount` in the pool.
-    * @param _amount - amount to withdraw.
-    */
-    function withdrawDeposit(uint256 _amount) external {
-        require(collectedAmount.mod(settings.validatorDepositAmount()) >= _amount, "Pool: insufficient collected amount");
-        require(_amount > 0 && _amount.mod(settings.minDepositUnit()) == 0, "Pool: invalid withdrawal amount");
-        require(!settings.pausedContracts(address(this)), "Pool: contract is disabled");
-
-        // burn sender deposit tokens
-        swdToken.burn(msg.sender, _amount);
-
-        // update pool collected amount
-        collectedAmount = collectedAmount.sub(_amount);
-
-        // transfer ETH to the tokens owner
-        msg.sender.sendValue(_amount);
-    }
-
-    /**
-    * @dev Function for registering new validators.
-    * @param _pubKey - BLS public key of the validator, generated by the operator.
-    * @param _signature - BLS signature of the validator, generated by the operator.
-    * @param _depositDataRoot - hash tree root of the deposit data, generated by the operator.
-    */
-    function registerValidator(bytes calldata _pubKey, bytes calldata _signature, bytes32 _depositDataRoot) external {
+     * @dev See {IPool-registerValidator}.
+     */
+    function registerValidator(bytes calldata _pubKey, bytes calldata _signature, bytes32 _depositDataRoot) external override {
         require(operators.isOperator(msg.sender), "Pool: permission denied");
 
         // reduce pool collected amount
@@ -121,7 +93,7 @@ contract Pool is Initializable {
         validators.register(_pubKey, poolId);
         validatorRegistration.deposit{value : depositAmount}(
             _pubKey,
-            settings.withdrawalCredentials(),
+            abi.encodePacked(settings.withdrawalCredentials()),
             _signature,
             _depositDataRoot
         );

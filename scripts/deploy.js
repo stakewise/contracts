@@ -1,21 +1,8 @@
-const { stdout } = require('@openzeppelin/cli');
-const { Loggy } = require('@openzeppelin/upgrades');
-const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../deployments/common');
-const { deployAllProxies } = require('../deployments');
+const { deployAllContracts } = require('../deployments');
 
-stdout.silent(true);
-Loggy.silent(true);
-
-(async () => {
-  // Initialize network connection
-  let networkConfig = await getNetworkConfig();
-
-  // Deploy logic contracts
-  await deployLogicContracts({ networkConfig });
-
-  // Deploy all proxies
-  await deployAllProxies({ networkConfig });
-})();
+deployAllContracts()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

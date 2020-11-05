@@ -1,0 +1,1 @@
+[{"inputs":[{"internalType":"bytes","name":"pubkey","type":"bytes"},{"internalType":"bytes","name":"withdrawCredentials","type":"bytes"},{"internalType":"bytes","name":"signature","type":"bytes"},{"internalType":"bytes32","name":"depositDataRoot","type":"bytes32"}],"name":"deposit","outputs":[],"stateMutability":"payable","type":"function"}]

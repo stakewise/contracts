@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import "@openzeppelin/contracts-ethereum-package/contracts/Initializable.sol";
+import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "../libraries/Roles.sol";
 import "../interfaces/IAdmins.sol";
 import "../interfaces/IManagers.sol";

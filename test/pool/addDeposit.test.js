@@ -1,47 +1,30 @@
 const { expect } = require('chai');
 const { BN, ether, expectRevert } = require('@openzeppelin/test-helpers');
-const { deployAllProxies } = require('../../deployments');
+const { deployAllContracts } = require('../../deployments');
 const { initialSettings } = require('../../deployments/settings');
 const {
-  getNetworkConfig,
-  deployLogicContracts,
-} = require('../../deployments/common');
-const {
   getDepositAmount,
-  removeNetworkFile,
   checkCollectorBalance,
   checkPoolCollectedAmount,
-  checkSWDToken,
+  checkStakingEthToken,
 } = require('../utils');
 
 const Pool = artifacts.require('Pool');
 const Settings = artifacts.require('Settings');
-const SWDToken = artifacts.require('SWDToken');
+const StakingEthToken = artifacts.require('StakingEthToken');
 
 contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
-  let networkConfig, pool, settings, swdToken;
-
-  before(async () => {
-    networkConfig = await getNetworkConfig();
-    await deployLogicContracts({ networkConfig });
-  });
-
-  after(() => {
-    removeNetworkFile(networkConfig.network);
-  });
+  let pool, settings, stakingEthToken;
 
   beforeEach(async () => {
     let {
-      pool: poolProxy,
-      settings: settingsProxy,
-      swdToken: swdTokenProxy,
-    } = await deployAllProxies({
-      initialAdmin: admin,
-      networkConfig,
-    });
-    pool = await Pool.at(poolProxy);
-    settings = await Settings.at(settingsProxy);
-    swdToken = await SWDToken.at(swdTokenProxy);
+      pool: poolContractAddress,
+      settings: settingsContractAddress,
+      stakingEthToken: stakingEthTokenContractAddress,
+    } = await deployAllContracts({ initialAdmin: admin });
+    pool = await Pool.at(poolContractAddress);
+    settings = await Settings.at(settingsContractAddress);
+    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
   });
 
   it('fails to add a deposit with zero amount', async () => {
@@ -85,7 +68,7 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
         from: sender1,
         value: ether('1'),
       }),
-      'Pool: contract is disabled'
+      'Pool: contract is paused'
     );
     await checkCollectorBalance(pool);
     await checkPoolCollectedAmount(pool);
@@ -99,8 +82,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       from: sender1,
       value: depositAmount1,
     });
-    await checkSWDToken({
-      swdToken,
+    await checkStakingEthToken({
+      stakingEthToken,
       totalSupply: depositAmount1,
       account: sender1,
       balance: depositAmount1,
@@ -114,8 +97,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       value: depositAmount2,
     });
     totalSupply = totalSupply.add(depositAmount2);
-    await checkSWDToken({
-      swdToken,
+    await checkStakingEthToken({
+      stakingEthToken,
       totalSupply,
       account: sender2,
       balance: depositAmount2,
