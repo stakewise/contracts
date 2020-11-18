@@ -57,4 +57,4 @@ Development of the project happens in the open on GitHub, and we are grateful to
 
 ### License
 
-The project is [GNU GPL v3](./LICENSE.md).
+The project is [GNU AGPL v3](./LICENSE).
