@@ -41,6 +41,7 @@ contract Settings is ISettings, Initializable {
         uint256 _maintainerFee,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
+        uint256 _withdrawalLockDuration,
         uint256 _validatorPrice,
         address _maintainer,
         address _admins,
@@ -53,6 +54,7 @@ contract Settings is ISettings, Initializable {
         uintSettings[keccak256(abi.encodePacked("maintainerFee"))] = _maintainerFee;
         uintSettings[keccak256(abi.encodePacked("validatorDepositAmount"))] = _validatorDepositAmount;
         uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = _maxDepositAmount;
+        uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))] = _withdrawalLockDuration;
         uintSettings[keccak256(abi.encodePacked("validatorPrice"))] = _validatorPrice;
         addressSettings[keccak256(abi.encodePacked("maintainer"))] = _maintainer;
         admins = IAdmins(_admins);
@@ -89,6 +91,23 @@ contract Settings is ISettings, Initializable {
 
         uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = newValue;
         emit SettingChanged("maxDepositAmount");
+    }
+
+    /**
+     * @dev See {ISettings-withdrawalLockDuration}.
+     */
+    function withdrawalLockDuration() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))];
+    }
+
+    /**
+     * @dev See {ISettings-setWithdrawalLockDuration}.
+     */
+    function setWithdrawalLockDuration(uint256 newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))] = newValue;
+        emit SettingChanged("withdrawalLockDuration");
     }
 
     /**

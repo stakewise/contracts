@@ -39,17 +39,28 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
     // @dev Address of the BalanceReporters contract.
     address private balanceReporters;
 
-    // @dev Reward rate for user reward calculation. Can be negative in case of the penalties.
-    int256 private rewardRate;
+    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
+    int256 private rewardPerToken;
+
+    // @dev Address of the StakedTokens contract.
+    address private stakedTokens;
 
     /**
       * @dev See {IRewardEthToken-initialize}.
       */
-    function initialize(address _stakedEthToken, address _settings, address _balanceReporters) public override initializer {
+    function initialize(
+        address _stakedEthToken,
+        address _settings,
+        address _balanceReporters,
+        address _stakedTokens
+    )
+        public override initializer
+    {
         super.initialize("StakeWise Reward ETH", "rwETH");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         settings = ISettings(_settings);
         balanceReporters = _balanceReporters;
+        stakedTokens = _stakedTokens;
     }
 
     /**
@@ -68,8 +79,8 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
     }
 
     /**
-      * @dev See {IRewardEthToken-rewardOf}.
-      */
+     * @dev See {IRewardEthToken-rewardOf}.
+     */
     function rewardOf(address account) public view override returns (int256) {
         Checkpoint memory cp = checkpoints[account];
 
@@ -77,7 +88,7 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
         uint256 deposit = stakedEthToken.depositOf(account);
         if (deposit != 0) {
             // calculate current reward of the account
-            curReward = deposit.toInt256().mul(rewardRate.sub(cp.rewardRate)).div(1 ether);
+            curReward = deposit.toInt256().mul(rewardPerToken.sub(cp.rewardPerToken)).div(1e18);
         }
 
         // return checkpoint reward + current reward
@@ -93,10 +104,10 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
         require(!settings.pausedContracts(address(this)), "RewardEthToken: contract is paused");
 
         uint256 senderReward = balanceOf(sender);
-        require(amount > 0 && senderReward >= amount, "RewardEthToken: invalid amount");
-        checkpoints[sender] = Checkpoint(rewardRate, senderReward.sub(amount).toInt256());
+        require(senderReward >= amount, "RewardEthToken: invalid amount");
+        checkpoints[sender] = Checkpoint(rewardPerToken, senderReward.sub(amount).toInt256());
 
-        checkpoints[recipient] = Checkpoint(rewardRate, rewardOf(recipient).add(amount.toInt256()));
+        checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount.toInt256()));
 
         emit Transfer(sender, recipient, amount);
     }
@@ -106,7 +117,7 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
      */
     function updateRewardCheckpoint(address account) external override {
         require(msg.sender == address(stakedEthToken), "RewardEthToken: permission denied");
-        checkpoints[account] = Checkpoint(rewardRate, rewardOf(account));
+        checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account));
     }
 
     /**
@@ -121,14 +132,14 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
             maintainerReward = periodRewards.mul(settings.maintainerFee().toInt256()).div(10000);
         }
 
-        // calculate reward rate used for account reward calculation
-        rewardRate = rewardRate.add(periodRewards.sub(maintainerReward).mul(1 ether).div(stakedEthToken.totalDeposits().toInt256()));
+        // calculate reward per token used for account reward calculation
+        rewardPerToken = rewardPerToken.add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits().toInt256()));
 
         // deduct maintainer fee if period reward is positive
         if (maintainerReward > 0) {
            address maintainer = settings.maintainer();
            checkpoints[maintainer] = Checkpoint(
-                rewardRate,
+                rewardPerToken,
                 rewardOf(maintainer).add(maintainerReward)
            );
         }
@@ -137,6 +148,14 @@ contract RewardEthToken is IRewardEthToken, BaseERC20 {
         updateTimestamp = block.timestamp;
         totalRewards = newTotalRewards;
 
-        emit RewardsUpdated(periodRewards, newTotalRewards, rewardRate, updateTimestamp);
+        emit RewardsUpdated(periodRewards, newTotalRewards, rewardPerToken, updateTimestamp);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-claim}.
+     */
+    function claim(address sender, address recipient, uint256 amount) external override {
+        require(msg.sender == stakedTokens, "RewardEthToken: permission denied");
+        _transfer(sender, recipient, amount);
     }
 }

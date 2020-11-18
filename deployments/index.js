@@ -19,8 +19,10 @@ const {
 const {
   deployRewardEthToken,
   deployStakedEthToken,
+  deployStakedTokens,
   initializeRewardEthToken,
   initializeStakedEthToken,
+  initializeStakedTokens,
 } = require('./tokens');
 const { deployAndInitializePayments } = require('./payments');
 
@@ -94,6 +96,13 @@ async function deployAllContracts({
     )
   );
 
+  const stakedTokensContractAddress = await deployStakedTokens();
+  log(
+    white(
+      `Deployed StakedTokens contract: ${green(stakedTokensContractAddress)}`
+    )
+  );
+
   const balanceReportersContractAddress = await deployBalanceReporters();
   log(
     white(
@@ -143,9 +152,18 @@ async function deployAllContracts({
     rewardEthTokenContractAddress,
     stakedEthTokenContractAddress,
     settingsContractAddress,
-    balanceReportersContractAddress
+    balanceReportersContractAddress,
+    stakedTokensContractAddress
   );
   log(white('Initialized RewardEthToken contract'));
+
+  await initializeStakedTokens(
+    stakedTokensContractAddress,
+    settingsContractAddress,
+    adminsContractAddress,
+    rewardEthTokenContractAddress
+  );
+  log(white('Initialized StakedTokens contract'));
 
   await initializeBalanceReporters(
     balanceReportersContractAddress,

@@ -116,7 +116,7 @@ contract BalanceReporters is IBalanceReporters, Initializable {
         emit VoteSubmitted(msg.sender, _newTotalRewards, updateTimestamp);
 
         // update rewards only if enough votes accumulated
-        if (candidates[_newTotalRewards].mul(1 ether).div(totalReporters) >= votesThreshold) {
+        if (candidates[_newTotalRewards].mul(1e18).div(totalReporters) >= votesThreshold) {
             delete candidates[_newTotalRewards];
             rewardEthToken.updateTotalRewards(_newTotalRewards);
         }

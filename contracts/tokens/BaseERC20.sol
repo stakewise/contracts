@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
+ * Ported from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.2.0/contracts/token/ERC20/ERC20.sol
  *
  * TIP: For a detailed writeup see our guide
  * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How

@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
+
+/**
+ * @dev ABIEncoderV2 is used to enable encoding/decoding of the array of structs. The pragma
+ * is required, but ABIEncoderV2 is no longer considered experimental as of Solidity 0.6.0
+ */
 
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -79,23 +85,27 @@ contract Pool is IPool, Initializable {
     }
 
     /**
-     * @dev See {IPool-registerValidator}.
+     * @dev See {IPool-registerValidators}.
      */
-    function registerValidator(bytes calldata _pubKey, bytes calldata _signature, bytes32 _depositDataRoot) external override {
+    function registerValidators(Validator[] calldata _validators) external override {
         require(operators.isOperator(msg.sender), "Pool: permission denied");
 
         // reduce pool collected amount
         uint256 depositAmount = settings.validatorDepositAmount();
-        require(collectedAmount >= depositAmount, "Pool: insufficient collected amount");
-        collectedAmount = collectedAmount.sub(depositAmount);
+        collectedAmount = collectedAmount.sub(depositAmount.mul(_validators.length), "Pool: insufficient collected amount");
 
-        // register validator
-        validators.register(_pubKey, poolId);
-        validatorRegistration.deposit{value : depositAmount}(
-            _pubKey,
-            abi.encodePacked(settings.withdrawalCredentials()),
-            _signature,
-            _depositDataRoot
-        );
+        bytes memory withdrawalCredentials = abi.encodePacked(settings.withdrawalCredentials());
+        for (uint256 i = 0; i < _validators.length; i++) {
+            Validator calldata validator = _validators[i];
+
+            // register validator
+            validators.register(validator.publicKey, poolId);
+            validatorRegistration.deposit{value : depositAmount}(
+                validator.publicKey,
+                withdrawalCredentials,
+                validator.signature,
+                validator.depositDataRoot
+            );
+        }
     }
 }

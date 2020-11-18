@@ -28,6 +28,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
     poolContractAddress,
     admin,
     balanceReportersContractAddress,
+    stakedTokensContractAddress,
     sender1,
     sender2,
   ] = accounts;
@@ -58,7 +59,8 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       rewardEthTokenContractAddress,
       stakedEthTokenContractAddress,
       settings.address,
-      balanceReportersContractAddress
+      balanceReportersContractAddress,
+      stakedTokensContractAddress
     );
 
     stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
@@ -145,13 +147,16 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('cannot transfer zero amount', async () => {
-      await expectRevert(
-        stakedEthToken.transfer(sender2, ether('0'), {
-          from: sender1,
-        }),
-        'StakedEthToken: invalid amount'
-      );
+    it('can transfer zero amount', async () => {
+      let receipt = await stakedEthToken.transfer(sender2, ether('0'), {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value: ether('0'),
+      });
 
       await checkStakedEthToken({
         stakedEthToken,

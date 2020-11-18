@@ -24,6 +24,7 @@ interface ISettings {
     * @param _maintainerFee - percentage fee for using the service.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
+    * @param _withdrawalLockDuration - number of seconds passed before withdrawal can be performed.
     * @param _validatorPrice - price per month of the non-custodial validator.
     * @param _maintainer - address of the maintainer, where the fee is paid.
     * @param _admins - address of the Admins contract.
@@ -35,6 +36,7 @@ interface ISettings {
         uint256 _maintainerFee,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
+        uint256 _withdrawalLockDuration,
         uint256 _validatorPrice,
         address _maintainer,
         address _admins,
@@ -122,6 +124,17 @@ interface ISettings {
     * @param newValue - new maximum deposit amount.
     */
     function setMaxDepositAmount(uint256 newValue) external;
+
+    /**
+    * @dev Function for getting withdrawal lock duration in seconds.
+    */
+    function withdrawalLockDuration() external view returns (uint256);
+
+    /**
+    * @dev Function for setting withdrawal lock duration in seconds.
+    * @param newValue - new number of seconds.
+    */
+    function setWithdrawalLockDuration(uint256 newValue) external;
 
     /**
     * @dev Function for getting non-custodial validator price per month.

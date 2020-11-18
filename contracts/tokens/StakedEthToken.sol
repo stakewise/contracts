@@ -88,7 +88,7 @@ contract StakedEthToken is IStakedEthToken, BaseERC20 {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "StakedEthToken: transfer from the zero address");
         require(recipient != address(0), "StakedEthToken: transfer to the zero address");
-        require(amount > 0 && balanceOf(sender) >= amount, "StakedEthToken: invalid amount");
+        require(balanceOf(sender) >= amount, "StakedEthToken: invalid amount");
         require(!settings.pausedContracts(address(this)), "StakedEthToken: contract is paused");
 
         // start calculating sender rewards with updated deposit amount

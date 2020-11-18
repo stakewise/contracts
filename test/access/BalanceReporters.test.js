@@ -33,6 +33,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     reporter,
     anotherReporter,
     poolContractAddress,
+    stakedTokensContractAddress,
     anyone,
     ...otherAccounts
   ] = accounts;
@@ -64,7 +65,8 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       rewardEthTokenContractAddress,
       stakedEthTokenContractAddress,
       settings.address,
-      balanceReportersContractAddress
+      balanceReportersContractAddress,
+      stakedTokensContractAddress
     );
 
     await initializeBalanceReporters(

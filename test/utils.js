@@ -2,7 +2,15 @@ const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 const { initialSettings } = require('../deployments/settings');
+const {
+  deployStakedEthToken,
+  deployRewardEthToken,
+  initializeStakedEthToken,
+  initializeRewardEthToken,
+} = require('../deployments/tokens');
 
+const StakedEthToken = artifacts.require('StakedEthToken');
+const RewardEthToken = artifacts.require('RewardEthToken');
 const Validators = artifacts.require('Validators');
 
 function getDepositAmount({
@@ -159,6 +167,34 @@ async function checkRewardEthToken({
   }
 }
 
+async function deployTokens({
+  settings,
+  balanceReportersContractAddress,
+  stakedTokensContractAddress,
+  poolContractAddress,
+}) {
+  const stakedEthTokenContractAddress = await deployStakedEthToken();
+  const rewardEthTokenContractAddress = await deployRewardEthToken();
+  await initializeStakedEthToken(
+    stakedEthTokenContractAddress,
+    rewardEthTokenContractAddress,
+    settings.address,
+    poolContractAddress
+  );
+  await initializeRewardEthToken(
+    rewardEthTokenContractAddress,
+    stakedEthTokenContractAddress,
+    settings.address,
+    balanceReportersContractAddress,
+    stakedTokensContractAddress
+  );
+
+  return [
+    await RewardEthToken.at(rewardEthTokenContractAddress),
+    await StakedEthToken.at(stakedEthTokenContractAddress),
+  ];
+}
+
 module.exports = {
   checkCollectorBalance,
   checkSolo,
@@ -168,4 +204,5 @@ module.exports = {
   checkPoolCollectedAmount,
   checkStakedEthToken,
   checkRewardEthToken,
+  deployTokens,
 };

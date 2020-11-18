@@ -1,14 +1,14 @@
 const { ethers, upgrades } = require('@nomiclabs/buidler');
 
-async function deployAndInitializeERC20Mock(ownerAddress, name, symbol) {
+async function deployAndInitializeERC20Mock(
+  ownerAddress,
+  name,
+  symbol,
+  totalSupply = '100000000000000000000000000' // 100000000 ETH
+) {
   const ERC20Mock = await ethers.getContractFactory('ERC20Mock');
   const erc20Mock = await ERC20Mock.deploy();
-  await erc20Mock.initialize(
-    ownerAddress,
-    '100000000000000000000000000', // 100000000 ETH
-    name,
-    symbol
-  );
+  await erc20Mock.initialize(ownerAddress, totalSupply, name, symbol);
   return erc20Mock.address;
 }
 
@@ -50,7 +50,8 @@ async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
   stakedEthTokenContractAddress,
   settingsContractAddress,
-  balanceReportersContractAddress
+  balanceReportersContractAddress,
+  stakedTokensContractAddress
 ) {
   let RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
@@ -58,7 +59,33 @@ async function initializeRewardEthToken(
   return RewardEthToken.initialize(
     stakedEthTokenContractAddress,
     settingsContractAddress,
-    balanceReportersContractAddress
+    balanceReportersContractAddress,
+    stakedTokensContractAddress
+  );
+}
+
+async function deployStakedTokens() {
+  const StakedTokens = await ethers.getContractFactory('StakedTokens');
+  const proxy = await upgrades.deployProxy(StakedTokens, [], {
+    initializer: false,
+    unsafeAllowCustomTypes: true,
+  });
+  return proxy.address;
+}
+
+async function initializeStakedTokens(
+  stakedTokensContractAddress,
+  settingsContractAddress,
+  adminsContractAddress,
+  rewardEthTokenContractAddress
+) {
+  let StakedTokens = await ethers.getContractFactory('StakedTokens');
+  StakedTokens = StakedTokens.attach(stakedTokensContractAddress);
+
+  return StakedTokens.initialize(
+    settingsContractAddress,
+    adminsContractAddress,
+    rewardEthTokenContractAddress
   );
 }
 
@@ -68,4 +95,6 @@ module.exports = {
   initializeStakedEthToken,
   deployRewardEthToken,
   initializeRewardEthToken,
+  deployStakedTokens,
+  initializeStakedTokens,
 };

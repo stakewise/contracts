@@ -1,6 +1,7 @@
 const initialSettings = {
   maxDepositAmount: '1000000000000000000000', // 1000 ETH
   validatorDepositAmount: '32000000000000000000', // 32 ETH
+  withdrawalLockDuration: '86400', // 1 day
   validatorPrice: '10000000000000000000', // 10 DAI / month
   maintainerFee: '1000', // 10%,
   admin: '0x08C96cfD285D039EdEB1a7c5CaF9ef0D0EE38c52',
@@ -22,6 +23,7 @@ async function deployAndInitializeSettings(
     initialSettings.maintainerFee,
     initialSettings.validatorDepositAmount,
     initialSettings.maxDepositAmount,
+    initialSettings.withdrawalLockDuration,
     initialSettings.validatorPrice,
     initialSettings.maintainer,
     adminsContractAddress,

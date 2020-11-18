@@ -15,44 +15,14 @@ const {
   initialSettings,
 } = require('../../deployments/settings');
 const {
-  deployStakedEthToken,
-  deployRewardEthToken,
-  initializeStakedEthToken,
-  initializeRewardEthToken,
-} = require('../../deployments/tokens');
-const { checkStakedEthToken, checkRewardEthToken } = require('../utils');
+  checkStakedEthToken,
+  checkRewardEthToken,
+  deployTokens,
+} = require('../utils');
 
-const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-
-async function deployTokens({
-  settings,
-  balanceReportersContractAddress,
-  poolContractAddress,
-}) {
-  const stakedEthTokenContractAddress = await deployStakedEthToken();
-  const rewardEthTokenContractAddress = await deployRewardEthToken();
-  await initializeStakedEthToken(
-    stakedEthTokenContractAddress,
-    rewardEthTokenContractAddress,
-    settings.address,
-    poolContractAddress
-  );
-  await initializeRewardEthToken(
-    rewardEthTokenContractAddress,
-    stakedEthTokenContractAddress,
-    settings.address,
-    balanceReportersContractAddress
-  );
-
-  return [
-    await RewardEthToken.at(rewardEthTokenContractAddress),
-    await StakedEthToken.at(stakedEthTokenContractAddress),
-  ];
-}
 
 contract('RewardEthToken', ([_, ...accounts]) => {
   let settings, stakedEthToken, rewardEthToken;
@@ -60,6 +30,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     poolContractAddress,
     admin,
     balanceReportersContractAddress,
+    stakedTokensContractAddress,
     ...otherAccounts
   ] = accounts;
 
@@ -80,6 +51,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     [rewardEthToken, stakedEthToken] = await deployTokens({
       settings,
       balanceReportersContractAddress,
+      stakedTokensContractAddress,
       poolContractAddress,
     });
   });
@@ -119,7 +91,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards: newTotalRewards,
         totalRewards: newTotalRewards,
-        rewardRate: userReward.mul(ether('1')).div(deposit),
+        rewardPerToken: userReward.mul(ether('1')).div(deposit),
       });
 
       await checkRewardEthToken({
@@ -176,6 +148,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         [rewardEthToken, stakedEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
+          stakedTokensContractAddress,
           poolContractAddress,
         });
 
@@ -298,6 +271,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         [rewardEthToken, stakedEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
+          stakedTokensContractAddress,
           poolContractAddress,
         });
 
@@ -473,14 +447,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let periodRewards = ether('0.773174861417694153');
       let maintainerReward = ether('0.077317486141769415');
       let totalRewards = periodRewards;
-      let rewardRate = ether('0.017396434381898118');
+      let rewardPerToken = ether('0.017396434381898118');
       let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -554,14 +528,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       // 4. period reward: -1.060653959130621 arrives
       periodRewards = ether('-1.060653959130621');
       totalRewards = totalRewards.add(periodRewards);
-      rewardRate = ether('-0.006709337416525086');
+      rewardPerToken = ether('-0.006709337416525086');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -634,14 +608,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       periodRewards = ether('2.3556757303647870');
       totalRewards = totalRewards.add(periodRewards);
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
-      rewardRate = ether('0.041474938886391011');
+      rewardPerToken = ether('0.041474938886391011');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -733,13 +707,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('cannot transfer zero amount', async () => {
-      await expectRevert(
-        rewardEthToken.transfer(sender2, ether('0'), {
-          from: sender1,
-        }),
-        'RewardEthToken: invalid amount'
-      );
+    it('can transfer zero amount', async () => {
+      let receipt = await stakedEthToken.transfer(sender2, ether('0'), {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value: ether('0'),
+      });
 
       await checkRewardEthToken({
         rewardEthToken,

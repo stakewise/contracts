@@ -31,6 +31,9 @@ contract Payments is IPayments, Initializable {
     // @dev Maps account address to its token balance.
     mapping(address => uint256) private balances;
 
+    // @dev Maps account address to when the tokens can be withdrawn again.
+    mapping(address => uint256) private releaseTimes;
+
     // @dev Address of the Settings contract.
     ISettings private settings;
 
@@ -83,8 +86,15 @@ contract Payments is IPayments, Initializable {
     function withdrawTokens(uint256 _amount) public override {
         require(_amount > 0, "Payments: invalid amount");
 
+        // solhint-disable-next-line not-rely-on-time
+        require(block.timestamp >= releaseTimes[msg.sender], "Payments: current time is before release time");
+
         // update account's balance
         balances[msg.sender] = balances[msg.sender].sub(_amount, "Payments: insufficient tokens balance");
+
+        // the tokens can be withdrawn everytime the withdrawal lock expires
+        // solhint-disable-next-line not-rely-on-time
+        releaseTimes[msg.sender] = block.timestamp + settings.withdrawalLockDuration();
 
         address selectedToken = selectedTokens[msg.sender];
         emit BalanceUpdated(selectedToken, msg.sender);
