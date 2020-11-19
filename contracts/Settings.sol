@@ -10,8 +10,7 @@ import "./interfaces/ISettings.sol";
 /**
  * @title Settings
  *
- * @dev Contract for storing global settings.
- * Can be changed by accounts with an admin role.
+ * @dev Contract for storing global settings. Can be changed by accounts with an admin role.
  * Contracts can be paused by operators.
  */
 contract Settings is ISettings, Initializable {

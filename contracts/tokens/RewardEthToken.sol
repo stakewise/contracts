@@ -103,10 +103,7 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
         require(!settings.pausedContracts(address(this)), "RewardEthToken: contract is paused");
 
-        uint256 senderReward = balanceOf(sender);
-        require(senderReward >= amount, "RewardEthToken: invalid amount");
-        checkpoints[sender] = Checkpoint(rewardPerToken, senderReward.sub(amount).toInt256());
-
+        checkpoints[sender] = Checkpoint(rewardPerToken, balanceOf(sender).sub(amount, "RewardEthToken: invalid amount").toInt256());
         checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount.toInt256()));
 
         emit Transfer(sender, recipient, amount);

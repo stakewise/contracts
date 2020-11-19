@@ -57,7 +57,7 @@ interface ISolos {
     event DepositCanceled(bytes32 indexed soloId, uint256 amount);
 
     /**
-    * @dev Function for getting solo's withdrawal credentials and pending amount.
+    * @dev Function for getting solo's details.
     * @param _soloId - ID of the solo to retrieve data for.
     */
     function solos(bytes32 _soloId) external view returns (

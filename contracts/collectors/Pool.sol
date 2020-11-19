@@ -16,7 +16,7 @@ import "../interfaces/IPool.sol";
 /**
  * @title Pool
  *
- * @dev Pool contract accumulates deposits from the users, mints tokens and register validators.
+ * @dev Pool contract accumulates deposits from the users, mints tokens and registers validators.
  */
 contract Pool is IPool, Initializable {
     using SafeMath for uint256;

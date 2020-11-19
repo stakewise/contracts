@@ -35,12 +35,23 @@ contract Payments is IPayments, Initializable {
     // @dev Address of the Managers contract.
     IManagers private managers;
 
+    // @dev Indicates whether the calling function is locked.
+    uint256 private unlocked;
+
+    modifier lock() {
+        require(unlocked == 1, "Payments: locked");
+        unlocked = 0;
+        _;
+        unlocked = 1;
+    }
+
     /**
      * @dev See {IPayments-initialize}.
      */
     function initialize(address _settings, address _managers) public override initializer {
         settings = ISettings(_settings);
         managers = IManagers(_managers);
+        unlocked = 1;
     }
 
     /**
@@ -53,7 +64,7 @@ contract Payments is IPayments, Initializable {
     /**
      * @dev See {IPayments-addTokens}.
      */
-    function addTokens(address _token, uint256 _amount) external override {
+    function addTokens(address _token, uint256 _amount) external override lock {
         require(!settings.pausedContracts(address(this)), "Payments: contract is paused");
         require(settings.supportedPaymentTokens(_token), "Payments: token is not supported");
 
@@ -62,7 +73,7 @@ contract Payments is IPayments, Initializable {
         if (selectedToken != _token) {
             // withdraw previously used tokens
             if (balances[msg.sender] > 0) {
-                withdrawTokens(balances[msg.sender]);
+                _withdrawTokens(balances[msg.sender]);
             }
             selectedTokens[msg.sender] = _token;
         }
@@ -75,10 +86,7 @@ contract Payments is IPayments, Initializable {
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     }
 
-    /**
-     * @dev See {IPayments-withdrawTokens}.
-     */
-    function withdrawTokens(uint256 _amount) public override {
+    function _withdrawTokens(uint256 _amount) private {
         require(_amount > 0, "Payments: invalid amount");
 
         // solhint-disable-next-line not-rely-on-time
@@ -99,9 +107,16 @@ contract Payments is IPayments, Initializable {
     }
 
     /**
+     * @dev See {IPayments-withdrawTokens}.
+     */
+    function withdrawTokens(uint256 _amount) public override lock {
+        _withdrawTokens(_amount);
+    }
+
+    /**
      * @dev See {IPayments-executePayments}.
      */
-    function executePayments(Payment[] calldata _payments) external override {
+    function executePayments(Payment[] calldata _payments) external override lock {
         require(managers.isManager(msg.sender), "Payments: permission denied");
 
         address maintainer = settings.maintainer();
