@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
@@ -8,14 +8,14 @@ import "@openzeppelin/contracts/utils/SafeCast.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/ISettings.sol";
-import "./BaseERC20.sol";
+import "./ERC20.sol";
 
 /**
  * @title StakedEthToken
  *
  * @dev StakedEthToken contract stores pool staked tokens.
  */
-contract StakedEthToken is IStakedEthToken, BaseERC20 {
+contract StakedEthToken is IStakedEthToken, ERC20 {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
     using SafeCast for uint256;
@@ -83,7 +83,7 @@ contract StakedEthToken is IStakedEthToken, BaseERC20 {
     }
 
     /**
-     * @dev See {BaseERC20-_transfer}.
+     * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         require(sender != address(0), "StakedEthToken: transfer from the zero address");

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "../tokens/BaseERC20.sol";
+import "../tokens/ERC20.sol";
 
 
-contract ERC20Mock is BaseERC20 {
+contract ERC20Mock is ERC20 {
     using SafeMath for uint256;
 
     uint256 private _totalSupply;

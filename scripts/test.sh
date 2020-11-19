@@ -34,4 +34,4 @@ else
   echo "Ganache launched!"
 fi
 
-npx buidler test --gas --optimizer --network local "$@"
+npx hardhat test --gas --optimizer --network local "$@"

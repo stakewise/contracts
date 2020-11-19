@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require('@nomiclabs/buidler');
+const { ethers, upgrades } = require('hardhat');
 
 async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');

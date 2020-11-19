@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
@@ -9,7 +9,11 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
- * Ported from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.2.0/contracts/token/ERC20/ERC20.sol
+ * Ported from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.3.0/contracts/token/ERC20/ERC20.sol
+ *
+ * This implementation is agnostic to the way tokens are created. This means
+ * that a supply mechanism has to be added in a derived contract using {_mint}.
+ * For a generic mechanism see {ERC20PresetMinterPauser}.
  *
  * TIP: For a detailed writeup see our guide
  * https://forum.zeppelin.solutions/t/how-to-implement-erc20-supply-mechanisms/226[How
@@ -28,7 +32,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-abstract contract BaseERC20 is IERC20, Initializable {
+abstract contract ERC20 is IERC20, Initializable {
     using SafeMath for uint256;
 
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -41,12 +45,14 @@ abstract contract BaseERC20 is IERC20, Initializable {
      * @dev Sets the values for {name} and {symbol}, initializes {decimals} with
      * a default value of 18.
      *
+     * To select a different value for {decimals}, use {_setupDecimals}.
+     *
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    function initialize(string memory name, string memory symbol) internal initializer {
-        _name = name;
-        _symbol = symbol;
+    function initialize(string memory name_, string memory symbol_) internal initializer {
+        _name = name_;
+        _symbol = symbol_;
         _decimals = 18;
     }
 
@@ -71,7 +77,8 @@ abstract contract BaseERC20 is IERC20, Initializable {
      * be displayed to a user as `5,05` (`505 / 10 ** 2`).
      *
      * Tokens usually opt for a value of 18, imitating the relationship between
-     * Ether and Wei. This is the value {ERC20} uses.
+     * Ether and Wei. This is the value {ERC20} uses, unless {_setupDecimals} is
+     * called.
      *
      * NOTE: This information is only used for _display_ purposes: it in
      * no way affects any of the arithmetic of the contract, including
@@ -117,9 +124,10 @@ abstract contract BaseERC20 is IERC20, Initializable {
      * @dev See {IERC20-transferFrom}.
      *
      * Emits an {Approval} event indicating the updated allowance. This is not
-     * required by the EIP. See the note at the beginning of {ERC20};
+     * required by the EIP. See the note at the beginning of {ERC20}.
      *
      * Requirements:
+     *
      * - `sender` and `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      * - the caller must have allowance for ``sender``'s tokens of at least
@@ -127,7 +135,7 @@ abstract contract BaseERC20 is IERC20, Initializable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "BaseERC20: transfer amount exceeds allowance"));
+        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
         return true;
     }
 
@@ -163,7 +171,7 @@ abstract contract BaseERC20 is IERC20, Initializable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "BaseERC20: decreased allowance below zero"));
+        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
         return true;
     }
 
@@ -184,9 +192,9 @@ abstract contract BaseERC20 is IERC20, Initializable {
     function _transfer(address sender, address recipient, uint256 amount) internal virtual { }
 
     /**
-     * @dev Sets `amount` as the allowance of `spender` over the `owner`s tokens.
+     * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
      *
-     * This is internal function is equivalent to `approve`, and can be used to
+     * This internal function is equivalent to `approve`, and can be used to
      * e.g. set automatic allowances for certain subsystems, etc.
      *
      * Emits an {Approval} event.
@@ -197,8 +205,8 @@ abstract contract BaseERC20 is IERC20, Initializable {
      * - `spender` cannot be the zero address.
      */
     function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "BaseERC20: approve from the zero address");
-        require(spender != address(0), "BaseERC20: approve to the zero address");
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);

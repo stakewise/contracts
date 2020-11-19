@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
-
-/**
- * @dev ABIEncoderV2 is used to enable encoding/decoding of the array of structs. The pragma
- * is required, but ABIEncoderV2 is no longer considered experimental as of Solidity 0.6.0
- */
+pragma solidity 0.7.5;
+pragma abicoder v2;
 
 /**
  * @dev Interface of the Payments contract.

@@ -26,7 +26,7 @@ The StakeWise smart contracts for tokenized staking and non-custodial validators
    yarn compile --optimizer
    ```
 
-3. Define network parameters in `buidler.config.js`. Learn more at [Buidler config options](https://hardhat.org/config/#available-config-options).
+3. Define network parameters in `hardhat.config.js`. Learn more at [Hardhat config options](https://hardhat.org/config/).
 
 4. Change [initial settings](./deployments/settings.js) accordingly.
 
@@ -37,6 +37,7 @@ The StakeWise smart contracts for tokenized staking and non-custodial validators
    ```
 
 6. If you are deploying to the network without `DAI contract`, run the following commands:
+
    ```shell script
    yarn deployDAI --network rinkeby
    ```

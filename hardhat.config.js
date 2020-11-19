@@ -1,55 +1,54 @@
-const {
-  usePlugin,
-  task,
-  extendEnvironment,
-} = require('@nomiclabs/buidler/config');
+const { task, extendEnvironment } = require('hardhat/config');
 const { gray, yellow } = require('chalk');
 
-usePlugin('@nomiclabs/buidler-ethers');
-usePlugin('@openzeppelin/buidler-upgrades');
-usePlugin('@nomiclabs/buidler-truffle5');
-usePlugin('solidity-coverage');
-usePlugin('buidler-gas-reporter');
-usePlugin('buidler-contract-sizer');
-usePlugin('buidler-abi-exporter');
+require('@nomiclabs/hardhat-ethers');
+require('@openzeppelin/hardhat-upgrades');
+require('@nomiclabs/hardhat-truffle5');
+require('solidity-coverage');
+require('hardhat-gas-reporter');
+require('hardhat-contract-sizer');
+require('hardhat-abi-exporter');
 
 const optimizerRuns = 10000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
-extendEnvironment((bre) => {
-  bre.log = log;
+extendEnvironment((hre) => {
+  hre.log = log;
 });
 
-function optimizeIfRequired({ bre, taskArguments: { optimizer } }) {
-  if (optimizer || bre.optimizer) {
+function optimizeIfRequired({ hre, taskArguments: { optimizer } }) {
+  if (optimizer || hre.optimizer) {
     // only show message once if re-run
-    if (bre.optimizer === undefined) {
+    if (hre.optimizer === undefined) {
       console.log(
         gray('Adding optimizer, runs', yellow(optimizerRuns.toString()))
       );
     }
 
     // Use optimizer (slower) but simulates real contract size limits and gas usage
-    bre.config.solc.optimizer = { enabled: true, runs: optimizerRuns };
-    bre.config.networks.buidlerevm.allowUnlimitedContractSize = false;
+    hre.config.solidity.compilers[0].settings.optimizer = {
+      enabled: true,
+      runs: optimizerRuns,
+    };
+    hre.config.networks.hardhat.allowUnlimitedContractSize = false;
   } else {
-    if (bre.optimizer === undefined) {
+    if (hre.optimizer === undefined) {
       console.log(
         gray('Optimizer disabled. Unlimited contract sizes allowed.')
       );
     }
-    bre.config.solc.optimizer = { enabled: false };
-    bre.config.networks.buidlerevm.allowUnlimitedContractSize = true;
+    hre.config.solidity.compilers[0].settings.optimizer = { enabled: false };
+    hre.config.networks.hardhat.allowUnlimitedContractSize = true;
   }
 
-  // flag here so that if invoked via "buidler test" the argument will persist to the compile stage
-  bre.optimizer = !!optimizer;
+  // flag here so that if invoked via "hardhat test" the argument will persist to the compile stage
+  hre.optimizer = !!optimizer;
 }
 
 task('compile')
   .addFlag('optimizer', 'Compile with the optimizer')
-  .setAction(async (taskArguments, bre, runSuper) => {
-    optimizeIfRequired({ bre, taskArguments });
+  .setAction(async (taskArguments, hre, runSuper) => {
+    optimizeIfRequired({ hre, taskArguments });
     await runSuper(taskArguments);
   });
 
@@ -57,26 +56,26 @@ task('test')
   .addFlag('optimizer', 'Compile with the optimizer')
   .addFlag('gas', 'Compile gas usage')
   .addOptionalParam('grep', 'Filter tests to only those with given logic')
-  .setAction(async (taskArguments, bre, runSuper) => {
+  .setAction(async (taskArguments, hre, runSuper) => {
     const { gas, grep } = taskArguments;
 
-    optimizeIfRequired({ bre, taskArguments });
+    optimizeIfRequired({ hre, taskArguments });
 
     if (grep) {
       console.log(gray('Filtering tests to those containing'), yellow(grep));
-      bre.config.mocha.grep = grep;
+      hre.config.mocha.grep = grep;
     }
 
     if (gas) {
       console.log(
         gray(`Enabling ${yellow('gas')} reports, tests will run slower`)
       );
-      bre.config.gasReporter.enabled = true;
-      bre.config.mocha.timeout = 180000;
+      hre.config.gasReporter.enabled = true;
+      hre.config.mocha.timeout = 180000;
     }
 
     // suppress logs for tests
-    bre.config.suppressLogs = true;
+    hre.config.suppressLogs = true;
 
     await runSuper(taskArguments);
   });
@@ -84,11 +83,11 @@ task('test')
 const GAS_PRICE = 20e9; // 20 Gwei
 
 module.exports = {
-  solc: {
-    version: '0.6.12',
+  solidity: {
+    version: '0.7.5',
   },
   networks: {
-    buidlerevm: {
+    hardhat: {
       blockGasLimit: 0x1fffffffffffff,
       gasPrice: GAS_PRICE,
       allowUnlimitedContractSize: true,
@@ -132,5 +131,6 @@ module.exports = {
       'IPool',
     ],
     clear: true,
+    flat: true,
   },
 };

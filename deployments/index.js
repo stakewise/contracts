@@ -1,4 +1,4 @@
-const bre = require('@nomiclabs/buidler');
+const hre = require('hardhat');
 const { white, green } = require('chalk');
 
 const {
@@ -27,7 +27,7 @@ const {
 const { deployAndInitializePayments } = require('./payments');
 
 function log(message) {
-  if (bre.config != null && bre.config.suppressLogs !== true) {
+  if (hre.config != null && hre.config.suppressLogs !== true) {
     console.log(message);
   }
 }
