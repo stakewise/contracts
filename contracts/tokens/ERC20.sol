@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
- * Ported from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.3.0/contracts/token/ERC20/ERC20.sol
+ * Adapted from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.3.0/contracts/token/ERC20/ERC20.sol
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using {_mint}.

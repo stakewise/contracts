@@ -3,9 +3,9 @@
 pragma solidity 0.7.5;
 pragma abicoder v2;
 
-import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "../libraries/Address.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
