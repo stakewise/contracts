@@ -8,5 +8,5 @@ module.exports = {
   mocha: {
     timeout: 180000,
   },
-  skipFiles: ['mocks', 'tokens/ERC20.sol'],
+  skipFiles: ['mocks', 'tokens/ERC20.sol', 'libraries/Address.sol'],
 };
