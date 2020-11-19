@@ -1,15 +1,15 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @dev Interface of the StakingEthToken contract.
+ * @dev Interface of the StakedEthToken contract.
  */
-interface IStakingEthToken is IERC20 {
+interface IStakedEthToken is IERC20 {
     /**
-    * @dev Constructor for initializing the StakingEthToken contract.
+    * @dev Constructor for initializing the StakedEthToken contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _settings - address of the Settings contract.
     * @param _pool - address of the Pool contract.

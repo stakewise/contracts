@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -10,11 +10,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IRewardEthToken is IERC20 {
     /**
     * @dev Structure for storing information about user reward checkpoint.
-    * @param rewardRate - user reward rate checkpoint.
+    * @param rewardPerToken - user reward per token.
     * @param reward - user reward checkpoint.
     */
     struct Checkpoint {
-        int256 rewardRate;
+        int256 rewardPerToken;
         int256 reward;
     }
 
@@ -22,23 +22,24 @@ interface IRewardEthToken is IERC20 {
     * @dev Event for tracking rewards update by balance reporters.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
-    * @param rewardRate - calculated reward rate used for account reward calculation.
+    * @param rewardPerToken - calculated reward per token for account reward calculation.
     * @param updateTimestamp - last rewards update timestamp by balance reporters.
     */
     event RewardsUpdated(
         int256 periodRewards,
         int256 totalRewards,
-        int256 rewardRate,
+        int256 rewardPerToken,
         uint256 updateTimestamp
     );
 
     /**
     * @dev Constructor for initializing the RewardEthToken contract.
-    * @param _stakingEthToken - address of the StakingEthToken contract.
+    * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _settings - address of the Settings contract.
     * @param _balanceReporters - address of the BalanceReporters contract.
+    * @param _stakedTokens - address of the StakedTokens contract.
     */
-    function initialize(address _stakingEthToken, address _settings, address _balanceReporters) external;
+    function initialize(address _stakedEthToken, address _settings, address _balanceReporters, address _stakedTokens) external;
 
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
@@ -59,7 +60,7 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Function for updating account's reward checkpoint.
-    * Can only be called by StakingEthToken contract.
+    * Can only be called by StakedEthToken contract.
     * @param account - address of the account to update the reward checkpoint for.
     */
     function updateRewardCheckpoint(address account) external;
@@ -70,4 +71,12 @@ interface IRewardEthToken is IERC20 {
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(int256 newTotalRewards) external;
+
+    /**
+    * @dev Function for claiming rewards. Can only be called by StakedTokens contract.
+    * @param sender - address of the rewards sender.
+    * @param recipient - address of the rewards recipient.
+    * @param amount - amount of rewards to send.
+    */
+    function claim(address sender, address recipient, uint256 amount) external;
 }

@@ -1,21 +1,21 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/math/SignedSafeMath.sol";
 import "@openzeppelin/contracts/utils/SafeCast.sol";
-import "../interfaces/IStakingEthToken.sol";
+import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/ISettings.sol";
-import "./BaseERC20.sol";
+import "./ERC20.sol";
 
 /**
- * @title StakingEthToken
+ * @title StakedEthToken
  *
- * @dev StakingEthToken contract stores pool staking tokens.
+ * @dev StakedEthToken contract stores pool staked tokens.
  */
-contract StakingEthToken is IStakingEthToken, BaseERC20 {
+contract StakedEthToken is IStakedEthToken, ERC20 {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
     using SafeCast for uint256;
@@ -37,10 +37,10 @@ contract StakingEthToken is IStakingEthToken, BaseERC20 {
     ISettings private settings;
 
     /**
-     * @dev See {StakingEthToken-initialize}.
+     * @dev See {StakedEthToken-initialize}.
      */
     function initialize(address _rewardEthToken, address _settings, address _pool) public override initializer {
-        super.initialize("StakeWise Staking ETH", "stETH");
+        super.initialize("StakeWise Staked ETH", "stETH");
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         settings = ISettings(_settings);
         pool = _pool;
@@ -76,20 +76,20 @@ contract StakingEthToken is IStakingEthToken, BaseERC20 {
     }
 
     /**
-     * @dev See {IStakingEthToken-depositOf}.
+     * @dev See {IStakedEthToken-depositOf}.
      */
     function depositOf(address account) external view override returns (uint256) {
         return deposits[account];
     }
 
     /**
-     * @dev See {BaseERC20-_transfer}.
+     * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override {
-        require(sender != address(0), "StakingEthToken: transfer from the zero address");
-        require(recipient != address(0), "StakingEthToken: transfer to the zero address");
-        require(amount > 0 && balanceOf(sender) >= amount, "StakingEthToken: invalid amount");
-        require(!settings.pausedContracts(address(this)), "StakingEthToken: contract is paused");
+        require(sender != address(0), "StakedEthToken: transfer from the zero address");
+        require(recipient != address(0), "StakedEthToken: transfer to the zero address");
+        require(balanceOf(sender) >= amount, "StakedEthToken: invalid amount");
+        require(!settings.pausedContracts(address(this)), "StakedEthToken: contract is paused");
 
         // start calculating sender rewards with updated deposit amount
         rewardEthToken.updateRewardCheckpoint(sender);
@@ -103,10 +103,10 @@ contract StakingEthToken is IStakingEthToken, BaseERC20 {
     }
 
     /**
-     * @dev See {IStakingEthToken-mint}.
+     * @dev See {IStakedEthToken-mint}.
      */
     function mint(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakingEthToken: permission denied");
+        require(msg.sender == pool, "StakedEthToken: permission denied");
 
         // start calculating account rewards with updated deposit amount
         rewardEthToken.updateRewardCheckpoint(account);

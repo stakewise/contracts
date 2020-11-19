@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require('@nomiclabs/buidler');
+const { ethers, upgrades } = require('hardhat');
 
 async function deployAndInitializeAdmins(initialAdminAddress) {
   const Admins = await ethers.getContractFactory('Admins');

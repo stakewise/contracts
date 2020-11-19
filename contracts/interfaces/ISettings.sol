@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 /**
  * @dev Interface of the Settings contract.
@@ -22,9 +22,9 @@ interface ISettings {
     * @dev Constructor for initializing the Settings contract.
     * @param _allContractsPaused - defines whether all contracts should be paused.
     * @param _maintainerFee - percentage fee for using the service.
-    * @param _minDepositUnit - minimum unit (wei, gwei, etc.) deposit can have.
     * @param _validatorDepositAmount - deposit amount required to become an Ethereum validator.
     * @param _maxDepositAmount - maximum deposit amount.
+    * @param _withdrawalLockDuration - number of seconds passed before withdrawal can be performed.
     * @param _validatorPrice - price per month of the non-custodial validator.
     * @param _maintainer - address of the maintainer, where the fee is paid.
     * @param _admins - address of the Admins contract.
@@ -34,9 +34,9 @@ interface ISettings {
     function initialize(
         bool _allContractsPaused,
         uint256 _maintainerFee,
-        uint256 _minDepositUnit,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
+        uint256 _withdrawalLockDuration,
         uint256 _validatorPrice,
         address _maintainer,
         address _admins,
@@ -66,17 +66,6 @@ interface ISettings {
     * @dev Function for getting the deposit amount required to become an Ethereum validator.
     */
     function validatorDepositAmount() external view returns (uint256);
-
-    /**
-    * @dev Function for getting user deposit minimum unit.
-    */
-    function minDepositUnit() external view returns (uint256);
-
-    /**
-    * @dev Function for changing user's deposit minimum unit.
-    * @param newValue - new minimum deposit unit.
-    */
-    function setMinDepositUnit(uint256 newValue) external;
 
     /**
     * @dev Function for getting the address of the application owner, where the fee will be paid.
@@ -135,6 +124,17 @@ interface ISettings {
     * @param newValue - new maximum deposit amount.
     */
     function setMaxDepositAmount(uint256 newValue) external;
+
+    /**
+    * @dev Function for getting withdrawal lock duration in seconds.
+    */
+    function withdrawalLockDuration() external view returns (uint256);
+
+    /**
+    * @dev Function for setting withdrawal lock duration in seconds.
+    * @param newValue - new number of seconds.
+    */
+    function setWithdrawalLockDuration(uint256 newValue) external;
 
     /**
     * @dev Function for getting non-custodial validator price per month.

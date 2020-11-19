@@ -1,12 +1,7 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
-pragma experimental ABIEncoderV2;
-
-/**
- * @dev ABIEncoderV2 is used to enable encoding/decoding of the array of structs. The pragma
- * is required, but ABIEncoderV2 is no longer considered experimental as of Solidity 0.6.0
- */
+pragma solidity 0.7.5;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
@@ -31,11 +26,24 @@ contract Payments is IPayments, Initializable {
     // @dev Maps account address to its token balance.
     mapping(address => uint256) private balances;
 
+    // @dev Maps account address to when the tokens can be withdrawn again.
+    mapping(address => uint256) private releaseTimes;
+
     // @dev Address of the Settings contract.
     ISettings private settings;
 
     // @dev Address of the Managers contract.
     IManagers private managers;
+
+    // @dev Indicates whether the calling function is locked.
+    uint256 private unlocked;
+
+    modifier lock() {
+        require(unlocked == 1, "Payments: locked");
+        unlocked = 0;
+        _;
+        unlocked = 1;
+    }
 
     /**
      * @dev See {IPayments-initialize}.
@@ -43,6 +51,7 @@ contract Payments is IPayments, Initializable {
     function initialize(address _settings, address _managers) public override initializer {
         settings = ISettings(_settings);
         managers = IManagers(_managers);
+        unlocked = 1;
     }
 
     /**
@@ -55,7 +64,7 @@ contract Payments is IPayments, Initializable {
     /**
      * @dev See {IPayments-addTokens}.
      */
-    function addTokens(address _token, uint256 _amount) external override {
+    function addTokens(address _token, uint256 _amount) external override lock {
         require(!settings.pausedContracts(address(this)), "Payments: contract is paused");
         require(settings.supportedPaymentTokens(_token), "Payments: token is not supported");
 
@@ -64,7 +73,7 @@ contract Payments is IPayments, Initializable {
         if (selectedToken != _token) {
             // withdraw previously used tokens
             if (balances[msg.sender] > 0) {
-                withdrawTokens(balances[msg.sender]);
+                _withdrawTokens(balances[msg.sender]);
             }
             selectedTokens[msg.sender] = _token;
         }
@@ -77,14 +86,18 @@ contract Payments is IPayments, Initializable {
         IERC20(_token).safeTransferFrom(msg.sender, address(this), _amount);
     }
 
-    /**
-     * @dev See {IPayments-withdrawTokens}.
-     */
-    function withdrawTokens(uint256 _amount) public override {
+    function _withdrawTokens(uint256 _amount) private {
         require(_amount > 0, "Payments: invalid amount");
+
+        // solhint-disable-next-line not-rely-on-time
+        require(block.timestamp >= releaseTimes[msg.sender], "Payments: current time is before release time");
 
         // update account's balance
         balances[msg.sender] = balances[msg.sender].sub(_amount, "Payments: insufficient tokens balance");
+
+        // the tokens can be withdrawn everytime the withdrawal lock expires
+        // solhint-disable-next-line not-rely-on-time
+        releaseTimes[msg.sender] = block.timestamp + settings.withdrawalLockDuration();
 
         address selectedToken = selectedTokens[msg.sender];
         emit BalanceUpdated(selectedToken, msg.sender);
@@ -94,9 +107,16 @@ contract Payments is IPayments, Initializable {
     }
 
     /**
+     * @dev See {IPayments-withdrawTokens}.
+     */
+    function withdrawTokens(uint256 _amount) public override lock {
+        _withdrawTokens(_amount);
+    }
+
+    /**
      * @dev See {IPayments-executePayments}.
      */
-    function executePayments(Payment[] calldata _payments) external override {
+    function executePayments(Payment[] calldata _payments) external override lock {
         require(managers.isManager(msg.sender), "Payments: permission denied");
 
         address maintainer = settings.maintainer();

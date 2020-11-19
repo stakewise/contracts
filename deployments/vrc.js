@@ -1,4 +1,4 @@
-const { ethers } = require('@nomiclabs/buidler');
+const { ethers } = require('hardhat');
 
 // https://github.com/ethereum/eth2.0-specs/blob/dev/solidity_deposit_contract/deposit_contract.json
 // Commit: e4a9c5f

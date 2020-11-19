@@ -1,4 +1,4 @@
-const { ethers, upgrades } = require('@nomiclabs/buidler');
+const { ethers, upgrades } = require('hardhat');
 
 async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');
@@ -11,7 +11,7 @@ async function deployPool() {
 
 async function initializePool(
   poolContractAddress,
-  stakingEthTokenContractAddress,
+  stakedEthTokenContractAddress,
   settingsContractAddress,
   operatorsContractAddress,
   vrcContractAddress,
@@ -21,7 +21,7 @@ async function initializePool(
   Pool = Pool.attach(poolContractAddress);
 
   return Pool.initialize(
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
     operatorsContractAddress,
     vrcContractAddress,

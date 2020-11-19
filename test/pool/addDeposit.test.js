@@ -6,39 +6,30 @@ const {
   getDepositAmount,
   checkCollectorBalance,
   checkPoolCollectedAmount,
-  checkStakingEthToken,
+  checkStakedEthToken,
 } = require('../utils');
 
 const Pool = artifacts.require('Pool');
 const Settings = artifacts.require('Settings');
-const StakingEthToken = artifacts.require('StakingEthToken');
+const StakedEthToken = artifacts.require('StakedEthToken');
 
 contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
-  let pool, settings, stakingEthToken;
+  let pool, settings, stakedEthToken;
 
   beforeEach(async () => {
     let {
       pool: poolContractAddress,
       settings: settingsContractAddress,
-      stakingEthToken: stakingEthTokenContractAddress,
+      stakedEthToken: stakedEthTokenContractAddress,
     } = await deployAllContracts({ initialAdmin: admin });
     pool = await Pool.at(poolContractAddress);
     settings = await Settings.at(settingsContractAddress);
-    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
+    stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
   });
 
   it('fails to add a deposit with zero amount', async () => {
     await expectRevert(
       pool.addDeposit({ from: sender1, value: ether('0') }),
-      'Pool: invalid deposit amount'
-    );
-    await checkCollectorBalance(pool);
-    await checkPoolCollectedAmount(pool);
-  });
-
-  it('fails to add a deposit with unit less than minimum', async () => {
-    await expectRevert(
-      pool.addDeposit({ from: sender1, value: ether('1').sub(new BN(1)) }),
       'Pool: invalid deposit amount'
     );
     await checkCollectorBalance(pool);
@@ -82,8 +73,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       from: sender1,
       value: depositAmount1,
     });
-    await checkStakingEthToken({
-      stakingEthToken,
+    await checkStakedEthToken({
+      stakedEthToken,
       totalSupply: depositAmount1,
       account: sender1,
       balance: depositAmount1,
@@ -97,8 +88,8 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
       value: depositAmount2,
     });
     totalSupply = totalSupply.add(depositAmount2);
-    await checkStakingEthToken({
-      stakingEthToken,
+    await checkStakedEthToken({
+      stakedEthToken,
       totalSupply,
       account: sender2,
       balance: depositAmount2,

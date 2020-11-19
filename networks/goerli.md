@@ -47,7 +47,7 @@
 - Implementation: [0xC89c1d8656FE38C61eA9e9DeDBF3Fc2Df9B5E69A](https://goerli.etherscan.io/address/0xC89c1d8656FE38C61eA9e9DeDBF3Fc2Df9B5E69A)
 - Transaction: [0xa5a9ef24e09ed0751f6d9a6922682cba03e46c2c15a14573319fe22fb06abe4b](https://goerli.etherscan.io/tx/0xa5a9ef24e09ed0751f6d9a6922682cba03e46c2c15a14573319fe22fb06abe4b)
 
-## StakingEthToken Contract
+## StakedEthToken Contract
 
 - Implementation: [0x31B62Ee18B6e3944F38011D8A54515965EA58D42](https://goerli.etherscan.io/address/0x31B62Ee18B6e3944F38011D8A54515965EA58D42)
 - Proxy: [0xDEB33b7B57FDD05D51e01B5409FfC4cc47897003](https://goerli.etherscan.io/address/0xDEB33b7B57FDD05D51e01B5409FfC4cc47897003)

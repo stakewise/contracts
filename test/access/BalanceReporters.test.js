@@ -15,24 +15,25 @@ const {
 const { deployAndInitializeSettings } = require('../../deployments/settings');
 const {
   deployRewardEthToken,
-  deployStakingEthToken,
+  deployStakedEthToken,
   initializeRewardEthToken,
-  initializeStakingEthToken,
+  initializeStakedEthToken,
 } = require('../../deployments/tokens');
 
 const Admins = artifacts.require('Admins');
 const RewardEthToken = artifacts.require('RewardEthToken');
-const StakingEthToken = artifacts.require('StakingEthToken');
+const StakedEthToken = artifacts.require('StakedEthToken');
 const Settings = artifacts.require('Settings');
 const BalanceReporters = artifacts.require('BalanceReporters');
 
 contract('BalanceReporters', ([_, ...accounts]) => {
-  let admins, settings, balanceReporters, rewardEthToken, stakingEthToken;
+  let admins, settings, balanceReporters, rewardEthToken, stakedEthToken;
   let [
     admin,
     reporter,
     anotherReporter,
     poolContractAddress,
+    stakedTokensContractAddress,
     anyone,
     ...otherAccounts
   ] = accounts;
@@ -51,20 +52,21 @@ contract('BalanceReporters', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    const stakingEthTokenContractAddress = await deployStakingEthToken();
+    const stakedEthTokenContractAddress = await deployStakedEthToken();
     const rewardEthTokenContractAddress = await deployRewardEthToken();
     const balanceReportersContractAddress = await deployBalanceReporters();
-    await initializeStakingEthToken(
-      stakingEthTokenContractAddress,
+    await initializeStakedEthToken(
+      stakedEthTokenContractAddress,
       rewardEthTokenContractAddress,
       settings.address,
       poolContractAddress
     );
     await initializeRewardEthToken(
       rewardEthTokenContractAddress,
-      stakingEthTokenContractAddress,
+      stakedEthTokenContractAddress,
       settings.address,
-      balanceReportersContractAddress
+      balanceReportersContractAddress,
+      stakedTokensContractAddress
     );
 
     await initializeBalanceReporters(
@@ -78,7 +80,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       balanceReportersContractAddress
     );
     rewardEthToken = await RewardEthToken.at(rewardEthTokenContractAddress);
-    stakingEthToken = await StakingEthToken.at(stakingEthTokenContractAddress);
+    stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
   });
 
   describe('assigning', () => {
@@ -183,7 +185,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       await balanceReporters.addReporter(reporter2, { from: admin });
       await balanceReporters.addReporter(reporter3, { from: admin });
 
-      await stakingEthToken.mint(anyone, ether('32'), {
+      await stakedEthToken.mint(anyone, ether('32'), {
         from: poolContractAddress,
       });
     });

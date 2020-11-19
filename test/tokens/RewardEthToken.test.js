@@ -15,51 +15,22 @@ const {
   initialSettings,
 } = require('../../deployments/settings');
 const {
-  deployStakingEthToken,
-  deployRewardEthToken,
-  initializeStakingEthToken,
-  initializeRewardEthToken,
-} = require('../../deployments/tokens');
-const { checkStakingEthToken, checkRewardEthToken } = require('../utils');
+  checkStakedEthToken,
+  checkRewardEthToken,
+  deployTokens,
+} = require('../utils');
 
-const StakingEthToken = artifacts.require('StakingEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
 const Settings = artifacts.require('Settings');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
 
-async function deployTokens({
-  settings,
-  balanceReportersContractAddress,
-  poolContractAddress,
-}) {
-  const stakingEthTokenContractAddress = await deployStakingEthToken();
-  const rewardEthTokenContractAddress = await deployRewardEthToken();
-  await initializeStakingEthToken(
-    stakingEthTokenContractAddress,
-    rewardEthTokenContractAddress,
-    settings.address,
-    poolContractAddress
-  );
-  await initializeRewardEthToken(
-    rewardEthTokenContractAddress,
-    stakingEthTokenContractAddress,
-    settings.address,
-    balanceReportersContractAddress
-  );
-
-  return [
-    await RewardEthToken.at(rewardEthTokenContractAddress),
-    await StakingEthToken.at(stakingEthTokenContractAddress),
-  ];
-}
-
 contract('RewardEthToken', ([_, ...accounts]) => {
-  let settings, stakingEthToken, rewardEthToken;
+  let settings, stakedEthToken, rewardEthToken;
   let [
     poolContractAddress,
     admin,
     balanceReportersContractAddress,
+    stakedTokensContractAddress,
     ...otherAccounts
   ] = accounts;
 
@@ -77,9 +48,10 @@ contract('RewardEthToken', ([_, ...accounts]) => {
   });
 
   beforeEach(async () => {
-    [rewardEthToken, stakingEthToken] = await deployTokens({
+    [rewardEthToken, stakedEthToken] = await deployTokens({
       settings,
       balanceReportersContractAddress,
+      stakedTokensContractAddress,
       poolContractAddress,
     });
   });
@@ -103,7 +75,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
 
     it('balance reporters can update rewards', async () => {
       let deposit = ether('32');
-      await stakingEthToken.mint(otherAccounts[0], deposit, {
+      await stakedEthToken.mint(otherAccounts[0], deposit, {
         from: poolContractAddress,
       });
       let newTotalRewards = ether('10');
@@ -119,7 +91,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards: newTotalRewards,
         totalRewards: newTotalRewards,
-        rewardRate: userReward.mul(ether('1')).div(deposit),
+        rewardPerToken: userReward.mul(ether('1')).div(deposit),
       });
 
       await checkRewardEthToken({
@@ -173,15 +145,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
 
       for (const { totalRewards, maintainerReward, users } of testCases) {
         // redeploy tokens
-        [rewardEthToken, stakingEthToken] = await deployTokens({
+        [rewardEthToken, stakedEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
+          stakedTokensContractAddress,
           poolContractAddress,
         });
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
-          await stakingEthToken.mint(otherAccounts[i], users[i].deposit, {
+          await stakedEthToken.mint(otherAccounts[i], users[i].deposit, {
             from: poolContractAddress,
           });
         }
@@ -210,8 +183,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
             reward: reward,
           });
 
-          await checkStakingEthToken({
-            stakingEthToken,
+          await checkStakedEthToken({
+            stakedEthToken,
             totalSupply: validatorDepositAmount,
             account: otherAccounts[i],
             balance: deposit,
@@ -295,15 +268,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
 
       for (const { totalRewards, users } of testCases) {
         // redeploy tokens
-        [rewardEthToken, stakingEthToken] = await deployTokens({
+        [rewardEthToken, stakedEthToken] = await deployTokens({
           settings,
           balanceReportersContractAddress,
+          stakedTokensContractAddress,
           poolContractAddress,
         });
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
-          await stakingEthToken.mint(otherAccounts[i], users[i].deposit, {
+          await stakedEthToken.mint(otherAccounts[i], users[i].deposit, {
             from: poolContractAddress,
           });
         }
@@ -324,8 +298,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
             reward: penalisedReturn.sub(deposit),
           });
 
-          await checkStakingEthToken({
-            stakingEthToken,
+          await checkStakedEthToken({
+            stakedEthToken,
             totalSupply: validatorDepositAmount.add(totalRewards),
             account: otherAccounts[i],
             balance: penalisedReturn,
@@ -423,7 +397,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         let reward = tests[0][i].reward;
 
         totalDeposits = totalDeposits.add(deposit);
-        await stakingEthToken.mint(otherAccounts[i], deposit, {
+        await stakedEthToken.mint(otherAccounts[i], deposit, {
           from: poolContractAddress,
         });
 
@@ -435,8 +409,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward,
           reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -445,7 +419,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       }
 
       // 1. user1 transfers 4 stETH to user2
-      await stakingEthToken.transfer(otherAccounts[2], ether('4'), {
+      await stakedEthToken.transfer(otherAccounts[2], ether('4'), {
         from: otherAccounts[1],
       });
       for (let i = 0; i < tests[1].length; i++) {
@@ -460,8 +434,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward,
           reward: reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -473,14 +447,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let periodRewards = ether('0.773174861417694153');
       let maintainerReward = ether('0.077317486141769415');
       let totalRewards = periodRewards;
-      let rewardRate = ether('0.017396434381898118');
+      let rewardPerToken = ether('0.017396434381898118');
       let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -503,8 +477,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward,
           reward: reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -513,7 +487,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       }
 
       // 3. user2 transfer 6 stETH to user0
-      await stakingEthToken.transfer(otherAccounts[0], ether('6'), {
+      await stakedEthToken.transfer(otherAccounts[0], ether('6'), {
         from: otherAccounts[2],
       });
       // user1 transfers 0.104378606291388708 rwETH to user2
@@ -525,7 +499,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         }
       );
       // user3 creates new deposit with 4 stETH
-      await stakingEthToken.mint(otherAccounts[3], ether('4'), {
+      await stakedEthToken.mint(otherAccounts[3], ether('4'), {
         from: poolContractAddress,
       });
       totalDeposits = totalDeposits.add(ether('4'));
@@ -542,8 +516,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward,
           reward: reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: deposit,
@@ -554,14 +528,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       // 4. period reward: -1.060653959130621 arrives
       periodRewards = ether('-1.060653959130621');
       totalRewards = totalRewards.add(periodRewards);
-      rewardRate = ether('-0.006709337416525086');
+      rewardPerToken = ether('-0.006709337416525086');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -583,8 +557,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits.add(totalRewards),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -593,7 +567,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       }
 
       // 5. user3 transfers 3.903576912806307184 stETH to user0
-      await stakingEthToken.transfer(
+      await stakedEthToken.transfer(
         otherAccounts[0],
         ether('3.903576912806307184'),
         {
@@ -621,8 +595,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits.add(totalRewards),
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -634,14 +608,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       periodRewards = ether('2.3556757303647870');
       totalRewards = totalRewards.add(periodRewards);
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
-      rewardRate = ether('0.041474938886391011');
+      rewardPerToken = ether('0.041474938886391011');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
-        rewardRate,
+        rewardPerToken,
       });
 
       await checkRewardEthToken({
@@ -664,8 +638,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           balance: reward.gt(new BN(0)) ? reward : new BN(0),
           reward,
         });
-        await checkStakingEthToken({
-          stakingEthToken,
+        await checkStakedEthToken({
+          stakedEthToken,
           totalSupply: totalDeposits,
           account: otherAccounts[i],
           balance: reward.gt(new BN(0)) ? deposit : deposit.add(reward),
@@ -687,10 +661,10 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         from: admin,
       });
 
-      await stakingEthToken.mint(sender1, value1, {
+      await stakedEthToken.mint(sender1, value1, {
         from: poolContractAddress,
       });
-      await stakingEthToken.mint(sender2, value2, {
+      await stakedEthToken.mint(sender2, value2, {
         from: poolContractAddress,
       });
 
@@ -733,13 +707,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('cannot transfer zero amount', async () => {
-      await expectRevert(
-        rewardEthToken.transfer(sender2, ether('0'), {
-          from: sender1,
-        }),
-        'RewardEthToken: invalid amount'
-      );
+    it('can transfer zero amount', async () => {
+      let receipt = await stakedEthToken.transfer(sender2, ether('0'), {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value: ether('0'),
+      });
 
       await checkRewardEthToken({
         rewardEthToken,

@@ -5,134 +5,104 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "spender",
+        "name": "token",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "periodRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "totalRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "rewardPerToken",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "updateTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
+        "name": "account",
         "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Transfer",
-    "type": "event"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      }
-    ],
-    "name": "allowance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
     ],
-    "name": "approve",
-    "outputs": [
+    "name": "RewardWithdrawn",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "bool",
-        "name": "",
+        "name": "isEnabled",
         "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "name": "TokenToggled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokensStaked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "TokensWithdrawn",
+    "type": "event"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "account",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_account",
         "type": "address"
       }
     ],
@@ -151,45 +121,17 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "claim",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_stakedEthToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_settings",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_balanceReporters",
+        "name": "_admins",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_stakedTokens",
+        "name": "_rewardEthToken",
         "type": "address"
       }
     ],
@@ -202,7 +144,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "account",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_account",
         "type": "address"
       }
     ],
@@ -218,105 +165,42 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "totalRewards",
-    "outputs": [
-      {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
-        "name": "recipient",
+        "name": "_token",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_withdrawnReward",
         "type": "uint256"
       }
     ],
-    "name": "transferFrom",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "updateRewardCheckpoint",
+    "name": "stakeTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "updateTimestamp",
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      }
+    ],
+    "name": "supportedTokens",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bool",
         "name": "",
-        "type": "uint256"
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -325,12 +209,58 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
-        "name": "newTotalRewards",
-        "type": "int256"
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "_isSupported",
+        "type": "bool"
       }
     ],
-    "name": "updateTotalRewards",
+    "name": "toggleTokenContract",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_withdrawnReward",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawTokens",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

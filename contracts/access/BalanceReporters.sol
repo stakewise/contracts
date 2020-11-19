@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
@@ -116,7 +116,7 @@ contract BalanceReporters is IBalanceReporters, Initializable {
         emit VoteSubmitted(msg.sender, _newTotalRewards, updateTimestamp);
 
         // update rewards only if enough votes accumulated
-        if (candidates[_newTotalRewards].mul(1 ether).div(totalReporters) >= votesThreshold) {
+        if (candidates[_newTotalRewards].mul(1e18).div(totalReporters) >= votesThreshold) {
             delete candidates[_newTotalRewards];
             rewardEthToken.updateTotalRewards(_newTotalRewards);
         }

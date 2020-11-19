@@ -28,37 +28,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "periodRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "totalRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "int256",
-        "name": "rewardPerToken",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "updateTimestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "from",
@@ -151,30 +120,26 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "sender",
+        "name": "account",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "recipient",
-        "type": "address"
-      },
+      }
+    ],
+    "name": "depositOf",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "claim",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
         "internalType": "address",
-        "name": "_stakedEthToken",
+        "name": "_rewardEthToken",
         "type": "address"
       },
       {
@@ -184,12 +149,7 @@
       },
       {
         "internalType": "address",
-        "name": "_balanceReporters",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakedTokens",
+        "name": "_pool",
         "type": "address"
       }
     ],
@@ -204,27 +164,26 @@
         "internalType": "address",
         "name": "account",
         "type": "address"
-      }
-    ],
-    "name": "rewardOf",
-    "outputs": [
+      },
       {
-        "internalType": "int256",
-        "name": "",
-        "type": "int256"
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "totalRewards",
+    "name": "totalDeposits",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -293,45 +252,6 @@
         "type": "bool"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "updateRewardCheckpoint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "updateTimestamp",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "int256",
-        "name": "newTotalRewards",
-        "type": "int256"
-      }
-    ],
-    "name": "updateTotalRewards",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

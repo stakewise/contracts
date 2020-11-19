@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: AGPL-3.0-only
 
-pragma solidity 0.6.12;
+pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/proxy/Initializable.sol";
 import "./interfaces/IAdmins.sol";
@@ -10,8 +10,7 @@ import "./interfaces/ISettings.sol";
 /**
  * @title Settings
  *
- * @dev Contract for storing global settings.
- * Can be changed by accounts with an admin role.
+ * @dev Contract for storing global settings. Can be changed by accounts with an admin role.
  * Contracts can be paused by operators.
  */
 contract Settings is ISettings, Initializable {
@@ -39,9 +38,9 @@ contract Settings is ISettings, Initializable {
     function initialize(
         bool _allContractsPaused,
         uint256 _maintainerFee,
-        uint256 _minDepositUnit,
         uint256 _validatorDepositAmount,
         uint256 _maxDepositAmount,
+        uint256 _withdrawalLockDuration,
         uint256 _validatorPrice,
         address _maintainer,
         address _admins,
@@ -52,9 +51,9 @@ contract Settings is ISettings, Initializable {
     {
         boolSettings[keccak256(abi.encodePacked("allContractsPaused"))] = _allContractsPaused;
         uintSettings[keccak256(abi.encodePacked("maintainerFee"))] = _maintainerFee;
-        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = _minDepositUnit;
         uintSettings[keccak256(abi.encodePacked("validatorDepositAmount"))] = _validatorDepositAmount;
         uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = _maxDepositAmount;
+        uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))] = _withdrawalLockDuration;
         uintSettings[keccak256(abi.encodePacked("validatorPrice"))] = _validatorPrice;
         addressSettings[keccak256(abi.encodePacked("maintainer"))] = _maintainer;
         admins = IAdmins(_admins);
@@ -77,23 +76,6 @@ contract Settings is ISettings, Initializable {
     }
 
     /**
-     * @dev See {ISettings-minDepositUnit}.
-     */
-    function minDepositUnit() external view override returns (uint256) {
-        return uintSettings[keccak256(abi.encodePacked("minDepositUnit"))];
-    }
-
-    /**
-     * @dev See {ISettings-setMinDepositUnit}.
-     */
-    function setMinDepositUnit(uint256 newValue) external override {
-        require(admins.isAdmin(msg.sender), "Settings: permission denied");
-
-        uintSettings[keccak256(abi.encodePacked("minDepositUnit"))] = newValue;
-        emit SettingChanged("minDepositUnit");
-    }
-
-    /**
      * @dev See {ISettings-maxDepositAmount}.
      */
     function maxDepositAmount() external view override returns (uint256) {
@@ -108,6 +90,23 @@ contract Settings is ISettings, Initializable {
 
         uintSettings[keccak256(abi.encodePacked("maxDepositAmount"))] = newValue;
         emit SettingChanged("maxDepositAmount");
+    }
+
+    /**
+     * @dev See {ISettings-withdrawalLockDuration}.
+     */
+    function withdrawalLockDuration() external view override returns (uint256) {
+        return uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))];
+    }
+
+    /**
+     * @dev See {ISettings-setWithdrawalLockDuration}.
+     */
+    function setWithdrawalLockDuration(uint256 newValue) external override {
+        require(admins.isAdmin(msg.sender), "Settings: permission denied");
+
+        uintSettings[keccak256(abi.encodePacked("withdrawalLockDuration"))] = newValue;
+        emit SettingChanged("withdrawalLockDuration");
     }
 
     /**

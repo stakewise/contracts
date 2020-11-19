@@ -1,4 +1,4 @@
-const bre = require('@nomiclabs/buidler');
+const hre = require('hardhat');
 const { white, green } = require('chalk');
 
 const {
@@ -18,14 +18,16 @@ const {
 } = require('./collectors');
 const {
   deployRewardEthToken,
-  deployStakingEthToken,
+  deployStakedEthToken,
+  deployStakedTokens,
   initializeRewardEthToken,
-  initializeStakingEthToken,
+  initializeStakedEthToken,
+  initializeStakedTokens,
 } = require('./tokens');
 const { deployAndInitializePayments } = require('./payments');
 
 function log(message) {
-  if (bre.config != null && bre.config.suppressLogs !== true) {
+  if (hre.config != null && hre.config.suppressLogs !== true) {
     console.log(message);
   }
 }
@@ -76,11 +78,11 @@ async function deployAllContracts({
   const solosContractAddress = await deploySolos();
   log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
-  const stakingEthTokenContractAddress = await deployStakingEthToken();
+  const stakedEthTokenContractAddress = await deployStakedEthToken();
   log(
     white(
-      `Deployed StakingEthToken contract: ${green(
-        stakingEthTokenContractAddress
+      `Deployed StakedEthToken contract: ${green(
+        stakedEthTokenContractAddress
       )}`
     )
   );
@@ -91,6 +93,13 @@ async function deployAllContracts({
       `Deployed RewardEthToken contract: ${green(
         rewardEthTokenContractAddress
       )}`
+    )
+  );
+
+  const stakedTokensContractAddress = await deployStakedTokens();
+  log(
+    white(
+      `Deployed StakedTokens contract: ${green(stakedTokensContractAddress)}`
     )
   );
 
@@ -114,7 +123,7 @@ async function deployAllContracts({
 
   await initializePool(
     poolContractAddress,
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
     operatorsContractAddress,
     vrcContractAddress,
@@ -131,21 +140,30 @@ async function deployAllContracts({
   );
   log(white('Initialized Solos contract'));
 
-  await initializeStakingEthToken(
-    stakingEthTokenContractAddress,
+  await initializeStakedEthToken(
+    stakedEthTokenContractAddress,
     rewardEthTokenContractAddress,
     settingsContractAddress,
     poolContractAddress
   );
-  log(white('Initialized StakingEthToken contract'));
+  log(white('Initialized StakedEthToken contract'));
 
   await initializeRewardEthToken(
     rewardEthTokenContractAddress,
-    stakingEthTokenContractAddress,
+    stakedEthTokenContractAddress,
     settingsContractAddress,
-    balanceReportersContractAddress
+    balanceReportersContractAddress,
+    stakedTokensContractAddress
   );
   log(white('Initialized RewardEthToken contract'));
+
+  await initializeStakedTokens(
+    stakedTokensContractAddress,
+    settingsContractAddress,
+    adminsContractAddress,
+    rewardEthTokenContractAddress
+  );
+  log(white('Initialized StakedTokens contract'));
 
   await initializeBalanceReporters(
     balanceReportersContractAddress,
@@ -164,7 +182,7 @@ async function deployAllContracts({
     balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
-    stakingEthToken: stakingEthTokenContractAddress,
+    stakedEthToken: stakedEthTokenContractAddress,
     rewardEthToken: rewardEthTokenContractAddress,
   };
 }

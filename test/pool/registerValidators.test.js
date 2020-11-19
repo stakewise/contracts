@@ -8,15 +8,14 @@ const {
   checkValidatorRegistered,
   getDepositAmount,
 } = require('../utils');
-const { validatorRegistrationArgs } = require('./validatorRegistrationArgs');
+const { validators } = require('./validators');
 
 const Pool = artifacts.require('Pool');
 const Operators = artifacts.require('Operators');
 
 const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const { pubKey, signature, hashTreeRoot } = validatorRegistrationArgs[0];
 
-contract('Pool (register validator)', ([_, ...accounts]) => {
+contract('Pool (register validators)', ([_, ...accounts]) => {
   let vrc, pool, poolId;
   let [admin, operator, sender1, sender2, other] = accounts;
 
@@ -56,7 +55,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
 
   it('fails to register validator with callers other than operator', async () => {
     await expectRevert(
-      pool.registerValidator(pubKey, signature, hashTreeRoot, {
+      pool.registerValidators(validators.slice(1), {
         from: other,
       }),
       'Pool: permission denied'
@@ -66,51 +65,40 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
   });
 
   it('fails to register validator with used public key', async () => {
-    // Register validator 1
-    await pool.registerValidator(pubKey, signature, hashTreeRoot, {
-      from: operator,
-    });
-    await checkCollectorBalance(pool);
-    await checkPoolCollectedAmount(pool);
-
     // create new deposit
     await pool.addDeposit({
       from: sender1,
       value: validatorDepositAmount,
     });
 
-    // Register validator 2 with the same validator public key
+    // Register 2 validators with the same validator public key
     await expectRevert(
-      pool.registerValidator(pubKey, signature, hashTreeRoot, {
+      pool.registerValidators([validators[0], validators[0]], {
         from: operator,
       }),
       'Validators: public key has been already used'
     );
-    await checkCollectorBalance(pool, validatorDepositAmount);
-    await checkPoolCollectedAmount(pool, validatorDepositAmount);
+    await checkCollectorBalance(pool, validatorDepositAmount.mul(new BN(2)));
+    await checkPoolCollectedAmount(pool, validatorDepositAmount.mul(new BN(2)));
   });
 
   it('fails to register validator when validator deposit amount is not collect', async () => {
-    await pool.registerValidator(pubKey, signature, hashTreeRoot, {
-      from: operator,
-    });
-
     await expectRevert(
-      pool.registerValidator(pubKey, signature, hashTreeRoot, {
+      pool.registerValidators(validators.slice(2), {
         from: operator,
       }),
       'Pool: insufficient collected amount'
     );
 
-    await checkCollectorBalance(pool);
-    await checkPoolCollectedAmount(pool);
+    await checkCollectorBalance(pool, validatorDepositAmount);
+    await checkPoolCollectedAmount(pool, validatorDepositAmount);
   });
 
-  it('registers validators when validator deposit amount collected', async () => {
+  it('registers multiple validators at once', async () => {
     // one validator is already created
     let totalAmount = validatorDepositAmount;
 
-    for (let i = 1; i < validatorRegistrationArgs.length; i++) {
+    for (let i = 1; i < validators.length; i++) {
       await pool.addDeposit({
         from: sender1,
         value: validatorDepositAmount,
@@ -123,25 +111,21 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
     await checkPoolCollectedAmount(pool, totalAmount);
 
     // register validators
-    for (let i = 0; i < validatorRegistrationArgs.length; i++) {
-      const { tx } = await pool.registerValidator(
-        validatorRegistrationArgs[i].pubKey,
-        validatorRegistrationArgs[i].signature,
-        validatorRegistrationArgs[i].hashTreeRoot,
-        {
-          from: operator,
-        }
-      );
-      totalAmount = totalAmount.sub(validatorDepositAmount);
+    const { tx } = await pool.registerValidators(validators, {
+      from: operator,
+    });
 
+    for (let i = 0; i < validators.length; i++) {
       await checkValidatorRegistered({
         vrc,
         transaction: tx,
-        pubKey: validatorRegistrationArgs[i].pubKey,
+        pubKey: validators[i].publicKey,
         entityId: poolId,
-        signature: validatorRegistrationArgs[i].signature,
+        signature: validators[i].signature,
       });
     }
+
+    // check balance empty
     await checkCollectorBalance(pool);
     await checkPoolCollectedAmount(pool);
   });

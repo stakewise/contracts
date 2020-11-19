@@ -216,6 +216,28 @@ contract('Payments', ([_, ...accounts]) => {
       );
     });
 
+    it('fails to withdraw too often', async () => {
+      let withdrawalBalance = balance.div(new BN(2));
+      let receipt = await payments.withdrawTokens(withdrawalBalance, {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'BalanceUpdated', {
+        token: daiToken.address,
+        account: sender1,
+      });
+      expect(await payments.balanceOf(sender1)).to.bignumber.equal(
+        withdrawalBalance
+      );
+
+      await expectRevert(
+        payments.withdrawTokens(withdrawalBalance, {
+          from: sender1,
+        }),
+        'Payments: current time is before release time'
+      );
+    });
+
     it('withdraws tokens for different users', async () => {
       for (const user of [sender1, sender2]) {
         let receipt = await payments.withdrawTokens(balance, {
