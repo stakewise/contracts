@@ -526,7 +526,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     ).to.be.bignumber.equal(stakedBalance);
   });
 
-  it('cannot withdraw tokens or rewards when penalties', async () => {
+  it('cannot withdraw or stake tokens when penalties', async () => {
     let totalRewards = ether('-100');
 
     // update rewards
@@ -547,6 +547,18 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
 
     // check token holders
     for (const holder of tokenHolders) {
+      await token.mint(holder, stakedBalance, {
+        from: admin,
+      });
+      await token.approve(stakedTokens.address, stakedBalance, {
+        from: holder,
+      });
+      await expectRevert(
+        stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+          from: holder,
+        }),
+        'StakedTokens: cannot update account with negative rewards'
+      );
       await expectRevert(
         stakedTokens.withdrawRewards(token.address, new BN(1), {
           from: holder,

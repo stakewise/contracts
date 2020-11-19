@@ -27,7 +27,7 @@ interface IStakedTokens {
     /**
     * @dev Event for tracking whether token contract is enabled or not.
     * @param token - address of the token.
-    * @param isEnabled - whether the token is enabled or not.
+    * @param isEnabled - defines whether the token is enabled or not.
     */
     event TokenToggled(address indexed token, bool isEnabled);
 
