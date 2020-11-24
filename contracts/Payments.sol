@@ -23,11 +23,11 @@ contract Payments is IPayments, Initializable {
     // @dev Maps account address to its selected token contract address.
     mapping(address => address) public override selectedTokens;
 
+    // @dev Maps account address to when the tokens can be withdrawn again.
+    mapping(address => uint256) public override releaseTimes;
+
     // @dev Maps account address to its token balance.
     mapping(address => uint256) private balances;
-
-    // @dev Maps account address to when the tokens can be withdrawn again.
-    mapping(address => uint256) private releaseTimes;
 
     // @dev Address of the Settings contract.
     ISettings private settings;

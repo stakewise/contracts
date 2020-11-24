@@ -110,6 +110,27 @@ contract Solos is ISolos, Initializable {
     }
 
     /**
+     * @dev See {ISolos-registerValidator}.
+     */
+    function registerValidator(Validator calldata _validator) external override {
+        require(operators.isOperator(msg.sender), "Solos: permission denied");
+
+        // update solo balance
+        uint256 validatorDepositAmount = settings.validatorDepositAmount();
+        Solo storage solo = solos[_validator.soloId];
+        solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
+
+        // register validator
+        validators.register(_validator.publicKey, _validator.soloId);
+        validatorRegistration.deposit{value : validatorDepositAmount}(
+            _validator.publicKey,
+            abi.encodePacked(solo.withdrawalCredentials),
+            _validator.signature,
+            _validator.depositDataRoot
+        );
+    }
+
+    /**
      * @dev See {ISolos-registerValidators}.
      */
     function registerValidators(Validator[] calldata _validators) external override {

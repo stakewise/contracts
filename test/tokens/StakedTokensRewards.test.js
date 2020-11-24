@@ -139,7 +139,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
       await token.approve(stakedTokens.address, stakedBalance, {
         from: holder,
       });
-      await stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+      await stakedTokens.stakeTokens(token.address, stakedBalance, {
         from: holder,
       });
     }
@@ -155,7 +155,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await checkRewards({ totalRewards, fee });
   });
 
-  it('distributes penalties correctly', async () => {
+  it('rewards are 0 when the token contract has negative rewards', async () => {
     let totalRewards = ether('-100');
 
     // update rewards
@@ -178,36 +178,55 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     for (const holder of tokenHolders) {
       expect(
         await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(ether('-6.25'));
+      ).to.be.bignumber.equal(new BN(0));
     }
   });
 
-  it('rewards do not change if the tokens are withdrawn', async () => {
+  it('rewards are withdrawn when the tokens are withdrawn', async () => {
     let totalRewards = ether('100');
+    let fee = totalRewards.mul(maintainerFee).div(new BN(10000));
+    let rewardHolderReward = totalRewards
+      .sub(fee)
+      .div(new BN(rewardHolders.length));
+    let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
+
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
-
-    await checkRewards({
-      totalRewards,
-      fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
-    });
+    await checkRewards({ totalRewards, fee });
 
     // withdraw tokens
     for (const holder of tokenHolders) {
-      await stakedTokens.withdrawTokens(token.address, stakedBalance, '0', {
-        from: holder,
+      let receipt = await stakedTokens.withdrawTokens(
+        token.address,
+        stakedBalance,
+        {
+          from: holder,
+        }
+      );
+      expectEvent(receipt, 'RewardWithdrawn', {
+        token: token.address,
+        account: holder,
+        amount: tokenReward,
       });
     }
 
-    await checkRewards({
-      totalRewards,
-      fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
-    });
+    // check token holders
+    for (const holder of tokenHolders) {
+      expect(
+        await stakedTokens.rewardOf(token.address, holder)
+      ).to.be.bignumber.equal(new BN(0));
+    }
   });
 
-  it('rewards do not change if the tokens are staked', async () => {
+  it('rewards are withdrawn when the tokens are staked', async () => {
     let totalRewards = ether('100');
+    let fee = totalRewards.mul(maintainerFee).div(new BN(10000));
+    let rewardHolderReward = totalRewards
+      .sub(fee)
+      .div(new BN(rewardHolders.length));
+    let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
+
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
@@ -229,15 +248,26 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
       await token.approve(stakedTokens.address, stakedBalance, {
         from: holder,
       });
-      await stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
-        from: holder,
+      let receipt = await stakedTokens.stakeTokens(
+        token.address,
+        stakedBalance,
+        {
+          from: holder,
+        }
+      );
+      expectEvent(receipt, 'RewardWithdrawn', {
+        token: token.address,
+        account: holder,
+        amount: tokenReward,
       });
     }
 
-    await checkRewards({
-      totalRewards,
-      fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
-    });
+    // check token holders
+    for (const holder of tokenHolders) {
+      expect(
+        await stakedTokens.rewardOf(token.address, holder)
+      ).to.be.bignumber.equal(new BN(0));
+    }
   });
 
   it('fails to withdraw rewards when contract is paused', async () => {
@@ -247,13 +277,9 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
 
     await expectRevert(
-      stakedTokens.withdrawRewards(
-        token.address,
-        await stakedTokens.rewardOf(token.address, tokenHolders[0]),
-        {
-          from: tokenHolder1,
-        }
-      ),
+      stakedTokens.withdrawRewards(token.address, {
+        from: tokenHolder1,
+      }),
       'StakedTokens: contract is paused'
     );
 
@@ -263,55 +289,38 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   });
 
   it('can withdraw zero rewards', async () => {
-    let totalRewards = ether('100');
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
-    });
-
-    await checkRewards({
-      totalRewards,
-      fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
-    });
-
     // withdraw rewards
     for (const holder of tokenHolders) {
-      await stakedTokens.withdrawRewards(token.address, '0', {
+      await stakedTokens.withdrawRewards(token.address, {
         from: holder,
       });
     }
 
-    await checkRewards({
-      totalRewards,
-      fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
-    });
-  });
-
-  it('fails to withdraw rewards when token is disabled', async () => {
-    await stakedTokens.toggleTokenContract(token.address, false, {
-      from: admin,
-    });
-
-    await expectRevert(
-      stakedTokens.withdrawRewards(
-        token.address,
-        await stakedTokens.rewardOf(token.address, tokenHolders[0]),
-        {
-          from: tokenHolder1,
-        }
-      ),
-      'StakedTokens: token is not supported'
-    );
+    // check token holders
+    for (const holder of tokenHolders) {
+      expect(
+        await stakedTokens.rewardOf(token.address, holder)
+      ).to.be.bignumber.equal(new BN(0));
+    }
   });
 
   it('can withdraw rewards', async () => {
     let totalRewards = ether('100');
+    let fee = totalRewards.mul(maintainerFee).div(new BN(10000));
+    let rewardHolderReward = totalRewards
+      .sub(fee)
+      .div(new BN(rewardHolders.length));
+    let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
+
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
 
     for (const holder of tokenHolders) {
       let reward = await stakedTokens.rewardOf(token.address, holder);
-      let receipt = await stakedTokens.withdrawRewards(token.address, reward, {
+      expect(tokenReward).to.be.bignumber.equal(reward);
+
+      let receipt = await stakedTokens.withdrawRewards(token.address, {
         from: holder,
       });
 
@@ -324,10 +333,6 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
         await stakedTokens.rewardOf(token.address, holder)
       ).to.be.bignumber.equal(new BN(0));
     }
-
-    let rewardHolderReward = totalRewards
-      .sub(totalRewards.mul(maintainerFee).div(new BN(10000)))
-      .div(new BN(rewardHolders.length));
 
     // check reward holders
     for (const holder of rewardHolders) {
@@ -351,7 +356,6 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     }
 
     // check token holders
-    let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
     for (const holder of tokenHolders) {
       await checkRewardEthToken({
         rewardEthToken,
@@ -364,101 +368,42 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   });
 
   it('cannot withdraw rewards multiple times', async () => {
+    let totalRewards = ether('100');
+    await rewardEthToken.updateTotalRewards(totalRewards, {
+      from: balanceReportersContractAddress,
+    });
+
     let reward = await stakedTokens.rewardOf(token.address, tokenHolder1);
-    await stakedTokens.withdrawRewards(token.address, reward, {
+    let receipt = await stakedTokens.withdrawRewards(token.address, {
       from: tokenHolder1,
     });
-    await expectRevert(
-      stakedTokens.withdrawRewards(token.address, new BN(1), {
-        from: tokenHolder1,
-      }),
-      'StakedTokens: cannot update account with negative rewards'
-    );
-  });
-
-  it('can withdraw rewards when staking new tokens', async () => {
-    let totalRewards = ether('100');
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+    expectEvent(receipt, 'RewardWithdrawn', {
+      token: token.address,
+      account: tokenHolder1,
+      amount: reward,
     });
 
-    let addedBalance = stakedBalance.div(new BN(2));
-    for (const holder of tokenHolders) {
-      await token.mint(holder, stakedBalance, {
-        from: admin,
-      });
-      await token.approve(stakedTokens.address, addedBalance, {
-        from: holder,
-      });
-    }
-
-    for (const holder of tokenHolders) {
-      let halfReward = (await stakedTokens.rewardOf(token.address, holder)).div(
-        new BN(2)
-      );
-      let receipt = await stakedTokens.stakeTokens(
-        token.address,
-        addedBalance,
-        halfReward,
-        {
-          from: holder,
-        }
-      );
-      expectEvent(receipt, 'RewardWithdrawn', {
-        token: token.address,
-        account: holder,
-        amount: halfReward,
-      });
-      expectEvent(receipt, 'TokensStaked', {
-        token: token.address,
-        account: holder,
-        amount: addedBalance,
-      });
-      expect(
-        await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(halfReward);
-      expect(
-        await stakedTokens.balanceOf(token.address, holder)
-      ).to.be.bignumber.equal(stakedBalance.add(addedBalance));
-    }
-  });
-
-  it('can withdraw rewards when withdrawing tokens', async () => {
-    let totalRewards = ether('100');
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+    await checkRewardEthToken({
+      rewardEthToken,
+      totalSupply: totalRewards,
+      account: tokenHolder1,
+      balance: reward,
+      reward: reward,
     });
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(new BN(0));
 
-    let halfBalance = stakedBalance.div(new BN(2));
-    for (const holder of tokenHolders) {
-      let halfReward = (await stakedTokens.rewardOf(token.address, holder)).div(
-        new BN(2)
-      );
-      let receipt = await stakedTokens.withdrawTokens(
-        token.address,
-        halfBalance,
-        halfReward,
-        {
-          from: holder,
-        }
-      );
-      expectEvent(receipt, 'RewardWithdrawn', {
-        token: token.address,
-        account: holder,
-        amount: halfReward,
-      });
-      expectEvent(receipt, 'TokensWithdrawn', {
-        token: token.address,
-        account: holder,
-        amount: halfBalance,
-      });
-      expect(
-        await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(halfReward);
-      expect(
-        await stakedTokens.balanceOf(token.address, holder)
-      ).to.be.bignumber.equal(halfBalance);
-    }
+    await stakedTokens.withdrawRewards(token.address, {
+      from: tokenHolder1,
+    });
+    await checkRewardEthToken({
+      rewardEthToken,
+      totalSupply: totalRewards,
+      account: tokenHolder1,
+      balance: reward,
+      reward: reward,
+    });
   });
 
   it('calculates checkpoints correctly', async () => {
@@ -466,48 +411,117 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
-
-    // add another tokens holder
-    let tokensHolder5 = accounts[accounts.length - 1];
-    await token.mint(tokensHolder5, stakedBalance, {
-      from: admin,
-    });
-    await token.approve(stakedTokens.address, stakedBalance, {
-      from: tokensHolder5,
-    });
-    await stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
-      from: tokensHolder5,
-    });
     await checkRewards({
       totalRewards,
       fee: totalRewards.mul(maintainerFee).div(new BN(10000)),
     });
 
+    let reward = await stakedTokens.rewardOf(token.address, tokenHolder1);
+
+    // add another tokens holder
+    let tokenHolder5 = accounts[accounts.length - 1];
+    await token.mint(tokenHolder5, stakedBalance, {
+      from: admin,
+    });
+    await token.approve(stakedTokens.address, stakedBalance, {
+      from: tokenHolder5,
+    });
+    await stakedTokens.stakeTokens(token.address, stakedBalance, {
+      from: tokenHolder5,
+    });
+
     expect(
-      await stakedTokens.rewardOf(token.address, tokensHolder5)
+      await stakedTokens.rewardOf(token.address, tokenHolder5)
     ).to.be.bignumber.equal(new BN(0));
     expect(
-      await stakedTokens.balanceOf(token.address, tokensHolder5)
+      await stakedTokens.balanceOf(token.address, tokenHolder5)
     ).to.be.bignumber.equal(stakedBalance);
+    expect(await rewardEthToken.rewardOf(token.address)).to.be.bignumber.equal(
+      new BN('0')
+    );
 
-    // withdraw half reward
-    for (const holder of tokenHolders) {
-      let halfReward = (await stakedTokens.rewardOf(token.address, holder)).div(
-        new BN(2)
-      );
-      await stakedTokens.withdrawRewards(token.address, halfReward, {
+    // withdraw rewards for all except holder1
+    for (const holder of tokenHolders.slice(1)) {
+      await stakedTokens.withdrawRewards(token.address, {
         from: holder,
       });
       expect(
         await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(halfReward);
+      ).to.be.bignumber.equal(new BN(0));
       expect(
         await stakedTokens.balanceOf(token.address, holder)
       ).to.be.bignumber.equal(stakedBalance);
+      expect(await rewardEthToken.rewardOf(holder)).to.be.bignumber.equal(
+        reward
+      );
     }
 
-    // penalty received
-    totalRewards = ether('0');
+    // check holder 1
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(reward);
+    expect(
+      await stakedTokens.balanceOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(stakedBalance);
+    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
+      new BN(0)
+    );
+
+    // check holder 5
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder5)
+    ).to.be.bignumber.equal(new BN(0));
+    expect(
+      await stakedTokens.balanceOf(token.address, tokenHolder5)
+    ).to.be.bignumber.equal(stakedBalance);
+
+    // first penalty received
+    totalRewards = ether('80');
+    await rewardEthToken.updateTotalRewards(totalRewards, {
+      from: balanceReportersContractAddress,
+    });
+
+    // check holder 1
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(reward);
+    expect(
+      await stakedTokens.balanceOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(stakedBalance);
+    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
+      new BN(0)
+    );
+
+    // check holder 5
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder5)
+    ).to.be.bignumber.equal(new BN(0));
+    expect(
+      await stakedTokens.balanceOf(token.address, tokenHolder5)
+    ).to.be.bignumber.equal(stakedBalance);
+
+    for (const holder of tokenHolders.slice(1)) {
+      expect(
+        await stakedTokens.rewardOf(token.address, holder)
+      ).to.be.bignumber.equal(new BN(0));
+    }
+
+    // withdraw token holder 1 reward
+    await stakedTokens.withdrawRewards(token.address, {
+      from: tokenHolder1,
+    });
+    expect(
+      await stakedTokens.rewardOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(new BN(0));
+    expect(
+      await stakedTokens.balanceOf(token.address, tokenHolder1)
+    ).to.be.bignumber.equal(stakedBalance);
+    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
+      reward
+    );
+
+    // second penalty received
+    totalRewards = ether('-100');
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
@@ -515,62 +529,15 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     for (const holder of tokenHolders) {
       expect(
         await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(ether('-2.1875'));
+      ).to.be.bignumber.equal(new BN(0));
     }
 
+    // check holder 5
     expect(
-      await stakedTokens.rewardOf(token.address, tokensHolder5)
-    ).to.be.bignumber.equal(ether('-5'));
+      await stakedTokens.rewardOf(token.address, tokenHolder5)
+    ).to.be.bignumber.equal(new BN(0));
     expect(
-      await stakedTokens.balanceOf(token.address, tokensHolder5)
+      await stakedTokens.balanceOf(token.address, tokenHolder5)
     ).to.be.bignumber.equal(stakedBalance);
-  });
-
-  it('cannot withdraw or stake tokens when penalties', async () => {
-    let totalRewards = ether('-100');
-
-    // update rewards
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
-    });
-
-    // check rewards holders rewards
-    for (const holder of rewardHolders) {
-      await checkRewardEthToken({
-        rewardEthToken,
-        totalSupply: new BN(0),
-        account: holder,
-        balance: new BN(0),
-        reward: totalRewards.div(new BN(rewardHolders.length)),
-      });
-    }
-
-    // check token holders
-    for (const holder of tokenHolders) {
-      await token.mint(holder, stakedBalance, {
-        from: admin,
-      });
-      await token.approve(stakedTokens.address, stakedBalance, {
-        from: holder,
-      });
-      await expectRevert(
-        stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
-          from: holder,
-        }),
-        'StakedTokens: cannot update account with negative rewards'
-      );
-      await expectRevert(
-        stakedTokens.withdrawRewards(token.address, new BN(1), {
-          from: holder,
-        }),
-        'StakedTokens: cannot update account with negative rewards'
-      );
-      await expectRevert(
-        stakedTokens.withdrawTokens(token.address, new BN(1), '0', {
-          from: holder,
-        }),
-        'StakedTokens: cannot update account with negative rewards'
-      );
-    }
   });
 });

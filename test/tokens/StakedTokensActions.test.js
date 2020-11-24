@@ -223,7 +223,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
 
       await expectRevert(
-        stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+        stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
         'StakedTokens: contract is paused'
@@ -236,7 +236,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
 
     it('fails to stake tokens with invalid contract', async () => {
       await expectRevert(
-        stakedTokens.stakeTokens(rewardEthToken.address, stakedBalance, '0', {
+        stakedTokens.stakeTokens(rewardEthToken.address, stakedBalance, {
           from: tokenHolder1,
         }),
         'StakedTokens: token is not supported'
@@ -249,7 +249,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       });
 
       await expectRevert(
-        stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+        stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
         'StakedTokens: token is not supported'
@@ -258,19 +258,10 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
 
     it('fails to stake tokens with insufficient balance', async () => {
       await expectRevert(
-        stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+        stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: otherAccount,
         }),
         'StakedTokens: invalid tokens amount'
-      );
-    });
-
-    it('fails to withdraw insufficient rewards', async () => {
-      await expectRevert(
-        stakedTokens.stakeTokens(token.address, stakedBalance, new BN('1'), {
-          from: tokenHolder1,
-        }),
-        'StakedTokens: cannot update account with negative rewards'
       );
     });
 
@@ -283,7 +274,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         let receipt = await stakedTokens.stakeTokens(
           token.address,
           stakedBalance,
-          '0',
           {
             from: holder,
           }
@@ -313,7 +303,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         await token.approve(stakedTokens.address, stakedBalance, {
           from: holder,
         });
-        await stakedTokens.stakeTokens(token.address, stakedBalance, '0', {
+        await stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: holder,
         });
       }
@@ -326,7 +316,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
 
       await expectRevert(
-        stakedTokens.withdrawTokens(token.address, stakedBalance, '0', {
+        stakedTokens.withdrawTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
         'StakedTokens: contract is paused'
@@ -337,43 +327,40 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       });
     });
 
-    it('fails to withdraw tokens with invalid contract', async () => {
-      await expectRevert(
-        stakedTokens.withdrawTokens(otherAccount, stakedBalance, '0', {
-          from: tokenHolder1,
-        }),
-        'StakedTokens: invalid tokens amount'
-      );
-    });
-
-    it('fails to withdraw reward for disabled contract', async () => {
+    it('does not pull rewards when token is disabled', async () => {
       await stakedTokens.toggleTokenContract(token.address, false, {
         from: admin,
       });
 
+      let totalRewards = ether('100');
+      await rewardEthToken.updateTotalRewards(totalRewards, {
+        from: balanceReportersContractAddress,
+      });
+
+      await stakedTokens.withdrawTokens(token.address, stakedBalance, {
+        from: tokenHolder1,
+      });
+
+      expect(await rewardEthToken.balanceOf(tokenHolder1)).to.bignumber.equal(
+        new BN(0)
+      );
+    });
+
+    it('fails to withdraw tokens with invalid contract', async () => {
       await expectRevert(
-        stakedTokens.withdrawTokens(token.address, stakedBalance, ether('1'), {
+        stakedTokens.withdrawTokens(otherAccount, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: token is not supported'
+        'StakedTokens: invalid tokens amount'
       );
     });
 
     it('fails to withdraw tokens with insufficient balance', async () => {
       await expectRevert(
-        stakedTokens.withdrawTokens(token.address, stakedBalance, '0', {
+        stakedTokens.withdrawTokens(token.address, stakedBalance, {
           from: otherAccount,
         }),
         'StakedTokens: invalid tokens amount'
-      );
-    });
-
-    it('fails to withdraw insufficient rewards', async () => {
-      await expectRevert(
-        stakedTokens.withdrawTokens(token.address, stakedBalance, new BN('1'), {
-          from: tokenHolder1,
-        }),
-        'StakedTokens: cannot update account with negative rewards'
       );
     });
 
@@ -382,7 +369,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         let receipt = await stakedTokens.withdrawTokens(
           token.address,
           stakedBalance,
-          '0',
           {
             from: holder,
           }
@@ -412,7 +398,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         let receipt = await stakedTokens.withdrawTokens(
           token.address,
           stakedBalance,
-          '0',
           {
             from: holder,
           }

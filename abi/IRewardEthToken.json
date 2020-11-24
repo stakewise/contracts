@@ -151,22 +151,42 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "sender",
+        "name": "account",
         "type": "address"
+      }
+    ],
+    "name": "checkpoints",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
       },
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "address",
-        "name": "recipient",
+        "name": "tokenContract",
         "type": "address"
-      },
+      }
+    ],
+    "name": "claimRewards",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "claim",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -207,6 +227,19 @@
       }
     ],
     "name": "rewardOf",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewardPerToken",
     "outputs": [
       {
         "internalType": "int256",

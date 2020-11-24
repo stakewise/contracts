@@ -8,8 +8,9 @@ require('solidity-coverage');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
+require('@nomiclabs/hardhat-etherscan');
 
-const optimizerRuns = 10000000;
+const optimizerRuns = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
 extendEnvironment((hre) => {
@@ -80,6 +81,13 @@ task('test')
     await runSuper(taskArguments);
   });
 
+task('verify')
+  .addFlag('optimizer', 'Compile with the optimizer')
+  .setAction(async (taskArguments, hre, runSuper) => {
+    optimizeIfRequired({ hre, taskArguments });
+    await runSuper(taskArguments);
+  });
+
 const GAS_PRICE = 20e9; // 20 Gwei
 
 module.exports = {
@@ -132,5 +140,8 @@ module.exports = {
     ],
     clear: true,
     flat: true,
+  },
+  etherscan: {
+    apiKey: 'api key goes here',
   },
 };
