@@ -52,6 +52,17 @@ interface IRewardEthToken is IERC20 {
     function totalRewards() external view returns (int256);
 
     /**
+    * @dev Function for retrieving current reward per token used for account reward calculation.
+    */
+    function rewardPerToken() external view returns (int256);
+
+    /**
+    * @dev Function for retrieving account's current checkpoint.
+    * @param account - address of the account to retrieve the checkpoint for.
+    */
+    function checkpoints(address account) external view returns (int256, int256);
+
+    /**
     * @dev Function for retrieving current reward of the account.
     * Can be negative in case account's deposit is penalised.
     * @param account - address of the account to retrieve the reward for.
@@ -74,9 +85,7 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Function for claiming rewards. Can only be called by StakedTokens contract.
-    * @param sender - address of the rewards sender.
-    * @param recipient - address of the rewards recipient.
-    * @param amount - amount of rewards to send.
+    * @param tokenContract - address of the token contract.
     */
-    function claim(address sender, address recipient, uint256 amount) external;
+    function claimRewards(address tokenContract) external returns (uint256);
 }

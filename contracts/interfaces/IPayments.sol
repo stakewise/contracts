@@ -62,6 +62,12 @@ interface IPayments {
     function balanceOf(address _account) external view returns (uint256);
 
     /**
+    * @dev Function for retrieving the time in seconds when the tokens can be withdrawn next time.
+    * @param _account - address of account to retrieve the time for.
+    */
+    function releaseTimes(address _account) external view returns (uint256);
+
+    /**
     * @dev Function for adding tokens to the account's balance.
     * @param _token - address of the token to use.
     * @param _amount - amount of tokens to add.

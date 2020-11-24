@@ -80,6 +80,26 @@ contract Pool is IPool, Initializable {
     }
 
     /**
+     * @dev See {IPool-registerValidator}.
+     */
+    function registerValidator(Validator calldata _validator) external override {
+        require(operators.isOperator(msg.sender), "Pool: permission denied");
+
+        // reduce pool collected amount
+        uint256 depositAmount = settings.validatorDepositAmount();
+        collectedAmount = collectedAmount.sub(depositAmount, "Pool: insufficient collected amount");
+
+        // register validator
+        validators.register(_validator.publicKey, poolId);
+        validatorRegistration.deposit{value : depositAmount}(
+            _validator.publicKey,
+            abi.encodePacked(settings.withdrawalCredentials()),
+            _validator.signature,
+            _validator.depositDataRoot
+        );
+    }
+
+    /**
      * @dev See {IPool-registerValidators}.
      */
     function registerValidators(Validator[] calldata _validators) external override {

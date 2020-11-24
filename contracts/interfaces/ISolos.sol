@@ -102,6 +102,12 @@ interface ISolos {
     function cancelDeposit(bytes32 _withdrawalCredentials, uint256 _amount) external;
 
     /**
+    * @dev Function for registering new solo validator.
+    * @param _validator - validator to register.
+    */
+    function registerValidator(Validator calldata _validator) external;
+
+    /**
     * @dev Function for registering new solo validators.
     * @param _validators - list of validators to register.
     */

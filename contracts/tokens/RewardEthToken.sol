@@ -28,7 +28,10 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     int256 public override totalRewards;
 
     // @dev Maps account address to its reward checkpoint.
-    mapping(address => Checkpoint) private checkpoints;
+    mapping(address => Checkpoint) public override checkpoints;
+
+    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
+    int256 public override rewardPerToken;
 
     // @dev Address of the StakedEthToken contract.
     IStakedEthToken private stakedEthToken;
@@ -38,9 +41,6 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
 
     // @dev Address of the BalanceReporters contract.
     address private balanceReporters;
-
-    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
-    int256 private rewardPerToken;
 
     // @dev Address of the StakedTokens contract.
     address private stakedTokens;
@@ -149,10 +149,11 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     }
 
     /**
-     * @dev See {IRewardEthToken-claim}.
+     * @dev See {IRewardEthToken-claimRewards}.
      */
-    function claim(address sender, address recipient, uint256 amount) external override {
+    function claimRewards(address tokenContract) external override returns (uint256 rewards) {
         require(msg.sender == stakedTokens, "RewardEthToken: permission denied");
-        _transfer(sender, recipient, amount);
+        rewards = balanceOf(tokenContract);
+        _transfer(tokenContract, stakedTokens, rewards);
     }
 }

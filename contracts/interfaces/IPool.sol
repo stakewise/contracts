@@ -54,6 +54,12 @@ interface IPool {
     function addDeposit() external payable;
 
     /**
+    * @dev Function for registering new pool validator.
+    * @param _validator - validator to register.
+    */
+    function registerValidator(Validator calldata _validator) external;
+
+    /**
     * @dev Function for registering new pool validators.
     * @param _validators - list of validators to register.
     */

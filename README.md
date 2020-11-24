@@ -50,7 +50,8 @@ The StakeWise smart contracts for tokenized staking and non-custodial validators
 
 ## Documentation
 
-You can find the documentation for every contract in the `contracts` directory. In the future, the documentation will be hosted on a dedicated webpage.
+You can find the documentation for every contract in the `contracts` directory.
+The documentation is also available on the [official documentation page](https://docs.stakewise.io/smart-contracts).
 
 ## Contributing
 

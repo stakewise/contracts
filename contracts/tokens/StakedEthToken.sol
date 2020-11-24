@@ -70,9 +70,9 @@ contract StakedEthToken is IStakedEthToken, ERC20 {
             return deposit;
         }
 
-        // in case rewards amount is negative, apply penalty to deposit
-        int256 balance = deposit.toInt256().add(reward);
-        return balance > 0 ? balance.toUint256() : 0;
+        // rewards amount is negative, apply penalty to deposit
+        // the penalty cannot be bigger than the deposit
+        return deposit.toInt256().add(reward).toUint256();
     }
 
     /**

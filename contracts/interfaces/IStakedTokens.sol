@@ -7,13 +7,15 @@ pragma solidity 0.7.5;
  */
 interface IStakedTokens {
     /**
-    * @dev Structure for storing information about reward checkpoint for accounts and tokens.
-    * @param rewardPerToken - last synced reward per token.
+    * @dev Structure for storing information about token.
+    * @param enabled - defines whether the token is supported.
+    * @param totalSupply - total staked amount of the token.
     * @param totalRewards - last synced total rewards.
     */
-    struct Checkpoint {
-        int256 rewardPerToken;
-        int256 totalRewards;
+    struct Token {
+        bool enabled;
+        uint256 totalSupply;
+        uint256 totalRewards;
     }
 
     /**
@@ -48,10 +50,16 @@ interface IStakedTokens {
     event TokensWithdrawn(address indexed token, address indexed account, uint256 amount);
 
     /**
-    * @dev Function for checking whether token is supported or not.
-    * @param _token - address of the token to check.
+    * @dev Function for retrieving token's data.
+    * @param _token - address of the token to retrieve.
     */
-    function supportedTokens(address _token) external view returns (bool);
+    function tokens(address _token) external view returns (bool, uint256, uint256);
+
+    /**
+    * @dev Function for retrieving account or token reward rate.
+    * @param _account - address of the account to retrieve reward rate for.
+    */
+    function rewardRates(address _account) external view returns (uint256);
 
     /**
     * @dev Constructor for initializing the StakedTokens contract.
@@ -71,24 +79,21 @@ interface IStakedTokens {
     * @dev Function for staking tokens which inherit rewards.
     * @param _token - address of the token to stake tokens for.
     * @param _amount - amount of tokens to stake.
-    * @param _withdrawnReward - the amount of already accumulated rewards to withdraw.
     */
-    function stakeTokens(address _token, uint256 _amount, uint256 _withdrawnReward) external;
+    function stakeTokens(address _token, uint256 _amount) external;
 
     /**
     * @dev Function for withdrawing staked tokens.
     * @param _token - address of the token to withdraw tokens for.
     * @param _amount - amount of tokens to withdraw.
-    * @param _withdrawnReward - the amount of already accumulated rewards to withdraw.
     */
-    function withdrawTokens(address _token, uint256 _amount, uint256 _withdrawnReward) external;
+    function withdrawTokens(address _token, uint256 _amount) external;
 
     /**
     * @dev Function for withdrawing rewards.
     * @param _token - address of the staked tokens contract.
-    * @param _amount - amount of rewards to withdraw.
     */
-    function withdrawRewards(address _token, uint256 _amount) external;
+    function withdrawRewards(address _token) external;
 
     /**
      * @dev Function for retrieving the amount of tokens staked by account for the specific token contract.
@@ -99,9 +104,8 @@ interface IStakedTokens {
 
     /**
     * @dev Function for retrieving current reward of the account for the specific token contract.
-    * Can be negative in case of penalty.
     * @param _token - address of the contract which tokens are staked.
     * @param _account - address of the account to retrieve the reward for.
     */
-    function rewardOf(address _token, address _account) external view returns (int256);
+    function rewardOf(address _token, address _account) external view returns (uint256);
 }
