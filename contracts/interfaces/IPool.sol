@@ -58,10 +58,4 @@ interface IPool {
     * @param _validator - validator to register.
     */
     function registerValidator(Validator calldata _validator) external;
-
-    /**
-    * @dev Function for registering new pool validators.
-    * @param _validators - list of validators to register.
-    */
-    function registerValidators(Validator[] calldata _validators) external;
 }
