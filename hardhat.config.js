@@ -56,11 +56,17 @@ task('compile')
 task('test')
   .addFlag('optimizer', 'Compile with the optimizer')
   .addFlag('gas', 'Compile gas usage')
+  .addFlag('noWarnings', 'Silence upgrade warnings')
   .addOptionalParam('grep', 'Filter tests to only those with given logic')
   .setAction(async (taskArguments, hre, runSuper) => {
-    const { gas, grep } = taskArguments;
+    const { gas, grep, noWarnings } = taskArguments;
 
     optimizeIfRequired({ hre, taskArguments });
+
+    if (noWarnings) {
+      console.log(gray('Silencing upgrades warnings'));
+      hre.upgrades.silenceWarnings();
+    }
 
     if (grep) {
       console.log(gray('Filtering tests to those containing'), yellow(grep));
@@ -78,6 +84,17 @@ task('test')
     // suppress logs for tests
     hre.config.suppressLogs = true;
 
+    await runSuper(taskArguments);
+  });
+
+task('coverage')
+  .addFlag('noWarnings', 'Silence upgrade warnings')
+  .setAction(async (taskArguments, hre, runSuper) => {
+    const { noWarnings } = taskArguments;
+    if (noWarnings) {
+      console.log(gray('Silencing upgrades warnings'));
+      hre.upgrades.silenceWarnings();
+    }
     await runSuper(taskArguments);
   });
 

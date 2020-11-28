@@ -93,6 +93,8 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     expectEvent(receipt, 'DepositCanceled', {
       soloId,
       amount: '0',
+      sender,
+      withdrawalCredentials,
     });
 
     await checkSolo({
@@ -160,15 +162,13 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
 
   it('fails to cancel a deposit with registered validator', async () => {
     await time.increase(initialSettings.withdrawalLockDuration);
-    await solos.registerValidators(
-      [
-        {
-          publicKey: validators[0].publicKey,
-          soloId,
-          signature: validators[0].signature,
-          depositDataRoot: validators[0].depositDataRoot,
-        },
-      ],
+    await solos.registerValidator(
+      {
+        publicKey: validators[0].publicKey,
+        soloId,
+        signature: validators[0].signature,
+        depositDataRoot: validators[0].depositDataRoot,
+      },
       {
         from: operator,
       }
@@ -216,6 +216,8 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
     expectEvent(receipt, 'DepositCanceled', {
       soloId,
       amount: validatorDepositAmount,
+      sender,
+      withdrawalCredentials,
     });
     await checkSolo({
       solos,

@@ -52,9 +52,16 @@ interface ISolos {
     /**
     * @dev Event for tracking canceled deposits.
     * @param soloId - ID of the solo.
+    * @param sender - address of the deposit sender.
     * @param amount - amount canceled.
+    * @param withdrawalCredentials - withdrawal credentials submitted by deposit owner.
     */
-    event DepositCanceled(bytes32 indexed soloId, uint256 amount);
+    event DepositCanceled(
+        bytes32 indexed soloId,
+        address sender,
+        uint256 amount,
+        bytes32 withdrawalCredentials
+    );
 
     /**
     * @dev Function for getting solo's details.
@@ -106,10 +113,4 @@ interface ISolos {
     * @param _validator - validator to register.
     */
     function registerValidator(Validator calldata _validator) external;
-
-    /**
-    * @dev Function for registering new solo validators.
-    * @param _validators - list of validators to register.
-    */
-    function registerValidators(Validator[] calldata _validators) external;
 }

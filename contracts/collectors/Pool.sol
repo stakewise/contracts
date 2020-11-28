@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "../libraries/Address.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IValidatorRegistration.sol";
@@ -97,30 +97,5 @@ contract Pool is IPool, Initializable {
             _validator.signature,
             _validator.depositDataRoot
         );
-    }
-
-    /**
-     * @dev See {IPool-registerValidators}.
-     */
-    function registerValidators(Validator[] calldata _validators) external override {
-        require(operators.isOperator(msg.sender), "Pool: permission denied");
-
-        // reduce pool collected amount
-        uint256 depositAmount = settings.validatorDepositAmount();
-        collectedAmount = collectedAmount.sub(depositAmount.mul(_validators.length), "Pool: insufficient collected amount");
-
-        bytes memory withdrawalCredentials = abi.encodePacked(settings.withdrawalCredentials());
-        for (uint256 i = 0; i < _validators.length; i++) {
-            Validator calldata validator = _validators[i];
-
-            // register validator
-            validators.register(validator.publicKey, poolId);
-            validatorRegistration.deposit{value : depositAmount}(
-                validator.publicKey,
-                withdrawalCredentials,
-                validator.signature,
-                validator.depositDataRoot
-            );
-        }
     }
 }

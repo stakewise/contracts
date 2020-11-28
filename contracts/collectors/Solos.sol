@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "../libraries/Address.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/ISettings.sol";
 import "../interfaces/IOperators.sol";
 import "../interfaces/IValidatorRegistration.sol";
@@ -37,6 +37,16 @@ contract Solos is ISolos, Initializable {
     // @dev Address of the Validators contract.
     IValidators private validators;
 
+    // @dev Indicates whether the calling function is locked.
+    uint256 private unlocked;
+
+    modifier lock() {
+        require(unlocked == 1, "Solos: locked");
+        unlocked = 0;
+        _;
+        unlocked = 1;
+    }
+
     /**
      * @dev See {ISolos-initialize}.
      */
@@ -52,6 +62,7 @@ contract Solos is ISolos, Initializable {
         operators = IOperators(_operators);
         validatorRegistration = IValidatorRegistration(_validatorRegistration);
         validators = IValidators(_validators);
+        unlocked = 1;
     }
 
     /**
@@ -84,7 +95,7 @@ contract Solos is ISolos, Initializable {
     /**
      * @dev See {ISolos-cancelDeposit}.
      */
-    function cancelDeposit(bytes32 _withdrawalCredentials, uint256 _amount) external override {
+    function cancelDeposit(bytes32 _withdrawalCredentials, uint256 _amount) external override lock {
         // update balance
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
         Solo storage solo = solos[soloId];
@@ -94,6 +105,10 @@ contract Solos is ISolos, Initializable {
 
         uint256 newAmount = solo.amount.sub(_amount, "Solos: insufficient balance");
         require(newAmount.mod(settings.validatorDepositAmount()) == 0, "Solos: invalid cancel amount");
+
+        // emit event
+        emit DepositCanceled(soloId, msg.sender, _amount, solo.withdrawalCredentials);
+
         if (newAmount > 0) {
             solo.amount = newAmount;
             // solhint-disable-next-line not-rely-on-time
@@ -101,9 +116,6 @@ contract Solos is ISolos, Initializable {
         } else {
             delete solos[soloId];
         }
-
-        // emit event
-        emit DepositCanceled(soloId, _amount);
 
         // transfer canceled amount to the recipient
         msg.sender.sendValue(_amount);
@@ -128,29 +140,5 @@ contract Solos is ISolos, Initializable {
             _validator.signature,
             _validator.depositDataRoot
         );
-    }
-
-    /**
-     * @dev See {ISolos-registerValidators}.
-     */
-    function registerValidators(Validator[] calldata _validators) external override {
-        require(operators.isOperator(msg.sender), "Solos: permission denied");
-
-        // update solo balance
-        uint256 validatorDepositAmount = settings.validatorDepositAmount();
-        for (uint256 i = 0; i < _validators.length; i++) {
-            Validator calldata validator = _validators[i];
-            Solo storage solo = solos[validator.soloId];
-            solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
-
-            // register validator
-            validators.register(validator.publicKey, validator.soloId);
-            validatorRegistration.deposit{value : validatorDepositAmount}(
-                validator.publicKey,
-                abi.encodePacked(solo.withdrawalCredentials),
-                validator.signature,
-                validator.depositDataRoot
-            );
-        }
     }
 }
