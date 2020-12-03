@@ -19,6 +19,12 @@
         "internalType": "uint256",
         "name": "price",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
       }
     ],
     "name": "ValidatorRegistered",
@@ -77,6 +83,11 @@
         "internalType": "bytes32",
         "name": "_entityId",
         "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_operator",
+        "type": "address"
       }
     ],
     "name": "register",

@@ -2,68 +2,74 @@
 
 ## Admins Contract
 
-- Implementation: [0x137D3fC02159228aC6422EC02bCc5a5f3D6da206](https://goerli.etherscan.io/address/0x137D3fC02159228aC6422EC02bCc5a5f3D6da206)
-- Proxy: [0xaA73c0E8b5d00c9d0b4221694831F228D69e20CE](https://goerli.etherscan.io/address/0xaA73c0E8b5d00c9d0b4221694831F228D69e20CE)
-- Transaction: [0xcfdb806dde6e7e9813b5bd5136bed50a99becc4a926ae57cdb7951ac922375cf](https://goerli.etherscan.io/tx/0xcfdb806dde6e7e9813b5bd5136bed50a99becc4a926ae57cdb7951ac922375cf)
+- Implementation: [0x86560E64D5b80792b49774191e2aC6eA99Ba2d7e](https://goerli.etherscan.io/address/0x137D3fC02159228aC6422EC02bCc5a5f3D6da206)
+- Proxy: [0x404c84e66C6ACbBfE68261DDDFE2bCA57B80117f](https://goerli.etherscan.io/address/0x404c84e66C6ACbBfE68261DDDFE2bCA57B80117f)
+- Transaction: [0xd74ee452ff4dd785a94cb67f09e6472d2b057c286f295fcb68a7f046e1fb1501](https://goerli.etherscan.io/tx/0xd74ee452ff4dd785a94cb67f09e6472d2b057c286f295fcb68a7f046e1fb1501)
 
 ## Managers Contract
 
-- Implementation: [0x1a888097C528cF2eF0960bb09dd4D234E922E3bc](https://goerli.etherscan.io/address/0x1a888097C528cF2eF0960bb09dd4D234E922E3bc)
-- Proxy: [0x1E11d3f0b4982dfA35a3FD5A7f4569B43E588189](https://goerli.etherscan.io/address/0x1E11d3f0b4982dfA35a3FD5A7f4569B43E588189)
-- Transaction: [0x19eb6be6b5f44ec9b14a309458555a01659a108f1868dcbbae807c38be848364](https://goerli.etherscan.io/tx/0x19eb6be6b5f44ec9b14a309458555a01659a108f1868dcbbae807c38be848364)
+- Implementation: [0x3DD1118a783ee8553F50e95999803CA10638BD2d](https://goerli.etherscan.io/address/0x3DD1118a783ee8553F50e95999803CA10638BD2d)
+- Proxy: [0x0D03DD809685Eb7f0F0B4344fb8661c54C31E1d0](https://goerli.etherscan.io/address/0x0D03DD809685Eb7f0F0B4344fb8661c54C31E1d0)
+- Transaction: [0x1d7acd1506b5d790533411308d2d80f805ec8d4dd435943624d67a7fb0b53602](https://goerli.etherscan.io/tx/0x1d7acd1506b5d790533411308d2d80f805ec8d4dd435943624d67a7fb0b53602)
 
 ## Operators Contract
 
-- Implementation: [0xBC44D9cE7918163b72BEc815CE9405f7C6110C97](https://goerli.etherscan.io/address/0xBC44D9cE7918163b72BEc815CE9405f7C6110C97)
-- Proxy: [0xD05442FaEf67aF53E1652474F799c5f3Df3d2a93](https://goerli.etherscan.io/address/0xD05442FaEf67aF53E1652474F799c5f3Df3d2a93)
-- Transaction: [0x6cd4312c442888e51f08fbe7814fbb859673116dd0ef15d5b04b225ff2a6a1d0](https://goerli.etherscan.io/tx/0x6cd4312c442888e51f08fbe7814fbb859673116dd0ef15d5b04b225ff2a6a1d0)
+- Implementation: [0xcfb5351CAEA3f993508Fb07C998A45647731Cf97](https://goerli.etherscan.io/address/0xcfb5351CAEA3f993508Fb07C998A45647731Cf97)
+- Proxy: [0xd6b18D9EC58563B7e9ae1065daEa8Dc5Ad2Bf382](https://goerli.etherscan.io/address/0xd6b18D9EC58563B7e9ae1065daEa8Dc5Ad2Bf382)
+- Transaction: [0x59b1a4eca6a4d2b68947540d34aca10383929556064815439940d05b886a2683](https://goerli.etherscan.io/tx/0x59b1a4eca6a4d2b68947540d34aca10383929556064815439940d05b886a2683)
 
 ## Settings Contract
 
-- Implementation: [0x53b17F04765DA7B24E424aD58e658b28549Ec9E2](https://goerli.etherscan.io/address/0x53b17F04765DA7B24E424aD58e658b28549Ec9E2)
-- Proxy: [0x94232139b1AD0f697ADc2A64795481063d81C3BC](https://goerli.etherscan.io/address/0x94232139b1AD0f697ADc2A64795481063d81C3BC)
-- Transaction: [0x8a419d005296ad437b87fcb8292205d2f4fbdbc1ee97b8af27e9f6c7feb472c8](https://goerli.etherscan.io/tx/0x8a419d005296ad437b87fcb8292205d2f4fbdbc1ee97b8af27e9f6c7feb472c8)
+- Implementation: [0x78F92ffcBb3625d43900E0f8D267C7a7d52f61F1](https://goerli.etherscan.io/address/0x78F92ffcBb3625d43900E0f8D267C7a7d52f61F1)
+- Proxy: [0x2215f0A1669a23D3E69fc7dfFB49670a9ac638D6](https://goerli.etherscan.io/address/0x2215f0A1669a23D3E69fc7dfFB49670a9ac638D6)
+- Transaction: [0xeb8e58b7371e40b52c71fb72dac17bddf0ab66bda01f597812ee7cc77979b32a](https://goerli.etherscan.io/tx/0xeb8e58b7371e40b52c71fb72dac17bddf0ab66bda01f597812ee7cc77979b32a)
 
 ## Payments Contract
 
-- Implementation: [0xbea05495a9fE31a7f6c90E62c4311e3048226C9b](https://goerli.etherscan.io/address/0xbea05495a9fE31a7f6c90E62c4311e3048226C9b)
-- Proxy: [0x760F3462eC8839eBF81E000a613006519C5220B3](https://goerli.etherscan.io/address/0x760F3462eC8839eBF81E000a613006519C5220B3)
-- Transaction: [0x01edd166bcd7611111cee73ad1fc69b88a7dd180dfe40c6afebb43103c876d37](https://goerli.etherscan.io/tx/0x01edd166bcd7611111cee73ad1fc69b88a7dd180dfe40c6afebb43103c876d37)
+- Implementation: [0x3Be9452eE3B88A6C0dd35Caf077E43BD2d151400](https://goerli.etherscan.io/address/0x3Be9452eE3B88A6C0dd35Caf077E43BD2d151400)
+- Proxy: [0x07Ba805C336d50f122C5666dF1427746B9b00a1B](https://goerli.etherscan.io/address/0x07Ba805C336d50f122C5666dF1427746B9b00a1B)
+- Transaction: [0x8ca7464bf964dda8e969d51e4522f62522097aca2e89c7f6cec2354642efbdab](https://goerli.etherscan.io/tx/0x8ca7464bf964dda8e969d51e4522f62522097aca2e89c7f6cec2354642efbdab)
 
 ## Validators Contract
 
-- Implementation: [0x21907CB32780E9718eA00a790dFE990D23293B8e](https://goerli.etherscan.io/address/0x21907CB32780E9718eA00a790dFE990D23293B8e)
-- Proxy: [0x1154A0c1F536556073F546EE3ab6e7c324138788](https://goerli.etherscan.io/address/0x1154A0c1F536556073F546EE3ab6e7c324138788)
-- Transaction: [0x8bf53fc4e1ff3e339e5d4952142eb04a7624c951f07ad1e704d8f4b3109d2d1d](https://goerli.etherscan.io/tx/0x8bf53fc4e1ff3e339e5d4952142eb04a7624c951f07ad1e704d8f4b3109d2d1d)
+- Implementation: [0xf3751A19f50C1328055B319FF077299eb4ecA4fB](https://goerli.etherscan.io/address/0xf3751A19f50C1328055B319FF077299eb4ecA4fB)
+- Proxy: [0xabcf3fcC74E33e065053Ac32b4565592aC18eeFC](https://goerli.etherscan.io/address/0xabcf3fcC74E33e065053Ac32b4565592aC18eeFC)
+- Transaction: [0x869e48e0be9a4aba24992d27e571baa52c2cd0a5437b54b55d8891dd57b7d2e2](https://goerli.etherscan.io/tx/0x869e48e0be9a4aba24992d27e571baa52c2cd0a5437b54b55d8891dd57b7d2e2)
 
 ## Pool Contract
 
-- Implementation: [0x1f38fAc52Db4Ff913717a83e0Dd46AE567Cda533](https://goerli.etherscan.io/address/0x1f38fAc52Db4Ff913717a83e0Dd46AE567Cda533)
-- Proxy: [0x58C37d07799DD1AEb5fD90370E646e9191E22b68](https://goerli.etherscan.io/address/0x58C37d07799DD1AEb5fD90370E646e9191E22b68)
-- Transaction: [0x0fd89f460d91c08399fe97798114cc46eadb8ac194a951b8dd40b7c120c5b383](https://goerli.etherscan.io/tx/0x0fd89f460d91c08399fe97798114cc46eadb8ac194a951b8dd40b7c120c5b383)
+- Implementation: [0x524336F1De7E0D2efF49a627e76f59cf967aD554](https://goerli.etherscan.io/address/0x524336F1De7E0D2efF49a627e76f59cf967aD554)
+- Proxy: [0xA5DaBE0258be9cAd025Ad7F9b6F5851e5A00019f](https://goerli.etherscan.io/address/0xA5DaBE0258be9cAd025Ad7F9b6F5851e5A00019f)
+- Transaction: [0x104c133a18baaf79b4fe13ef10f6bac610adbe07b6faa8cc25ae44452d53be48](https://goerli.etherscan.io/tx/0x104c133a18baaf79b4fe13ef10f6bac610adbe07b6faa8cc25ae44452d53be48)
 
 ## Solos Contract
 
-- Implementation: [0xC89c1d8656FE38C61eA9e9DeDBF3Fc2Df9B5E69A](https://goerli.etherscan.io/address/0xC89c1d8656FE38C61eA9e9DeDBF3Fc2Df9B5E69A)
-- Transaction: [0xa5a9ef24e09ed0751f6d9a6922682cba03e46c2c15a14573319fe22fb06abe4b](https://goerli.etherscan.io/tx/0xa5a9ef24e09ed0751f6d9a6922682cba03e46c2c15a14573319fe22fb06abe4b)
+- Implementation: [0x7E904916fBEEE866Ef17052a6529b4a435d7787f](https://goerli.etherscan.io/address/0x7E904916fBEEE866Ef17052a6529b4a435d7787f)
+- Transaction: [0x570be29cd1eea7b51f145b99a7ad5c6eb946522e2bb6947d9758ca8255a3c7cd](https://goerli.etherscan.io/tx/0x570be29cd1eea7b51f145b99a7ad5c6eb946522e2bb6947d9758ca8255a3c7cd)
 
 ## StakedEthToken Contract
 
-- Implementation: [0x31B62Ee18B6e3944F38011D8A54515965EA58D42](https://goerli.etherscan.io/address/0x31B62Ee18B6e3944F38011D8A54515965EA58D42)
-- Proxy: [0xDEB33b7B57FDD05D51e01B5409FfC4cc47897003](https://goerli.etherscan.io/address/0xDEB33b7B57FDD05D51e01B5409FfC4cc47897003)
-- Transaction: [0xc7de52d9823cb4bc029297dcb424b7feb4790f1e7aa4fc40882ca22bdac737a7](https://goerli.etherscan.io/tx/0xc7de52d9823cb4bc029297dcb424b7feb4790f1e7aa4fc40882ca22bdac737a7)
+- Implementation: [0xbdE1d112d9f70b11B77B942C3813e304e6A265a7](https://goerli.etherscan.io/address/0xbdE1d112d9f70b11B77B942C3813e304e6A265a7)
+- Proxy: [0xF7Fdec4bc04bE429c5a883Cfc5c2a90aB57Bbf11](https://goerli.etherscan.io/address/0xF7Fdec4bc04bE429c5a883Cfc5c2a90aB57Bbf11)
+- Transaction: [0x804dc277d8cd99c719ff0aee5582ecbf79319a10c4147e582ed41752b5a8ff3d](https://goerli.etherscan.io/tx/0x804dc277d8cd99c719ff0aee5582ecbf79319a10c4147e582ed41752b5a8ff3d)
 
 ## RewardEthToken Contract
 
-- Implementation: [0x5a9C5D8454E1f9a3a4985F8bf7771C8679E930c1](https://goerli.etherscan.io/address/0x5a9C5D8454E1f9a3a4985F8bf7771C8679E930c1)
-- Proxy: [0x891B6a6bb110D71c2d332a99e95Ccf3c68902c9A](https://goerli.etherscan.io/address/0x891B6a6bb110D71c2d332a99e95Ccf3c68902c9A)
-- Transaction: [0x7581980e7493dffb9a643c80e8362a9b0b745daa9f87a2931fbe0e58013b2414](https://goerli.etherscan.io/tx/0x7581980e7493dffb9a643c80e8362a9b0b745daa9f87a2931fbe0e58013b2414)
+- Implementation: [0x1f8b9F49bDBa28119Af5Fde0516176AF7ea9E6E6](https://goerli.etherscan.io/address/0x1f8b9F49bDBa28119Af5Fde0516176AF7ea9E6E6)
+- Proxy: [0xE69eDC0162227A76Bc1D04384fe8b468C7Ad67DB](https://goerli.etherscan.io/address/0xE69eDC0162227A76Bc1D04384fe8b468C7Ad67DB)
+- Transaction: [0xbda42296afaa92b89ca3df2e56df6a6502674e86bf897465059cc2fd25db4c54](https://goerli.etherscan.io/tx/0xbda42296afaa92b89ca3df2e56df6a6502674e86bf897465059cc2fd25db4c54)
+
+## StakedTokens Contract
+
+- Implementation: [0x8147243aCeD45e4DB65FA46D30bab6262FdD2Cec](https://goerli.etherscan.io/address/0x8147243aCeD45e4DB65FA46D30bab6262FdD2Cec)
+- Proxy: [0xf96fa39cfcAb2385581F62c39131101BC7EB0D3B](https://goerli.etherscan.io/address/0xf96fa39cfcAb2385581F62c39131101BC7EB0D3B)
+- Transaction: [0xcea1b81c5ec4470c9c04886de8bc0e07f053da2032cbb8900864ec3913c9e733](https://goerli.etherscan.io/tx/0xcea1b81c5ec4470c9c04886de8bc0e07f053da2032cbb8900864ec3913c9e733)
 
 ## BalanceReporters Contract
 
-- Implementation: [0x1CED86b078e24e45B047800c66C9F3ea7Ee227f4](https://goerli.etherscan.io/address/0x1CED86b078e24e45B047800c66C9F3ea7Ee227f4)
-- Proxy: [0xCcd59D5567b3fF28818621E4cF14ef9984Fa3491](https://goerli.etherscan.io/address/0xCcd59D5567b3fF28818621E4cF14ef9984Fa3491)
-- Transaction: [0x495bd75f5bbf6e478b39cd1c185acdbcf4e77d251fdf39e96f65dcc223a64195](https://goerli.etherscan.io/tx/0x495bd75f5bbf6e478b39cd1c185acdbcf4e77d251fdf39e96f65dcc223a64195)
+- Implementation: [0xeeA7c0B955Cb2B88E83F8749eE8806af9aD09496](https://goerli.etherscan.io/address/0xeeA7c0B955Cb2B88E83F8749eE8806af9aD09496)
+- Proxy: [0xDDB3db9B3c65810DD31ccFc6C04C2bb83E1E098B](https://goerli.etherscan.io/address/0xDDB3db9B3c65810DD31ccFc6C04C2bb83E1E098B)
+- Transaction: [0x40d611b161bb5d8914b7e0dbeb9d20abdc21a7d912abd0cee88d3fe7857a0aca](https://goerli.etherscan.io/tx/0x40d611b161bb5d8914b7e0dbeb9d20abdc21a7d912abd0cee88d3fe7857a0aca)
 
 ## Proxy Upgrade Contract
 

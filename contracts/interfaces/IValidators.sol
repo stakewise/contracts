@@ -17,8 +17,9 @@ interface IValidators {
     * @param entityId - ID of the entity where the deposit was accumulated.
     * @param pubKey - validator public key.
     * @param price - validator monthly price.
+    * @param operator - address of the validator operator.
     */
-    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint256 price);
+    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint256 price, address operator);
 
     /**
     * @dev Constructor for initializing the Validators contract.
@@ -32,6 +33,7 @@ interface IValidators {
     * @dev Function for registering validators. Can only be called by collectors.
     * @param _pubKey - BLS public key of the validator.
     * @param _entityId - ID of the entity where the validator deposit was accumulated.
+    * @param _operator - address of the validator operator.
     */
-    function register(bytes calldata _pubKey, bytes32 _entityId) external;
+    function register(bytes calldata _pubKey, bytes32 _entityId, address _operator) external;
 }
