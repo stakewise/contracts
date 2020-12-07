@@ -127,6 +127,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
         from: operator,
       });
       await checkValidatorRegistered({
+        operator,
         vrc,
         transaction: tx,
         pubKey: validators[i].publicKey,

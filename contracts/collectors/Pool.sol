@@ -90,7 +90,7 @@ contract Pool is IPool, Initializable {
         collectedAmount = collectedAmount.sub(depositAmount, "Pool: insufficient collected amount");
 
         // register validator
-        validators.register(_validator.publicKey, poolId);
+        validators.register(_validator.publicKey, poolId, msg.sender);
         validatorRegistration.deposit{value : depositAmount}(
             _validator.publicKey,
             abi.encodePacked(settings.withdrawalCredentials()),

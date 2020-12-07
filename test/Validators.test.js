@@ -20,7 +20,7 @@ const publicKey =
 
 contract(
   'Validators',
-  ([_, poolContractAddress, solosContractAddress, admin, anyone]) => {
+  ([_, poolContractAddress, solosContractAddress, admin, operator, anyone]) => {
     let validators, settings;
 
     beforeEach(async () => {
@@ -49,6 +49,7 @@ contract(
         validators.register(
           web3.utils.fromAscii('\x11'.repeat(48)),
           web3.utils.soliditySha3('collector', 1),
+          anyone,
           {
             from: anyone,
           }
@@ -57,10 +58,11 @@ contract(
       );
 
       let entityId = web3.utils.soliditySha3('collector', 1);
-      let receipt = await validators.register(publicKey, entityId, {
+      let receipt = await validators.register(publicKey, entityId, operator, {
         from: solosContractAddress,
       });
       expectEvent(receipt, 'ValidatorRegistered', {
+        operator,
         entityId,
         pubKey: publicKey,
         price: initialSettings.validatorPrice,
@@ -75,6 +77,7 @@ contract(
         validators.register(
           web3.utils.fromAscii('\x11'.repeat(48)),
           web3.utils.soliditySha3('collector', 1),
+          anyone,
           {
             from: solosContractAddress,
           }

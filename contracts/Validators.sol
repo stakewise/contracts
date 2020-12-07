@@ -44,12 +44,12 @@ contract Validators is IValidators, Initializable {
     /**
      * @dev See {IValidators-register}.
      */
-    function register(bytes calldata _pubKey, bytes32 _entityId) external override onlyCollectors {
+    function register(bytes calldata _pubKey, bytes32 _entityId, address _operator) external override onlyCollectors {
         require(!settings.pausedContracts(address(this)), "Validators: contract is paused");
         bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
         require(!publicKeys[validatorId], "Validators: public key has been already used");
 
         publicKeys[validatorId] = true;
-        emit ValidatorRegistered(_entityId, _pubKey, settings.validatorPrice());
+        emit ValidatorRegistered(_entityId, _pubKey, settings.validatorPrice(), _operator);
     }
 }

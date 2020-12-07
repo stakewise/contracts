@@ -86,6 +86,7 @@ async function checkValidatorRegistered({
   pubKey,
   entityId,
   signature,
+  operator,
   withdrawalCredentials = initialSettings.withdrawalCredentials,
   validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
 }) {
@@ -111,6 +112,7 @@ async function checkValidatorRegistered({
       pubKey: pubKey,
       entityId,
       price: initialSettings.validatorPrice,
+      operator,
     }
   );
 }

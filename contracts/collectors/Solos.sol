@@ -133,7 +133,7 @@ contract Solos is ISolos, Initializable {
         solo.amount = solo.amount.sub(validatorDepositAmount, "Solos: insufficient balance");
 
         // register validator
-        validators.register(_validator.publicKey, _validator.soloId);
+        validators.register(_validator.publicKey, _validator.soloId, msg.sender);
         validatorRegistration.deposit{value : validatorDepositAmount}(
             _validator.publicKey,
             abi.encodePacked(solo.withdrawalCredentials),

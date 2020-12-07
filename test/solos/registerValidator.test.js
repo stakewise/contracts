@@ -169,6 +169,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       });
       await checkValidatorRegistered({
         vrc,
+        operator,
         transaction: tx,
         pubKey: newValidators[i].publicKey,
         entityId: newValidators[i].soloId,
