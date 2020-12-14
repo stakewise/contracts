@@ -170,7 +170,8 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
         totalSupply: new BN(0),
         account: holder,
         balance: new BN(0),
-        reward: totalRewards.div(new BN(rewardHolders.length)),
+        // subtract 1 Wei for fixing penalty rounding down
+        reward: totalRewards.div(new BN(rewardHolders.length)).sub(new BN(1)),
       });
     }
 

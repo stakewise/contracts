@@ -184,21 +184,18 @@ contract StakedTokens is IStakedTokens, Initializable {
     */
     function updateTokenRewards(address _token) private {
         Token storage token = tokens[_token];
-        if (token.totalSupply == 0) {
+        uint256 claimedRewards = IRewardEthToken(rewardEthToken).balanceOf(_token);
+        if (token.totalSupply == 0 || claimedRewards == 0) {
             // no staked tokens
             return;
         }
 
         // withdraw rewards from token
-        uint256 periodReward = IRewardEthToken(rewardEthToken).claimRewards(_token);
-        if (periodReward == 0) {
-            // there are no new rewards
-            return;
-        }
+        IRewardEthToken(rewardEthToken).claimRewards(_token, claimedRewards);
 
         // calculate reward per token used for account reward calculation
-        rewardRates[_token] = rewardRates[_token].add(periodReward.mul(1e18).div(token.totalSupply));
-        token.totalRewards = token.totalRewards.add(periodReward);
+        rewardRates[_token] = rewardRates[_token].add(claimedRewards.mul(1e18).div(token.totalSupply));
+        token.totalRewards = token.totalRewards.add(claimedRewards);
     }
 
     /**

@@ -73,7 +73,7 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view override returns (uint256) {
+    function balanceOf(address account) external view override returns (uint256) {
         int256 balance = rewardOf(account);
         return balance > 0 ? balance.toUint256() : 0;
     }
@@ -89,6 +89,10 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
         if (deposit != 0) {
             // calculate current reward of the account
             curReward = deposit.toInt256().mul(rewardPerToken.sub(cp.rewardPerToken)).div(1e18);
+            if (curReward < 0) {
+                // fixes precision issue in case of the account penalty
+                curReward = curReward.sub(1);
+            }
         }
 
         // return checkpoint reward + current reward
@@ -103,7 +107,7 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
         require(!settings.pausedContracts(address(this)), "RewardEthToken: contract is paused");
 
-        checkpoints[sender] = Checkpoint(rewardPerToken, balanceOf(sender).sub(amount, "RewardEthToken: invalid amount").toInt256());
+        checkpoints[sender] = Checkpoint(rewardPerToken, rewardOf(sender).toUint256().sub(amount, "RewardEthToken: invalid amount").toInt256());
         checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount.toInt256()));
 
         emit Transfer(sender, recipient, amount);
@@ -113,8 +117,15 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        require(msg.sender == address(stakedEthToken), "RewardEthToken: permission denied");
         checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account));
+    }
+
+    /**
+     * @dev See {IRewardEthToken-resetCheckpoint}.
+     */
+    function resetCheckpoint(address account) external override {
+        require(msg.sender == address(stakedEthToken), "RewardEthToken: permission denied");
+        checkpoints[account] = Checkpoint(rewardPerToken, 0);
     }
 
     /**
@@ -151,9 +162,8 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     /**
      * @dev See {IRewardEthToken-claimRewards}.
      */
-    function claimRewards(address tokenContract) external override returns (uint256 rewards) {
+    function claimRewards(address tokenContract, uint256 claimedRewards) external override {
         require(msg.sender == stakedTokens, "RewardEthToken: permission denied");
-        rewards = balanceOf(tokenContract);
-        _transfer(tokenContract, stakedTokens, rewards);
+        _transfer(tokenContract, stakedTokens, claimedRewards);
     }
 }

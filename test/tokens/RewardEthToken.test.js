@@ -295,14 +295,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
             totalSupply: new BN(0),
             account: otherAccounts[i],
             balance: new BN(0),
-            reward: penalisedReturn.sub(deposit),
+            // subtract 1 Wei for fixing penalty rounding down
+            reward: penalisedReturn.sub(deposit).sub(new BN(1)),
           });
 
           await checkStakedEthToken({
             stakedEthToken,
             totalSupply: validatorDepositAmount.add(totalRewards),
             account: otherAccounts[i],
-            balance: penalisedReturn,
+            // subtract 1 Wei for fixing penalty rounding down
+            balance: penalisedReturn.sub(new BN(1)),
             deposit,
           });
         }
@@ -353,39 +355,39 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         [
           {
             deposit: ether('11'),
-            reward: ether('-0.178181317873164654'),
+            reward: ether('-0.178181317873164655'),
           },
-          { deposit: ether('6'), reward: ether('-0.144634630790539224') },
-          { deposit: ether('23'), reward: ether('0.054442452002700438') },
-          { deposit: ether('4'), reward: ether('-0.096423087193692816') },
+          { deposit: ether('6'), reward: ether('-0.144634630790539225') },
+          { deposit: ether('23'), reward: ether('0.054442452002700437') },
+          { deposit: ether('4'), reward: ether('-0.096423087193692817') },
         ],
-        // user3 transfers 3.903576912806307184 stETH to user0
-        // user2 transfers 0.054442452002700438 rwETH to user3
+        // user3 transfers 3.903576912806307183 stETH to user0
+        // user2 transfers 0.054442452002700437 rwETH to user3
         [
           {
-            deposit: ether('14.903576912806307184'),
-            reward: ether('-0.178181317873164654'),
+            deposit: ether('14.903576912806307183'),
+            reward: ether('-0.178181317873164655'),
           },
-          { deposit: ether('6'), reward: ether('-0.144634630790539224') },
+          { deposit: ether('6'), reward: ether('-0.144634630790539225') },
           { deposit: ether('23'), reward: ether('0') },
           {
-            deposit: ether('0.096423087193692816'),
-            reward: ether('-0.041980635190992378'),
+            deposit: ether('0'),
+            reward: ether('0.054442452002700437'),
           },
         ],
         // period rewards: 2.1201081573283083
         // total rewards: 1.755311573473612038
-        // reward rate: 0.041474938886391011
+        // reward rate: 0.0415807634456188
         [
           {
-            deposit: ether('14.903576912806307184'),
-            reward: ether('0.539936749995255735'),
+            deposit: ether('14.903576912806307183'),
+            reward: ether('0.541513914452970914'),
           },
-          { deposit: ether('6'), reward: ether('0.144471027026957358') },
-          { deposit: ether('23'), reward: ether('1.108238354967070231') },
+          { deposit: ether('6'), reward: ether('0.145105974382324092') },
+          { deposit: ether('23'), reward: ether('1.110672319829309378') },
           {
-            deposit: ether('0.096423087193692816'),
-            reward: ether('-0.037334558515671313'),
+            deposit: ether('0'),
+            reward: ether('0.054442452002700437'),
           },
         ],
       ];
@@ -566,18 +568,21 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
       }
 
-      // 5. user3 transfers 3.903576912806307184 stETH to user0
+      // 5. user3 transfers 3.903576912806307183 stETH to user0
       await stakedEthToken.transfer(
         otherAccounts[0],
-        ether('3.903576912806307184'),
+        ether('3.903576912806307183'),
         {
           from: otherAccounts[3],
         }
       );
-      // user2 transfers 0.054442452002700438 rwETH to user3
+      // user3 penalty got burn after transfer
+      totalDeposits = totalDeposits.sub(ether('0.096423087193692817'));
+
+      // user2 transfers 0.054442452002700437 rwETH to user3
       await rewardEthToken.transfer(
         otherAccounts[3],
-        ether('0.054442452002700438'),
+        ether('0.054442452002700437'),
         {
           from: otherAccounts[2],
         }
@@ -608,7 +613,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       periodRewards = ether('2.3556757303647870');
       totalRewards = totalRewards.add(periodRewards);
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
-      rewardPerToken = ether('0.041474938886391011');
+      rewardPerToken = ether('0.0415807634456188');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
@@ -798,14 +803,5 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         deposit: value2,
       });
     });
-  });
-
-  it('anyone cannot update user reward', async () => {
-    await expectRevert(
-      rewardEthToken.updateRewardCheckpoint(otherAccounts[0], {
-        from: otherAccounts[0],
-      }),
-      'RewardEthToken: permission denied'
-    );
   });
 });

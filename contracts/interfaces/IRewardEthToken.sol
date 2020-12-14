@@ -71,10 +71,16 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Function for updating account's reward checkpoint.
-    * Can only be called by StakedEthToken contract.
     * @param account - address of the account to update the reward checkpoint for.
     */
     function updateRewardCheckpoint(address account) external;
+
+    /**
+    * @dev Function for resetting account's reward checkpoint.
+    * Can only be called by StakedEthToken contract.
+    * @param account - address of the account to reset the reward checkpoint for.
+    */
+    function resetCheckpoint(address account) external;
 
     /**
     * @dev Function for updating validators total rewards.
@@ -86,6 +92,7 @@ interface IRewardEthToken is IERC20 {
     /**
     * @dev Function for claiming rewards. Can only be called by StakedTokens contract.
     * @param tokenContract - address of the token contract.
+    * @param claimedRewards - total rewards to claim.
     */
-    function claimRewards(address tokenContract) external returns (uint256);
+    function claimRewards(address tokenContract, uint256 claimedRewards) external;
 }

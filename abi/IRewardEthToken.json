@@ -177,16 +177,15 @@
         "internalType": "address",
         "name": "tokenContract",
         "type": "address"
-      }
-    ],
-    "name": "claimRewards",
-    "outputs": [
+      },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "claimedRewards",
         "type": "uint256"
       }
     ],
+    "name": "claimRewards",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -214,6 +213,19 @@
       }
     ],
     "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "resetCheckpoint",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
