@@ -94,9 +94,8 @@ contract StakedEthToken is IStakedEthToken, ERC20 {
         if (senderReward < 0) {
             uint256 oldDeposit = deposits[sender];
             uint256 penalisedDeposit = oldDeposit.toInt256().add(senderReward).toUint256();
-            require(penalisedDeposit >= amount, "StakedEthToken: invalid amount");
 
-            if (penalisedDeposit.sub(amount).toInt256().add(senderReward.mul(2)) <= 0) {
+            if (penalisedDeposit.sub(amount, "StakedEthToken: invalid amount").toInt256().add(senderReward.mul(2)) <= 0) {
                 // penalty is equal or bigger than 50% of the left deposit -> repay penalty with the deposit
                 totalDeposits = totalDeposits.toInt256().add(senderReward).toUint256();
                 rewardEthToken.resetCheckpoint(sender);

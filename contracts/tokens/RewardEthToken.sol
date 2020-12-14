@@ -84,15 +84,23 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     function rewardOf(address account) public view override returns (int256) {
         Checkpoint memory cp = checkpoints[account];
 
-        int256 curReward;
+        int256 periodRewardPerToken = rewardPerToken.sub(cp.rewardPerToken);
+        if (periodRewardPerToken == 0) {
+            // no new rewards
+            return cp.reward;
+        }
+
         uint256 deposit = stakedEthToken.depositOf(account);
-        if (deposit != 0) {
-            // calculate current reward of the account
-            curReward = deposit.toInt256().mul(rewardPerToken.sub(cp.rewardPerToken)).div(1e18);
-            if (curReward < 0) {
-                // fixes precision issue in case of the account penalty
-                curReward = curReward.sub(1);
-            }
+        if (deposit == 0) {
+            // no deposit amount
+            return cp.reward;
+        }
+
+        // calculate current reward of the account
+        int256 curReward = deposit.toInt256().mul(periodRewardPerToken).div(1e18);
+        if (periodRewardPerToken < 0) {
+            // fixes precision issue in case of the account penalty
+            curReward = curReward.sub(1);
         }
 
         // return checkpoint reward + current reward
