@@ -114,9 +114,9 @@ async function deployAllContracts({
   // Initialize contracts
   await initializeValidators(
     validatorsContractAddress,
+    initialAdmin,
     poolContractAddress,
-    solosContractAddress,
-    settingsContractAddress
+    solosContractAddress
   );
   log(white('Initialized Validators contract'));
 

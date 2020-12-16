@@ -1,37 +1,24 @@
 [
   {
-    "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "entityId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "pubKey",
-        "type": "bytes"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
         "internalType": "address",
-        "name": "operator",
+        "name": "_account",
         "type": "address"
       }
     ],
-    "name": "ValidatorRegistered",
-    "type": "event"
+    "name": "addOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [
+      {
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      },
       {
         "internalType": "address",
         "name": "_pool",
@@ -41,16 +28,30 @@
         "internalType": "address",
         "name": "_solos",
         "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_settings",
-        "type": "address"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      }
+    ],
+    "name": "isOperator",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -75,22 +76,25 @@
   {
     "inputs": [
       {
-        "internalType": "bytes",
-        "name": "_pubKey",
-        "type": "bytes"
-      },
-      {
         "internalType": "bytes32",
-        "name": "_entityId",
+        "name": "_validatorId",
         "type": "bytes32"
-      },
-      {
-        "internalType": "address",
-        "name": "_operator",
-        "type": "address"
       }
     ],
     "name": "register",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      }
+    ],
+    "name": "removeOperator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

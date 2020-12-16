@@ -10,17 +10,17 @@ async function deployValidators() {
 
 async function initializeValidators(
   validatorsContractAddress,
+  adminAddress,
   poolContractAddress,
-  solosContractAddress,
-  settingsContractAddress
+  solosContractAddress
 ) {
   let Validators = await ethers.getContractFactory('Validators');
   Validators = Validators.attach(validatorsContractAddress);
 
   return Validators.initialize(
+    adminAddress,
     poolContractAddress,
-    solosContractAddress,
-    settingsContractAddress
+    solosContractAddress
   );
 }
 

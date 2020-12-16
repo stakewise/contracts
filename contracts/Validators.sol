@@ -2,9 +2,8 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IValidators.sol";
-import "./interfaces/ISettings.sol";
 
 
 /**
@@ -13,7 +12,9 @@ import "./interfaces/ISettings.sol";
  * @dev Validators contract keeps track of all the registered validators.
  * Only collectors can register validators.
  */
-contract Validators is IValidators, Initializable {
+contract Validators is IValidators, OwnablePausableUpgradeable {
+    bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
+
     // @dev Maps hash of the public key to whether it was already used.
     mapping(bytes32 => bool) public override publicKeys;
 
@@ -23,11 +24,8 @@ contract Validators is IValidators, Initializable {
     // @dev Address of the Solos contract.
     address private solos;
 
-    // @dev Address of the Settings contract.
-    ISettings private settings;
-
     // @dev Checks whether the caller is the collector contract.
-    modifier onlyCollectors() {
+    modifier onlyCollector() {
         require(msg.sender == solos || msg.sender == pool, "Validators: permission denied");
         _;
     }
@@ -35,21 +33,38 @@ contract Validators is IValidators, Initializable {
     /**
      * @dev See {IValidators-initialize}.
      */
-    function initialize(address _pool, address _solos, address _settings) public override initializer {
+    function initialize(address _admin, address _pool, address _solos) public override initializer {
+        __OwnablePausableUpgradeable_init(_admin);
         pool = _pool;
         solos = _solos;
-        settings = ISettings(_settings);
+    }
+
+    /**
+     * @dev See {IValidators-isOperator}.
+     */
+    function isOperator(address _account) public override view returns (bool) {
+        return hasRole(OPERATOR_ROLE, _account);
+    }
+
+    /**
+     * @dev See {IValidators-addOperator}.
+     */
+    function addOperator(address _account) external override {
+        grantRole(OPERATOR_ROLE, _account);
+    }
+
+    /**
+     * @dev See {IValidators-removeOperator}.
+     */
+    function removeOperator(address _account) external override {
+        revokeRole(OPERATOR_ROLE, _account);
     }
 
     /**
      * @dev See {IValidators-register}.
      */
-    function register(bytes calldata _pubKey, bytes32 _entityId, address _operator) external override onlyCollectors {
-        require(!settings.pausedContracts(address(this)), "Validators: contract is paused");
-        bytes32 validatorId = keccak256(abi.encodePacked(_pubKey));
-        require(!publicKeys[validatorId], "Validators: public key has been already used");
-
-        publicKeys[validatorId] = true;
-        emit ValidatorRegistered(_entityId, _pubKey, settings.validatorPrice(), _operator);
+    function register(bytes32 _validatorId) external override onlyCollector whenNotPaused {
+        require(!publicKeys[_validatorId], "Validators: public key has been already used");
+        publicKeys[_validatorId] = true;
     }
 }

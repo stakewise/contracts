@@ -39,6 +39,9 @@ abstract contract OwnablePausableUpgradeable is IOwnablePausable, PausableUpgrad
         __OwnablePausableUpgradeable_init_unchained(_admin);
     }
 
+    /**
+     * @dev Grants `DEFAULT_ADMIN_ROLE`, `PAUSER_ROLE` to the admin account.
+     */
     // solhint-disable-next-line func-name-mixedcase
     function __OwnablePausableUpgradeable_init_unchained(address _admin) internal initializer {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
