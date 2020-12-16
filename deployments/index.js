@@ -2,17 +2,11 @@ const hre = require('hardhat');
 const { white, green } = require('chalk');
 
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeManagers,
-  deployAndInitializeOperators,
-} = require('./access');
-const {
   deployValidators,
   initializeValidators,
   deployBalanceReporters,
   initializeBalanceReporters,
 } = require('./validators');
-const { deployAndInitializeSettings, initialSettings } = require('./settings');
 const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
   deployRewardEthToken,
@@ -22,7 +16,6 @@ const {
   initializeStakedEthToken,
   initializeStakedTokens,
 } = require('./tokens');
-const { deployAndInitializePayments } = require('./payments');
 
 function log(message) {
   if (hre.config != null && hre.config.suppressLogs !== true) {
@@ -30,40 +23,25 @@ function log(message) {
   }
 }
 
+const initialSettings = {
+  maxDepositAmount: '1000000000000000000000', // 1000 ETH
+  validatorDepositAmount: '32000000000000000000', // 32 ETH
+  withdrawalLockDuration: '86400', // 1 day
+  validatorPrice: '10000000000000000000', // 10 DAI / month
+  maintainerFee: '1000', // 10%,
+  admin: '0x08C96cfD285D039EdEB1a7c5CaF9ef0D0EE38c52',
+  maintainer: '0xa01A6D6dea4e32Aa2E24f7e671d4eaC07AE3a8E8',
+  allContractsPaused: false,
+  // TODO: update to mainnet address
+  VRC: '0x8c5fecdc472e27bc447696f431e425d02dd46a8c',
+  withdrawalCredentials:
+    '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4',
+};
+
 async function deployAllContracts({
   initialAdmin = initialSettings.admin,
   vrcContractAddress = initialSettings.VRC,
 } = {}) {
-  // Deploy and initialize Admins contract
-  const adminsContractAddress = await deployAndInitializeAdmins(initialAdmin);
-  log(white(`Deployed Admins contract: ${green(adminsContractAddress)}`));
-
-  // Deploy and initialize Managers contract
-  const managersContractAddress = await deployAndInitializeManagers(
-    adminsContractAddress
-  );
-  log(white(`Deployed Managers contract: ${green(managersContractAddress)}`));
-
-  // Deploy and initialize Operators contract
-  const operatorsContractAddress = await deployAndInitializeOperators(
-    adminsContractAddress
-  );
-  log(white(`Deployed Operators contract: ${green(operatorsContractAddress)}`));
-
-  // Deploy and initialize Settings contract
-  const settingsContractAddress = await deployAndInitializeSettings(
-    adminsContractAddress,
-    operatorsContractAddress
-  );
-  log(white(`Deployed Settings contract: ${green(settingsContractAddress)}`));
-
-  // Deploy and initialize Payments contract
-  const paymentsContractAddress = await deployAndInitializePayments(
-    settingsContractAddress,
-    managersContractAddress
-  );
-  log(white(`Deployed Payments contract: ${green(paymentsContractAddress)}`));
-
   // Deploy contracts
   const validatorsContractAddress = await deployValidators();
   log(
@@ -164,10 +142,6 @@ async function deployAllContracts({
   log(white('Initialized BalanceReporters contract'));
 
   return {
-    admins: adminsContractAddress,
-    operators: operatorsContractAddress,
-    managers: managersContractAddress,
-    settings: settingsContractAddress,
     validators: validatorsContractAddress,
     balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,

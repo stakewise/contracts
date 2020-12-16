@@ -34,7 +34,7 @@ abstract contract OwnablePausable is IOwnablePausable, Pausable, AccessControl {
     /**
      * @dev Grants `DEFAULT_ADMIN_ROLE`, `PAUSER_ROLE` to the admin account.
      */
-    constructor(address _admin) internal {
+    constructor(address _admin) {
         _setupRole(DEFAULT_ADMIN_ROLE, _admin);
         _setupRole(PAUSER_ROLE, _admin);
     }

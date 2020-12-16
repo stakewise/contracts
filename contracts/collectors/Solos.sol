@@ -50,7 +50,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
         address _validatorRegistration,
         address _validators
     )
-        public OwnablePausable(_admin)
+        OwnablePausable(_admin)
     {
         validatorRegistration = IDepositContract(_validatorRegistration);
         validators = IValidators(_validators);
