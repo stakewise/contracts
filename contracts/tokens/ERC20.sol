@@ -2,14 +2,14 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/proxy/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 
 /**
  * @dev Implementation of the {IERC20} interface.
- * Adapted from: https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v3.3.0/contracts/token/ERC20/ERC20.sol
+ * Adapted from: https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.3.0/contracts/token/ERC20/ERC20Upgradeable.sol
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using {_mint}.
@@ -32,8 +32,8 @@ import "@openzeppelin/contracts/proxy/Initializable.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-abstract contract ERC20 is IERC20, Initializable {
-    using SafeMath for uint256;
+abstract contract ERC20 is IERC20Upgradeable, Initializable {
+    using SafeMathUpgradeable for uint256;
 
     mapping (address => mapping (address => uint256)) private _allowances;
 
@@ -50,7 +50,13 @@ abstract contract ERC20 is IERC20, Initializable {
      * All three of these values are immutable: they can only be set once during
      * construction.
      */
-    function initialize(string memory name_, string memory symbol_) internal initializer {
+    // solhint-disable-next-line func-name-mixedcase
+    function __ERC20_init(string memory name_, string memory symbol_) internal initializer {
+        __ERC20_init_unchained(name_, symbol_);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function __ERC20_init_unchained(string memory name_, string memory symbol_) internal initializer {
         _name = name_;
         _symbol = symbol_;
         _decimals = 18;
@@ -211,4 +217,6 @@ abstract contract ERC20 is IERC20, Initializable {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
+
+    uint256[44] private __gap;
 }
