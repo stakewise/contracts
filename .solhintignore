@@ -1,1 +1,2 @@
 contracts/mocks/
+contracts/interfaces/IDepositContract.sol
