@@ -151,8 +151,7 @@ async function deployAllContracts({
 
   await initializeStakedTokens(
     stakedTokensContractAddress,
-    settingsContractAddress,
-    adminsContractAddress,
+    initialAdmin,
     rewardEthTokenContractAddress
   );
   log(white('Initialized StakedTokens contract'));

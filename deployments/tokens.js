@@ -75,18 +75,13 @@ async function deployStakedTokens() {
 
 async function initializeStakedTokens(
   stakedTokensContractAddress,
-  settingsContractAddress,
-  adminsContractAddress,
+  adminAddress,
   rewardEthTokenContractAddress
 ) {
   let StakedTokens = await ethers.getContractFactory('StakedTokens');
   StakedTokens = StakedTokens.attach(stakedTokensContractAddress);
 
-  return StakedTokens.initialize(
-    settingsContractAddress,
-    adminsContractAddress,
-    rewardEthTokenContractAddress
-  );
+  return StakedTokens.initialize(adminAddress, rewardEthTokenContractAddress);
 }
 
 module.exports = {

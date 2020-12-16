@@ -2,14 +2,13 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/proxy/Initializable.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "../interfaces/ISettings.sol";
+import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IStakedTokens.sol";
-import "../interfaces/IAdmins.sol";
 
 /**
  * @title StakedTokens
@@ -17,8 +16,8 @@ import "../interfaces/IAdmins.sol";
  * @dev StakedTokens contract allows users to continue earning rewards
  * while locking tokens which inherit staking rewards.
  */
-contract StakedTokens is IStakedTokens, Initializable {
-    using SafeMath for uint256;
+contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGuardUpgradeable {
+    using SafeMathUpgradeable for uint256;
     using SafeERC20 for IERC20;
 
     // @dev Maps token address to its information.
@@ -30,41 +29,22 @@ contract StakedTokens is IStakedTokens, Initializable {
     // @dev Maps token addresses to their holders' balances.
     mapping(address => mapping(address => uint256)) private balances;
 
-    // @dev Address of the Settings contract.
-    ISettings private settings;
-
-    // @dev Address of the Admins contract.
-    IAdmins private admins;
-
     // @dev Address of the RewardEthToken contract.
     address private rewardEthToken;
-
-    // @dev Indicates whether the calling function is locked.
-    uint256 private unlocked;
-
-    modifier lock() {
-        require(unlocked == 1, "StakedTokens: locked");
-        unlocked = 0;
-        _;
-        unlocked = 1;
-    }
 
     /**
      * @dev See {IStakedTokens-initialize}.
      */
-    function initialize(address _settings, address _admins, address _rewardEthToken) public override initializer {
-        settings = ISettings(_settings);
-        admins = IAdmins(_admins);
+    function initialize(address _admin, address _rewardEthToken) public override initializer {
+        __OwnablePausableUpgradeable_init(_admin);
+        __ReentrancyGuard_init_unchained();
         rewardEthToken = _rewardEthToken;
-        unlocked = 1;
     }
 
     /**
      * @dev See {IStakedTokens-toggleTokenContract}.
      */
-    function toggleTokenContract(address _token, bool _isEnabled) external override {
-        require(!settings.pausedContracts(address(this)), "StakedTokens: contract is paused");
-        require(admins.isAdmin(msg.sender), "StakedTokens: permission denied");
+    function toggleTokenContract(address _token, bool _isEnabled) external override onlyAdmin whenNotPaused {
         require(_token != address(0), "StakedTokens: invalid token address");
 
         // support token
@@ -80,9 +60,7 @@ contract StakedTokens is IStakedTokens, Initializable {
     /**
      * @dev See {IStakedTokens-stakeTokens}.
      */
-    function stakeTokens(address _token, uint256 _amount) external override lock {
-        require(!settings.pausedContracts(address(this)), "StakedTokens: contract is paused");
-
+    function stakeTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
         Token storage token = tokens[_token];
         require(token.enabled, "StakedTokens: token is not supported");
         require(IERC20(_token).balanceOf(msg.sender) >= _amount, "StakedTokens: invalid tokens amount");
@@ -107,9 +85,7 @@ contract StakedTokens is IStakedTokens, Initializable {
     /**
      * @dev See {IStakedTokens-withdrawTokens}.
      */
-    function withdrawTokens(address _token, uint256 _amount) external override lock {
-        require(!settings.pausedContracts(address(this)), "StakedTokens: contract is paused");
-
+    function withdrawTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
         Token storage token = tokens[_token];
 
         if (token.enabled) {
@@ -134,8 +110,7 @@ contract StakedTokens is IStakedTokens, Initializable {
     /**
      * @dev See {IStakedTokens-withdrawRewards}.
      */
-    function withdrawRewards(address _token) external override lock {
-        require(!settings.pausedContracts(address(this)), "StakedTokens: contract is paused");
+    function withdrawRewards(address _token) external override nonReentrant whenNotPaused {
         require(tokens[_token].enabled, "StakedTokens: token is not supported");
 
         // update token's reward
