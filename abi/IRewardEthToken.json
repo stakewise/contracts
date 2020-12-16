@@ -30,6 +30,32 @@
       {
         "indexed": false,
         "internalType": "int256",
+        "name": "newMaintainerFee",
+        "type": "int256"
+      }
+    ],
+    "name": "MaintainerFeeUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newMaintainer",
+        "type": "address"
+      }
+    ],
+    "name": "MaintainerUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "int256",
         "name": "periodRewards",
         "type": "int256"
       },
@@ -193,12 +219,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_stakedEthToken",
+        "name": "_admin",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_settings",
+        "name": "_stakedEthToken",
         "type": "address"
       },
       {
@@ -215,6 +241,32 @@
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maintainer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "maintainerFee",
+    "outputs": [
+      {
+        "internalType": "int256",
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -260,6 +312,32 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_newMaintainer",
+        "type": "address"
+      }
+    ],
+    "name": "setMaintainer",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int256",
+        "name": "_newMaintainerFee",
+        "type": "int256"
+      }
+    ],
+    "name": "setMaintainerFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

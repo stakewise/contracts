@@ -142,8 +142,8 @@ async function deployAllContracts({
 
   await initializeRewardEthToken(
     rewardEthTokenContractAddress,
+    initialAdmin,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
     balanceReportersContractAddress,
     stakedTokensContractAddress
   );

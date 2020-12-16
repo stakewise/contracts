@@ -48,8 +48,8 @@ async function deployRewardEthToken() {
 
 async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
+  adminAddress,
   stakedEthTokenContractAddress,
-  settingsContractAddress,
   balanceReportersContractAddress,
   stakedTokensContractAddress
 ) {
@@ -57,8 +57,8 @@ async function initializeRewardEthToken(
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
 
   return RewardEthToken.initialize(
+    adminAddress,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
     balanceReportersContractAddress,
     stakedTokensContractAddress
   );

@@ -2,12 +2,24 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @dev Interface of the RewardEthToken contract.
  */
-interface IRewardEthToken is IERC20 {
+interface IRewardEthToken is IERC20Upgradeable {
+    /**
+    * @dev Event for tracking updated maintainer.
+    * @param newMaintainer - address of the maintainer, where the fee will be paid.
+    */
+    event MaintainerUpdated(address newMaintainer);
+
+    /**
+    * @dev Event for tracking updated maintainer fee.
+    * @param newMaintainerFee - new maintainer fee.
+    */
+    event MaintainerFeeUpdated(int256 newMaintainerFee);
+
     /**
     * @dev Structure for storing information about user reward checkpoint.
     * @param rewardPerToken - user reward per token.
@@ -34,12 +46,34 @@ interface IRewardEthToken is IERC20 {
 
     /**
     * @dev Constructor for initializing the RewardEthToken contract.
+    * @param _admin - address of the contract admin.
     * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _settings - address of the Settings contract.
     * @param _balanceReporters - address of the BalanceReporters contract.
     * @param _stakedTokens - address of the StakedTokens contract.
     */
-    function initialize(address _stakedEthToken, address _settings, address _balanceReporters, address _stakedTokens) external;
+    function initialize(address _admin, address _stakedEthToken, address _balanceReporters, address _stakedTokens) external;
+
+    /**
+    * @dev Function for getting the address of the maintainer, where the fee will be paid.
+    */
+    function maintainer() external view returns (address);
+
+    /**
+    * @dev Function for changing the maintainer's address.
+    * @param _newMaintainer - new maintainer's address.
+    */
+    function setMaintainer(address _newMaintainer) external;
+
+    /**
+    * @dev Function for getting maintainer fee. The percentage fee users pay from their reward for using the pool service.
+    */
+    function maintainerFee() external view returns (int256);
+
+    /**
+    * @dev Function for changing the maintainer's fee.
+    * @param _newMaintainerFee - new maintainer's fee. Must be less than 10000 (100.00%).
+    */
+    function setMaintainerFee(int256 _newMaintainerFee) external;
 
     /**
     * @dev Function for retrieving the last total rewards update timestamp.

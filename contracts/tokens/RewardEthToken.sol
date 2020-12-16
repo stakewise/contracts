@@ -2,12 +2,12 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import "@openzeppelin/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
-import "../interfaces/ISettings.sol";
+import "../presets/OwnablePausableUpgradeable.sol";
 import "./ERC20.sol";
 
 /**
@@ -15,11 +15,11 @@ import "./ERC20.sol";
  *
  * @dev RewardEthToken contract stores pool reward tokens.
  */
-contract RewardEthToken is IRewardEthToken, ERC20 {
-    using SafeMath for uint256;
-    using SignedSafeMath for int256;
-    using SafeCast for uint256;
-    using SafeCast for int256;
+contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
+    using SafeMathUpgradeable for uint256;
+    using SignedSafeMathUpgradeable for int256;
+    using SafeCastUpgradeable for uint256;
+    using SafeCastUpgradeable for int256;
 
     // @dev Last rewards update timestamp by balance reporters.
     uint256 public override updateTimestamp;
@@ -33,11 +33,14 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
     int256 public override rewardPerToken;
 
+    // @dev Maintainer percentage fee.
+    int256 public override maintainerFee;
+
+    // @dev Address of the maintainer, where the fee will be paid.
+    address public override maintainer;
+
     // @dev Address of the StakedEthToken contract.
     IStakedEthToken private stakedEthToken;
-
-    // @dev Address of the Settings contract.
-    ISettings private settings;
 
     // @dev Address of the BalanceReporters contract.
     address private balanceReporters;
@@ -49,18 +52,35 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
       * @dev See {IRewardEthToken-initialize}.
       */
     function initialize(
+        address _admin,
         address _stakedEthToken,
-        address _settings,
         address _balanceReporters,
         address _stakedTokens
     )
         public override initializer
     {
-        super.initialize("StakeWise Reward ETH", "rwETH");
+        __OwnablePausableUpgradeable_init(_admin);
+        __ERC20_init_unchained("StakeWise Reward ETH", "rwETH");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
-        settings = ISettings(_settings);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;
+    }
+
+    /**
+     * @dev See {IRewardEthToken-setMaintainer}.
+     */
+    function setMaintainer(address _newMaintainer) external override onlyAdmin {
+        maintainer = _newMaintainer;
+        emit MaintainerUpdated(_newMaintainer);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-setMaintainerFee}.
+     */
+    function setMaintainerFee(int256 _newMaintainerFee) external override onlyAdmin {
+        require(_newMaintainerFee > 0 && _newMaintainerFee < 10000, "RewardEthToken: invalid new maintainer fee");
+        maintainerFee = _newMaintainerFee;
+        emit MaintainerFeeUpdated(_newMaintainerFee);
     }
 
     /**
@@ -110,10 +130,9 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
     /**
      * @dev See {ERC20-_transfer}.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
+    function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
         require(sender != address(0), "RewardEthToken: transfer from the zero address");
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
-        require(!settings.pausedContracts(address(this)), "RewardEthToken: contract is paused");
 
         checkpoints[sender] = Checkpoint(rewardPerToken, rewardOf(sender).toUint256().sub(amount, "RewardEthToken: invalid amount").toInt256());
         checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount.toInt256()));
@@ -145,7 +164,7 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
         int256 periodRewards = newTotalRewards.sub(totalRewards);
         int256 maintainerReward;
         if (periodRewards > 0) {
-            maintainerReward = periodRewards.mul(settings.maintainerFee().toInt256()).div(10000);
+            maintainerReward = periodRewards.mul(maintainerFee).div(10000);
         }
 
         // calculate reward per token used for account reward calculation
@@ -153,7 +172,6 @@ contract RewardEthToken is IRewardEthToken, ERC20 {
 
         // deduct maintainer fee if period reward is positive
         if (maintainerReward > 0) {
-           address maintainer = settings.maintainer();
            checkpoints[maintainer] = Checkpoint(
                 rewardPerToken,
                 rewardOf(maintainer).add(maintainerReward)
