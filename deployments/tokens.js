@@ -23,16 +23,16 @@ async function deployStakedEthToken() {
 
 async function initializeStakedEthToken(
   stakedEthTokenContractAddress,
+  adminAddress,
   rewardEthTokenContractAddress,
-  settingsContractAddress,
   poolContractAddress
 ) {
   let StakedEthToken = await ethers.getContractFactory('StakedEthToken');
   StakedEthToken = StakedEthToken.attach(stakedEthTokenContractAddress);
 
   return StakedEthToken.initialize(
+    adminAddress,
     rewardEthTokenContractAddress,
-    settingsContractAddress,
     poolContractAddress
   );
 }
