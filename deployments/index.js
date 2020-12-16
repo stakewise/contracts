@@ -123,9 +123,8 @@ async function deployAllContracts({
 
   await initializePool(
     poolContractAddress,
+    initialAdmin,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
-    operatorsContractAddress,
     vrcContractAddress,
     validatorsContractAddress
   );

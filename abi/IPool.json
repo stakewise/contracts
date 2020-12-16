@@ -1,5 +1,37 @@
 [
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "ValidatorRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "newWithdrawalCredentials",
+        "type": "bytes32"
+      }
+    ],
+    "name": "WithdrawalCredentialsUpdated",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "addDeposit",
     "outputs": [],
@@ -23,17 +55,12 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_stakedEthToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_settings",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_operators",
         "type": "address"
       },
       {
@@ -83,13 +110,39 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_withdrawalCredentials",
+        "type": "bytes32"
+      }
+    ],
+    "name": "setWithdrawalCredentials",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "validatorRegistration",
     "outputs": [
       {
-        "internalType": "contract IValidatorRegistration",
+        "internalType": "contract IDepositContract",
         "name": "",
         "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "withdrawalCredentials",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",

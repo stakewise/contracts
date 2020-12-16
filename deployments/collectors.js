@@ -11,9 +11,8 @@ async function deployPool() {
 
 async function initializePool(
   poolContractAddress,
+  adminAddress,
   stakedEthTokenContractAddress,
-  settingsContractAddress,
-  operatorsContractAddress,
   vrcContractAddress,
   validatorsContractAddress
 ) {
@@ -21,9 +20,8 @@ async function initializePool(
   Pool = Pool.attach(poolContractAddress);
 
   return Pool.initialize(
+    adminAddress,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
-    operatorsContractAddress,
     vrcContractAddress,
     validatorsContractAddress
   );
