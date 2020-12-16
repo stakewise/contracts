@@ -7,18 +7,6 @@ pragma solidity 0.7.5;
  */
 interface IBalanceReporters {
     /**
-    * @dev Event for tracking added reporter.
-    * @param account - address of the account which was assigned a reporter role.
-    */
-    event ReporterAdded(address account);
-
-    /**
-    * @dev Event for tracking removed reporters.
-    * @param account - address which was removed reporter role.
-    */
-    event ReporterRemoved(address account);
-
-    /**
     * @dev Event for tracking removed reporters.
     * @param reporter - address of the account which submitted vote.
     * @param newTotalRewards - submitted value of total rewards.
@@ -45,17 +33,11 @@ interface IBalanceReporters {
     function getUniswapPairs() external view returns (address[] memory);
 
     /**
-    * @dev Function for retrieving the total number of reporters.
-    */
-    function totalReporters() external view returns (uint256);
-
-    /**
     * @dev Constructor for initializing the BalanceReporters contract.
-    * @param _admins - address of the Admins contract.
-    * @param _settings - address of the Settings contract.
+    * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     */
-    function initialize(address _admins, address _settings, address _rewardEthToken) external;
+    function initialize(address _admin, address _rewardEthToken) external;
 
     /**
     * @dev Function for checking whether an account has a reporter role.

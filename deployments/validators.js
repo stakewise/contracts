@@ -24,7 +24,32 @@ async function initializeValidators(
   );
 }
 
+async function deployBalanceReporters() {
+  const BalanceReporters = await ethers.getContractFactory('BalanceReporters');
+  const proxy = await upgrades.deployProxy(BalanceReporters, [], {
+    unsafeAllowCustomTypes: true,
+    initializer: false,
+  });
+  return proxy.address;
+}
+
+async function initializeBalanceReporters(
+  balanceReportersContractAddress,
+  adminAddress,
+  rewardEthTokenContractAddress
+) {
+  let BalanceReporters = await ethers.getContractFactory('BalanceReporters');
+  BalanceReporters = BalanceReporters.attach(balanceReportersContractAddress);
+
+  return BalanceReporters.initialize(
+    adminAddress,
+    rewardEthTokenContractAddress
+  );
+}
+
 module.exports = {
   deployValidators,
   initializeValidators,
+  deployBalanceReporters,
+  initializeBalanceReporters,
 };

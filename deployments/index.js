@@ -5,10 +5,13 @@ const {
   deployAndInitializeAdmins,
   deployAndInitializeManagers,
   deployAndInitializeOperators,
+} = require('./access');
+const {
+  deployValidators,
+  initializeValidators,
   deployBalanceReporters,
   initializeBalanceReporters,
-} = require('./access');
-const { deployValidators, initializeValidators } = require('./validators');
+} = require('./validators');
 const { deployAndInitializeSettings, initialSettings } = require('./settings');
 const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
@@ -156,8 +159,7 @@ async function deployAllContracts({
 
   await initializeBalanceReporters(
     balanceReportersContractAddress,
-    adminsContractAddress,
-    settingsContractAddress,
+    initialAdmin,
     rewardEthTokenContractAddress
   );
   log(white('Initialized BalanceReporters contract'));
