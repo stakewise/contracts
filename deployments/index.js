@@ -10,12 +10,7 @@ const {
 } = require('./access');
 const { deployValidators, initializeValidators } = require('./validators');
 const { deployAndInitializeSettings, initialSettings } = require('./settings');
-const {
-  deploySolos,
-  deployPool,
-  initializeSolos,
-  initializePool,
-} = require('./collectors');
+const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
   deployRewardEthToken,
   deployStakedEthToken,
@@ -75,7 +70,11 @@ async function deployAllContracts({
   const poolContractAddress = await deployPool();
   log(white(`Deployed Pool contract: ${green(poolContractAddress)}`));
 
-  const solosContractAddress = await deploySolos();
+  const solosContractAddress = await deploySolos(
+    initialAdmin,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
   log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
   const stakedEthTokenContractAddress = await deployStakedEthToken();
@@ -129,15 +128,6 @@ async function deployAllContracts({
     validatorsContractAddress
   );
   log(white('Initialized Pool contract'));
-
-  await initializeSolos(
-    solosContractAddress,
-    settingsContractAddress,
-    operatorsContractAddress,
-    vrcContractAddress,
-    validatorsContractAddress
-  );
-  log(white('Initialized Solos contract'));
 
   await initializeStakedEthToken(
     stakedEthTokenContractAddress,

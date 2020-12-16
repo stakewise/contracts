@@ -3,9 +3,9 @@
 pragma solidity 0.7.5;
 
 /**
- * @dev Interface of the OwnablePausableUpgradeable contract.
+ * @dev Interface of the OwnablePausableUpgradeable and OwnablePausable contracts.
  */
-interface IOwnablePausableUpgradeable {
+interface IOwnablePausable {
     /**
     * @dev Function for checking whether an account has a pauser role.
     * @param _account - account to check.

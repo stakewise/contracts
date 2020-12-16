@@ -4,7 +4,6 @@ pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "./IDepositContract.sol";
-import "./IOwnablePausableUpgradeable.sol";
 
 /**
  * @dev Interface of the Pool contract.

@@ -3,7 +3,7 @@
 pragma solidity 0.7.5;
 pragma abicoder v2;
 
-import "./IValidatorRegistration.sol";
+import "./IDepositContract.sol";
 
 /**
  * @dev Interface of the Solos contract.
@@ -64,6 +64,27 @@ interface ISolos {
     );
 
     /**
+    * @dev Event for tracking new cancel lock duration time.
+    * @param newCancelLockDuration - new cancel lock duration for solo deposits.
+    */
+    event CancelLockDurationUpdated(uint256 newCancelLockDuration);
+
+    /**
+    * @dev Event for tracking solo validator price updates.
+    * @param newValidatorPrice - new price for the solo validators.
+    */
+    event ValidatorPriceUpdated(uint256 newValidatorPrice);
+
+    /**
+    * @dev Event for tracking registered validators.
+    * @param soloId - ID of the solo where the deposit was accumulated.
+    * @param publicKey - validator public key.
+    * @param price - validator monthly price.
+    * @param operator - address of the validator operator.
+    */
+    event ValidatorRegistered(bytes32 indexed soloId, bytes publicKey, uint256 price, address operator);
+
+    /**
     * @dev Function for getting solo's details.
     * @param _soloId - ID of the solo to retrieve data for.
     */
@@ -76,26 +97,33 @@ interface ISolos {
     /**
     * @dev Function for retrieving the validator registration contract address.
     */
-    function validatorRegistration() external view returns (IValidatorRegistration);
+    function validatorRegistration() external view returns (IDepositContract);
 
     /**
-    * @dev Constructor for initializing the Solos contract.
-    * @param _settings - address of the Settings contract.
-    * @param _operators - address of the Operators contract.
-    * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
-    * @param _validators - address of the Validators contract.
+    * @dev Function for getting solo validator price per month.
     */
-    function initialize(
-        address _settings,
-        address _operators,
-        address _validatorRegistration,
-        address _validators
-    ) external;
+    function validatorPrice() external view returns (uint256);
+
+    /**
+    * @dev Function for updating solo validator price.
+    * @param _validatorPrice - new validator price.
+    */
+    function setValidatorPrice(uint256 _validatorPrice) external;
+
+    /**
+    * @dev Function for getting cancel lock duration in seconds.
+    */
+    function cancelLockDuration() external view returns (uint256);
+
+    /**
+    * @dev Function for updating cancel lock duration in seconds.
+    * @param newCancelLockDuration - new cancel lock duration in seconds.
+    */
+    function setCancelLockDuration(uint256 newCancelLockDuration) external;
 
     /**
     * @dev Function for adding solo deposits.
     * The deposit amount must be divisible by the validator deposit amount.
-    * The depositing will be disallowed in case `Solos` contract is paused in `Settings` contract.
     * @param _withdrawalCredentials - withdrawal credentials for performing validator withdrawal.
     */
     function addDeposit(bytes32 _withdrawalCredentials) external payable;

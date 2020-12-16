@@ -3,6 +3,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newCancelLockDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "CancelLockDurationUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "bytes32",
         "name": "soloId",
@@ -62,6 +75,50 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newValidatorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "ValidatorPriceUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "soloId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "price",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "ValidatorRegistered",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -93,31 +150,16 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "cancelLockDuration",
+    "outputs": [
       {
-        "internalType": "address",
-        "name": "_settings",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_operators",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_validatorRegistration",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_validators",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -158,6 +200,32 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "newCancelLockDuration",
+        "type": "uint256"
+      }
+    ],
+    "name": "setCancelLockDuration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_validatorPrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "setValidatorPrice",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "_soloId",
         "type": "bytes32"
@@ -186,10 +254,23 @@
   },
   {
     "inputs": [],
+    "name": "validatorPrice",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "validatorRegistration",
     "outputs": [
       {
-        "internalType": "contract IValidatorRegistration",
+        "internalType": "contract IDepositContract",
         "name": "",
         "type": "address"
       }

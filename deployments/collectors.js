@@ -27,36 +27,25 @@ async function initializePool(
   );
 }
 
-async function deploySolos() {
-  // Solos is deployed without proxy as it's non-custodial
-  const Solos = await ethers.getContractFactory('Solos');
-  const solos = await Solos.deploy();
-
-  await solos.deployed();
-  return solos.address;
-}
-
-async function initializeSolos(
-  solosContractAddress,
-  settingsContractAddress,
-  operatorsContractAddress,
+async function deploySolos(
+  adminAddress,
   vrcContractAddress,
   validatorsContractAddress
 ) {
-  let Solos = await ethers.getContractFactory('Solos');
-  Solos = Solos.attach(solosContractAddress);
-
-  return Solos.initialize(
-    settingsContractAddress,
-    operatorsContractAddress,
+  // Solos is deployed without proxy as it's non-custodial
+  const Solos = await ethers.getContractFactory('Solos');
+  const solos = await Solos.deploy(
+    adminAddress,
     vrcContractAddress,
     validatorsContractAddress
   );
+
+  await solos.deployed();
+  return solos.address;
 }
 
 module.exports = {
   deployPool,
   initializePool,
   deploySolos,
-  initializeSolos,
 };
