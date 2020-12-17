@@ -24,7 +24,7 @@
       {
         "indexed": false,
         "internalType": "bytes32",
-        "name": "newWithdrawalCredentials",
+        "name": "withdrawalCredentials",
         "type": "bytes32"
       }
     ],

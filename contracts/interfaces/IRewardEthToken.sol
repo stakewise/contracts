@@ -10,15 +10,15 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Event for tracking updated maintainer.
-    * @param newMaintainer - address of the maintainer, where the fee will be paid.
+    * @param maintainer - address of the new maintainer, where the fee will be paid.
     */
-    event MaintainerUpdated(address newMaintainer);
+    event MaintainerUpdated(address maintainer);
 
     /**
     * @dev Event for tracking updated maintainer fee.
-    * @param newMaintainerFee - new maintainer fee.
+    * @param maintainerFee - new maintainer fee.
     */
-    event MaintainerFeeUpdated(int256 newMaintainerFee);
+    event MaintainerFeeUpdated(int256 maintainerFee);
 
     /**
     * @dev Structure for storing information about user reward checkpoint.

@@ -6,38 +6,23 @@ const {
   expectEvent,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeOperators,
-} = require('../../deployments/access');
-const {
-  deployAndInitializeSettings,
-  initialSettings,
-} = require('../../deployments/settings');
-const {
   deployAndInitializeERC20Mock,
   deployStakedTokens,
   initializeStakedTokens,
 } = require('../../deployments/tokens');
 const { deployTokens, checkRewardEthToken } = require('../utils');
 
-const Admins = artifacts.require('Admins');
-const Settings = artifacts.require('Settings');
 const StakedTokens = artifacts.require('StakedTokens');
 const ERC20Mock = artifacts.require('ERC20Mock');
 
-const maintainerFee = new BN(initialSettings.maintainerFee);
+const maintainerFee = new BN(1000);
 
 contract('StakedTokens Rewards', ([_, ...accounts]) => {
-  let settings,
-    admins,
-    stakedEthToken,
-    rewardEthToken,
-    stakedTokens,
-    token,
-    rewardHolders;
+  let stakedEthToken, rewardEthToken, stakedTokens, token, rewardHolders;
   let [
     poolContractAddress,
     admin,
+    maintainer,
     balanceReportersContractAddress,
     rewardsHolder1,
     rewardsHolder2,
@@ -75,34 +60,21 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     }
   }
 
-  before(async () => {
-    let adminsContractAddress = await deployAndInitializeAdmins(admin);
-    let operatorsContractAddress = await deployAndInitializeOperators(
-      adminsContractAddress
-    );
-    settings = await Settings.at(
-      await deployAndInitializeSettings(
-        adminsContractAddress,
-        operatorsContractAddress
-      )
-    );
-    admins = await Admins.at(adminsContractAddress);
-  });
-
   beforeEach(async () => {
     let stakedTokensContractAddress = await deployStakedTokens();
     [rewardEthToken, stakedEthToken] = await deployTokens({
-      settings,
+      adminAddress: admin,
       balanceReportersContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
     });
+    await rewardEthToken.setMaintainer(maintainer, { from: admin });
+    await rewardEthToken.setMaintainerFee(maintainerFee, { from: admin });
 
     stakedTokens = await StakedTokens.at(stakedTokensContractAddress);
     await initializeStakedTokens(
       stakedTokensContractAddress,
-      settings.address,
-      admins.address,
+      admin,
       rewardEthToken.address
     );
 
@@ -272,21 +244,17 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   });
 
   it('fails to withdraw rewards when contract is paused', async () => {
-    await settings.setPausedContracts(stakedTokens.address, true, {
-      from: admin,
-    });
-    expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
+    await stakedTokens.pause({ from: admin });
+    expect(await stakedTokens.paused()).equal(true);
 
     await expectRevert(
       stakedTokens.withdrawRewards(token.address, {
         from: tokenHolder1,
       }),
-      'StakedTokens: contract is paused'
+      'Pausable: paused'
     );
 
-    await settings.setPausedContracts(stakedTokens.address, false, {
-      from: admin,
-    });
+    await stakedTokens.unpause({ from: admin });
   });
 
   it('can withdraw zero rewards', async () => {

@@ -5,7 +5,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newCancelLockDuration",
+        "name": "cancelLockDuration",
         "type": "uint256"
       }
     ],
@@ -80,7 +80,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newValidatorPrice",
+        "name": "validatorPrice",
         "type": "uint256"
       }
     ],

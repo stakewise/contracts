@@ -30,7 +30,7 @@
       {
         "indexed": false,
         "internalType": "int256",
-        "name": "newMaintainerFee",
+        "name": "maintainerFee",
         "type": "int256"
       }
     ],
@@ -43,7 +43,7 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "newMaintainer",
+        "name": "maintainer",
         "type": "address"
       }
     ],

@@ -1,7 +1,6 @@
 const { expect } = require('chai');
-const { BN, ether, expectRevert } = require('@openzeppelin/test-helpers');
+const { ether, expectRevert } = require('@openzeppelin/test-helpers');
 const { deployAllContracts } = require('../../deployments');
-const { initialSettings } = require('../../deployments/settings');
 const {
   getDepositAmount,
   checkCollectorBalance,
@@ -10,20 +9,17 @@ const {
 } = require('../utils');
 
 const Pool = artifacts.require('Pool');
-const Settings = artifacts.require('Settings');
 const StakedEthToken = artifacts.require('StakedEthToken');
 
 contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
-  let pool, settings, stakedEthToken;
+  let pool, stakedEthToken;
 
   beforeEach(async () => {
     let {
       pool: poolContractAddress,
-      settings: settingsContractAddress,
       stakedEthToken: stakedEthTokenContractAddress,
     } = await deployAllContracts({ initialAdmin: admin });
     pool = await Pool.at(poolContractAddress);
-    settings = await Settings.at(settingsContractAddress);
     stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
   });
 
@@ -36,30 +32,16 @@ contract('Pool (add deposit)', ([_, admin, sender1, sender2]) => {
     await checkPoolCollectedAmount(pool);
   });
 
-  it('fails to add too large deposit', async () => {
-    await expectRevert(
-      pool.addDeposit({
-        from: sender1,
-        value: new BN(initialSettings.maxDepositAmount).add(ether('1')),
-      }),
-      'Pool: deposit amount is too large'
-    );
-    await checkCollectorBalance(pool);
-    await checkPoolCollectedAmount(pool);
-  });
-
   it('fails to add a deposit to paused pool', async () => {
-    await settings.setPausedContracts(pool.address, true, {
-      from: admin,
-    });
-    expect(await settings.pausedContracts(pool.address)).equal(true);
+    await pool.pause({ from: admin });
+    expect(await pool.paused()).equal(true);
 
     await expectRevert(
       pool.addDeposit({
         from: sender1,
         value: ether('1'),
       }),
-      'Pool: contract is paused'
+      'Pausable: paused'
     );
     await checkCollectorBalance(pool);
     await checkPoolCollectedAmount(pool);

@@ -7,6 +7,26 @@ pragma solidity 0.7.5;
  */
 interface IOwnablePausable {
     /**
+    * @dev Function for checking whether an account has an admin role.
+    * @param _account - account to check.
+    */
+    function isAdmin(address _account) external view returns (bool);
+
+    /**
+    * @dev Function for assigning an admin role to the account.
+    * Can only be called by an account with an admin role.
+    * @param _account - account to assign an admin role to.
+    */
+    function addAdmin(address _account) external;
+
+    /**
+    * @dev Function for removing an admin role from the account.
+    * Can only be called by an account with an admin role.
+    * @param _account - account to remove an admin role from.
+    */
+    function removeAdmin(address _account) external;
+
+    /**
     * @dev Function for checking whether an account has a pauser role.
     * @param _account - account to check.
     */

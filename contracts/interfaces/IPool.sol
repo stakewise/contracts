@@ -11,9 +11,9 @@ import "./IDepositContract.sol";
 interface IPool {
     /**
     * @dev Event for tracking new pool withdrawal credentials.
-    * @param newWithdrawalCredentials - new withdrawal credentials for the pool validators.
+    * @param withdrawalCredentials - new withdrawal credentials for the pool validators.
     */
-    event WithdrawalCredentialsUpdated(bytes32 newWithdrawalCredentials);
+    event WithdrawalCredentialsUpdated(bytes32 withdrawalCredentials);
 
     /**
     * @dev Event for tracking registered validators.

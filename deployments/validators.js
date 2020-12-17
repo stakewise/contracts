@@ -4,6 +4,7 @@ async function deployValidators() {
   const Validators = await ethers.getContractFactory('Validators');
   const proxy = await upgrades.deployProxy(Validators, [], {
     initializer: false,
+    unsafeAllowCustomTypes: true,
   });
   return proxy.address;
 }

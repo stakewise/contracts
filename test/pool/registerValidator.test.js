@@ -1,23 +1,28 @@
-const { BN, expectRevert } = require('@openzeppelin/test-helpers');
+const {
+  BN,
+  expectRevert,
+  expectEvent,
+  ether,
+} = require('@openzeppelin/test-helpers');
 const { deployAllContracts } = require('../../deployments');
-const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
   checkPoolCollectedAmount,
-  checkValidatorRegistered,
   getDepositAmount,
 } = require('../utils');
-const { validators } = require('./validators');
+const { validatorParams } = require('./validatorParams');
 
 const Pool = artifacts.require('Pool');
-const Operators = artifacts.require('Operators');
+const Validators = artifacts.require('Validators');
 
-const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const validator = validators[0];
+const validatorDeposit = ether('32');
+const withdrawalCredentials =
+  '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
+const validator = validatorParams[0];
 
 contract('Pool (register validator)', ([_, ...accounts]) => {
-  let vrc, pool, poolId;
+  let vrc, pool;
   let [admin, operator, sender1, sender2, other] = accounts;
 
   before(async () => {
@@ -27,27 +32,26 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       pool: poolContractAddress,
-      operators: operatorsContractAddress,
+      validators: validatorsContractAddress,
     } = await deployAllContracts({
       initialAdmin: admin,
       vrcContractAddress: vrc.options.address,
     });
     pool = await Pool.at(poolContractAddress);
-    poolId = web3.utils.soliditySha3(pool.address);
 
-    let operators = await Operators.at(operatorsContractAddress);
-    await operators.addOperator(operator, { from: admin });
+    let validators = await Validators.at(validatorsContractAddress);
+    await validators.addOperator(operator, { from: admin });
 
     // register pool
     let amount1 = getDepositAmount({
-      max: validatorDepositAmount.div(new BN(2)),
+      max: validatorDeposit.div(new BN(2)),
     });
     await pool.addDeposit({
       from: sender1,
       value: amount1,
     });
 
-    let amount2 = validatorDepositAmount.sub(amount1);
+    let amount2 = validatorDeposit.sub(amount1);
     await pool.addDeposit({
       from: sender2,
       value: amount2,
@@ -61,15 +65,56 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       }),
       'Pool: permission denied'
     );
-    await checkCollectorBalance(pool, validatorDepositAmount);
-    await checkPoolCollectedAmount(pool, validatorDepositAmount);
+    await checkCollectorBalance(pool, validatorDeposit);
+    await checkPoolCollectedAmount(pool, validatorDeposit);
+  });
+
+  it('fails to register validator with paused pool', async () => {
+    await pool.pause({ from: admin });
+    expect(await pool.paused()).equal(true);
+
+    await expectRevert(
+      pool.registerValidator(validator, {
+        from: other,
+      }),
+      'Pausable: paused'
+    );
+    await checkCollectorBalance(pool, validatorDeposit);
+    await checkPoolCollectedAmount(pool, validatorDeposit);
+  });
+
+  it('not admin fails to update withdrawal credentials', async () => {
+    await expectRevert(
+      pool.setWithdrawalCredentials(withdrawalCredentials, {
+        from: other,
+      }),
+      'OwnablePausableUpgradeable: permission denied'
+    );
+    await checkCollectorBalance(pool, validatorDeposit);
+    await checkPoolCollectedAmount(pool, validatorDeposit);
+  });
+
+  it('admin can update withdrawal credentials', async () => {
+    let receipt = await pool.setWithdrawalCredentials(withdrawalCredentials, {
+      from: admin,
+    });
+
+    await expectEvent(receipt, 'WithdrawalCredentialsUpdated', {
+      withdrawalCredentials,
+    });
+    await checkCollectorBalance(pool, validatorDeposit);
+    await checkPoolCollectedAmount(pool, validatorDeposit);
   });
 
   it('fails to register validator with used public key', async () => {
+    await pool.setWithdrawalCredentials(withdrawalCredentials, {
+      from: admin,
+    });
+
     // create new deposit
     await pool.addDeposit({
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Register 1 validator
@@ -84,18 +129,22 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       }),
       'Validators: public key has been already used'
     );
-    await checkCollectorBalance(pool, validatorDepositAmount);
-    await checkPoolCollectedAmount(pool, validatorDepositAmount);
+    await checkCollectorBalance(pool, validatorDeposit);
+    await checkPoolCollectedAmount(pool, validatorDeposit);
   });
 
   it('fails to register validator when validator deposit amount is not collect', async () => {
+    await pool.setWithdrawalCredentials(withdrawalCredentials, {
+      from: admin,
+    });
+
     // Register 1 validator
     await pool.registerValidator(validator, {
       from: operator,
     });
 
     await expectRevert(
-      pool.registerValidator(validators[1], {
+      pool.registerValidator(validatorParams[1], {
         from: operator,
       }),
       'Pool: insufficient collected amount'
@@ -105,16 +154,20 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
     await checkPoolCollectedAmount(pool, new BN(0));
   });
 
-  it('registers single validator', async () => {
-    // one validator is already created
-    let totalAmount = validatorDepositAmount;
+  it('registers validator', async () => {
+    await pool.setWithdrawalCredentials(withdrawalCredentials, {
+      from: admin,
+    });
 
-    for (let i = 1; i < validators.length; i++) {
+    // one validator is already created
+    let totalAmount = validatorDeposit;
+
+    for (let i = 1; i < validatorParams.length; i++) {
       await pool.addDeposit({
         from: sender1,
-        value: validatorDepositAmount,
+        value: validatorDeposit,
       });
-      totalAmount = totalAmount.add(validatorDepositAmount);
+      totalAmount = totalAmount.add(validatorDeposit);
     }
 
     // check balance increased correctly
@@ -122,19 +175,15 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
     await checkPoolCollectedAmount(pool, totalAmount);
 
     // register validators
-    for (let i = 0; i < validators.length; i++) {
-      const { tx } = await pool.registerValidator(validators[i], {
+    for (let i = 0; i < validatorParams.length; i++) {
+      const receipt = await pool.registerValidator(validatorParams[i], {
         from: operator,
       });
-      await checkValidatorRegistered({
+      await expectEvent(receipt, 'ValidatorRegistered', {
+        publicKey: validatorParams[i].publicKey,
         operator,
-        vrc,
-        transaction: tx,
-        pubKey: validators[i].publicKey,
-        entityId: poolId,
-        signature: validators[i].signature,
       });
-      totalAmount = totalAmount.sub(validatorDepositAmount);
+      totalAmount = totalAmount.sub(validatorDeposit);
     }
 
     // check balance empty

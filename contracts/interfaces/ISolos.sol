@@ -65,15 +65,15 @@ interface ISolos {
 
     /**
     * @dev Event for tracking new cancel lock duration time.
-    * @param newCancelLockDuration - new cancel lock duration for solo deposits.
+    * @param cancelLockDuration - new cancel lock duration for solo deposits.
     */
-    event CancelLockDurationUpdated(uint256 newCancelLockDuration);
+    event CancelLockDurationUpdated(uint256 cancelLockDuration);
 
     /**
     * @dev Event for tracking solo validator price updates.
-    * @param newValidatorPrice - new price for the solo validators.
+    * @param validatorPrice - new price for the solo validators.
     */
-    event ValidatorPriceUpdated(uint256 newValidatorPrice);
+    event ValidatorPriceUpdated(uint256 validatorPrice);
 
     /**
     * @dev Event for tracking registered validators.

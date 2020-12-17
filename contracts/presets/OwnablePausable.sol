@@ -40,6 +40,27 @@ abstract contract OwnablePausable is IOwnablePausable, Pausable, AccessControl {
     }
 
     /**
+     * @dev See {IOwnablePausable-isAdmin}.
+     */
+    function isAdmin(address _account) public override view returns (bool) {
+        return hasRole(DEFAULT_ADMIN_ROLE, _account);
+    }
+
+    /**
+     * @dev See {IOwnablePausable-addAdmin}.
+     */
+    function addAdmin(address _account) external override {
+        grantRole(DEFAULT_ADMIN_ROLE, _account);
+    }
+
+    /**
+     * @dev See {IOwnablePausable-removeAdmin}.
+     */
+    function removeAdmin(address _account) external override {
+        revokeRole(DEFAULT_ADMIN_ROLE, _account);
+    }
+
+    /**
      * @dev See {IOwnablePausable-isPauser}.
      */
     function isPauser(address _account) public override view returns (bool) {
