@@ -7,33 +7,42 @@ pragma solidity 0.7.5;
  */
 interface IValidators {
     /**
+    * @dev Constructor for initializing the Validators contract.
+    * @param _admin - address of the contract admin.
+    * @param _pool - address of the Pool contract.
+    * @param _solos - address of the Solos contract.
+    */
+    function initialize(address _admin, address _pool, address _solos) external;
+
+    /**
+    * @dev Function for checking whether an account has an operator role.
+    * @param _account - account to check.
+    */
+    function isOperator(address _account) external view returns (bool);
+
+    /**
+    * @dev Function for adding an operator role to the account.
+    * Can only be called by an account with an admin role.
+    * @param _account - account to assign an operator role to.
+    */
+    function addOperator(address _account) external;
+
+    /**
+    * @dev Function for removing an operator role from the account.
+    * Can only be called by an account with an admin role.
+    * @param _account - account to remove an operator role from.
+    */
+    function removeOperator(address _account) external;
+
+    /**
     * @dev Function for checking whether public key was already used.
     * @param _publicKey - hash of public key to check.
     */
     function publicKeys(bytes32 _publicKey) external view returns (bool);
 
     /**
-    * @dev Event for tracking registered validators.
-    * @param entityId - ID of the entity where the deposit was accumulated.
-    * @param pubKey - validator public key.
-    * @param price - validator monthly price.
-    * @param operator - address of the validator operator.
-    */
-    event ValidatorRegistered(bytes32 indexed entityId, bytes pubKey, uint256 price, address operator);
-
-    /**
-    * @dev Constructor for initializing the Validators contract.
-    * @param _pool - address of the Pool contract.
-    * @param _solos - address of the Solos contract.
-    * @param _settings - address of the Settings contract.
-    */
-    function initialize(address _pool, address _solos, address _settings) external;
-
-    /**
     * @dev Function for registering validators. Can only be called by collectors.
-    * @param _pubKey - BLS public key of the validator.
-    * @param _entityId - ID of the entity where the validator deposit was accumulated.
-    * @param _operator - address of the validator operator.
+    * @param _validatorId - ID of the validator.
     */
-    function register(bytes calldata _pubKey, bytes32 _entityId, address _operator) external;
+    function register(bytes32 _validatorId) external;
 }

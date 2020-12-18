@@ -1,4 +1,4 @@
-const validators = [
+const validatorParams = [
   {
     publicKey:
       '0xac77c929681e44a8a8ca73b6b233156d2f5293104b7ba45810b9f306f7ce9f5474250987e422b2eb1339297ba2b8eba4',
@@ -52,5 +52,5 @@ const validators = [
 ];
 
 module.exports = {
-  validators,
+  validatorParams,
 };

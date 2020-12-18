@@ -23,16 +23,16 @@ async function deployStakedEthToken() {
 
 async function initializeStakedEthToken(
   stakedEthTokenContractAddress,
+  adminAddress,
   rewardEthTokenContractAddress,
-  settingsContractAddress,
   poolContractAddress
 ) {
   let StakedEthToken = await ethers.getContractFactory('StakedEthToken');
   StakedEthToken = StakedEthToken.attach(stakedEthTokenContractAddress);
 
   return StakedEthToken.initialize(
+    adminAddress,
     rewardEthTokenContractAddress,
-    settingsContractAddress,
     poolContractAddress
   );
 }
@@ -48,8 +48,8 @@ async function deployRewardEthToken() {
 
 async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
+  adminAddress,
   stakedEthTokenContractAddress,
-  settingsContractAddress,
   balanceReportersContractAddress,
   stakedTokensContractAddress
 ) {
@@ -57,8 +57,8 @@ async function initializeRewardEthToken(
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
 
   return RewardEthToken.initialize(
+    adminAddress,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
     balanceReportersContractAddress,
     stakedTokensContractAddress
   );
@@ -75,18 +75,13 @@ async function deployStakedTokens() {
 
 async function initializeStakedTokens(
   stakedTokensContractAddress,
-  settingsContractAddress,
-  adminsContractAddress,
+  adminAddress,
   rewardEthTokenContractAddress
 ) {
   let StakedTokens = await ethers.getContractFactory('StakedTokens');
   StakedTokens = StakedTokens.attach(stakedTokensContractAddress);
 
-  return StakedTokens.initialize(
-    settingsContractAddress,
-    adminsContractAddress,
-    rewardEthTokenContractAddress
-  );
+  return StakedTokens.initialize(adminAddress, rewardEthTokenContractAddress);
 }
 
 module.exports = {

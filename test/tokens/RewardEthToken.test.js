@@ -7,52 +7,90 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeOperators,
-} = require('../../deployments/access');
-const {
-  deployAndInitializeSettings,
-  initialSettings,
-} = require('../../deployments/settings');
-const {
   checkStakedEthToken,
   checkRewardEthToken,
   deployTokens,
 } = require('../utils');
 
-const Settings = artifacts.require('Settings');
-
-const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const validatorDeposit = ether('32');
+const maintainerFee = new BN(1000);
 
 contract('RewardEthToken', ([_, ...accounts]) => {
-  let settings, stakedEthToken, rewardEthToken;
+  let stakedEthToken, rewardEthToken;
   let [
     poolContractAddress,
     admin,
+    maintainer,
     balanceReportersContractAddress,
     stakedTokensContractAddress,
     ...otherAccounts
   ] = accounts;
 
-  before(async () => {
-    let adminsContractAddress = await deployAndInitializeAdmins(admin);
-    let operatorsContractAddress = await deployAndInitializeOperators(
-      adminsContractAddress
-    );
-    settings = await Settings.at(
-      await deployAndInitializeSettings(
-        adminsContractAddress,
-        operatorsContractAddress
-      )
-    );
-  });
-
   beforeEach(async () => {
     [rewardEthToken, stakedEthToken] = await deployTokens({
-      settings,
+      adminAddress: admin,
       balanceReportersContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
+    });
+
+    await rewardEthToken.setMaintainer(maintainer, { from: admin });
+    await rewardEthToken.setMaintainerFee(maintainerFee, { from: admin });
+  });
+
+  describe('admin actions', () => {
+    it('not admin fails to update maintainer address', async () => {
+      await expectRevert(
+        rewardEthToken.setMaintainer(otherAccounts[0], {
+          from: otherAccounts[0],
+        }),
+        'OwnablePausableUpgradeable: permission denied'
+      );
+    });
+
+    it('admin can update maintainer address', async () => {
+      let receipt = await rewardEthToken.setMaintainer(otherAccounts[0], {
+        from: admin,
+      });
+
+      await expectEvent(receipt, 'MaintainerUpdated', {
+        maintainer: otherAccounts[0],
+      });
+    });
+
+    it('not admin fails to update maintainer fee', async () => {
+      await expectRevert(
+        rewardEthToken.setMaintainerFee(9999, {
+          from: otherAccounts[0],
+        }),
+        'OwnablePausableUpgradeable: permission denied'
+      );
+    });
+
+    it('admin can update maintainer fee', async () => {
+      let receipt = await rewardEthToken.setMaintainerFee(9999, {
+        from: admin,
+      });
+
+      await expectEvent(receipt, 'MaintainerFeeUpdated', {
+        maintainerFee: '9999',
+      });
+    });
+
+    it('fails to set invalid maintainer fee', async () => {
+      await expectRevert(
+        rewardEthToken.setMaintainerFee(10000, {
+          from: admin,
+        }),
+        'RewardEthToken: invalid new maintainer fee'
+      );
+
+      await expectRevert(
+        rewardEthToken.setMaintainerFee(-1, {
+          from: admin,
+        }),
+        'RewardEthToken: invalid new maintainer fee'
+      );
     });
   });
 
@@ -80,7 +118,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
       let newTotalRewards = ether('10');
       let maintainerReward = newTotalRewards
-        .mul(new BN(initialSettings.maintainerFee))
+        .mul(new BN(maintainerFee))
         .div(new BN(10000));
       let userReward = newTotalRewards.sub(maintainerReward);
 
@@ -103,7 +141,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
       await checkRewardEthToken({
         rewardEthToken,
-        account: initialSettings.maintainer,
+        account: maintainer,
         balance: maintainerReward,
         reward: maintainerReward,
       });
@@ -131,7 +169,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         {
           totalRewards: ether('2.145744568757666688'),
           maintainerReward: ether('0.214574456875766668'),
-          users: Array(validatorDepositAmount.div(ether('4')).toNumber()).fill({
+          users: Array(validatorDeposit.div(ether('4')).toNumber()).fill({
             deposit: ether('4'),
             reward: ether('0.2413962639852375'),
           }),
@@ -146,11 +184,13 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       for (const { totalRewards, maintainerReward, users } of testCases) {
         // redeploy tokens
         [rewardEthToken, stakedEthToken] = await deployTokens({
-          settings,
+          adminAddress: admin,
           balanceReportersContractAddress,
           stakedTokensContractAddress,
           poolContractAddress,
         });
+        await rewardEthToken.setMaintainer(maintainer, { from: admin });
+        await rewardEthToken.setMaintainerFee(maintainerFee, { from: admin });
 
         // mint deposits
         for (let i = 0; i < users.length; i++) {
@@ -168,7 +208,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         await checkRewardEthToken({
           rewardEthToken,
           totalSupply: totalRewards,
-          account: initialSettings.maintainer,
+          account: maintainer,
           balance: maintainerReward,
           reward: maintainerReward,
         });
@@ -185,7 +225,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
 
           await checkStakedEthToken({
             stakedEthToken,
-            totalSupply: validatorDepositAmount,
+            totalSupply: validatorDeposit,
             account: otherAccounts[i],
             balance: deposit,
             deposit,
@@ -253,7 +293,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         },
         {
           totalRewards: ether('-0.243422652'),
-          users: Array(validatorDepositAmount.div(ether('4')).toNumber()).fill({
+          users: Array(validatorDeposit.div(ether('4')).toNumber()).fill({
             deposit: ether('4'),
             penalisedReturn: ether('3.9695721685'),
           }),
@@ -269,7 +309,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       for (const { totalRewards, users } of testCases) {
         // redeploy tokens
         [rewardEthToken, stakedEthToken] = await deployTokens({
-          settings,
+          adminAddress: admin,
           balanceReportersContractAddress,
           stakedTokensContractAddress,
           poolContractAddress,
@@ -295,14 +335,16 @@ contract('RewardEthToken', ([_, ...accounts]) => {
             totalSupply: new BN(0),
             account: otherAccounts[i],
             balance: new BN(0),
-            reward: penalisedReturn.sub(deposit),
+            // subtract 1 Wei for fixing penalty rounding down
+            reward: penalisedReturn.sub(deposit).sub(new BN(1)),
           });
 
           await checkStakedEthToken({
             stakedEthToken,
-            totalSupply: validatorDepositAmount.add(totalRewards),
+            totalSupply: validatorDeposit.add(totalRewards),
             account: otherAccounts[i],
-            balance: penalisedReturn,
+            // subtract 1 Wei for fixing penalty rounding down
+            balance: penalisedReturn.sub(new BN(1)),
             deposit,
           });
         }
@@ -353,39 +395,39 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         [
           {
             deposit: ether('11'),
-            reward: ether('-0.178181317873164654'),
+            reward: ether('-0.178181317873164655'),
           },
-          { deposit: ether('6'), reward: ether('-0.144634630790539224') },
-          { deposit: ether('23'), reward: ether('0.054442452002700438') },
-          { deposit: ether('4'), reward: ether('-0.096423087193692816') },
+          { deposit: ether('6'), reward: ether('-0.144634630790539225') },
+          { deposit: ether('23'), reward: ether('0.054442452002700437') },
+          { deposit: ether('4'), reward: ether('-0.096423087193692817') },
         ],
-        // user3 transfers 3.903576912806307184 stETH to user0
-        // user2 transfers 0.054442452002700438 rwETH to user3
+        // user3 transfers 3.903576912806307183 stETH to user0
+        // user2 transfers 0.054442452002700437 rwETH to user3
         [
           {
-            deposit: ether('14.903576912806307184'),
-            reward: ether('-0.178181317873164654'),
+            deposit: ether('14.903576912806307183'),
+            reward: ether('-0.178181317873164655'),
           },
-          { deposit: ether('6'), reward: ether('-0.144634630790539224') },
+          { deposit: ether('6'), reward: ether('-0.144634630790539225') },
           { deposit: ether('23'), reward: ether('0') },
           {
-            deposit: ether('0.096423087193692816'),
-            reward: ether('-0.041980635190992378'),
+            deposit: ether('0'),
+            reward: ether('0.054442452002700437'),
           },
         ],
         // period rewards: 2.1201081573283083
         // total rewards: 1.755311573473612038
-        // reward rate: 0.041474938886391011
+        // reward rate: 0.0415807634456188
         [
           {
-            deposit: ether('14.903576912806307184'),
-            reward: ether('0.539936749995255735'),
+            deposit: ether('14.903576912806307183'),
+            reward: ether('0.541513914452970914'),
           },
-          { deposit: ether('6'), reward: ether('0.144471027026957358') },
-          { deposit: ether('23'), reward: ether('1.108238354967070231') },
+          { deposit: ether('6'), reward: ether('0.145105974382324092') },
+          { deposit: ether('23'), reward: ether('1.110672319829309378') },
           {
-            deposit: ether('0.096423087193692816'),
-            reward: ether('-0.037334558515671313'),
+            deposit: ether('0'),
+            reward: ether('0.054442452002700437'),
           },
         ],
       ];
@@ -460,7 +502,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       await checkRewardEthToken({
         rewardEthToken,
         totalSupply: totalRewards,
-        account: initialSettings.maintainer,
+        account: maintainer,
         balance: maintainerReward,
         reward: maintainerReward,
       });
@@ -541,7 +583,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       await checkRewardEthToken({
         rewardEthToken,
         totalSupply: new BN(0),
-        account: initialSettings.maintainer,
+        account: maintainer,
         balance: maintainerReward,
         reward: maintainerReward,
       });
@@ -566,18 +608,21 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
       }
 
-      // 5. user3 transfers 3.903576912806307184 stETH to user0
+      // 5. user3 transfers 3.903576912806307183 stETH to user0
       await stakedEthToken.transfer(
         otherAccounts[0],
-        ether('3.903576912806307184'),
+        ether('3.903576912806307183'),
         {
           from: otherAccounts[3],
         }
       );
-      // user2 transfers 0.054442452002700438 rwETH to user3
+      // user3 penalty got burn after transfer
+      totalDeposits = totalDeposits.sub(ether('0.096423087193692817'));
+
+      // user2 transfers 0.054442452002700437 rwETH to user3
       await rewardEthToken.transfer(
         otherAccounts[3],
-        ether('0.054442452002700438'),
+        ether('0.054442452002700437'),
         {
           from: otherAccounts[2],
         }
@@ -608,7 +653,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       periodRewards = ether('2.3556757303647870');
       totalRewards = totalRewards.add(periodRewards);
       maintainerReward = maintainerReward.add(ether('0.2355675730364787'));
-      rewardPerToken = ether('0.041474938886391011');
+      rewardPerToken = ether('0.0415807634456188');
       receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
@@ -621,7 +666,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       await checkRewardEthToken({
         rewardEthToken,
         totalSupply: totalRewards,
-        account: initialSettings.maintainer,
+        account: maintainer,
         balance: maintainerReward,
         reward: maintainerReward,
       });
@@ -657,10 +702,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     let [sender1, sender2] = otherAccounts;
 
     beforeEach(async () => {
-      await settings.setMaintainerFee(new BN(1000), {
-        from: admin,
-      });
-
       await stakedEthToken.mint(sender1, value1, {
         from: poolContractAddress,
       });
@@ -728,18 +769,14 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setPausedContracts(rewardEthToken.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(rewardEthToken.address)).equal(
-        true
-      );
+      await rewardEthToken.pause({ from: admin });
+      expect(await rewardEthToken.paused()).equal(true);
 
       await expectRevert(
         rewardEthToken.transfer(sender2, value1, {
           from: sender1,
         }),
-        'RewardEthToken: contract is paused'
+        'Pausable: paused'
       );
 
       await checkRewardEthToken({
@@ -749,9 +786,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         balance: value1,
         reward: value1,
       });
-      await settings.setPausedContracts(rewardEthToken.address, false, {
-        from: admin,
-      });
+      await rewardEthToken.unpause({ from: admin });
     });
 
     it('cannot transfer amount bigger than balance', async () => {
@@ -798,14 +833,5 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         deposit: value2,
       });
     });
-  });
-
-  it('anyone cannot update user reward', async () => {
-    await expectRevert(
-      rewardEthToken.updateRewardCheckpoint(otherAccounts[0], {
-        from: otherAccounts[0],
-      }),
-      'RewardEthToken: permission denied'
-    );
   });
 });

@@ -1,19 +1,25 @@
-const { BN, expectRevert, constants } = require('@openzeppelin/test-helpers');
+const {
+  BN,
+  expectRevert,
+  expectEvent,
+  constants,
+  ether,
+} = require('@openzeppelin/test-helpers');
 const { deployAllContracts } = require('../../deployments');
-const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
   checkSolo,
   checkValidatorRegistered,
 } = require('../utils');
-const { validators } = require('./validators');
+const { validatorParams } = require('./validatorParams');
 
 const Solos = artifacts.require('Solos');
-const Operators = artifacts.require('Operators');
+const Validators = artifacts.require('Validators');
 
-const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
-const validator = validators[0];
+const validatorPrice = ether('10');
+const validatorDeposit = ether('32');
+const validator = validatorParams[0];
 
 contract('Solos (register validator)', ([_, ...accounts]) => {
   let vrc, solos, soloId;
@@ -26,20 +32,24 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
   beforeEach(async () => {
     let {
       solos: solosContractAddress,
-      operators: operatorsContractAddress,
+      validators: validatorsContractAddress,
     } = await deployAllContracts({
       initialAdmin: admin,
       vrcContractAddress: vrc.options.address,
     });
     solos = await Solos.at(solosContractAddress);
 
-    let operators = await Operators.at(operatorsContractAddress);
-    await operators.addOperator(operator, { from: admin });
+    let validators = await Validators.at(validatorsContractAddress);
+    await validators.addOperator(operator, { from: admin });
+
+    await solos.setValidatorPrice(validatorPrice, {
+      from: admin,
+    });
 
     // create new solo
     await solos.addDeposit(validator.withdrawalCredentials, {
       from: sender,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
     soloId = web3.utils.soliditySha3(
       solos.address,
@@ -49,7 +59,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
   });
 
   it('fails to register validator for invalid solo ID', async () => {
-    let validator = { soloId: constants.ZERO_BYTES32, ...validators[0] };
+    let validator = { soloId: constants.ZERO_BYTES32, ...validatorParams[0] };
     await expectRevert(
       solos.registerValidator(validator, {
         from: operator,
@@ -60,9 +70,9 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       solos,
       soloId,
       withdrawalCredentials: validator.withdrawalCredentials,
-      amount: validatorDepositAmount,
+      amount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
   });
 
   it('fails to register validator with callers other than operator', async () => {
@@ -79,15 +89,15 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       solos,
       soloId,
       withdrawalCredentials: validator.withdrawalCredentials,
-      amount: validatorDepositAmount,
+      amount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
   });
 
   it('fails to register validator with used public key', async () => {
     await solos.addDeposit(validator.withdrawalCredentials, {
       from: sender,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     await solos.registerValidator(
@@ -106,12 +116,12 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       ),
       'Validators: public key has been already used'
     );
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
   });
 
   it('fails to register validator twice', async () => {
     await solos.registerValidator(
-      { soloId, ...validators[0] },
+      { soloId, ...validatorParams[0] },
       {
         from: operator,
       }
@@ -119,7 +129,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
 
     await expectRevert(
       solos.registerValidator(
-        { soloId, ...validators[1] },
+        { soloId, ...validatorParams[1] },
         {
           from: operator,
         }
@@ -130,9 +140,44 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
     await checkCollectorBalance(solos, new BN(0));
   });
 
+  it('fails to register validator with paused solos', async () => {
+    await solos.pause({ from: admin });
+    expect(await solos.paused()).equal(true);
+
+    await expectRevert(
+      solos.registerValidator(
+        { soloId, ...validatorParams[1] },
+        {
+          from: sender,
+        }
+      ),
+      'Pausable: paused'
+    );
+    await checkCollectorBalance(solos, validatorDeposit);
+  });
+
+  it('not admin fails to update validator price', async () => {
+    await expectRevert(
+      solos.setValidatorPrice(validatorPrice, {
+        from: other,
+      }),
+      'OwnablePausable: permission denied'
+    );
+  });
+
+  it('admin can update validator price', async () => {
+    let receipt = await solos.setValidatorPrice(validatorPrice, {
+      from: admin,
+    });
+
+    await expectEvent(receipt, 'ValidatorPriceUpdated', {
+      validatorPrice: validatorPrice.toString(),
+    });
+  });
+
   it('registers single validator', async () => {
     // one validator is already created
-    let totalAmount = validatorDepositAmount;
+    let totalAmount = validatorDeposit;
     let newValidators = [];
     newValidators.push({
       soloId: web3.utils.soliditySha3(
@@ -143,20 +188,20 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       ...validator,
     });
 
-    for (let i = 1; i < validators.length; i++) {
-      await solos.addDeposit(validators[i].withdrawalCredentials, {
+    for (let i = 1; i < validatorParams.length; i++) {
+      await solos.addDeposit(validatorParams[i].withdrawalCredentials, {
         from: sender,
-        value: validatorDepositAmount,
+        value: validatorDeposit,
       });
       newValidators.push({
         soloId: web3.utils.soliditySha3(
           solos.address,
           sender,
-          validators[i].withdrawalCredentials
+          validatorParams[i].withdrawalCredentials
         ),
-        ...validators[i],
+        ...validatorParams[i],
       });
-      totalAmount = totalAmount.add(validatorDepositAmount);
+      totalAmount = totalAmount.add(validatorDeposit);
     }
 
     // check balance increased correctly
@@ -164,17 +209,22 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
 
     // register validators
     for (let i = 0; i < newValidators.length; i++) {
-      const { tx } = await solos.registerValidator(newValidators[i], {
+      let receipt = await solos.registerValidator(newValidators[i], {
         from: operator,
       });
       await checkValidatorRegistered({
         vrc,
         operator,
-        transaction: tx,
+        transaction: receipt.tx,
         pubKey: newValidators[i].publicKey,
-        entityId: newValidators[i].soloId,
         withdrawalCredentials: newValidators[i].withdrawalCredentials,
-        signature: validators[i].signature,
+        signature: validatorParams[i].signature,
+      });
+      await expectEvent(receipt, 'ValidatorRegistered', {
+        publicKey: validatorParams[i].publicKey,
+        soloId: newValidators[i].soloId,
+        price: validatorPrice,
+        operator,
       });
     }
 

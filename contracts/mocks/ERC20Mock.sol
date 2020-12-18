@@ -2,12 +2,12 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../tokens/ERC20.sol";
 
 
 contract ERC20Mock is ERC20 {
-    using SafeMath for uint256;
+    using SafeMathUpgradeable for uint256;
 
     uint256 private _totalSupply;
 
@@ -15,7 +15,7 @@ contract ERC20Mock is ERC20 {
     mapping (address => uint256) private _balances;
 
     function initialize(address _owner, uint256 initialBalance, string memory name, string memory symbol) public initializer {
-        super.initialize(name, symbol);
+        __ERC20_init_unchained(name, symbol);
         owner = _owner;
         _mint(_owner, initialBalance);
     }

@@ -139,12 +139,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_rewardEthToken",
+        "name": "_admin",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_settings",
+        "name": "_rewardEthToken",
         "type": "address"
       },
       {

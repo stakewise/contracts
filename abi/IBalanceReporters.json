@@ -4,32 +4,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "ReporterAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "ReporterRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address[]",
         "name": "uniswapPairs",
         "type": "address[]"
@@ -147,12 +121,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_admins",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_settings",
+        "name": "_admin",
         "type": "address"
       },
       {
@@ -209,19 +178,6 @@
     "name": "setUniswapPairs",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalReporters",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

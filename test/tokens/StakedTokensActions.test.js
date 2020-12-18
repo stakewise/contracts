@@ -7,30 +7,17 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeOperators,
-} = require('../../deployments/access');
-const { deployAndInitializeSettings } = require('../../deployments/settings');
-const {
   deployAndInitializeERC20Mock,
   deployStakedTokens,
   initializeStakedTokens,
 } = require('../../deployments/tokens');
 const { deployTokens } = require('../utils');
 
-const Admins = artifacts.require('Admins');
-const Settings = artifacts.require('Settings');
 const StakedTokens = artifacts.require('StakedTokens');
 const ERC20Mock = artifacts.require('ERC20Mock');
 
 contract('StakedTokens Actions', ([_, ...accounts]) => {
-  let settings,
-    admins,
-    stakedEthToken,
-    rewardEthToken,
-    stakedTokens,
-    token,
-    rewardHolders;
+  let stakedEthToken, rewardEthToken, stakedTokens, token, rewardHolders;
   let [
     poolContractAddress,
     admin,
@@ -47,24 +34,10 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
   let tokenHolders = [tokenHolder1, tokenHolder2, tokenHolder3, tokenHolder4];
   let stakedBalance = ether('25');
 
-  before(async () => {
-    let adminsContractAddress = await deployAndInitializeAdmins(admin);
-    let operatorsContractAddress = await deployAndInitializeOperators(
-      adminsContractAddress
-    );
-    settings = await Settings.at(
-      await deployAndInitializeSettings(
-        adminsContractAddress,
-        operatorsContractAddress
-      )
-    );
-    admins = await Admins.at(adminsContractAddress);
-  });
-
   beforeEach(async () => {
     let stakedTokensContractAddress = await deployStakedTokens();
     [rewardEthToken, stakedEthToken] = await deployTokens({
-      settings,
+      adminAddress: admin,
       balanceReportersContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
@@ -73,8 +46,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
     stakedTokens = await StakedTokens.at(stakedTokensContractAddress);
     await initializeStakedTokens(
       stakedTokensContractAddress,
-      settings.address,
-      admins.address,
+      admin,
       rewardEthToken.address
     );
 
@@ -106,21 +78,17 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
 
   describe('enabling token', () => {
     it('fails to enable when contract is paused', async () => {
-      await settings.setPausedContracts(stakedTokens.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
+      await stakedTokens.pause({ from: admin });
+      expect(await stakedTokens.paused()).equal(true);
 
       await expectRevert(
         stakedTokens.toggleTokenContract(token.address, true, {
           from: admin,
         }),
-        'StakedTokens: contract is paused'
+        'Pausable: paused'
       );
 
-      await settings.setPausedContracts(stakedTokens.address, false, {
-        from: admin,
-      });
+      await stakedTokens.unpause({ from: admin });
     });
 
     it('only admin user can enable token', async () => {
@@ -128,7 +96,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.toggleTokenContract(token.address, true, {
           from: otherAccount,
         }),
-        'StakedTokens: permission denied'
+        'OwnablePausableUpgradeable: permission denied'
       );
     });
 
@@ -159,21 +127,17 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
 
   describe('disabling token', () => {
     it('fails to disable token support when contract is paused', async () => {
-      await settings.setPausedContracts(stakedTokens.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
+      await stakedTokens.pause({ from: admin });
+      expect(await stakedTokens.paused()).equal(true);
 
       await expectRevert(
         stakedTokens.toggleTokenContract(token.address, false, {
           from: admin,
         }),
-        'StakedTokens: contract is paused'
+        'Pausable: paused'
       );
 
-      await settings.setPausedContracts(stakedTokens.address, false, {
-        from: admin,
-      });
+      await stakedTokens.unpause({ from: admin });
     });
 
     it('only admin user can toggle token support', async () => {
@@ -185,7 +149,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.toggleTokenContract(token.address, false, {
           from: otherAccount,
         }),
-        'StakedTokens: permission denied'
+        'OwnablePausableUpgradeable: permission denied'
       );
     });
 
@@ -217,21 +181,17 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
     });
 
     it('fails to stake tokens when contract is paused', async () => {
-      await settings.setPausedContracts(stakedTokens.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
+      await stakedTokens.pause({ from: admin });
+      expect(await stakedTokens.paused()).equal(true);
 
       await expectRevert(
         stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: contract is paused'
+        'Pausable: paused'
       );
 
-      await settings.setPausedContracts(stakedTokens.address, false, {
-        from: admin,
-      });
+      await stakedTokens.unpause({ from: admin });
     });
 
     it('fails to stake tokens with invalid contract', async () => {
@@ -310,21 +270,17 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
     });
 
     it('fails to withdraw tokens when contract is paused', async () => {
-      await settings.setPausedContracts(stakedTokens.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(stakedTokens.address)).equal(true);
+      await stakedTokens.pause({ from: admin });
+      expect(await stakedTokens.paused()).equal(true);
 
       await expectRevert(
         stakedTokens.withdrawTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: contract is paused'
+        'Pausable: paused'
       );
 
-      await settings.setPausedContracts(stakedTokens.address, false, {
-        from: admin,
-      });
+      await stakedTokens.unpause({ from: admin });
     });
 
     it('does not pull rewards when token is disabled', async () => {

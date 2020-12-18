@@ -6,36 +6,30 @@ const {
   expectRevert,
 } = require('@openzeppelin/test-helpers');
 const { deployAllContracts } = require('../../deployments');
-const { initialSettings } = require('../../deployments/settings');
 const { checkCollectorBalance, checkSoloDepositAdded } = require('../utils');
 
 const Solos = artifacts.require('Solos');
-const Settings = artifacts.require('Settings');
 
-const validatorDepositAmount = new BN(initialSettings.validatorDepositAmount);
+const validatorDeposit = ether('32');
 const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Solos (add deposit)', ([_, ...accounts]) => {
-  let solos, settings;
+  let solos;
   let [admin, sender1, sender2] = accounts;
 
   beforeEach(async () => {
-    let {
-      solos: solosContractAddress,
-      settings: settingsContractAddress,
-    } = await deployAllContracts({
+    let { solos: solosContractAddress } = await deployAllContracts({
       initialAdmin: admin,
     });
     solos = await Solos.at(solosContractAddress);
-    settings = await Settings.at(settingsContractAddress);
   });
 
   it('fails to add a deposit with invalid withdrawal credentials', async () => {
     await expectRevert(
       solos.addDeposit(constants.ZERO_BYTES32, {
         from: sender1,
-        value: validatorDepositAmount,
+        value: validatorDeposit,
       }),
       'Solos: invalid withdrawal credentials'
     );
@@ -48,7 +42,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
         '0x9dfd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061',
         {
           from: sender1,
-          value: validatorDepositAmount,
+          value: validatorDeposit,
         }
       ),
       'Solos: invalid withdrawal credentials'
@@ -57,17 +51,15 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
   });
 
   it('fails to add a deposit to paused contract', async () => {
-    await settings.setPausedContracts(solos.address, true, {
-      from: admin,
-    });
-    expect(await settings.pausedContracts(solos.address)).equal(true);
+    await solos.pause({ from: admin });
+    expect(await solos.paused()).equal(true);
 
     await expectRevert(
       solos.addDeposit(withdrawalCredentials, {
         from: sender1,
-        value: validatorDepositAmount,
+        value: validatorDeposit,
       }),
-      'Solos: contract is paused'
+      'Pausable: paused'
     );
     await checkCollectorBalance(solos);
   });
@@ -76,20 +68,9 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       solos.addDeposit(withdrawalCredentials, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).sub(ether('1')),
+        value: validatorDeposit.sub(ether('1')),
       }),
       'Solos: invalid deposit amount'
-    );
-    await checkCollectorBalance(solos);
-  });
-
-  it('fails to add too large deposit', async () => {
-    await expectRevert(
-      solos.addDeposit(withdrawalCredentials, {
-        from: sender1,
-        value: new BN(initialSettings.maxDepositAmount).add(ether('1')),
-      }),
-      'Solos: deposit amount is too large'
     );
     await checkCollectorBalance(solos);
   });
@@ -98,7 +79,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     await expectRevert(
       solos.addDeposit(withdrawalCredentials, {
         from: sender1,
-        value: new BN(initialSettings.validatorDepositAmount).add(ether('1')),
+        value: validatorDeposit.add(ether('1')),
       }),
       'Solos: invalid deposit amount'
     );
@@ -106,7 +87,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
   });
 
   it('adds deposits divisible by validator deposit amount', async () => {
-    let depositAmount = validatorDepositAmount.mul(new BN(3));
+    let depositAmount = validatorDeposit.mul(new BN(3));
     // Send a deposit
     const receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,
@@ -121,14 +102,14 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       addedAmount: depositAmount,
       totalAmount: depositAmount,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(3)));
+    await checkCollectorBalance(solos, validatorDeposit.mul(new BN(3)));
   });
 
   it('increases amount for the same solo', async () => {
     // Send first deposit
     let receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -137,15 +118,15 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender1,
       solos,
       withdrawalCredentials,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount,
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
 
     // Send second deposit
     receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -154,17 +135,17 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender1,
       solos,
       withdrawalCredentials,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount.mul(new BN(2)),
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit.mul(new BN(2)),
     });
-    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(2)));
+    await checkCollectorBalance(solos, validatorDeposit.mul(new BN(2)));
   });
 
   it('adds deposits for different users', async () => {
     // User 1 creates a deposit
     let receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -173,15 +154,15 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender1,
       solos,
       withdrawalCredentials,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount,
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
 
     // User 2 creates a deposit
     receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender2,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -190,17 +171,17 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender2,
       solos,
       withdrawalCredentials,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount,
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(2)));
+    await checkCollectorBalance(solos, validatorDeposit.mul(new BN(2)));
   });
 
   it('creates different solos for deposits with different withdrawal withdrawal credentials', async () => {
     // User creates deposit with first withdrawal credential
     let receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -209,17 +190,17 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender1,
       solos,
       withdrawalCredentials,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount,
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount);
+    await checkCollectorBalance(solos, validatorDeposit);
 
     // User creates deposit with second withdrawal credential
     let withdrawalCredentials2 =
       '0x00ef3debe27bec735f68fee62c107f6a2bf85a4bb308cee64ce3a9addefa44f7';
     receipt = await solos.addDeposit(withdrawalCredentials2, {
       from: sender1,
-      value: validatorDepositAmount,
+      value: validatorDeposit,
     });
 
     // Check solo deposit added
@@ -228,9 +209,9 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
       sender: sender1,
       solos,
       withdrawalCredentials: withdrawalCredentials2,
-      addedAmount: validatorDepositAmount,
-      totalAmount: validatorDepositAmount,
+      addedAmount: validatorDeposit,
+      totalAmount: validatorDeposit,
     });
-    await checkCollectorBalance(solos, validatorDepositAmount.mul(new BN(2)));
+    await checkCollectorBalance(solos, validatorDeposit.mul(new BN(2)));
   });
 });

@@ -1,7 +1,6 @@
 const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
-const { initialSettings } = require('../deployments/settings');
 const {
   deployStakedEthToken,
   deployRewardEthToken,
@@ -11,12 +10,8 @@ const {
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
-const Validators = artifacts.require('Validators');
 
-function getDepositAmount({
-  min = new BN('1'),
-  max = new BN(initialSettings.maxDepositAmount),
-} = {}) {
+function getDepositAmount({ min = new BN('1'), max = ether('10000') } = {}) {
   return ether(Math.random().toFixed(8))
     .mul(max.sub(min))
     .div(ether('1'))
@@ -84,11 +79,9 @@ async function checkValidatorRegistered({
   vrc,
   transaction,
   pubKey,
-  entityId,
   signature,
-  operator,
-  withdrawalCredentials = initialSettings.withdrawalCredentials,
-  validatorDepositAmount = new BN(initialSettings.validatorDepositAmount),
+  withdrawalCredentials,
+  validatorDepositAmount = ether('32'),
 }) {
   // Check VRC record created
   await expectEvent.inTransaction(transaction, vrc, 'DepositEvent', {
@@ -102,19 +95,6 @@ async function checkValidatorRegistered({
     ),
     signature: signature,
   });
-
-  // Check ValidatorRegistered log emitted
-  await expectEvent.inTransaction(
-    transaction,
-    Validators,
-    'ValidatorRegistered',
-    {
-      pubKey: pubKey,
-      entityId,
-      price: initialSettings.validatorPrice,
-      operator,
-    }
-  );
 }
 
 async function checkStakedEthToken({
@@ -170,7 +150,7 @@ async function checkRewardEthToken({
 }
 
 async function deployTokens({
-  settings,
+  adminAddress,
   balanceReportersContractAddress,
   stakedTokensContractAddress,
   poolContractAddress,
@@ -179,14 +159,14 @@ async function deployTokens({
   const rewardEthTokenContractAddress = await deployRewardEthToken();
   await initializeStakedEthToken(
     stakedEthTokenContractAddress,
+    adminAddress,
     rewardEthTokenContractAddress,
-    settings.address,
     poolContractAddress
   );
   await initializeRewardEthToken(
     rewardEthTokenContractAddress,
+    adminAddress,
     stakedEthTokenContractAddress,
-    settings.address,
     balanceReportersContractAddress,
     stakedTokensContractAddress
   );

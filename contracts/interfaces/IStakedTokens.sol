@@ -63,11 +63,10 @@ interface IStakedTokens {
 
     /**
     * @dev Constructor for initializing the StakedTokens contract.
-    * @param _settings - address of the Settings contract.
-    * @param _admins - address of the Admins contract.
+    * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     */
-    function initialize(address _settings, address _admins, address _rewardEthToken) external;
+    function initialize(address _admin, address _rewardEthToken) external;
 
    /**
    * @dev Function for enabling or disabling token contract. Can only be called by an admin user.

@@ -2,12 +2,12 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/math/SignedSafeMath.sol";
-import "@openzeppelin/contracts/utils/SafeCast.sol";
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
+import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
-import "../interfaces/ISettings.sol";
 import "./ERC20.sol";
 
 /**
@@ -15,11 +15,11 @@ import "./ERC20.sol";
  *
  * @dev StakedEthToken contract stores pool staked tokens.
  */
-contract StakedEthToken is IStakedEthToken, ERC20 {
-    using SafeMath for uint256;
-    using SignedSafeMath for int256;
-    using SafeCast for uint256;
-    using SafeCast for int256;
+contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
+    using SafeMathUpgradeable for uint256;
+    using SignedSafeMathUpgradeable for int256;
+    using SafeCastUpgradeable for uint256;
+    using SafeCastUpgradeable for int256;
 
     // @dev Total amount of deposits.
     uint256 public override totalDeposits;
@@ -33,16 +33,13 @@ contract StakedEthToken is IStakedEthToken, ERC20 {
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
 
-    // @dev Address of the Settings contract.
-    ISettings private settings;
-
     /**
      * @dev See {StakedEthToken-initialize}.
      */
-    function initialize(address _rewardEthToken, address _settings, address _pool) public override initializer {
-        super.initialize("StakeWise Staked ETH", "stETH");
+    function initialize(address _admin, address _rewardEthToken, address _pool) public override initializer {
+        __OwnablePausableUpgradeable_init(_admin);
+        __ERC20_init_unchained("StakeWise Staked ETH", "stETH");
         rewardEthToken = IRewardEthToken(_rewardEthToken);
-        settings = ISettings(_settings);
         pool = _pool;
     }
 
@@ -63,7 +60,7 @@ contract StakedEthToken is IStakedEthToken, ERC20 {
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view override returns (uint256) {
+    function balanceOf(address account) external view override returns (uint256) {
         int256 reward = rewardEthToken.rewardOf(account);
         uint256 deposit = deposits[account];
         if (reward >= 0) {
@@ -85,15 +82,28 @@ contract StakedEthToken is IStakedEthToken, ERC20 {
     /**
      * @dev See {ERC20-_transfer}.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
+    function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
         require(sender != address(0), "StakedEthToken: transfer from the zero address");
         require(recipient != address(0), "StakedEthToken: transfer to the zero address");
-        require(balanceOf(sender) >= amount, "StakedEthToken: invalid amount");
-        require(!settings.pausedContracts(address(this)), "StakedEthToken: contract is paused");
 
-        // start calculating sender rewards with updated deposit amount
-        rewardEthToken.updateRewardCheckpoint(sender);
-        deposits[sender] = deposits[sender].sub(amount);
+        int256 senderReward = rewardEthToken.rewardOf(sender);
+        if (senderReward < 0) {
+            uint256 oldDeposit = deposits[sender];
+            uint256 penalisedDeposit = oldDeposit.toInt256().add(senderReward).toUint256();
+
+            if (penalisedDeposit.sub(amount, "StakedEthToken: invalid amount").toInt256().add(senderReward.mul(2)) <= 0) {
+                // penalty is equal or bigger than 50% of the left deposit -> repay penalty with the deposit
+                totalDeposits = totalDeposits.toInt256().add(senderReward).toUint256();
+                rewardEthToken.resetCheckpoint(sender);
+                deposits[sender] = penalisedDeposit.sub(amount);
+            } else {
+                deposits[sender] = oldDeposit.sub(amount);
+            }
+        } else {
+            // start calculating sender rewards with updated deposit amount
+            rewardEthToken.updateRewardCheckpoint(sender);
+            deposits[sender] = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
+        }
 
         // start calculating recipient rewards with updated deposit amount
         rewardEthToken.updateRewardCheckpoint(recipient);

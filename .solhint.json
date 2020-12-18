@@ -4,6 +4,7 @@
     "compiler-version": "off",
     "mark-callable-contracts": "off",
     "no-empty-blocks": "off",
-    "reason-string": "off"
+    "reason-string": "off",
+    "func-visibility": ["warn", { "ignoreConstructors": true }]
   }
 }

@@ -7,11 +7,6 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeOperators,
-} = require('../../deployments/access');
-const { deployAndInitializeSettings } = require('../../deployments/settings');
-const {
   deployStakedEthToken,
   deployRewardEthToken,
   initializeStakedEthToken,
@@ -20,10 +15,9 @@ const {
 const { checkStakedEthToken } = require('../utils');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
-const Settings = artifacts.require('Settings');
 
 contract('StakedEthToken', ([_, ...accounts]) => {
-  let settings, stakedEthToken;
+  let stakedEthToken;
   let [
     poolContractAddress,
     admin,
@@ -33,32 +27,19 @@ contract('StakedEthToken', ([_, ...accounts]) => {
     sender2,
   ] = accounts;
 
-  before(async () => {
-    let adminsContractAddress = await deployAndInitializeAdmins(admin);
-    let operatorsContractAddress = await deployAndInitializeOperators(
-      adminsContractAddress
-    );
-    settings = await Settings.at(
-      await deployAndInitializeSettings(
-        adminsContractAddress,
-        operatorsContractAddress
-      )
-    );
-  });
-
   beforeEach(async () => {
     const stakedEthTokenContractAddress = await deployStakedEthToken();
     const rewardEthTokenContractAddress = await deployRewardEthToken();
     await initializeStakedEthToken(
       stakedEthTokenContractAddress,
+      admin,
       rewardEthTokenContractAddress,
-      settings.address,
       poolContractAddress
     );
     await initializeRewardEthToken(
       rewardEthTokenContractAddress,
+      admin,
       stakedEthTokenContractAddress,
-      settings.address,
       balanceReportersContractAddress,
       stakedTokensContractAddress
     );
@@ -168,18 +149,14 @@ contract('StakedEthToken', ([_, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await settings.setPausedContracts(stakedEthToken.address, true, {
-        from: admin,
-      });
-      expect(await settings.pausedContracts(stakedEthToken.address)).equal(
-        true
-      );
+      await stakedEthToken.pause({ from: admin });
+      expect(await stakedEthToken.paused()).equal(true);
 
       await expectRevert(
         stakedEthToken.transfer(sender2, value, {
           from: sender1,
         }),
-        'StakedEthToken: contract is paused'
+        'Pausable: paused'
       );
 
       await checkStakedEthToken({
@@ -189,9 +166,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
         balance: value,
         deposit: value,
       });
-      await settings.setPausedContracts(stakedEthToken.address, false, {
-        from: admin,
-      });
+      await stakedEthToken.unpause({ from: admin });
     });
 
     it('cannot transfer amount bigger than balance', async () => {

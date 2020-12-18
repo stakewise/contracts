@@ -2,20 +2,12 @@ const hre = require('hardhat');
 const { white, green } = require('chalk');
 
 const {
-  deployAndInitializeAdmins,
-  deployAndInitializeManagers,
-  deployAndInitializeOperators,
+  deployValidators,
+  initializeValidators,
   deployBalanceReporters,
   initializeBalanceReporters,
-} = require('./access');
-const { deployValidators, initializeValidators } = require('./validators');
-const { deployAndInitializeSettings, initialSettings } = require('./settings');
-const {
-  deploySolos,
-  deployPool,
-  initializeSolos,
-  initializePool,
-} = require('./collectors');
+} = require('./validators');
+const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
   deployRewardEthToken,
   deployStakedEthToken,
@@ -24,7 +16,6 @@ const {
   initializeStakedEthToken,
   initializeStakedTokens,
 } = require('./tokens');
-const { deployAndInitializePayments } = require('./payments');
 
 function log(message) {
   if (hre.config != null && hre.config.suppressLogs !== true) {
@@ -32,40 +23,15 @@ function log(message) {
   }
 }
 
+const initialSettings = {
+  admin: '0x08C96cfD285D039EdEB1a7c5CaF9ef0D0EE38c52',
+  VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
+};
+
 async function deployAllContracts({
   initialAdmin = initialSettings.admin,
   vrcContractAddress = initialSettings.VRC,
 } = {}) {
-  // Deploy and initialize Admins contract
-  const adminsContractAddress = await deployAndInitializeAdmins(initialAdmin);
-  log(white(`Deployed Admins contract: ${green(adminsContractAddress)}`));
-
-  // Deploy and initialize Managers contract
-  const managersContractAddress = await deployAndInitializeManagers(
-    adminsContractAddress
-  );
-  log(white(`Deployed Managers contract: ${green(managersContractAddress)}`));
-
-  // Deploy and initialize Operators contract
-  const operatorsContractAddress = await deployAndInitializeOperators(
-    adminsContractAddress
-  );
-  log(white(`Deployed Operators contract: ${green(operatorsContractAddress)}`));
-
-  // Deploy and initialize Settings contract
-  const settingsContractAddress = await deployAndInitializeSettings(
-    adminsContractAddress,
-    operatorsContractAddress
-  );
-  log(white(`Deployed Settings contract: ${green(settingsContractAddress)}`));
-
-  // Deploy and initialize Payments contract
-  const paymentsContractAddress = await deployAndInitializePayments(
-    settingsContractAddress,
-    managersContractAddress
-  );
-  log(white(`Deployed Payments contract: ${green(paymentsContractAddress)}`));
-
   // Deploy contracts
   const validatorsContractAddress = await deployValidators();
   log(
@@ -75,7 +41,11 @@ async function deployAllContracts({
   const poolContractAddress = await deployPool();
   log(white(`Deployed Pool contract: ${green(poolContractAddress)}`));
 
-  const solosContractAddress = await deploySolos();
+  const solosContractAddress = await deploySolos(
+    initialAdmin,
+    vrcContractAddress,
+    validatorsContractAddress
+  );
   log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
 
   const stakedEthTokenContractAddress = await deployStakedEthToken();
@@ -115,43 +85,33 @@ async function deployAllContracts({
   // Initialize contracts
   await initializeValidators(
     validatorsContractAddress,
+    initialAdmin,
     poolContractAddress,
-    solosContractAddress,
-    settingsContractAddress
+    solosContractAddress
   );
   log(white('Initialized Validators contract'));
 
   await initializePool(
     poolContractAddress,
+    initialAdmin,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
-    operatorsContractAddress,
     vrcContractAddress,
     validatorsContractAddress
   );
   log(white('Initialized Pool contract'));
 
-  await initializeSolos(
-    solosContractAddress,
-    settingsContractAddress,
-    operatorsContractAddress,
-    vrcContractAddress,
-    validatorsContractAddress
-  );
-  log(white('Initialized Solos contract'));
-
   await initializeStakedEthToken(
     stakedEthTokenContractAddress,
+    initialAdmin,
     rewardEthTokenContractAddress,
-    settingsContractAddress,
     poolContractAddress
   );
   log(white('Initialized StakedEthToken contract'));
 
   await initializeRewardEthToken(
     rewardEthTokenContractAddress,
+    initialAdmin,
     stakedEthTokenContractAddress,
-    settingsContractAddress,
     balanceReportersContractAddress,
     stakedTokensContractAddress
   );
@@ -159,25 +119,19 @@ async function deployAllContracts({
 
   await initializeStakedTokens(
     stakedTokensContractAddress,
-    settingsContractAddress,
-    adminsContractAddress,
+    initialAdmin,
     rewardEthTokenContractAddress
   );
   log(white('Initialized StakedTokens contract'));
 
   await initializeBalanceReporters(
     balanceReportersContractAddress,
-    adminsContractAddress,
-    settingsContractAddress,
+    initialAdmin,
     rewardEthTokenContractAddress
   );
   log(white('Initialized BalanceReporters contract'));
 
   return {
-    admins: adminsContractAddress,
-    operators: operatorsContractAddress,
-    managers: managersContractAddress,
-    settings: settingsContractAddress,
     validators: validatorsContractAddress,
     balanceReporters: balanceReportersContractAddress,
     pool: poolContractAddress,

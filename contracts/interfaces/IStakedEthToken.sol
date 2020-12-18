@@ -2,19 +2,19 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
  * @dev Interface of the StakedEthToken contract.
  */
-interface IStakedEthToken is IERC20 {
+interface IStakedEthToken is IERC20Upgradeable {
     /**
     * @dev Constructor for initializing the StakedEthToken contract.
+    * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
-    * @param _settings - address of the Settings contract.
     * @param _pool - address of the Pool contract.
     */
-    function initialize(address _rewardEthToken, address _settings, address _pool) external;
+    function initialize(address _admin, address _rewardEthToken, address _pool) external;
 
     /**
     * @dev Function for retrieving the total deposits amount.
