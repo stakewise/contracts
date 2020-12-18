@@ -18,7 +18,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @dev Event for tracking updated maintainer fee.
     * @param maintainerFee - new maintainer fee.
     */
-    event MaintainerFeeUpdated(int256 maintainerFee);
+    event MaintainerFeeUpdated(uint128 maintainerFee);
 
     /**
     * @dev Structure for storing information about user reward checkpoint.
@@ -26,8 +26,8 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param reward - user reward checkpoint.
     */
     struct Checkpoint {
-        int256 rewardPerToken;
-        int256 reward;
+        int128 rewardPerToken;
+        int128 reward;
     }
 
     /**
@@ -38,10 +38,10 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param updateTimestamp - last rewards update timestamp by balance reporters.
     */
     event RewardsUpdated(
-        int256 periodRewards,
-        int256 totalRewards,
-        int256 rewardPerToken,
-        uint256 updateTimestamp
+        int128 periodRewards,
+        int128 totalRewards,
+        int128 rewardPerToken,
+        uint128 updateTimestamp
     );
 
     /**
@@ -50,8 +50,17 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _balanceReporters - address of the BalanceReporters contract.
     * @param _stakedTokens - address of the StakedTokens contract.
+    * @param _maintainer - maintainer's address.
+    * @param _maintainerFee - maintainer's fee. Must be less than 10000 (100.00%).
     */
-    function initialize(address _admin, address _stakedEthToken, address _balanceReporters, address _stakedTokens) external;
+    function initialize(
+        address _admin,
+        address _stakedEthToken,
+        address _balanceReporters,
+        address _stakedTokens,
+        address _maintainer,
+        uint128 _maintainerFee
+    ) external;
 
     /**
     * @dev Function for getting the address of the maintainer, where the fee will be paid.
@@ -67,34 +76,34 @@ interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Function for getting maintainer fee. The percentage fee users pay from their reward for using the pool service.
     */
-    function maintainerFee() external view returns (int256);
+    function maintainerFee() external view returns (uint128);
 
     /**
     * @dev Function for changing the maintainer's fee.
     * @param _newMaintainerFee - new maintainer's fee. Must be less than 10000 (100.00%).
     */
-    function setMaintainerFee(int256 _newMaintainerFee) external;
+    function setMaintainerFee(uint128 _newMaintainerFee) external;
 
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
     */
-    function updateTimestamp() external view returns (uint256);
+    function updateTimestamp() external view returns (uint128);
 
     /**
     * @dev Function for retrieving the total rewards amount. Can be negative in case of penalties.
     */
-    function totalRewards() external view returns (int256);
+    function totalRewards() external view returns (int128);
 
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.
     */
-    function rewardPerToken() external view returns (int256);
+    function rewardPerToken() external view returns (int128);
 
     /**
     * @dev Function for retrieving account's current checkpoint.
     * @param account - address of the account to retrieve the checkpoint for.
     */
-    function checkpoints(address account) external view returns (int256, int256);
+    function checkpoints(address account) external view returns (int128, int128);
 
     /**
     * @dev Function for retrieving current reward of the account.
@@ -110,18 +119,11 @@ interface IRewardEthToken is IERC20Upgradeable {
     function updateRewardCheckpoint(address account) external;
 
     /**
-    * @dev Function for resetting account's reward checkpoint.
-    * Can only be called by StakedEthToken contract.
-    * @param account - address of the account to reset the reward checkpoint for.
-    */
-    function resetCheckpoint(address account) external;
-
-    /**
     * @dev Function for updating validators total rewards.
     * Can only be called by Balance Reporters contract.
     * @param newTotalRewards - new total rewards.
     */
-    function updateTotalRewards(int256 newTotalRewards) external;
+    function updateTotalRewards(int128 newTotalRewards) external;
 
     /**
     * @dev Function for claiming rewards. Can only be called by StakedTokens contract.

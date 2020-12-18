@@ -21,20 +21,20 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
     using SafeCastUpgradeable for uint256;
     using SafeCastUpgradeable for int256;
 
-    // @dev Last rewards update timestamp by balance reporters.
-    uint256 public override updateTimestamp;
-
-    // @dev Total amount of rewards. Can be negative in case of penalties.
-    int256 public override totalRewards;
-
     // @dev Maps account address to its reward checkpoint.
     mapping(address => Checkpoint) public override checkpoints;
 
-    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
-    int256 public override rewardPerToken;
-
     // @dev Maintainer percentage fee.
-    int256 public override maintainerFee;
+    uint128 public override maintainerFee;
+
+    // @dev Last rewards update timestamp by balance reporters.
+    uint128 public override updateTimestamp;
+
+    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
+    int128 public override rewardPerToken;
+
+    // @dev Total amount of rewards. Can be negative in case of penalties.
+    int128 public override totalRewards;
 
     // @dev Address of the maintainer, where the fee will be paid.
     address public override maintainer;
@@ -55,7 +55,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         address _admin,
         address _stakedEthToken,
         address _balanceReporters,
-        address _stakedTokens
+        address _stakedTokens,
+        address _maintainer,
+        uint128 _maintainerFee
     )
         public override initializer
     {
@@ -64,6 +66,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;
+
+        // set maintainer
+        maintainer = _maintainer;
+        emit MaintainerUpdated(_maintainer);
+
+        // set maintainer fee
+        maintainerFee = _maintainerFee;
+        emit MaintainerFeeUpdated(_maintainerFee);
     }
 
     /**
@@ -77,8 +87,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
     /**
      * @dev See {IRewardEthToken-setMaintainerFee}.
      */
-    function setMaintainerFee(int256 _newMaintainerFee) external override onlyAdmin {
-        require(_newMaintainerFee > 0 && _newMaintainerFee < 10000, "RewardEthToken: invalid new maintainer fee");
+    function setMaintainerFee(uint128 _newMaintainerFee) external override onlyAdmin {
+        require(_newMaintainerFee < 10000, "RewardEthToken: invalid new maintainer fee");
         maintainerFee = _newMaintainerFee;
         emit MaintainerFeeUpdated(_newMaintainerFee);
     }
@@ -87,7 +97,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() external view override returns (uint256) {
-        return totalRewards > 0 ? totalRewards.toUint256() : 0;
+        int256 _totalRewards = totalRewards;
+        return _totalRewards > 0 ? uint256(_totalRewards) : 0;
     }
 
     /**
@@ -95,7 +106,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
      */
     function balanceOf(address account) external view override returns (uint256) {
         int256 balance = rewardOf(account);
-        return balance > 0 ? balance.toUint256() : 0;
+        return balance > 0 ? uint256(balance) : 0;
     }
 
     /**
@@ -104,16 +115,16 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
     function rewardOf(address account) public view override returns (int256) {
         Checkpoint memory cp = checkpoints[account];
 
-        int256 periodRewardPerToken = rewardPerToken.sub(cp.rewardPerToken);
+        int256 periodRewardPerToken = int256(rewardPerToken).sub(int256(cp.rewardPerToken));
         if (periodRewardPerToken == 0) {
             // no new rewards
-            return cp.reward;
+            return int256(cp.reward);
         }
 
         uint256 deposit = stakedEthToken.depositOf(account);
         if (deposit == 0) {
             // no deposit amount
-            return cp.reward;
+            return int256(cp.reward);
         }
 
         // calculate current reward of the account
@@ -124,7 +135,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         }
 
         // return checkpoint reward + current reward
-        return cp.reward.add(curReward);
+        return int256(cp.reward).add(curReward);
     }
 
     /**
@@ -134,8 +145,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         require(sender != address(0), "RewardEthToken: transfer from the zero address");
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
 
-        checkpoints[sender] = Checkpoint(rewardPerToken, rewardOf(sender).toUint256().sub(amount, "RewardEthToken: invalid amount").toInt256());
-        checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount.toInt256()));
+        int128 curRewardPerToken = rewardPerToken;
+        checkpoints[sender] = Checkpoint(curRewardPerToken, int256(rewardOf(sender).toUint256().sub(amount, "RewardEthToken: invalid amount")).toInt128());
+        checkpoints[recipient] = Checkpoint(curRewardPerToken, rewardOf(recipient).add(amount.toInt256()).toInt128());
 
         emit Transfer(sender, recipient, amount);
     }
@@ -144,45 +156,39 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account));
-    }
-
-    /**
-     * @dev See {IRewardEthToken-resetCheckpoint}.
-     */
-    function resetCheckpoint(address account) external override {
-        require(msg.sender == address(stakedEthToken), "RewardEthToken: permission denied");
-        checkpoints[account] = Checkpoint(rewardPerToken, 0);
+        checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account).toInt128());
     }
 
     /**
      * @dev See {IRewardEthToken-updateTotalRewards}.
      */
-    function updateTotalRewards(int256 newTotalRewards) external override {
+    function updateTotalRewards(int128 newTotalRewards) external override {
         require(msg.sender == balanceReporters, "RewardEthToken: permission denied");
 
-        int256 periodRewards = newTotalRewards.sub(totalRewards);
+        int256 periodRewards = int256(newTotalRewards).sub(totalRewards);
         int256 maintainerReward;
         if (periodRewards > 0) {
-            maintainerReward = periodRewards.mul(maintainerFee).div(10000);
+            maintainerReward = periodRewards.mul(int256(maintainerFee)).div(10000);
         }
 
         // calculate reward per token used for account reward calculation
-        rewardPerToken = rewardPerToken.add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits().toInt256()));
+        int128 newRewardPerToken = int256(rewardPerToken).add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits().toInt256())).toInt128();
 
         // deduct maintainer fee if period reward is positive
         if (maintainerReward > 0) {
            checkpoints[maintainer] = Checkpoint(
-                rewardPerToken,
-                rewardOf(maintainer).add(maintainerReward)
+                newRewardPerToken,
+                rewardOf(maintainer).add(maintainerReward).toInt128()
            );
         }
 
         // solhint-disable-next-line not-rely-on-time
-        updateTimestamp = block.timestamp;
+        uint128 newTimestamp = block.timestamp.toUint128();
+        updateTimestamp = newTimestamp;
         totalRewards = newTotalRewards;
+        rewardPerToken = newRewardPerToken;
 
-        emit RewardsUpdated(periodRewards, newTotalRewards, rewardPerToken, updateTimestamp);
+        emit RewardsUpdated(periodRewards.toInt128(), newTotalRewards, newRewardPerToken, newTimestamp);
     }
 
     /**

@@ -23,21 +23,21 @@
       },
       {
         "indexed": false,
-        "internalType": "int256",
-        "name": "newTotalRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
         "internalType": "bool",
         "name": "syncUniswapPairs",
         "type": "bool"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
+        "internalType": "int128",
+        "name": "newTotalRewards",
+        "type": "int128"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint128",
         "name": "updateTimestamp",
-        "type": "uint256"
+        "type": "uint128"
       }
     ],
     "name": "VoteSubmitted",
@@ -96,9 +96,9 @@
         "type": "address"
       },
       {
-        "internalType": "int256",
+        "internalType": "int128",
         "name": "_newTotalRewards",
-        "type": "int256"
+        "type": "int128"
       },
       {
         "internalType": "bool",
@@ -183,9 +183,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "int128",
         "name": "_newTotalRewards",
-        "type": "int256"
+        "type": "int128"
       },
       {
         "internalType": "bool",

@@ -59,8 +59,8 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     /**
      * @dev See {IBalanceReporters-hasVoted}.
      */
-    function hasVoted(address _reporter, int256 _newTotalRewards, bool _syncUniswapPairs) public override view returns (bool) {
-        bytes32 candidateId = keccak256(abi.encodePacked(rewardEthToken.updateTimestamp(), _newTotalRewards, _syncUniswapPairs));
+    function hasVoted(address _reporter, int128 _newTotalRewards, bool _syncUniswapPairs) public override view returns (bool) {
+        bytes32 candidateId = keccak256(abi.encodePacked(_syncUniswapPairs, rewardEthToken.updateTimestamp(), _newTotalRewards));
         return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
     }
 
@@ -97,20 +97,20 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
      * @dev See {IBalanceReporters-voteForTotalRewards}.
      */
     function voteForTotalRewards(
-        int256 _newTotalRewards,
+        int128 _newTotalRewards,
         bool _syncUniswapPairs
     )
         external override onlyReporter whenNotPaused nonReentrant
     {
-        uint256 updateTimestamp = rewardEthToken.updateTimestamp();
-        bytes32 candidateId = keccak256(abi.encodePacked(updateTimestamp, _newTotalRewards, _syncUniswapPairs));
+        uint128 updateTimestamp = rewardEthToken.updateTimestamp();
+        bytes32 candidateId = keccak256(abi.encodePacked(_syncUniswapPairs, updateTimestamp, _newTotalRewards));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "BalanceReporters: vote was already submitted");
 
         // mark vote as submitted, update total rewards votes number
         submittedVotes[voteId] = true;
         candidates[candidateId] = candidates[candidateId].add(1);
-        emit VoteSubmitted(msg.sender, _newTotalRewards, _syncUniswapPairs, updateTimestamp);
+        emit VoteSubmitted(msg.sender, _syncUniswapPairs, _newTotalRewards, updateTimestamp);
 
         // update rewards only if enough votes accumulated
         if (candidates[candidateId].mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {

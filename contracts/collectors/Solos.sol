@@ -44,16 +44,28 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
     * @param _admin - address of the contract admin.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
+    * @param _validatorPrice - validator price.
+    * @param _cancelLockDuration - cancel lock duration in seconds.
     */
     constructor(
         address _admin,
         address _validatorRegistration,
-        address _validators
+        address _validators,
+        uint256 _validatorPrice,
+        uint256 _cancelLockDuration
     )
         OwnablePausable(_admin)
     {
         validatorRegistration = IDepositContract(_validatorRegistration);
         validators = IValidators(_validators);
+
+        // set validator price
+        validatorPrice = _validatorPrice;
+        emit ValidatorPriceUpdated(_validatorPrice);
+
+        // set cancel lock duration
+        cancelLockDuration = _cancelLockDuration;
+        emit CancelLockDurationUpdated(_cancelLockDuration);
     }
 
     /**

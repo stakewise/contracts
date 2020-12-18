@@ -47,7 +47,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view override returns (uint256) {
-        int256 totalRewards = rewardEthToken.totalRewards();
+        int256 totalRewards = int256(rewardEthToken.totalRewards());
         if (totalRewards >= 0) {
             return totalDeposits;
         }
@@ -61,7 +61,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) external view override returns (uint256) {
-        int256 reward = rewardEthToken.rewardOf(account);
+        int256 reward = int256(rewardEthToken.rewardOf(account));
         uint256 deposit = deposits[account];
         if (reward >= 0) {
             return deposit;
@@ -86,24 +86,16 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
         require(sender != address(0), "StakedEthToken: transfer from the zero address");
         require(recipient != address(0), "StakedEthToken: transfer to the zero address");
 
-        int256 senderReward = rewardEthToken.rewardOf(sender);
-        if (senderReward < 0) {
-            uint256 oldDeposit = deposits[sender];
-            uint256 penalisedDeposit = oldDeposit.toInt256().add(senderReward).toUint256();
+        uint256 newSenderDeposit = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
+        int256 senderReward = int256(rewardEthToken.rewardOf(sender));
+        require(
+            senderReward >= 0 || newSenderDeposit.toInt256().add(senderReward.mul(2)) > 0,
+            "StakedEthToken: unsafe penalty for left sender stETH amount"
+        );
 
-            if (penalisedDeposit.sub(amount, "StakedEthToken: invalid amount").toInt256().add(senderReward.mul(2)) <= 0) {
-                // penalty is equal or bigger than 50% of the left deposit -> repay penalty with the deposit
-                totalDeposits = totalDeposits.toInt256().add(senderReward).toUint256();
-                rewardEthToken.resetCheckpoint(sender);
-                deposits[sender] = penalisedDeposit.sub(amount);
-            } else {
-                deposits[sender] = oldDeposit.sub(amount);
-            }
-        } else {
-            // start calculating sender rewards with updated deposit amount
-            rewardEthToken.updateRewardCheckpoint(sender);
-            deposits[sender] = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
-        }
+        // start calculating sender rewards with updated deposit amount
+        rewardEthToken.updateRewardCheckpoint(sender);
+        deposits[sender] = newSenderDeposit;
 
         // start calculating recipient rewards with updated deposit amount
         rewardEthToken.updateRewardCheckpoint(recipient);
