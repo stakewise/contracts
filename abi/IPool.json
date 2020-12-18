@@ -72,6 +72,11 @@
         "internalType": "address",
         "name": "_validators",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_withdrawalCredentials",
+        "type": "bytes32"
       }
     ],
     "name": "initialize",

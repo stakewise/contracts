@@ -43,7 +43,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         address _admin,
         address _stakedEthToken,
         address _validatorRegistration,
-        address _validators
+        address _validators,
+        bytes32 _withdrawalCredentials
     )
         public override initializer
     {
@@ -51,6 +52,10 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         validatorRegistration = IDepositContract(_validatorRegistration);
         validators = IValidators(_validators);
+
+        // set withdrawal credentials
+        withdrawalCredentials = _withdrawalCredentials;
+        emit WithdrawalCredentialsUpdated(_withdrawalCredentials);
     }
 
     /**

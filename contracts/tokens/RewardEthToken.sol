@@ -55,7 +55,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         address _admin,
         address _stakedEthToken,
         address _balanceReporters,
-        address _stakedTokens
+        address _stakedTokens,
+        address _maintainer,
+        int256 _maintainerFee
     )
         public override initializer
     {
@@ -64,6 +66,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;
+
+        // set maintainer
+        maintainer = _maintainer;
+        emit MaintainerUpdated(_maintainer);
+
+        // set maintainer fee
+        maintainerFee = _maintainerFee;
+        emit MaintainerFeeUpdated(_maintainerFee);
     }
 
     /**

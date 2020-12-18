@@ -1,4 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
+const { initialSettings } = require('./settings');
 
 async function deployAndInitializeERC20Mock(
   ownerAddress,
@@ -60,7 +61,9 @@ async function initializeRewardEthToken(
     adminAddress,
     stakedEthTokenContractAddress,
     balanceReportersContractAddress,
-    stakedTokensContractAddress
+    stakedTokensContractAddress,
+    initialSettings.maintainer,
+    initialSettings.maintainerFee
   );
 }
 

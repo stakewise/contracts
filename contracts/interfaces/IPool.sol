@@ -40,12 +40,14 @@ interface IPool {
     * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
     * @param _validators - address of the Validators contract.
+    * @param _withdrawalCredentials - withdrawal credentials for the pool validators.
     */
     function initialize(
         address _admin,
         address _stakedEthToken,
         address _validatorRegistration,
-        address _validators
+        address _validators,
+        bytes32 _withdrawalCredentials
     ) external;
 
     /**

@@ -1,5 +1,9 @@
 const hre = require('hardhat');
+const {
+  getManifestAdmin,
+} = require('@openzeppelin/hardhat-upgrades/dist/admin.js');
 const { white, green } = require('chalk');
+const { initialSettings } = require('./settings');
 
 const {
   deployValidators,
@@ -23,14 +27,10 @@ function log(message) {
   }
 }
 
-const initialSettings = {
-  admin: '0x08C96cfD285D039EdEB1a7c5CaF9ef0D0EE38c52',
-  VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
-};
-
 async function deployAllContracts({
   initialAdmin = initialSettings.admin,
   vrcContractAddress = initialSettings.VRC,
+  transferProxyAdminOwnership = false,
 } = {}) {
   // Deploy contracts
   const validatorsContractAddress = await deployValidators();
@@ -130,6 +130,12 @@ async function deployAllContracts({
     rewardEthTokenContractAddress
   );
   log(white('Initialized BalanceReporters contract'));
+
+  if (transferProxyAdminOwnership) {
+    const admin = await getManifestAdmin(hre);
+    await hre.upgrades.admin.transferProxyAdminOwnership(initialAdmin);
+    log(white(`Transferred proxy admin ownership to ${await admin.owner()}`));
+  }
 
   return {
     validators: validatorsContractAddress,
