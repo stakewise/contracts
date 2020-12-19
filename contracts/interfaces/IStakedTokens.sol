@@ -11,11 +11,13 @@ interface IStakedTokens {
     * @param enabled - defines whether the token is supported.
     * @param totalSupply - total staked amount of the token.
     * @param totalRewards - last synced total rewards.
+    * @param rewardRate - token reward rate.
     */
     struct Token {
         bool enabled;
         uint256 totalSupply;
         uint256 totalRewards;
+        uint256 rewardRate;
     }
 
     /**
@@ -53,13 +55,7 @@ interface IStakedTokens {
     * @dev Function for retrieving token's data.
     * @param _token - address of the token to retrieve.
     */
-    function tokens(address _token) external view returns (bool, uint256, uint256);
-
-    /**
-    * @dev Function for retrieving account or token reward rate.
-    * @param _account - address of the account to retrieve reward rate for.
-    */
-    function rewardRates(address _account) external view returns (uint256);
+    function tokens(address _token) external view returns (bool, uint256, uint256, uint256);
 
     /**
     * @dev Constructor for initializing the StakedTokens contract.
@@ -100,6 +96,13 @@ interface IStakedTokens {
      * @param _account - address of the account.
      */
     function balanceOf(address _token, address _account) external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving account or token reward rate.
+    * @param _token - address of the contract which tokens are staked.
+    * @param _account - address of the account to retrieve reward rate for.
+    */
+    function rewardRateOf(address _token, address _account) external view returns (uint256);
 
     /**
     * @dev Function for retrieving current reward of the account for the specific token contract.

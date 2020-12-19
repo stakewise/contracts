@@ -163,11 +163,16 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "_token",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
     ],
-    "name": "rewardRates",
+    "name": "rewardRateOf",
     "outputs": [
       {
         "internalType": "uint256",
@@ -228,6 +233,11 @@
         "internalType": "bool",
         "name": "",
         "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       },
       {
         "internalType": "uint256",
