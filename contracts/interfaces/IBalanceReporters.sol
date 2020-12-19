@@ -13,7 +13,7 @@ interface IBalanceReporters {
     * @param syncUniswapPairs - whether to synchronize supported uniswap pairs.
     * @param updateTimestamp - timestamp of the RewardEthToken last update.
     */
-    event VoteSubmitted(address indexed reporter, int256 newTotalRewards, bool syncUniswapPairs, uint256 updateTimestamp);
+    event VoteSubmitted(address indexed reporter, uint256 newTotalRewards, bool syncUniswapPairs, uint256 updateTimestamp);
 
     /**
     * @dev Event for tracking updated uniswap pairs.
@@ -51,7 +51,7 @@ interface IBalanceReporters {
     * @param _newTotalRewards - total rewards submitted by the reporter.
     * @param _syncUniswapPairs - whether to synchronize supported uniswap pairs.
     */
-    function hasVoted(address _reporter, int256 _newTotalRewards, bool _syncUniswapPairs) external view returns (bool);
+    function hasVoted(address _reporter, uint256 _newTotalRewards, bool _syncUniswapPairs) external view returns (bool);
 
     /**
     * @dev Function for adding a reporter role to the account.
@@ -80,5 +80,5 @@ interface IBalanceReporters {
     * @param _newTotalRewards - total rewards to give a vote for.
     * @param _syncUniswapPairs - whether to synchronize supported uniswap pairs.
     */
-    function voteForTotalRewards(int256 _newTotalRewards, bool _syncUniswapPairs) external;
+    function voteForTotalRewards(uint256 _newTotalRewards, bool _syncUniswapPairs) external;
 }

@@ -59,7 +59,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     /**
      * @dev See {IBalanceReporters-hasVoted}.
      */
-    function hasVoted(address _reporter, int256 _newTotalRewards, bool _syncUniswapPairs) public override view returns (bool) {
+    function hasVoted(address _reporter, uint256 _newTotalRewards, bool _syncUniswapPairs) public override view returns (bool) {
         bytes32 candidateId = keccak256(abi.encodePacked(rewardEthToken.updateTimestamp(), _newTotalRewards, _syncUniswapPairs));
         return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
     }
@@ -97,7 +97,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
      * @dev See {IBalanceReporters-voteForTotalRewards}.
      */
     function voteForTotalRewards(
-        int256 _newTotalRewards,
+        uint256 _newTotalRewards,
         bool _syncUniswapPairs
     )
         external override onlyReporter whenNotPaused nonReentrant

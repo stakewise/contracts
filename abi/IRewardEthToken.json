@@ -29,9 +29,9 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "maintainerFee",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "name": "MaintainerFeeUpdated",
@@ -55,21 +55,21 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "periodRewards",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "totalRewards",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "indexed": false,
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "rewardPerToken",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -184,14 +184,14 @@
     "name": "checkpoints",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       },
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -271,25 +271,12 @@
     "name": "maintainerFee",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "resetCheckpoint",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -303,9 +290,9 @@
     "name": "rewardOf",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -316,9 +303,9 @@
     "name": "rewardPerToken",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -340,9 +327,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "_newMaintainerFee",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "name": "setMaintainerFee",
@@ -355,9 +342,9 @@
     "name": "totalRewards",
     "outputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -458,9 +445,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "newTotalRewards",
-        "type": "int256"
+        "type": "uint256"
       }
     ],
     "name": "updateTotalRewards",

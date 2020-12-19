@@ -23,9 +23,9 @@
       },
       {
         "indexed": false,
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "newTotalRewards",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -96,9 +96,9 @@
         "type": "address"
       },
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "_newTotalRewards",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "internalType": "bool",
@@ -183,9 +183,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "_newTotalRewards",
-        "type": "int256"
+        "type": "uint256"
       },
       {
         "internalType": "bool",

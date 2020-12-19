@@ -84,13 +84,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         }),
         'RewardEthToken: invalid new maintainer fee'
       );
-
-      await expectRevert(
-        rewardEthToken.setMaintainerFee(-1, {
-          from: admin,
-        }),
-        'RewardEthToken: invalid new maintainer fee'
-      );
     });
   });
 
