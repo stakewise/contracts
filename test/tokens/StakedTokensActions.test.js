@@ -1,10 +1,13 @@
 const { expect } = require('chai');
+const { fromRpcSig } = require('ethereumjs-util');
+const ethSigUtil = require('eth-sig-util');
 const {
   expectRevert,
   expectEvent,
   BN,
   ether,
   constants,
+  send,
 } = require('@openzeppelin/test-helpers');
 const {
   deployAndInitializeERC20Mock,
@@ -15,6 +18,37 @@ const { deployTokens } = require('../utils');
 
 const StakedTokens = artifacts.require('StakedTokens');
 const ERC20Mock = artifacts.require('ERC20Mock');
+
+const buildPermitData = ({
+  chainId,
+  verifyingContract,
+  deadline = constants.MAX_UINT256,
+  owner,
+  spender,
+  value,
+  name,
+  version = '1',
+  nonce = 0,
+}) => ({
+  primaryType: 'Permit',
+  types: {
+    EIP712Domain: [
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+    ],
+    Permit: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+      { name: 'value', type: 'uint256' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  },
+  domain: { name, version, chainId, verifyingContract },
+  message: { owner, spender, value, nonce, deadline },
+});
 
 contract('StakedTokens Actions', ([_, ...accounts]) => {
   let stakedEthToken, rewardEthToken, stakedTokens, token, rewardHolders;
@@ -223,6 +257,57 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
           await stakedTokens.balanceOf(token.address, holder)
         ).to.bignumber.equal(stakedBalance);
       }
+    });
+
+    it('can stake tokens with permit', async () => {
+      let holder = web3.eth.accounts.create();
+      await token.mint(holder.address, stakedBalance, {
+        from: admin,
+      });
+      await send.ether(otherAccount, holder.address, ether('10'));
+
+      // generate signature
+      const data = buildPermitData({
+        chainId: await token.getChainId(),
+        name: await token.name(),
+        verifyingContract: token.address,
+        value: stakedBalance,
+        owner: holder.address,
+        spender: stakedTokens.address,
+      });
+
+      const signature = ethSigUtil.signTypedMessage(
+        Buffer.from(holder.privateKey.substring(2), 'hex'),
+        { data }
+      );
+      let { v, r, s } = fromRpcSig(signature);
+
+      let encodedData = await stakedTokens.contract.methods
+        .stakeTokensWithPermit(
+          token.address,
+          stakedBalance,
+          constants.MAX_UINT256,
+          v,
+          r,
+          s
+        )
+        .encodeABI();
+      const tx = {
+        from: holder.address,
+        to: stakedTokens.address,
+        data: encodedData,
+        gas: 1000000,
+      };
+
+      let signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        holder.privateKey
+      );
+      await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+      expect(
+        await stakedTokens.balanceOf(token.address, holder.address)
+      ).to.bignumber.equal(stakedBalance);
     });
   });
 

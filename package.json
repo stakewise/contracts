@@ -61,6 +61,8 @@
     "eslint": "^7.15.0",
     "eslint-config-prettier": "^7.0.0",
     "eslint-plugin-prettier": "^3.3.0",
+    "eth-sig-util": "^3.0.0",
+    "ethereumjs-util": "^7.0.7",
     "ethers": "^5.0.24",
     "ganache-cli": "^6.12.1",
     "hardhat": "^2.0.5",

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.3.0/contracts/token/ERC20/ERC20Upgradeable.sol
 
 pragma solidity 0.7.5;
 
@@ -9,7 +10,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 
 /**
  * @dev Implementation of the {IERC20} interface.
- * Adapted from: https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.3.0/contracts/token/ERC20/ERC20Upgradeable.sol
  *
  * This implementation is agnostic to the way tokens are created. This means
  * that a supply mechanism has to be added in a derived contract using {_mint}.
@@ -32,7 +32,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
  * functions have been added to mitigate the well-known issues around setting
  * allowances. See {IERC20-approve}.
  */
-abstract contract ERC20 is IERC20Upgradeable, Initializable {
+abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
     using SafeMathUpgradeable for uint256;
 
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -141,7 +141,9 @@ abstract contract ERC20 is IERC20Upgradeable, Initializable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        if (sender != msg.sender && _allowances[sender][msg.sender] != uint256(-1)) {
+            _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
+        }
         return true;
     }
 
