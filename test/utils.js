@@ -11,7 +11,7 @@ const {
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 
-function getDepositAmount({ min = new BN('1'), max = ether('10000') } = {}) {
+function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
     .mul(max.sub(min))
     .div(ether('1'))

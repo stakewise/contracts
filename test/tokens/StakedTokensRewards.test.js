@@ -127,34 +127,6 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await checkRewards({ totalRewards, fee });
   });
 
-  it('rewards are 0 when the token contract has negative rewards', async () => {
-    let totalRewards = ether('-100');
-
-    // update rewards
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
-    });
-
-    // check rewards holders rewards
-    for (const holder of rewardHolders) {
-      await checkRewardEthToken({
-        rewardEthToken,
-        totalSupply: new BN(0),
-        account: holder,
-        balance: new BN(0),
-        // subtract 1 Wei for fixing penalty rounding down
-        reward: totalRewards.div(new BN(rewardHolders.length)).sub(new BN(1)),
-      });
-    }
-
-    // check token holders
-    for (const holder of tokenHolders) {
-      expect(
-        await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(new BN(0));
-    }
-  });
-
   it('rewards are withdrawn when the tokens are withdrawn', async () => {
     let totalRewards = ether('100');
     let fee = totalRewards.mul(maintainerFee).div(new BN(10000));
@@ -435,71 +407,6 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
       new BN(0)
     );
-
-    // check holder 5
-    expect(
-      await stakedTokens.rewardOf(token.address, tokenHolder5)
-    ).to.be.bignumber.equal(new BN(0));
-    expect(
-      await stakedTokens.balanceOf(token.address, tokenHolder5)
-    ).to.be.bignumber.equal(stakedBalance);
-
-    // first penalty received
-    totalRewards = ether('80');
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
-    });
-
-    // check holder 1
-    expect(
-      await stakedTokens.rewardOf(token.address, tokenHolder1)
-    ).to.be.bignumber.equal(reward);
-    expect(
-      await stakedTokens.balanceOf(token.address, tokenHolder1)
-    ).to.be.bignumber.equal(stakedBalance);
-    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
-      new BN(0)
-    );
-
-    // check holder 5
-    expect(
-      await stakedTokens.rewardOf(token.address, tokenHolder5)
-    ).to.be.bignumber.equal(new BN(0));
-    expect(
-      await stakedTokens.balanceOf(token.address, tokenHolder5)
-    ).to.be.bignumber.equal(stakedBalance);
-
-    for (const holder of tokenHolders.slice(1)) {
-      expect(
-        await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(new BN(0));
-    }
-
-    // withdraw token holder 1 reward
-    await stakedTokens.withdrawRewards(token.address, {
-      from: tokenHolder1,
-    });
-    expect(
-      await stakedTokens.rewardOf(token.address, tokenHolder1)
-    ).to.be.bignumber.equal(new BN(0));
-    expect(
-      await stakedTokens.balanceOf(token.address, tokenHolder1)
-    ).to.be.bignumber.equal(stakedBalance);
-    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
-      reward
-    );
-
-    // second penalty received
-    totalRewards = ether('-100');
-    await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
-    });
-
-    for (const holder of tokenHolders) {
-      expect(
-        await stakedTokens.rewardOf(token.address, holder)
-      ).to.be.bignumber.equal(new BN(0));
-    }
 
     // check holder 5
     expect(
