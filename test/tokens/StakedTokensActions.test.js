@@ -77,20 +77,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
   });
 
   describe('enabling token', () => {
-    it('fails to enable when contract is paused', async () => {
-      await stakedTokens.pause({ from: admin });
-      expect(await stakedTokens.paused()).equal(true);
-
-      await expectRevert(
-        stakedTokens.toggleTokenContract(token.address, true, {
-          from: admin,
-        }),
-        'Pausable: paused'
-      );
-
-      await stakedTokens.unpause({ from: admin });
-    });
-
     it('only admin user can enable token', async () => {
       await expectRevert(
         stakedTokens.toggleTokenContract(token.address, true, {
@@ -126,20 +112,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
   });
 
   describe('disabling token', () => {
-    it('fails to disable token support when contract is paused', async () => {
-      await stakedTokens.pause({ from: admin });
-      expect(await stakedTokens.paused()).equal(true);
-
-      await expectRevert(
-        stakedTokens.toggleTokenContract(token.address, false, {
-          from: admin,
-        }),
-        'Pausable: paused'
-      );
-
-      await stakedTokens.unpause({ from: admin });
-    });
-
     it('only admin user can toggle token support', async () => {
       await stakedTokens.toggleTokenContract(token.address, true, {
         from: admin,
@@ -221,7 +193,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: otherAccount,
         }),
-        'StakedTokens: invalid tokens amount'
+        'ERC20: transfer amount exceeds balance'
       );
     });
 
@@ -281,25 +253,6 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       );
 
       await stakedTokens.unpause({ from: admin });
-    });
-
-    it('does not pull rewards when token is disabled', async () => {
-      await stakedTokens.toggleTokenContract(token.address, false, {
-        from: admin,
-      });
-
-      let totalRewards = ether('100');
-      await rewardEthToken.updateTotalRewards(totalRewards, {
-        from: balanceReportersContractAddress,
-      });
-
-      await stakedTokens.withdrawTokens(token.address, stakedBalance, {
-        from: tokenHolder1,
-      });
-
-      expect(await rewardEthToken.balanceOf(tokenHolder1)).to.bignumber.equal(
-        new BN(0)
-      );
     });
 
     it('fails to withdraw tokens with invalid contract', async () => {

@@ -23,8 +23,8 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     // @dev Maps token address to its information.
     mapping(address => Token) public override tokens;
 
-    // @dev Maps account and token addresses to their reward rate.
-    mapping(address => uint256) public override rewardRates;
+    // @dev Maps token address to their holders' reward rates.
+    mapping(address => mapping(address => uint256)) private rewardRates;
 
     // @dev Maps token addresses to their holders' balances.
     mapping(address => mapping(address => uint256)) private balances;
@@ -44,7 +44,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     /**
      * @dev See {IStakedTokens-toggleTokenContract}.
      */
-    function toggleTokenContract(address _token, bool _isEnabled) external override onlyAdmin whenNotPaused {
+    function toggleTokenContract(address _token, bool _isEnabled) external override onlyAdmin {
         require(_token != address(0), "StakedTokens: invalid token address");
 
         // support token
@@ -63,7 +63,6 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     function stakeTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
         Token storage token = tokens[_token];
         require(token.enabled, "StakedTokens: token is not supported");
-        require(IERC20(_token).balanceOf(msg.sender) >= _amount, "StakedTokens: invalid tokens amount");
 
         // update token's reward
         updateTokenRewards(_token);
@@ -86,17 +85,14 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      * @dev See {IStakedTokens-withdrawTokens}.
      */
     function withdrawTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
-        Token storage token = tokens[_token];
-
-        if (token.enabled) {
-            // update token's reward
-            updateTokenRewards(_token);
-        }
+        // update token's reward
+        updateTokenRewards(_token);
 
         // withdraw account's current rewards
         _withdrawRewards(_token, msg.sender);
 
         // update account's balance
+        Token storage token = tokens[_token];
         token.totalSupply = token.totalSupply.sub(_amount, "StakedTokens: invalid tokens amount");
         balances[_token][msg.sender] = balances[_token][msg.sender].sub(_amount, "StakedTokens: invalid tokens amount");
 
@@ -111,8 +107,6 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      * @dev See {IStakedTokens-withdrawRewards}.
      */
     function withdrawRewards(address _token) external override nonReentrant whenNotPaused {
-        require(tokens[_token].enabled, "StakedTokens: token is not supported");
-
         // update token's reward
         updateTokenRewards(_token);
 
@@ -128,26 +122,31 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     }
 
     /**
+     * @dev See {IStakedTokens-rewardRateOf}.
+     */
+    function rewardRateOf(address _token, address _account) external view override returns (uint256) {
+        return rewardRates[_token][_account];
+    }
+
+    /**
      * @dev See {IStakedTokens-rewardOf}.
      */
-    function rewardOf(address _token, address _account) public override view returns (uint256) {
-        uint256 tokenRewardRate = rewardRates[_token];
-        uint256 accountRewardRate = rewardRates[_account];
-
+    function rewardOf(address _token, address _account) external override view returns (uint256) {
         Token memory token = tokens[_token];
         if (token.totalSupply == 0) {
             return 0;
         }
 
         // calculate period reward
-        uint256 periodReward = IERC20(rewardEthToken).balanceOf(_token);
+        uint256 tokenPeriodReward = IERC20(rewardEthToken).balanceOf(_token);
+        uint256 accountRewardRate = rewardRates[_token][_account];
         uint256 accountBalance = balances[_token][_account];
-        if (periodReward == 0) {
-            return accountBalance.mul(tokenRewardRate.sub(accountRewardRate)).div(1e18);
+        if (tokenPeriodReward == 0) {
+            return accountBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
         }
 
         // calculate reward per token used for account reward calculation
-        uint256 rewardRate = tokenRewardRate.add(periodReward.mul(1e18).div(token.totalSupply));
+        uint256 rewardRate = token.rewardRate.add(tokenPeriodReward.mul(1e18).div(token.totalSupply));
 
         // calculate period reward
         return accountBalance.mul(rewardRate.sub(accountRewardRate)).div(1e18);
@@ -161,16 +160,16 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         Token storage token = tokens[_token];
         uint256 claimedRewards = IRewardEthToken(rewardEthToken).balanceOf(_token);
         if (token.totalSupply == 0 || claimedRewards == 0) {
-            // no staked tokens
+            // no staked tokens or rewards
             return;
         }
 
+        // calculate reward per token used for account reward calculation
+        token.rewardRate = token.rewardRate.add(claimedRewards.mul(1e18).div(token.totalSupply));
+        token.totalRewards = token.totalRewards.add(claimedRewards);
+
         // withdraw rewards from token
         IRewardEthToken(rewardEthToken).claimRewards(_token, claimedRewards);
-
-        // calculate reward per token used for account reward calculation
-        rewardRates[_token] = rewardRates[_token].add(claimedRewards.mul(1e18).div(token.totalSupply));
-        token.totalRewards = token.totalRewards.add(claimedRewards);
     }
 
     /**
@@ -179,25 +178,29 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     * @param _account - account to update.
     */
     function _withdrawRewards(address _token, address _account) private {
-        // fetch token and account reward rates
-        uint256 tokenRewardRate = rewardRates[_token];
-        uint256 accountRewardRate = rewardRates[_account];
-        if (tokenRewardRate == accountRewardRate) {
+        Token storage token = tokens[_token];
+        uint256 accountRewardRate = rewardRates[_token][_account];
+        if (token.rewardRate == accountRewardRate) {
             // nothing to withdraw
             return;
         }
 
-        // calculate period reward
-        uint256 accountBalance = balances[_token][_account];
-        uint256 periodReward = accountBalance.mul(tokenRewardRate.sub(accountRewardRate)).div(1e18);
-
         // update account reward rate
-        rewardRates[_account] = tokenRewardRate;
+        rewardRates[_token][_account] = token.rewardRate;
+
+        uint256 accountBalance = balances[_token][_account];
+        if (accountBalance == 0) {
+            // no staked tokens
+            return;
+        }
+
+        // calculate period reward
+        uint256 periodReward = accountBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
 
         // withdraw rewards
-        Token storage token = tokens[_token];
         token.totalRewards = token.totalRewards.sub(periodReward);
-        IERC20(rewardEthToken).safeTransfer(_account, periodReward);
         emit RewardWithdrawn(_token, _account, periodReward);
+
+        IERC20(rewardEthToken).safeTransfer(_account, periodReward);
     }
 }
