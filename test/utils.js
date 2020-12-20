@@ -111,7 +111,7 @@ async function checkStakedEthToken({
   }
 
   if (account != null && deposit != null) {
-    expect(await stakedEthToken.depositOf(account)).to.be.bignumber.equal(
+    expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
       deposit
     );
   }

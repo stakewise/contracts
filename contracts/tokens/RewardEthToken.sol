@@ -107,7 +107,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
             return cp.reward;
         }
 
-        uint256 deposit = stakedEthToken.depositOf(account);
+        uint256 deposit = stakedEthToken.balanceOf(account);
         if (deposit == 0) {
             // no deposit amount
             return cp.reward;

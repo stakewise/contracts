@@ -53,13 +53,6 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
     }
 
     /**
-     * @dev See {IStakedEthToken-depositOf}.
-     */
-    function depositOf(address account) external view override returns (uint256) {
-        return deposits[account];
-    }
-
-    /**
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
