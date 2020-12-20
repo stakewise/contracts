@@ -98,7 +98,7 @@ interface IStakedTokens {
     function balanceOf(address _token, address _account) external view returns (uint256);
 
     /**
-    * @dev Function for retrieving account or token reward rate.
+    * @dev Function for retrieving account reward rate.
     * @param _token - address of the contract which tokens are staked.
     * @param _account - address of the account to retrieve reward rate for.
     */
