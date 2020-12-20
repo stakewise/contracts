@@ -410,8 +410,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           from: otherAccounts[3],
         }
       );
-      // user3 penalty got burn after transfer
-      totalDeposits = totalDeposits.sub(ether('0.096423087193692817'));
 
       // user2 transfers 0.054442452002700437 rwETH to user3
       await rewardEthToken.transfer(

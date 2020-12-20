@@ -90,7 +90,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     function updateTimestamp() external view returns (uint256);
 
     /**
-    * @dev Function for retrieving the total rewards amount. Can be negative in case of penalties.
+    * @dev Function for retrieving the total rewards amount.
     */
     function totalRewards() external view returns (uint256);
 
@@ -107,7 +107,6 @@ interface IRewardEthToken is IERC20Upgradeable {
 
     /**
     * @dev Function for retrieving current reward of the account.
-    * Can be negative in case account's deposit is penalised.
     * @param account - address of the account to retrieve the reward for.
     */
     function rewardOf(address account) external view returns (uint256);

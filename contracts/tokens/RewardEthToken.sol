@@ -3,8 +3,6 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
@@ -21,13 +19,13 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
     // @dev Last rewards update timestamp by balance reporters.
     uint256 public override updateTimestamp;
 
-    // @dev Total amount of rewards. Can be negative in case of penalties.
+    // @dev Total amount of rewards.
     uint256 public override totalRewards;
 
     // @dev Maps account address to its reward checkpoint.
     mapping(address => Checkpoint) public override checkpoints;
 
-    // @dev Reward per token for user reward calculation. Can be negative in case of the penalties.
+    // @dev Reward per token for user reward calculation.
     uint256 public override rewardPerToken;
 
     // @dev Maintainer percentage fee.
