@@ -54,7 +54,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         address _balanceReporters,
         address _stakedTokens,
         address _maintainer,
-        int256 _maintainerFee
+        uint256 _maintainerFee
     )
         public override initializer
     {

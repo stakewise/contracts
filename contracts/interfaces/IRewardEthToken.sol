@@ -59,7 +59,7 @@ interface IRewardEthToken is IERC20Upgradeable {
         address _balanceReporters,
         address _stakedTokens,
         address _maintainer,
-        int256 _maintainerFee
+        uint256 _maintainerFee
     ) external;
 
     /**
