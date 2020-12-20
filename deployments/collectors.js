@@ -1,4 +1,5 @@
 const { ethers, upgrades } = require('hardhat');
+const { initialSettings } = require('./settings');
 
 async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');
@@ -23,7 +24,8 @@ async function initializePool(
     adminAddress,
     stakedEthTokenContractAddress,
     vrcContractAddress,
-    validatorsContractAddress
+    validatorsContractAddress,
+    initialSettings.withdrawalCredentials
   );
 }
 
@@ -37,7 +39,9 @@ async function deploySolos(
   const solos = await Solos.deploy(
     adminAddress,
     vrcContractAddress,
-    validatorsContractAddress
+    validatorsContractAddress,
+    initialSettings.validatorPrice,
+    initialSettings.cancelLockDuration
   );
 
   await solos.deployed();

@@ -50,8 +50,17 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _balanceReporters - address of the BalanceReporters contract.
     * @param _stakedTokens - address of the StakedTokens contract.
+    * @param _maintainer - maintainer's address.
+    * @param _maintainerFee - maintainer's fee. Must be less than 10000 (100.00%).
     */
-    function initialize(address _admin, address _stakedEthToken, address _balanceReporters, address _stakedTokens) external;
+    function initialize(
+        address _admin,
+        address _stakedEthToken,
+        address _balanceReporters,
+        address _stakedTokens,
+        address _maintainer,
+        int256 _maintainerFee
+    ) external;
 
     /**
     * @dev Function for getting the address of the maintainer, where the fee will be paid.
