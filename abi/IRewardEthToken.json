@@ -236,6 +236,16 @@
         "internalType": "address",
         "name": "_stakedTokens",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_maintainer",
+        "type": "address"
+      },
+      {
+        "internalType": "int256",
+        "name": "_maintainerFee",
+        "type": "int256"
       }
     ],
     "name": "initialize",
