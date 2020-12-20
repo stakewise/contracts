@@ -4,6 +4,7 @@ pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
@@ -17,20 +18,24 @@ import "./interfaces/IBalanceReporters.sol";
  */
 contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, OwnablePausableUpgradeable {
     using SafeMathUpgradeable for uint256;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
 
     bytes32 public constant REPORTER_ROLE = keccak256("REPORTER_ROLE");
 
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
 
-    // @dev List of supported uniswap pairs for syncing.
-    address[] private uniswapPairs;
+    // @dev List of supported rwETH Uniswap pairs.
+    address[] private rewardEthUniswapPairs;
 
     // @dev Maps vote ID to whether it was submitted or not.
     mapping(bytes32 => bool) private submittedVotes;
 
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
+
+    // @dev Nonce for RewardEthToken total rewards.
+    CountersUpgradeable.Counter private totalRewardsNonce;
 
     /**
     * @dev Modifier for checking whether the caller is a reporter.
@@ -50,24 +55,24 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
-     * @dev See {IBalanceReporters-getUniswapPairs}.
+     * @dev See {IBalanceReporters-getRewardEthUniswapPairs}.
      */
-    function getUniswapPairs() public override view returns (address[] memory) {
-        return uniswapPairs;
+    function getRewardEthUniswapPairs() public override view returns (address[] memory) {
+        return rewardEthUniswapPairs;
     }
 
     /**
-     * @dev See {IBalanceReporters-hasVoted}.
+     * @dev See {IBalanceReporters-hasTotalRewardsVote}.
      */
-    function hasVoted(address _reporter, uint256 _newTotalRewards, bool _syncUniswapPairs) public override view returns (bool) {
-        bytes32 candidateId = keccak256(abi.encodePacked(rewardEthToken.updateTimestamp(), _newTotalRewards, _syncUniswapPairs));
+    function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external override view returns (bool) {
+        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), _nonce, _totalRewards));
         return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
     }
 
     /**
      * @dev See {IBalanceReporters-isReporter}.
      */
-    function isReporter(address _account) public override view returns (bool) {
+    function isReporter(address _account) external override view returns (bool) {
         return hasRole(REPORTER_ROLE, _account);
     }
 
@@ -86,42 +91,36 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
-     * @dev See {IBalanceReporters-setUniswapPairs}.
+     * @dev See {IBalanceReporters-setRewardEthUniswapPairs}.
      */
-    function setUniswapPairs(address[] calldata _uniswapPairs) external override onlyAdmin {
-        uniswapPairs = _uniswapPairs;
-        emit UniswapPairsUpdated(_uniswapPairs);
+    function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
+        rewardEthUniswapPairs = _rewardEthUniswapPairs;
+        emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs);
     }
 
     /**
      * @dev See {IBalanceReporters-voteForTotalRewards}.
      */
-    function voteForTotalRewards(
-        uint256 _newTotalRewards,
-        bool _syncUniswapPairs
-    )
-        external override onlyReporter whenNotPaused nonReentrant
-    {
-        uint256 updateTimestamp = rewardEthToken.updateTimestamp();
-        bytes32 candidateId = keccak256(abi.encodePacked(updateTimestamp, _newTotalRewards, _syncUniswapPairs));
+    function voteForTotalRewards(uint256 _newTotalRewards) external override onlyReporter whenNotPaused nonReentrant {
+        uint256 nonce = totalRewardsNonce.current();
+        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), nonce, _newTotalRewards));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
-        require(!submittedVotes[voteId], "BalanceReporters: vote was already submitted");
+        require(!submittedVotes[voteId], "BalanceReporters: rwETH total rewards vote was already submitted");
 
-        // mark vote as submitted, update total rewards votes number
+        // mark vote as submitted, update candidate votes number
         submittedVotes[voteId] = true;
         candidates[candidateId] = candidates[candidateId].add(1);
-        emit VoteSubmitted(msg.sender, _newTotalRewards, _syncUniswapPairs, updateTimestamp);
+        emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
 
         // update rewards only if enough votes accumulated
         if (candidates[candidateId].mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {
+            totalRewardsNonce.increment();
             delete candidates[candidateId];
             rewardEthToken.updateTotalRewards(_newTotalRewards);
 
-            if (_syncUniswapPairs) {
-                // force reserves to match balances
-                for (uint256 i = 0; i < uniswapPairs.length; i++) {
-                    IUniswapV2Pair(uniswapPairs[i]).sync();
-                }
+            // force reserves to match balances
+            for (uint256 i = 0; i < rewardEthUniswapPairs.length; i++) {
+                IUniswapV2Pair(rewardEthUniswapPairs[i]).sync();
             }
         }
     }

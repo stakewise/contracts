@@ -7,30 +7,29 @@ pragma solidity 0.7.5;
  */
 interface IBalanceReporters {
     /**
-    * @dev Event for tracking removed reporters.
+    * @dev Event for tracking votes for RewardEthToken total rewards.
     * @param reporter - address of the account which submitted vote.
-    * @param newTotalRewards - submitted value of total rewards.
-    * @param syncUniswapPairs - whether to synchronize supported uniswap pairs.
-    * @param updateTimestamp - timestamp of the RewardEthToken last update.
+    * @param nonce - update nonce.
+    * @param totalRewards - submitted value of total rewards.
     */
-    event VoteSubmitted(address indexed reporter, uint256 newTotalRewards, bool syncUniswapPairs, uint256 updateTimestamp);
+    event TotalRewardsVoteSubmitted(address indexed reporter, uint256 nonce, uint256 totalRewards);
 
     /**
-    * @dev Event for tracking updated uniswap pairs.
-    * @param uniswapPairs - new list of supported uniswap pairs.
+    * @dev Event for tracking updated reward ETH uniswap pairs.
+    * @param rewardEthUniswapPairs - new list of supported uniswap pairs.
     */
-    event UniswapPairsUpdated(address[] uniswapPairs);
+    event RewardEthUniswapPairsUpdated(address[] rewardEthUniswapPairs);
 
     /**
     * @dev Function for retrieving number of votes for the rewards update candidate.
-    * @param _candidateId - ID of the candidate (hash of last update timestamp and total rewards) to retrieve number of votes for.
+    * @param _candidateId - ID of the candidate to retrieve number of votes for.
     */
     function candidates(bytes32 _candidateId) external view returns (uint256);
 
     /**
-    * @dev Function for retrieving supported uniswap pairs.
+    * @dev Function for retrieving supported reward ETH uniswap pairs.
     */
-    function getUniswapPairs() external view returns (address[] memory);
+    function getRewardEthUniswapPairs() external view returns (address[] memory);
 
     /**
     * @dev Constructor for initializing the BalanceReporters contract.
@@ -46,12 +45,12 @@ interface IBalanceReporters {
     function isReporter(address _account) external view returns (bool);
 
     /**
-    * @dev Function for checking whether an account has a voted for the total rewards in current timestamp.
+    * @dev Function for checking whether an account has voted for the total rewards.
     * @param _reporter - reporter address to check.
-    * @param _newTotalRewards - total rewards submitted by the reporter.
-    * @param _syncUniswapPairs - whether to synchronize supported uniswap pairs.
+    * @param _nonce - vote nonce.
+    * @param _totalRewards - total rewards submitted by the reporter.
     */
-    function hasVoted(address _reporter, uint256 _newTotalRewards, bool _syncUniswapPairs) external view returns (bool);
+    function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external view returns (bool);
 
     /**
     * @dev Function for adding a reporter role to the account.
@@ -68,17 +67,16 @@ interface IBalanceReporters {
     function removeReporter(address _account) external;
 
     /**
-    * @dev Function for updating list of supported uniswap pairs.
+    * @dev Function for updating list of supported reward ETH uniswap pairs.
     * Can only be called by an account with an admin role.
-    * @param _uniswapPairs - list of supported uniswap pairs.
+    * @param _rewardEthUniswapPairs - list of supported uniswap pairs.
     */
-    function setUniswapPairs(address[] calldata _uniswapPairs) external;
+    function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external;
 
     /**
     * @dev Function for voting for new RewardEthToken total rewards.
     * Can only be called by an account with a reporter role.
     * @param _newTotalRewards - total rewards to give a vote for.
-    * @param _syncUniswapPairs - whether to synchronize supported uniswap pairs.
     */
-    function voteForTotalRewards(uint256 _newTotalRewards, bool _syncUniswapPairs) external;
+    function voteForTotalRewards(uint256 _newTotalRewards) external;
 }
