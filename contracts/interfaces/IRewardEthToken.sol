@@ -106,12 +106,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     function checkpoints(address account) external view returns (uint256, uint256);
 
     /**
-    * @dev Function for retrieving current reward of the account.
-    * @param account - address of the account to retrieve the reward for.
-    */
-    function rewardOf(address account) external view returns (uint256);
-
-    /**
     * @dev Function for updating account's reward checkpoint.
     * @param account - address of the account to update the reward checkpoint for.
     */

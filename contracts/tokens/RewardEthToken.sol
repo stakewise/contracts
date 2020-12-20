@@ -99,13 +99,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
-        return rewardOf(account);
-    }
-
-    /**
-     * @dev See {IRewardEthToken-rewardOf}.
-     */
-    function rewardOf(address account) public view override returns (uint256) {
         Checkpoint memory cp = checkpoints[account];
 
         uint256 periodRewardPerToken = rewardPerToken.sub(cp.rewardPerToken);
@@ -131,8 +124,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         require(sender != address(0), "RewardEthToken: transfer from the zero address");
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
 
-        checkpoints[sender] = Checkpoint(rewardPerToken, rewardOf(sender).sub(amount, "RewardEthToken: invalid amount"));
-        checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount));
+        checkpoints[sender] = Checkpoint(rewardPerToken, balanceOf(sender).sub(amount, "RewardEthToken: invalid amount"));
+        checkpoints[recipient] = Checkpoint(rewardPerToken, balanceOf(recipient).add(amount));
 
         emit Transfer(sender, recipient, amount);
     }
@@ -141,7 +134,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account));
+        checkpoints[account] = Checkpoint(rewardPerToken, balanceOf(account));
     }
 
     /**
@@ -163,7 +156,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         // update maintainer's reward
         checkpoints[maintainer] = Checkpoint(
             rewardPerToken,
-            rewardOf(maintainer).add(maintainerReward)
+            balanceOf(maintainer).add(maintainerReward)
         );
 
         // solhint-disable-next-line not-rely-on-time

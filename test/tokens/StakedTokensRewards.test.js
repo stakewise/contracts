@@ -377,7 +377,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     expect(
       await stakedTokens.balanceOf(token.address, tokenHolder5)
     ).to.be.bignumber.equal(stakedBalance);
-    expect(await rewardEthToken.rewardOf(token.address)).to.be.bignumber.equal(
+    expect(await rewardEthToken.balanceOf(token.address)).to.be.bignumber.equal(
       new BN('0')
     );
 
@@ -392,7 +392,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
       expect(
         await stakedTokens.balanceOf(token.address, holder)
       ).to.be.bignumber.equal(stakedBalance);
-      expect(await rewardEthToken.rewardOf(holder)).to.be.bignumber.equal(
+      expect(await rewardEthToken.balanceOf(holder)).to.be.bignumber.equal(
         reward
       );
     }
@@ -404,7 +404,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     expect(
       await stakedTokens.balanceOf(token.address, tokenHolder1)
     ).to.be.bignumber.equal(stakedBalance);
-    expect(await rewardEthToken.rewardOf(tokenHolder1)).to.be.bignumber.equal(
+    expect(await rewardEthToken.balanceOf(tokenHolder1)).to.be.bignumber.equal(
       new BN(0)
     );
 

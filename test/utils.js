@@ -137,7 +137,7 @@ async function checkRewardEthToken({
   }
 
   if (account != null && reward != null) {
-    expect(await rewardEthToken.rewardOf(account)).to.be.bignumber.equal(
+    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
       reward
     );
   }
