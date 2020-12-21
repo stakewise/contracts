@@ -177,7 +177,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
     await checkCollectorBalance(solos, validatorDeposit.mul(new BN(2)));
   });
 
-  it('creates different solos for deposits with different withdrawal withdrawal credentials', async () => {
+  it('creates different solos for deposits with different withdrawal credentials', async () => {
     // User creates deposit with first withdrawal credential
     let receipt = await solos.addDeposit(withdrawalCredentials, {
       from: sender1,

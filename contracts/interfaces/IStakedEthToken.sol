@@ -22,12 +22,6 @@ interface IStakedEthToken is IERC20Upgradeable {
     function totalDeposits() external view returns (uint256);
 
     /**
-    * @dev Function for retrieving total deposit amount of the account.
-    * @param account - address of the account to retrieve the deposit for.
-    */
-    function depositOf(address account) external view returns (uint256);
-
-    /**
     * @dev Function for creating `amount` tokens and assigning them to `account`.
     * Can only be called by Pool contract.
     * @param account - address of the account to assign tokens to.

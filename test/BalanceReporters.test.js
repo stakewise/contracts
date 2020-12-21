@@ -140,22 +140,26 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     let [pair1, pair2, pair3] = otherAccounts;
     let pairs = [pair1, pair2, pair3];
 
-    it('admin user can set uniswap pairs', async () => {
-      const receipt = await balanceReporters.setUniswapPairs(pairs, {
+    it('admin user can set rwETH uniswap pairs', async () => {
+      const receipt = await balanceReporters.setRewardEthUniswapPairs(pairs, {
         from: admin,
       });
-      expectEvent(receipt, 'UniswapPairsUpdated', {
-        uniswapPairs: pairs,
+      expectEvent(receipt, 'RewardEthUniswapPairsUpdated', {
+        rewardEthUniswapPairs: pairs,
       });
-      expect(await balanceReporters.getUniswapPairs()).to.have.members(pairs);
+      expect(await balanceReporters.getRewardEthUniswapPairs()).to.have.members(
+        pairs
+      );
     });
 
-    it('anyone cannot set uniswap pairs', async () => {
+    it('anyone cannot set rwETH uniswap pairs', async () => {
       await expectRevert(
-        balanceReporters.setUniswapPairs(pairs, { from: anyone }),
+        balanceReporters.setRewardEthUniswapPairs(pairs, { from: anyone }),
         'OwnablePausableUpgradeable: permission denied'
       );
-      expect(await balanceReporters.getUniswapPairs()).to.have.members([]);
+      expect(await balanceReporters.getRewardEthUniswapPairs()).to.have.members(
+        []
+      );
     });
   });
 
@@ -178,7 +182,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       expect(await balanceReporters.paused()).equal(true);
 
       await expectRevert(
-        balanceReporters.voteForTotalRewards(ether('1'), true, {
+        balanceReporters.voteForTotalRewards(ether('1'), {
           from: reporter1,
         }),
         'Pausable: paused'
@@ -188,7 +192,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
 
     it('only reporter can submit new total rewards', async () => {
       await expectRevert(
-        balanceReporters.voteForTotalRewards(ether('1'), true, {
+        balanceReporters.voteForTotalRewards(ether('1'), {
           from: anyone,
         }),
         'BalanceReporters: permission denied'
@@ -197,84 +201,87 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     });
 
     it('cannot vote for the same total rewards twice', async () => {
-      await balanceReporters.voteForTotalRewards(ether('1'), true, {
+      await balanceReporters.voteForTotalRewards(ether('1'), {
         from: reporter1,
       });
       expect(
-        await balanceReporters.hasVoted(reporter1, ether('1'), true)
+        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
       ).to.equal(true);
       await expectRevert(
-        balanceReporters.voteForTotalRewards(ether('1'), true, {
+        balanceReporters.voteForTotalRewards(ether('1'), {
           from: reporter1,
         }),
-        'BalanceReporters: vote was already submitted'
+        'BalanceReporters: rwETH total rewards vote was already submitted'
       );
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('does not submit rewards when not enough votes', async () => {
-      const receipt = await balanceReporters.voteForTotalRewards(
-        ether('1'),
-        true,
-        {
-          from: reporter1,
-        }
-      );
-      expectEvent(receipt, 'VoteSubmitted', {
+      const receipt = await balanceReporters.voteForTotalRewards(ether('1'), {
+        from: reporter1,
+      });
+      expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter1,
-        newTotalRewards: ether('1'),
-        updateTimestamp: new BN(0),
-        syncUniswapPairs: true,
+        totalRewards: ether('1'),
+        nonce: new BN(0),
       });
       expect(
-        await balanceReporters.hasVoted(reporter1, ether('1'), true)
+        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
       ).to.equal(true);
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
 
     it('submits total rewards when enough votes collected', async () => {
       // reporter 1 submits
-      let receipt = await balanceReporters.voteForTotalRewards(
-        ether('1'),
-        true,
-        {
-          from: reporter1,
-        }
-      );
+      let receipt = await balanceReporters.voteForTotalRewards(ether('1'), {
+        from: reporter1,
+      });
       expect(
-        await balanceReporters.hasVoted(reporter1, ether('1'), true)
+        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
       ).to.equal(true);
-      expectEvent(receipt, 'VoteSubmitted', {
+      expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter1,
-        newTotalRewards: ether('1'),
-        updateTimestamp: new BN(0),
-        syncUniswapPairs: true,
+        totalRewards: ether('1'),
+        nonce: new BN(0),
       });
 
       // reporter 2 submits
-      receipt = await balanceReporters.voteForTotalRewards(ether('1'), true, {
+      receipt = await balanceReporters.voteForTotalRewards(ether('1'), {
         from: reporter2,
       });
-      expectEvent(receipt, 'VoteSubmitted', {
+      expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter2,
-        newTotalRewards: ether('1'),
-        updateTimestamp: new BN(0),
-        syncUniswapPairs: true,
+        totalRewards: ether('1'),
+        nonce: new BN(0),
       });
 
       // reporter 3 submits
-      receipt = await balanceReporters.voteForTotalRewards(ether('1'), true, {
+      receipt = await balanceReporters.voteForTotalRewards(ether('1'), {
         from: reporter3,
       });
-      expectEvent(receipt, 'VoteSubmitted', {
+      expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter3,
-        newTotalRewards: ether('1'),
-        updateTimestamp: new BN(0),
-        syncUniswapPairs: true,
+        totalRewards: ether('1'),
+        nonce: new BN(0),
       });
+
+      // update submitted
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
         ether('1')
       );
+
+      // vote again
+      receipt = await balanceReporters.voteForTotalRewards(ether('1'), {
+        from: reporter1,
+      });
+      expect(
+        await balanceReporters.hasTotalRewardsVote(reporter1, '1', ether('1'))
+      ).to.equal(true);
+      expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
+        reporter: reporter1,
+        totalRewards: ether('1'),
+        nonce: new BN(1),
+      });
     });
   });
 });

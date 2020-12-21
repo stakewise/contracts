@@ -11,7 +11,7 @@ const {
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 
-function getDepositAmount({ min = new BN('1'), max = ether('10000') } = {}) {
+function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
     .mul(max.sub(min))
     .div(ether('1'))
@@ -111,7 +111,7 @@ async function checkStakedEthToken({
   }
 
   if (account != null && deposit != null) {
-    expect(await stakedEthToken.depositOf(account)).to.be.bignumber.equal(
+    expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
       deposit
     );
   }
@@ -137,7 +137,7 @@ async function checkRewardEthToken({
   }
 
   if (account != null && reward != null) {
-    expect(await rewardEthToken.rewardOf(account)).to.be.bignumber.equal(
+    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
       reward
     );
   }

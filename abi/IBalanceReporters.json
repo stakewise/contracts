@@ -5,11 +5,11 @@
       {
         "indexed": false,
         "internalType": "address[]",
-        "name": "uniswapPairs",
+        "name": "rewardEthUniswapPairs",
         "type": "address[]"
       }
     ],
-    "name": "UniswapPairsUpdated",
+    "name": "RewardEthUniswapPairsUpdated",
     "type": "event"
   },
   {
@@ -23,24 +23,18 @@
       },
       {
         "indexed": false,
-        "internalType": "int256",
-        "name": "newTotalRewards",
-        "type": "int256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "syncUniswapPairs",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "updateTimestamp",
+        "name": "totalRewards",
         "type": "uint256"
       }
     ],
-    "name": "VoteSubmitted",
+    "name": "TotalRewardsVoteSubmitted",
     "type": "event"
   },
   {
@@ -77,7 +71,7 @@
   },
   {
     "inputs": [],
-    "name": "getUniswapPairs",
+    "name": "getRewardEthUniswapPairs",
     "outputs": [
       {
         "internalType": "address[]",
@@ -96,17 +90,17 @@
         "type": "address"
       },
       {
-        "internalType": "int256",
-        "name": "_newTotalRewards",
-        "type": "int256"
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
       },
       {
-        "internalType": "bool",
-        "name": "_syncUniswapPairs",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "_totalRewards",
+        "type": "uint256"
       }
     ],
-    "name": "hasVoted",
+    "name": "hasTotalRewardsVote",
     "outputs": [
       {
         "internalType": "bool",
@@ -171,11 +165,11 @@
     "inputs": [
       {
         "internalType": "address[]",
-        "name": "_uniswapPairs",
+        "name": "_rewardEthUniswapPairs",
         "type": "address[]"
       }
     ],
-    "name": "setUniswapPairs",
+    "name": "setRewardEthUniswapPairs",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -183,14 +177,9 @@
   {
     "inputs": [
       {
-        "internalType": "int256",
+        "internalType": "uint256",
         "name": "_newTotalRewards",
-        "type": "int256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_syncUniswapPairs",
-        "type": "bool"
+        "type": "uint256"
       }
     ],
     "name": "voteForTotalRewards",
