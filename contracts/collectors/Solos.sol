@@ -72,7 +72,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
      * @dev See {ISolos-addDeposit}.
      */
     function addDeposit(bytes32 _withdrawalCredentials) external payable override whenNotPaused {
-        require(_withdrawalCredentials != "" && _withdrawalCredentials[0] == 0x00, "Solos: invalid withdrawal credentials");
+        require(_withdrawalCredentials != "" && _withdrawalCredentials[0] == 0x00, "Solos: invalid credentials");
         require(msg.value > 0 && msg.value.mod(VALIDATOR_DEPOSIT) == 0, "Solos: invalid deposit amount");
 
         bytes32 soloId = keccak256(abi.encodePacked(address(this), msg.sender, _withdrawalCredentials));
@@ -100,7 +100,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
         Solo storage solo = solos[soloId];
 
         // solhint-disable-next-line not-rely-on-time
-        require(block.timestamp >= solo.releaseTime, "Solos: current time is before release time");
+        require(block.timestamp >= solo.releaseTime, "Solos: too early cancel");
 
         uint256 newAmount = solo.amount.sub(_amount, "Solos: insufficient balance");
         require(newAmount.mod(VALIDATOR_DEPOSIT) == 0, "Solos: invalid cancel amount");
@@ -140,7 +140,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
      * @dev See {ISolos-registerValidator}.
      */
     function registerValidator(Validator calldata _validator) external override whenNotPaused {
-        require(validators.isOperator(msg.sender), "Solos: permission denied");
+        require(validators.isOperator(msg.sender), "Solos: access denied");
 
         // update solo balance
         Solo storage solo = solos[_validator.soloId];
