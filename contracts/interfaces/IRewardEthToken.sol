@@ -45,6 +45,12 @@ interface IRewardEthToken is IERC20Upgradeable {
     );
 
     /**
+    * @dev Event for health factor updates.
+    * @param healthFactor - new health factor.
+    */
+    event HealthFactorUpdated(uint256 healthFactor);
+
+    /**
     * @dev Constructor for initializing the RewardEthToken contract.
     * @param _admin - address of the contract admin.
     * @param _stakedEthToken - address of the StakedEthToken contract.
@@ -61,6 +67,11 @@ interface IRewardEthToken is IERC20Upgradeable {
         address _maintainer,
         uint256 _maintainerFee
     ) external;
+
+    /**
+    * @dev Function for retrieving current health factor.
+    */
+    function healthFactor() external view returns (uint256);
 
     /**
     * @dev Function for getting the address of the maintainer, where the fee will be paid.
@@ -104,6 +115,12 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param account - address of the account to retrieve the checkpoint for.
     */
     function checkpoints(address account) external view returns (uint256, uint256);
+
+    /**
+    * @dev Function for retrieving total reward amount of the account.
+    * @param account - address of the account to retrieve the reward for.
+    */
+    function rewardOf(address account) external view returns (uint256);
 
     /**
     * @dev Function for updating account's reward checkpoint.

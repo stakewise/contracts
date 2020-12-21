@@ -15,6 +15,20 @@ interface IBalanceReporters {
     event TotalRewardsVoteSubmitted(address indexed reporter, uint256 nonce, uint256 totalRewards);
 
     /**
+    * @dev Event for tracking votes for StakedEthToken penalty.
+    * @param reporter - address of the account which submitted vote.
+    * @param nonce - update nonce.
+    * @param penalty - submitted penalty.
+    */
+    event StakedEthPenaltyVoteSubmitted(address indexed reporter, uint256 nonce, uint256 penalty);
+
+    /**
+    * @dev Event for tracking updated staked ETH uniswap pairs.
+    * @param stakedEthUniswapPairs - new list of supported uniswap pairs.
+    */
+    event StakedEthUniswapPairsUpdated(address[] stakedEthUniswapPairs);
+
+    /**
     * @dev Event for tracking updated reward ETH uniswap pairs.
     * @param rewardEthUniswapPairs - new list of supported uniswap pairs.
     */
@@ -32,11 +46,17 @@ interface IBalanceReporters {
     function getRewardEthUniswapPairs() external view returns (address[] memory);
 
     /**
+    * @dev Function for retrieving supported staked ETH uniswap pairs.
+    */
+    function getStakedEthUniswapPairs() external view returns (address[] memory);
+
+    /**
     * @dev Constructor for initializing the BalanceReporters contract.
     * @param _admin - address of the contract admin.
+    * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     */
-    function initialize(address _admin, address _rewardEthToken) external;
+    function initialize(address _admin, address _stakedEthToken, address _rewardEthToken) external;
 
     /**
     * @dev Function for checking whether an account has a reporter role.
@@ -51,6 +71,14 @@ interface IBalanceReporters {
     * @param _totalRewards - total rewards submitted by the reporter.
     */
     function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external view returns (bool);
+
+    /**
+    * @dev Function for checking whether an account has voted for the penalty.
+    * @param _reporter - reporter address to check.
+    * @param _nonce - vote nonce.
+    * @param _penalty - penalty submitted by the reporter.
+    */
+    function hasStakedEthPenaltyVote(address _reporter, uint256 _nonce, uint256 _penalty) external view returns (bool);
 
     /**
     * @dev Function for adding a reporter role to the account.
@@ -74,9 +102,23 @@ interface IBalanceReporters {
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external;
 
     /**
+    * @dev Function for updating list of supported staked ETH uniswap pairs.
+    * Can only be called by an account with an admin role.
+    * @param _stakedEthUniswapPairs - list of supported uniswap pairs.
+    */
+    function setStakedEthUniswapPairs(address[] calldata _stakedEthUniswapPairs) external;
+
+    /**
     * @dev Function for voting for new RewardEthToken total rewards.
     * Can only be called by an account with a reporter role.
     * @param _newTotalRewards - total rewards to give a vote for.
     */
     function voteForTotalRewards(uint256 _newTotalRewards) external;
+
+    /**
+    * @dev Function for voting for new StakedEthToken penalty.
+    * Can only be called by an account with a reporter role.
+    * @param _newPenalty - new penalty for StakedEthToken.
+    */
+    function voteForStakedEthPenalty(uint256 _newPenalty) external;
 }

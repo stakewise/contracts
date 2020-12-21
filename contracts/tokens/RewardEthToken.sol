@@ -31,6 +31,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Maintainer percentage fee.
     uint256 public override maintainerFee;
 
+    // @dev Health factor displays the pool's rewards health.
+    uint256 public override healthFactor;
+
     // @dev Address of the maintainer, where the fee will be paid.
     address public override maintainer;
 
@@ -62,6 +65,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;
+        healthFactor = 1e18;
 
         // set maintainer
         maintainer = _maintainer;
@@ -93,13 +97,20 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() external view override returns (uint256) {
-        return totalRewards;
+        return totalRewards.mul(healthFactor).div(1e18);
     }
 
     /**
      * @dev See {IERC20-balanceOf}.
      */
-    function balanceOf(address account) public view override returns (uint256) {
+    function balanceOf(address account) external view override returns (uint256) {
+        return rewardOf(account).mul(healthFactor).div(1e18);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-rewardOf}.
+     */
+    function rewardOf(address account) public view override returns (uint256) {
         Checkpoint memory cp = checkpoints[account];
 
         uint256 periodRewardPerToken = rewardPerToken.sub(cp.rewardPerToken);
@@ -125,8 +136,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(sender != address(0), "RewardEthToken: transfer from the zero address");
         require(recipient != address(0), "RewardEthToken: transfer to the zero address");
 
-        checkpoints[sender] = Checkpoint(rewardPerToken, balanceOf(sender).sub(amount, "RewardEthToken: invalid amount"));
-        checkpoints[recipient] = Checkpoint(rewardPerToken, balanceOf(recipient).add(amount));
+        uint256 senderReward = rewardOf(sender);
+        require(senderReward.mul(healthFactor).div(1e18) >= amount, "RewardEthToken: invalid amount");
+
+        checkpoints[sender] = Checkpoint(rewardPerToken, senderReward.sub(amount));
+        checkpoints[recipient] = Checkpoint(rewardPerToken, rewardOf(recipient).add(amount));
 
         emit Transfer(sender, recipient, amount);
     }
@@ -135,7 +149,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        checkpoints[account] = Checkpoint(rewardPerToken, balanceOf(account));
+        checkpoints[account] = Checkpoint(rewardPerToken, rewardOf(account));
     }
 
     /**
@@ -144,7 +158,20 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == balanceReporters, "RewardEthToken: permission denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards, "RewardEthToken: invalid new total rewards");
+        uint256 prevTotalRewards = totalRewards;
+        if (newTotalRewards < prevTotalRewards) {
+            // penalty amount has changed, update health factor
+            uint256 newHealthFactor = newTotalRewards.mul(1e18).div(prevTotalRewards);
+            healthFactor = newHealthFactor;
+            emit HealthFactorUpdated(newHealthFactor);
+            return;
+        } else if (healthFactor != 1e18) {
+            // rewards amount has recovered, restore health factor
+            healthFactor = 1e18;
+            emit HealthFactorUpdated(1e18);
+        }
+
+        uint256 periodRewards = newTotalRewards.sub(prevTotalRewards);
         if (periodRewards == 0) {
             // no new rewards
             return;
@@ -157,7 +184,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         // update maintainer's reward
         checkpoints[maintainer] = Checkpoint(
             rewardPerToken,
-            balanceOf(maintainer).add(maintainerReward)
+            rewardOf(maintainer).add(maintainerReward)
         );
 
         // solhint-disable-next-line not-rely-on-time

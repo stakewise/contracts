@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
+import "./interfaces/IStakedEthToken.sol";
 import "./interfaces/IBalanceReporters.sol";
 
 /**
@@ -28,14 +29,23 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     // @dev List of supported rwETH Uniswap pairs.
     address[] private rewardEthUniswapPairs;
 
+    // @dev List of supported stETH Uniswap pairs.
+    address[] private stakedEthUniswapPairs;
+
     // @dev Maps vote ID to whether it was submitted or not.
     mapping(bytes32 => bool) private submittedVotes;
 
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
 
+    // @dev Address of the StakedEthToken contract.
+    IStakedEthToken private stakedEthToken;
+
     // @dev Nonce for RewardEthToken total rewards.
     CountersUpgradeable.Counter private totalRewardsNonce;
+
+    // @dev Nonce for StakedEthToken penalty.
+    CountersUpgradeable.Counter private stakedEthPenaltyNonce;
 
     /**
     * @dev Modifier for checking whether the caller is a reporter.
@@ -48,9 +58,10 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     /**
      * @dev See {IBalanceReporters-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken) public override initializer {
+    function initialize(address _admin, address _stakedEthToken, address _rewardEthToken) public override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ReentrancyGuard_init_unchained();
+        stakedEthToken = IStakedEthToken(_stakedEthToken);
         rewardEthToken = IRewardEthToken(_rewardEthToken);
     }
 
@@ -66,6 +77,21 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
      */
     function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external override view returns (bool) {
         bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), _nonce, _totalRewards));
+        return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
+    }
+
+    /**
+     * @dev See {IBalanceReporters-getStakedEthUniswapPairs}.
+     */
+    function getStakedEthUniswapPairs() public override view returns (address[] memory) {
+        return stakedEthUniswapPairs;
+    }
+
+    /**
+     * @dev See {IBalanceReporters-hasStakedEthPenaltyVote}.
+     */
+    function hasStakedEthPenaltyVote(address _reporter, uint256 _nonce, uint256 _penalty) external override view returns (bool) {
+        bytes32 candidateId = keccak256(abi.encodePacked(address(stakedEthToken), _nonce, _penalty));
         return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
     }
 
@@ -99,6 +125,14 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
+     * @dev See {IBalanceReporters-setStakedEthUniswapPairs}.
+     */
+    function setStakedEthUniswapPairs(address[] calldata _stakedEthUniswapPairs) external override onlyAdmin {
+        stakedEthUniswapPairs = _stakedEthUniswapPairs;
+        emit StakedEthUniswapPairsUpdated(_stakedEthUniswapPairs);
+    }
+
+    /**
      * @dev See {IBalanceReporters-voteForTotalRewards}.
      */
     function voteForTotalRewards(uint256 _newTotalRewards) external override onlyReporter whenNotPaused nonReentrant {
@@ -121,6 +155,33 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
             // force reserves to match balances
             for (uint256 i = 0; i < rewardEthUniswapPairs.length; i++) {
                 IUniswapV2Pair(rewardEthUniswapPairs[i]).sync();
+            }
+        }
+    }
+
+    /**
+     * @dev See {IBalanceReporters-voteForStakedEthPenalty}.
+     */
+    function voteForStakedEthPenalty(uint256 _newPenalty) external override onlyReporter whenNotPaused nonReentrant {
+        uint256 nonce = stakedEthPenaltyNonce.current();
+        bytes32 candidateId = keccak256(abi.encodePacked(address(stakedEthToken), nonce, _newPenalty));
+        bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
+        require(!submittedVotes[voteId], "BalanceReporters: stETH penalty vote was already submitted");
+
+        // mark vote as submitted, update candidate votes number
+        submittedVotes[voteId] = true;
+        candidates[candidateId] = candidates[candidateId].add(1);
+        emit StakedEthPenaltyVoteSubmitted(msg.sender, nonce, _newPenalty);
+
+        // update rewards only if enough votes accumulated
+        if (candidates[candidateId].mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {
+            stakedEthPenaltyNonce.increment();
+            delete candidates[candidateId];
+            stakedEthToken.updateHealthFactor(_newPenalty);
+
+            // force reserves to match balances
+            for (uint256 i = 0; i < stakedEthUniswapPairs.length; i++) {
+                IUniswapV2Pair(stakedEthUniswapPairs[i]).sync();
             }
         }
     }
