@@ -309,6 +309,64 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         await stakedTokens.balanceOf(token.address, holder.address)
       ).to.bignumber.equal(stakedBalance);
     });
+
+    it('fails to stake tokens with permit with invalid signature', async () => {
+      let holder = web3.eth.accounts.create();
+      let invalidHolder = web3.eth.accounts.create();
+      await token.mint(holder.address, stakedBalance, {
+        from: admin,
+      });
+      await send.ether(otherAccount, invalidHolder.address, ether('10'));
+
+      // generate signature
+      const data = buildPermitData({
+        chainId: await token.getChainId(),
+        name: await token.name(),
+        verifyingContract: token.address,
+        value: stakedBalance,
+        owner: holder.address,
+        spender: stakedTokens.address,
+      });
+
+      const signature = ethSigUtil.signTypedMessage(
+        Buffer.from(holder.privateKey.substring(2), 'hex'),
+        { data }
+      );
+      let { v, r, s } = fromRpcSig(signature);
+
+      let encodedData = await stakedTokens.contract.methods
+        .stakeTokensWithPermit(
+          token.address,
+          stakedBalance,
+          constants.MAX_UINT256,
+          v,
+          r,
+          s
+        )
+        .encodeABI();
+      const tx = {
+        from: invalidHolder.address,
+        to: stakedTokens.address,
+        data: encodedData,
+        gas: 1000000,
+      };
+
+      let signedTx = await web3.eth.accounts.signTransaction(
+        tx,
+        invalidHolder.privateKey
+      );
+      expectRevert(
+        web3.eth.sendSignedTransaction(signedTx.rawTransaction),
+        'ERC20Permit: invalid signature'
+      );
+
+      expect(
+        await stakedTokens.balanceOf(token.address, invalidHolder.address)
+      ).to.bignumber.equal(new BN(0));
+      expect(
+        await stakedTokens.balanceOf(token.address, holder.address)
+      ).to.bignumber.equal(new BN(0));
+    });
   });
 
   describe('withdraw tokens', () => {
