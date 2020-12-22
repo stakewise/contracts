@@ -26,14 +26,14 @@ contract Validators is IValidators, OwnablePausableUpgradeable {
 
     // @dev Checks whether the caller is the collector contract.
     modifier onlyCollector() {
-        require(msg.sender == solos || msg.sender == pool, "Validators: permission denied");
+        require(msg.sender == solos || msg.sender == pool, "Validators: access denied");
         _;
     }
 
     /**
      * @dev See {IValidators-initialize}.
      */
-    function initialize(address _admin, address _pool, address _solos) public override initializer {
+    function initialize(address _admin, address _pool, address _solos) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         pool = _pool;
         solos = _solos;
@@ -42,7 +42,7 @@ contract Validators is IValidators, OwnablePausableUpgradeable {
     /**
      * @dev See {IValidators-isOperator}.
      */
-    function isOperator(address _account) public override view returns (bool) {
+    function isOperator(address _account) external override view returns (bool) {
         return hasRole(OPERATOR_ROLE, _account);
     }
 
@@ -64,7 +64,7 @@ contract Validators is IValidators, OwnablePausableUpgradeable {
      * @dev See {IValidators-register}.
      */
     function register(bytes32 _validatorId) external override onlyCollector whenNotPaused {
-        require(!publicKeys[_validatorId], "Validators: public key has been already used");
+        require(!publicKeys[_validatorId], "Validators: invalid public key");
         publicKeys[_validatorId] = true;
     }
 }

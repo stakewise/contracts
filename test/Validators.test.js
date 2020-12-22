@@ -38,7 +38,7 @@ contract(
         validators.register(validatorId, {
           from: anyone,
         }),
-        'Validators: permission denied'
+        'Validators: access denied'
       );
 
       await validators.register(validatorId, {

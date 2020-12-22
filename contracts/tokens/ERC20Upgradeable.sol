@@ -142,7 +142,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
         if (sender != msg.sender && _allowances[sender][msg.sender] != uint256(-1)) {
-            _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: transfer amount exceeds allowance"));
+            _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: invalid amount"));
         }
         return true;
     }
@@ -179,7 +179,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: decreased allowance below zero"));
+        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: invalid amount"));
         return true;
     }
 
@@ -213,8 +213,8 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * - `spender` cannot be the zero address.
      */
     function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "ERC20: invalid owner");
+        require(spender != address(0), "ERC20: invalid spender");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);

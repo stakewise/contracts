@@ -36,7 +36,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     /**
      * @dev See {IStakedTokens-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken) public override initializer {
+    function initialize(address _admin, address _rewardEthToken) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ReentrancyGuard_init_unchained();
         rewardEthToken = _rewardEthToken;
@@ -46,7 +46,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      * @dev See {IStakedTokens-toggleTokenContract}.
      */
     function toggleTokenContract(address _token, bool _isEnabled) external override onlyAdmin {
-        require(_token != address(0), "StakedTokens: invalid token address");
+        require(_token != address(0), "StakedTokens: invalid token");
 
         // support token
         Token storage token = tokens[_token];
@@ -83,18 +83,12 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     }
 
     function _stakeTokens(address _token, uint256 _amount) private {
-        Token storage token = tokens[_token];
-        require(token.enabled, "StakedTokens: token is not supported");
-
         // update token's reward
         updateTokenRewards(_token);
 
-        // withdraw account's current rewards
-        _withdrawRewards(_token, msg.sender);
-
-        // update account's balance
-        token.totalSupply = token.totalSupply.add(_amount);
-        balances[_token][msg.sender] = balances[_token][msg.sender].add(_amount);
+        // withdraw account's current rewards and update balance
+        uint256 accountBalance = balances[_token][msg.sender];
+        _withdrawRewards(_token, msg.sender, accountBalance, accountBalance.add(_amount));
 
         // emit event
         emit TokensStaked(_token, msg.sender, _amount);
@@ -111,12 +105,8 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         updateTokenRewards(_token);
 
         // withdraw account's current rewards
-        _withdrawRewards(_token, msg.sender);
-
-        // update account's balance
-        Token storage token = tokens[_token];
-        token.totalSupply = token.totalSupply.sub(_amount, "StakedTokens: invalid tokens amount");
-        balances[_token][msg.sender] = balances[_token][msg.sender].sub(_amount, "StakedTokens: invalid tokens amount");
+        uint256 accountBalance = balances[_token][msg.sender];
+        _withdrawRewards(_token, msg.sender, accountBalance, accountBalance.sub(_amount, "StakedTokens: invalid amount"));
 
         // emit event
         emit TokensWithdrawn(_token, msg.sender, _amount);
@@ -133,7 +123,8 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         updateTokenRewards(_token);
 
         // withdraw account's current rewards
-        _withdrawRewards(_token, msg.sender);
+        uint256 accountBalance = balances[_token][msg.sender];
+        _withdrawRewards(_token, msg.sender, accountBalance, accountBalance);
     }
 
     /**
@@ -199,29 +190,50 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     * @param _token - address of the staked tokens contract.
     * @param _account - account to update.
     */
-    function _withdrawRewards(address _token, address _account) private {
+    function _withdrawRewards(address _token, address _account, uint256 _prevBalance, uint256 _newBalance) private {
         Token storage token = tokens[_token];
         uint256 accountRewardRate = rewardRates[_token][_account];
         if (token.rewardRate == accountRewardRate) {
-            // nothing to withdraw
+            // reward rate has not changed -> update only balance
+            if (_newBalance == _prevBalance) {
+                return;
+            } else if (_newBalance > _prevBalance) {
+                require(token.enabled, "StakedTokens: unsupported token");
+            }
+
+            balances[_token][_account] = _newBalance;
+            token.totalSupply = token.totalSupply.add(_newBalance).sub(_prevBalance);
             return;
         }
 
         // update account reward rate
         rewardRates[_token][_account] = token.rewardRate;
 
-        uint256 accountBalance = balances[_token][_account];
-        if (accountBalance == 0) {
-            // no staked tokens
+        if (_prevBalance == 0) {
+            // no previously staked tokens -> update only balance
+            if (_newBalance == 0) {
+                return;
+            }
+
+            require(token.enabled, "StakedTokens: unsupported token");
+            balances[_token][_account] = _newBalance;
+            token.totalSupply = token.totalSupply.add(_newBalance);
             return;
         }
 
         // calculate period reward
-        uint256 periodReward = accountBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
+        uint256 periodReward = _prevBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
 
         // withdraw rewards
         token.totalRewards = token.totalRewards.sub(periodReward);
         emit RewardWithdrawn(_token, _account, periodReward);
+
+        if (_newBalance > _prevBalance) {
+            require(token.enabled, "StakedTokens: unsupported token");
+        }
+
+        balances[_token][_account] = _newBalance;
+        token.totalSupply = token.totalSupply.add(_newBalance).sub(_prevBalance);
 
         IERC20(rewardEthToken).safeTransfer(_account, periodReward);
     }

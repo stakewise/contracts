@@ -83,7 +83,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
           from: other,
         }
       ),
-      'Solos: permission denied'
+      'Solos: access denied'
     );
     await checkSolo({
       solos,

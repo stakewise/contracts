@@ -26,8 +26,8 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param reward - user reward checkpoint.
     */
     struct Checkpoint {
-        uint256 rewardPerToken;
-        uint256 reward;
+        uint128 reward;
+        uint64 rewardPerToken;
     }
 
     /**
@@ -85,31 +85,38 @@ interface IRewardEthToken is IERC20Upgradeable {
     function setMaintainerFee(uint256 _newMaintainerFee) external;
 
     /**
-    * @dev Function for retrieving the last total rewards update timestamp.
-    */
-    function updateTimestamp() external view returns (uint256);
-
-    /**
     * @dev Function for retrieving the total rewards amount.
     */
-    function totalRewards() external view returns (uint256);
+    function totalRewards() external view returns (uint128);
+
+    /**
+    * @dev Function for retrieving the last total rewards update timestamp.
+    */
+    function updateTimestamp() external view returns (uint64);
 
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.
     */
-    function rewardPerToken() external view returns (uint256);
+    function rewardPerToken() external view returns (uint64);
 
     /**
     * @dev Function for retrieving account's current checkpoint.
     * @param account - address of the account to retrieve the checkpoint for.
     */
-    function checkpoints(address account) external view returns (uint256, uint256);
+    function checkpoints(address account) external view returns (uint128, uint64);
 
     /**
     * @dev Function for updating account's reward checkpoint.
     * @param account - address of the account to update the reward checkpoint for.
     */
     function updateRewardCheckpoint(address account) external;
+
+    /**
+    * @dev Function for updating reward checkpoints for two accounts simultaneously (for gas savings).
+    * @param account1 - address of the first account to update the reward checkpoint for.
+    * @param account2 - address of the second account to update the reward checkpoint for.
+    */
+    function updateRewardCheckpoints(address account1, address account2) external;
 
     /**
     * @dev Function for updating validators total rewards.

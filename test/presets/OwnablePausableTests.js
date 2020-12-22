@@ -164,7 +164,7 @@ function ownablePausableTests({ getOwnableContract, accounts, contractName }) {
     it('others cannot pause contract', async () => {
       await expectRevert(
         ownableContract.pause({ from: anyone }),
-        `${contractName}: permission denied`
+        `${contractName}: access denied`
       );
       expect(await ownableContract.paused()).equal(false);
     });
@@ -173,7 +173,7 @@ function ownablePausableTests({ getOwnableContract, accounts, contractName }) {
       await ownableContract.pause({ from: pauser });
       await expectRevert(
         ownableContract.unpause({ from: anyone }),
-        `${contractName}: permission denied`
+        `${contractName}: access denied`
       );
       expect(await ownableContract.paused()).equal(true);
     });

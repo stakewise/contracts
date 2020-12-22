@@ -53,7 +53,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
         stakedEthToken.mint(sender1, ether('10'), {
           from: sender1,
         }),
-        'StakedEthToken: permission denied'
+        'StakedEthToken: access denied'
       );
       await checkStakedEthToken({
         stakedEthToken,
@@ -99,7 +99,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
         stakedEthToken.transfer(constants.ZERO_ADDRESS, value, {
           from: sender1,
         }),
-        'StakedEthToken: transfer to the zero address'
+        'StakedEthToken: invalid receiver'
       );
 
       await checkStakedEthToken({
@@ -116,7 +116,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
         stakedEthToken.transferFrom(constants.ZERO_ADDRESS, sender2, value, {
           from: sender1,
         }),
-        'StakedEthToken: transfer from the zero address'
+        'StakedEthToken: invalid sender'
       );
 
       await checkStakedEthToken({

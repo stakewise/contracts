@@ -155,7 +155,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     it('anyone cannot set rwETH uniswap pairs', async () => {
       await expectRevert(
         balanceReporters.setRewardEthUniswapPairs(pairs, { from: anyone }),
-        'OwnablePausableUpgradeable: permission denied'
+        'OwnablePausable: access denied'
       );
       expect(await balanceReporters.getRewardEthUniswapPairs()).to.have.members(
         []
@@ -195,7 +195,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         balanceReporters.voteForTotalRewards(ether('1'), {
           from: anyone,
         }),
-        'BalanceReporters: permission denied'
+        'BalanceReporters: access denied'
       );
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
@@ -211,7 +211,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         balanceReporters.voteForTotalRewards(ether('1'), {
           from: reporter1,
         }),
-        'BalanceReporters: rwETH total rewards vote was already submitted'
+        'BalanceReporters: already voted'
       );
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
