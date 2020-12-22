@@ -18,24 +18,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     using SafeMathUpgradeable for uint256;
     using SafeCastUpgradeable for uint256;
 
-    // @dev Maps account address to its reward checkpoint.
-    mapping(address => Checkpoint) public override checkpoints;
-
-    // @dev Maintainer percentage fee.
-    uint256 public override maintainerFee;
-
-    // @dev Total amount of rewards.
-    uint128 public override totalRewards;
-
-    // @dev Last rewards update timestamp by balance reporters.
-    uint64 public override updateTimestamp;
-
-    // @dev Reward per token for user reward calculation.
-    uint64 public override rewardPerToken;
-
-    // @dev Address of the maintainer, where the fee will be paid.
-    address public override maintainer;
-
     // @dev Address of the StakedEthToken contract.
     IStakedEthToken private stakedEthToken;
 
@@ -44,6 +26,24 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
 
     // @dev Address of the StakedTokens contract.
     address private stakedTokens;
+
+    // @dev Maps account address to its reward checkpoint.
+    mapping(address => Checkpoint) public override checkpoints;
+
+    // @dev Address of the maintainer, where the fee will be paid.
+    address public override maintainer;
+
+    // @dev Maintainer percentage fee.
+    uint256 public override maintainerFee;
+
+    // @dev Total amount of rewards.
+    uint128 public override totalRewards;
+
+    // @dev Reward per token for user reward calculation.
+    uint128 public override rewardPerToken;
+
+    // @dev Last rewards update timestamp by balance reporters.
+    uint64 public override updateTimestamp;
 
     /**
       * @dev See {IRewardEthToken-initialize}.
@@ -127,7 +127,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(sender != address(0), "RewardEthToken: invalid sender");
         require(recipient != address(0), "RewardEthToken: invalid receiver");
 
-        uint64 _rewardPerToken = rewardPerToken;
+        uint128 _rewardPerToken = rewardPerToken; // gas savings
         Checkpoint memory senderCheckpoint = Checkpoint(
             balanceOf(sender).sub(amount, "RewardEthToken: invalid amount").toUint128(),
             _rewardPerToken
@@ -155,7 +155,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-updateRewardCheckpoints}.
      */
     function updateRewardCheckpoints(address account1, address account2) external override {
-        uint64 _rewardPerToken = rewardPerToken;
+        uint128 _rewardPerToken = rewardPerToken; // gas savings
         Checkpoint memory checkpoint1 = Checkpoint(balanceOf(account1).toUint128(), _rewardPerToken);
         Checkpoint memory checkpoint2 = Checkpoint(balanceOf(account2).toUint128(), _rewardPerToken);
 
@@ -182,14 +182,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         // update maintainer's reward
         Checkpoint memory checkpoint = Checkpoint(
             balanceOf(maintainer).add(maintainerReward).toUint128(),
-            newRewardPerToken.toUint64()
+            newRewardPerToken.toUint128()
         );
         checkpoints[maintainer] = checkpoint;
 
         totalRewards = newTotalRewards.toUint128();
+        rewardPerToken = newRewardPerToken.toUint128();
         // solhint-disable-next-line not-rely-on-time
         updateTimestamp = block.timestamp.toUint64();
-        rewardPerToken = newRewardPerToken.toUint64();
 
         emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, updateTimestamp);
     }

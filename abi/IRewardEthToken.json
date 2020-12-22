@@ -189,9 +189,9 @@
         "type": "uint128"
       },
       {
-        "internalType": "uint64",
+        "internalType": "uint128",
         "name": "",
-        "type": "uint64"
+        "type": "uint128"
       }
     ],
     "stateMutability": "view",
@@ -284,9 +284,9 @@
     "name": "rewardPerToken",
     "outputs": [
       {
-        "internalType": "uint64",
+        "internalType": "uint128",
         "name": "",
-        "type": "uint64"
+        "type": "uint128"
       }
     ],
     "stateMutability": "view",

@@ -27,7 +27,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     */
     struct Checkpoint {
         uint128 reward;
-        uint64 rewardPerToken;
+        uint128 rewardPerToken;
     }
 
     /**
@@ -97,13 +97,13 @@ interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.
     */
-    function rewardPerToken() external view returns (uint64);
+    function rewardPerToken() external view returns (uint128);
 
     /**
     * @dev Function for retrieving account's current checkpoint.
     * @param account - address of the account to retrieve the checkpoint for.
     */
-    function checkpoints(address account) external view returns (uint128, uint64);
+    function checkpoints(address account) external view returns (uint128, uint128);
 
     /**
     * @dev Function for updating account's reward checkpoint.
