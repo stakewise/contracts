@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
-function ownablePausableTests({ getOwnableContract, accounts, contractName }) {
+function ownablePausableTests({ getOwnableContract, accounts }) {
   let ownableContract;
   let [admin, otherAdmin, pauser, otherPauser, anyone] = accounts;
 
@@ -164,7 +164,7 @@ function ownablePausableTests({ getOwnableContract, accounts, contractName }) {
     it('others cannot pause contract', async () => {
       await expectRevert(
         ownableContract.pause({ from: anyone }),
-        `${contractName}: access denied`
+        'OwnablePausable: access denied'
       );
       expect(await ownableContract.paused()).equal(false);
     });
@@ -173,7 +173,7 @@ function ownablePausableTests({ getOwnableContract, accounts, contractName }) {
       await ownableContract.pause({ from: pauser });
       await expectRevert(
         ownableContract.unpause({ from: anyone }),
-        `${contractName}: access denied`
+        'OwnablePausable: access denied'
       );
       expect(await ownableContract.paused()).equal(true);
     });
