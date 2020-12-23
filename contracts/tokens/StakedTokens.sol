@@ -192,17 +192,15 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     */
     function _withdrawRewards(address _token, address _account, uint256 _prevBalance, uint256 _newBalance) private {
         Token storage token = tokens[_token];
+        require(_newBalance >= _prevBalance || token.enabled, "StakedTokens: unsupported token");
+
         uint256 accountRewardRate = rewardRates[_token][_account];
         if (token.rewardRate == accountRewardRate) {
             // reward rate has not changed -> update only balance
-            if (_newBalance == _prevBalance) {
-                return;
-            } else if (_newBalance > _prevBalance) {
-                require(token.enabled, "StakedTokens: unsupported token");
+            if (_newBalance != _prevBalance) {
+                balances[_token][_account] = _newBalance;
+                token.totalSupply = token.totalSupply.add(_newBalance).sub(_prevBalance);
             }
-
-            balances[_token][_account] = _newBalance;
-            token.totalSupply = token.totalSupply.add(_newBalance).sub(_prevBalance);
             return;
         }
 
@@ -211,11 +209,6 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
 
         if (_prevBalance == 0) {
             // no previously staked tokens -> update only balance
-            if (_newBalance == 0) {
-                return;
-            }
-
-            require(token.enabled, "StakedTokens: unsupported token");
             balances[_token][_account] = _newBalance;
             token.totalSupply = token.totalSupply.add(_newBalance);
             return;
@@ -227,10 +220,6 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         // withdraw rewards
         token.totalRewards = token.totalRewards.sub(periodReward);
         emit RewardWithdrawn(_token, _account, periodReward);
-
-        if (_newBalance > _prevBalance) {
-            require(token.enabled, "StakedTokens: unsupported token");
-        }
 
         balances[_token][_account] = _newBalance;
         token.totalSupply = token.totalSupply.add(_newBalance).sub(_prevBalance);
