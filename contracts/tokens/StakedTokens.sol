@@ -53,7 +53,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         token.enabled = _isEnabled;
 
         // update token's reward
-        updateTokenRewards(_token);
+        _updateTokenRewards(_token);
 
         emit TokenToggled(_token, _isEnabled);
     }
@@ -84,7 +84,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
 
     function _stakeTokens(address _token, uint256 _amount) private {
         // update token's reward
-        updateTokenRewards(_token);
+        _updateTokenRewards(_token);
 
         // withdraw account's current rewards and update balance
         uint256 accountBalance = balances[_token][msg.sender];
@@ -102,7 +102,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      */
     function withdrawTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
         // update token's reward
-        updateTokenRewards(_token);
+        _updateTokenRewards(_token);
 
         // withdraw account's current rewards
         uint256 accountBalance = balances[_token][msg.sender];
@@ -120,7 +120,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      */
     function withdrawRewards(address _token) external override nonReentrant whenNotPaused {
         // update token's reward
-        updateTokenRewards(_token);
+        _updateTokenRewards(_token);
 
         // withdraw account's current rewards
         uint256 accountBalance = balances[_token][msg.sender];
@@ -169,7 +169,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     * @dev Function to update accumulated rewards for token.
     * @param _token - address of the token to update rewards for.
     */
-    function updateTokenRewards(address _token) private {
+    function _updateTokenRewards(address _token) private {
         Token storage token = tokens[_token];
         uint256 claimedRewards = IRewardEthToken(rewardEthToken).balanceOf(_token);
         if (token.totalSupply == 0 || claimedRewards == 0) {
@@ -192,7 +192,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     */
     function _withdrawRewards(address _token, address _account, uint256 _prevBalance, uint256 _newBalance) private {
         Token storage token = tokens[_token];
-        require(_newBalance >= _prevBalance || token.enabled, "StakedTokens: unsupported token");
+        require(_prevBalance >= _newBalance || token.enabled, "StakedTokens: unsupported token");
 
         uint256 accountRewardRate = rewardRates[_token][_account];
         if (token.rewardRate == accountRewardRate) {
