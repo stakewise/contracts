@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/a4e82ad71d24cf5ab1778f1947441f24903da86a/contracts/drafts/EIP712Upgradeable.sol
+// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/bcec9aaf09d00cc3420276aff2de8317156ede48/contracts/drafts/EIP712Upgradeable.sol
 
 pragma solidity 0.7.5;
 
@@ -92,7 +92,8 @@ abstract contract EIP712Upgradeable is Initializable {
         return keccak256(abi.encodePacked("\x19\x01", _domainSeparatorV4(), structHash));
     }
 
-    function _getChainId() private pure returns (uint256 chainId) {
+    function _getChainId() private view returns (uint256 chainId) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         // solhint-disable-next-line no-inline-assembly
         assembly {
             chainId := chainid()
