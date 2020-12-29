@@ -142,6 +142,8 @@ module.exports = {
     path: './abi',
     only: [
       'AccessControl',
+      'OwnablePausableUpgradeable',
+      'PausableUpgradeable',
       'IBalanceReporters',
       'IDepositContract',
       'IERC20',
