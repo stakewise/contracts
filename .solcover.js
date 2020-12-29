@@ -8,5 +8,11 @@ module.exports = {
   mocha: {
     timeout: 180000,
   },
-  skipFiles: ['mocks', 'tokens/ERC20.sol', 'libraries/Address.sol'],
+  skipFiles: [
+    'mocks',
+    'tokens/ERC20Upgradeable.sol',
+    'tokens/ERC20PermitUpgradeable.sol',
+    'tokens/EIP712Upgradeable.sol',
+    'libraries/ECDSA.sol',
+  ],
 };

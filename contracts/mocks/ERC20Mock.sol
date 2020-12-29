@@ -3,10 +3,10 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "../tokens/ERC20.sol";
+import "../tokens/ERC20PermitUpgradeable.sol";
 
 
-contract ERC20Mock is ERC20 {
+contract ERC20Mock is ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     uint256 private _totalSupply;
@@ -15,7 +15,8 @@ contract ERC20Mock is ERC20 {
     mapping (address => uint256) private _balances;
 
     function initialize(address _owner, uint256 initialBalance, string memory name, string memory symbol) public initializer {
-        __ERC20_init_unchained(name, symbol);
+        __ERC20_init(name, symbol);
+        __ERC20Permit_init(name);
         owner = _owner;
         _mint(_owner, initialBalance);
     }
@@ -48,5 +49,15 @@ contract ERC20Mock is ERC20 {
         _totalSupply = _totalSupply.add(amount);
         _balances[account] = _balances[account].add(amount);
         emit Transfer(address(0), account, amount);
+    }
+
+    // We get the chain id from the contract because Ganache (used for coverage) does not return the same chain id
+    // from within the EVM as from the JSON RPC interface.
+    // See https://github.com/trufflesuite/ganache-core/issues/515
+    function getChainId() external pure returns (uint256 chainId) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            chainId := chainid()
+        }
     }
 }

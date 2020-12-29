@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IRewardEthToken.sol";
+import "../interfaces/IERC20PermitUpgradeable.sol";
 import "../interfaces/IStakedTokens.sol";
 
 /**
@@ -61,6 +62,27 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
      * @dev See {IStakedTokens-stakeTokens}.
      */
     function stakeTokens(address _token, uint256 _amount) external override nonReentrant whenNotPaused {
+        _stakeTokens(_token, _amount);
+    }
+
+    /**
+     * @dev See {IStakedTokens-stakeTokensWithPermit}.
+     */
+    function stakeTokensWithPermit(
+        address _token,
+        uint256 _amount,
+        uint256 _deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        external override nonReentrant whenNotPaused
+    {
+        IERC20PermitUpgradeable(_token).permit(msg.sender, address(this), _amount, _deadline, v, r, s);
+        _stakeTokens(_token, _amount);
+    }
+
+    function _stakeTokens(address _token, uint256 _amount) private {
         Token storage token = tokens[_token];
         require(token.enabled, "StakedTokens: token is not supported");
 

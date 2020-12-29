@@ -6,14 +6,14 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
-import "./ERC20.sol";
+import "./ERC20PermitUpgradeable.sol";
 
 /**
  * @title StakedEthToken
  *
  * @dev StakedEthToken contract stores pool staked tokens.
  */
-contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
+contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     // @dev Total amount of deposits.
@@ -33,7 +33,8 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20 {
      */
     function initialize(address _admin, address _rewardEthToken, address _pool) public override initializer {
         __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init_unchained("StakeWise Staked ETH", "stETH");
+        __ERC20_init("StakeWise Staked ETH", "stETH");
+        __ERC20Permit_init("StakeWise Staked ETH");
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         pool = _pool;
     }

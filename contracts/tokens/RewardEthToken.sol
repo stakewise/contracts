@@ -6,14 +6,14 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
-import "./ERC20.sol";
+import "./ERC20PermitUpgradeable.sol";
 
 /**
  * @title RewardEthToken
  *
  * @dev RewardEthToken contract stores pool reward tokens.
  */
-contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
+contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     // @dev Last rewards update timestamp by balance reporters.
@@ -57,7 +57,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20 {
         public override initializer
     {
         __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init_unchained("StakeWise Reward ETH", "rwETH");
+        __ERC20_init("StakeWise Reward ETH", "rwETH");
+        __ERC20Permit_init("StakeWise Reward ETH");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;

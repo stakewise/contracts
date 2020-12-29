@@ -78,6 +78,17 @@ interface IStakedTokens {
     function stakeTokens(address _token, uint256 _amount) external;
 
     /**
+    * @dev Function for staking tokens which inherit rewards.
+    * @param _token - address of the token to stake tokens for.
+    * @param _amount - amount of tokens to stake.
+    * @param _deadline - deadline when the signature expires.
+    * @param v - secp256k1 signature part.
+    * @param r - secp256k1 signature part.
+    * @param s - secp256k1 signature part.
+    */
+    function stakeTokensWithPermit(address _token, uint256 _amount, uint256 _deadline, uint8 v, bytes32 r, bytes32 s) external;
+
+    /**
     * @dev Function for withdrawing staked tokens.
     * @param _token - address of the token to withdraw tokens for.
     * @param _amount - amount of tokens to withdraw.
