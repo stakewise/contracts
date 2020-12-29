@@ -44,7 +44,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.setMaintainer(otherAccounts[0], {
           from: otherAccounts[0],
         }),
-        'OwnablePausableUpgradeable: permission denied'
+        'OwnablePausable: access denied'
       );
     });
 
@@ -63,7 +63,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.setMaintainerFee(9999, {
           from: otherAccounts[0],
         }),
-        'OwnablePausableUpgradeable: permission denied'
+        'OwnablePausable: access denied'
       );
     });
 
@@ -82,7 +82,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.setMaintainerFee(10000, {
           from: admin,
         }),
-        'RewardEthToken: invalid new maintainer fee'
+        'RewardEthToken: invalid fee'
       );
     });
   });
@@ -93,7 +93,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.updateTotalRewards(ether('10'), {
           from: otherAccounts[0],
         }),
-        'RewardEthToken: permission denied'
+        'RewardEthToken: access denied'
       );
       await checkRewardEthToken({
         rewardEthToken,
@@ -447,7 +447,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.transfer(constants.ZERO_ADDRESS, value1, {
           from: sender1,
         }),
-        'RewardEthToken: transfer to the zero address'
+        'RewardEthToken: invalid receiver'
       );
 
       await checkRewardEthToken({
@@ -464,7 +464,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         rewardEthToken.transferFrom(constants.ZERO_ADDRESS, sender2, value1, {
           from: sender1,
         }),
-        'RewardEthToken: transfer from the zero address'
+        'RewardEthToken: invalid sender'
       );
 
       await checkRewardEthToken({

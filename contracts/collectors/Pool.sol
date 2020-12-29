@@ -46,7 +46,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         address _validators,
         bytes32 _withdrawalCredentials
     )
-        public override initializer
+        external override initializer
     {
         __OwnablePausableUpgradeable_init(_admin);
         stakedEthToken = IStakedEthToken(_stakedEthToken);
@@ -83,10 +83,10 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-registerValidator}.
      */
     function registerValidator(Validator calldata _validator) external override whenNotPaused {
-        require(validators.isOperator(msg.sender), "Pool: permission denied");
+        require(validators.isOperator(msg.sender), "Pool: access denied");
 
         // reduce pool collected amount
-        collectedAmount = collectedAmount.sub(VALIDATOR_DEPOSIT, "Pool: insufficient collected amount");
+        collectedAmount = collectedAmount.sub(VALIDATOR_DEPOSIT, "Pool: insufficient amount");
 
         // register validator
         validators.register(keccak256(abi.encodePacked(_validator.publicKey)));

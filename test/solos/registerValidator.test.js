@@ -83,7 +83,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
           from: other,
         }
       ),
-      'Solos: permission denied'
+      'Solos: access denied'
     );
     await checkSolo({
       solos,
@@ -114,7 +114,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
           from: operator,
         }
       ),
-      'Validators: public key has been already used'
+      'Validators: invalid public key'
     );
     await checkCollectorBalance(solos, validatorDeposit);
   });
@@ -161,7 +161,7 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       solos.setValidatorPrice(validatorPrice, {
         from: other,
       }),
-      'OwnablePausable: permission denied'
+      'OwnablePausable: access denied'
     );
   });
 

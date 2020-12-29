@@ -136,11 +136,14 @@ module.exports = {
     showTimeSpent: true,
     currency: 'USD',
     maxMethodDiff: 25, // CI will fail if gas usage is > than this %
+    excludeContracts: ['mocks/'],
   },
   abiExporter: {
     path: './abi',
     only: [
       'AccessControl',
+      'OwnablePausableUpgradeable',
+      'PausableUpgradeable',
       'IBalanceReporters',
       'IDepositContract',
       'IERC20',

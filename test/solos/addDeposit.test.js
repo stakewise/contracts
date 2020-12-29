@@ -31,7 +31,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
         from: sender1,
         value: validatorDeposit,
       }),
-      'Solos: invalid withdrawal credentials'
+      'Solos: invalid credentials'
     );
     await checkCollectorBalance(solos);
   });
@@ -45,7 +45,7 @@ contract('Solos (add deposit)', ([_, ...accounts]) => {
           value: validatorDeposit,
         }
       ),
-      'Solos: invalid withdrawal credentials'
+      'Solos: invalid credentials'
     );
     await checkCollectorBalance(solos);
   });

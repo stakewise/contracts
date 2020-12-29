@@ -14,7 +14,7 @@ contract ERC20Mock is ERC20PermitUpgradeable {
     address private owner;
     mapping (address => uint256) private _balances;
 
-    function initialize(address _owner, uint256 initialBalance, string memory name, string memory symbol) public initializer {
+    function initialize(address _owner, uint256 initialBalance, string memory name, string memory symbol) external initializer {
         __ERC20_init(name, symbol);
         __ERC20Permit_init(name);
         owner = _owner;
@@ -30,8 +30,8 @@ contract ERC20Mock is ERC20PermitUpgradeable {
     }
 
     function _transfer(address sender, address recipient, uint256 amount) internal override {
-        require(sender != address(0), "ERC20: transfer from the zero address");
-        require(recipient != address(0), "ERC20: transfer to the zero address");
+        require(sender != address(0), "ERC20: invalid sender");
+        require(recipient != address(0), "ERC20: invalid receiver");
 
         _balances[sender] = _balances[sender].sub(amount, "ERC20: transfer amount exceeds balance");
         _balances[recipient] = _balances[recipient].add(amount);

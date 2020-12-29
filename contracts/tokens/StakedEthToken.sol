@@ -31,7 +31,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     /**
      * @dev See {StakedEthToken-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken, address _pool) public override initializer {
+    function initialize(address _admin, address _rewardEthToken, address _pool) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ERC20_init("StakeWise Staked ETH", "stETH");
         __ERC20Permit_init("StakeWise Staked ETH");
@@ -57,15 +57,12 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "StakedEthToken: transfer from the zero address");
-        require(recipient != address(0), "StakedEthToken: transfer to the zero address");
+        require(sender != address(0), "StakedEthToken: invalid sender");
+        require(recipient != address(0), "StakedEthToken: invalid receiver");
 
-        // start calculating sender rewards with updated deposit amount
-        rewardEthToken.updateRewardCheckpoint(sender);
+        // start calculating sender and recipient rewards with updated deposit amounts
+        rewardEthToken.updateRewardCheckpoints(sender, recipient);
         deposits[sender] = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
-
-        // start calculating recipient rewards with updated deposit amount
-        rewardEthToken.updateRewardCheckpoint(recipient);
         deposits[recipient] = deposits[recipient].add(amount);
 
         emit Transfer(sender, recipient, amount);
@@ -75,7 +72,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IStakedEthToken-mint}.
      */
     function mint(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakedEthToken: permission denied");
+        require(msg.sender == pool, "StakedEthToken: access denied");
 
         // start calculating account rewards with updated deposit amount
         rewardEthToken.updateRewardCheckpoint(account);

@@ -41,14 +41,14 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     * @dev Modifier for checking whether the caller is a reporter.
     */
     modifier onlyReporter() {
-        require(hasRole(REPORTER_ROLE, msg.sender), "BalanceReporters: permission denied");
+        require(hasRole(REPORTER_ROLE, msg.sender), "BalanceReporters: access denied");
         _;
     }
 
     /**
      * @dev See {IBalanceReporters-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken) public override initializer {
+    function initialize(address _admin, address _rewardEthToken) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ReentrancyGuard_init_unchained();
         rewardEthToken = IRewardEthToken(_rewardEthToken);
@@ -105,15 +105,17 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
         uint256 nonce = totalRewardsNonce.current();
         bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), nonce, _newTotalRewards));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
-        require(!submittedVotes[voteId], "BalanceReporters: rwETH total rewards vote was already submitted");
+        require(!submittedVotes[voteId], "BalanceReporters: already voted");
 
         // mark vote as submitted, update candidate votes number
         submittedVotes[voteId] = true;
-        candidates[candidateId] = candidates[candidateId].add(1);
+        uint256 candidateNewVotes = candidates[candidateId].add(1);
+        candidates[candidateId] = candidateNewVotes;
         emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
 
         // update rewards only if enough votes accumulated
-        if (candidates[candidateId].mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {
+        // do not use safe math as votes number cannot overflow
+        if (candidateNewVotes * 3 > getRoleMemberCount(REPORTER_ROLE) * 2) {
             totalRewardsNonce.increment();
             delete candidates[candidateId];
             rewardEthToken.updateTotalRewards(_newTotalRewards);

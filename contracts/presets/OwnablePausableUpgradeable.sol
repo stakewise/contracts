@@ -19,7 +19,7 @@ abstract contract OwnablePausableUpgradeable is IOwnablePausable, PausableUpgrad
     * @dev Modifier for checking whether the caller is an admin.
     */
     modifier onlyAdmin() {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OwnablePausableUpgradeable: permission denied");
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "OwnablePausable: access denied");
         _;
     }
 
@@ -27,7 +27,7 @@ abstract contract OwnablePausableUpgradeable is IOwnablePausable, PausableUpgrad
     * @dev Modifier for checking whether the caller is a pauser.
     */
     modifier onlyPauser() {
-        require(hasRole(PAUSER_ROLE, msg.sender), "OwnablePausableUpgradeable: permission denied");
+        require(hasRole(PAUSER_ROLE, msg.sender), "OwnablePausable: access denied");
         _;
     }
 
@@ -51,7 +51,7 @@ abstract contract OwnablePausableUpgradeable is IOwnablePausable, PausableUpgrad
     /**
      * @dev See {IOwnablePausable-isAdmin}.
      */
-    function isAdmin(address _account) public override view returns (bool) {
+    function isAdmin(address _account) external override view returns (bool) {
         return hasRole(DEFAULT_ADMIN_ROLE, _account);
     }
 
@@ -72,7 +72,7 @@ abstract contract OwnablePausableUpgradeable is IOwnablePausable, PausableUpgrad
     /**
      * @dev See {IOwnablePausable-isPauser}.
      */
-    function isPauser(address _account) public override view returns (bool) {
+    function isPauser(address _account) external override view returns (bool) {
         return hasRole(PAUSER_ROLE, _account);
     }
 

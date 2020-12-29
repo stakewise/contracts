@@ -44,7 +44,7 @@ interface ISolos {
     */
     event DepositAdded(
         bytes32 indexed soloId,
-        address sender,
+        address indexed sender,
         uint256 amount,
         bytes32 withdrawalCredentials
     );
@@ -58,7 +58,7 @@ interface ISolos {
     */
     event DepositCanceled(
         bytes32 indexed soloId,
-        address sender,
+        address indexed sender,
         uint256 amount,
         bytes32 withdrawalCredentials
     );

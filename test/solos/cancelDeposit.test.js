@@ -113,7 +113,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       solos.cancelDeposit(withdrawalCredentials, validatorDeposit, {
         from: sender,
       }),
-      'Solos: current time is before release time'
+      'Solos: too early cancel'
     );
     await checkSolo({
       solos,
@@ -129,7 +129,7 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       solos.setCancelLockDuration(cancelLockDuration, {
         from: anyone,
       }),
-      'OwnablePausable: permission denied'
+      'OwnablePausable: access denied'
     );
     await checkSolo({
       solos,

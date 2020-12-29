@@ -13,6 +13,5 @@ contract('OwnablePausable', ([_, ...accounts]) => {
   ownablePausableTests({
     accounts,
     getOwnableContract,
-    contractName: 'OwnablePausable',
   });
 });

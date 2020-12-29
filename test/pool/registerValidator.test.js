@@ -63,7 +63,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       pool.registerValidator(validator, {
         from: other,
       }),
-      'Pool: permission denied'
+      'Pool: access denied'
     );
     await checkCollectorBalance(pool, validatorDeposit);
     await checkPoolCollectedAmount(pool, validatorDeposit);
@@ -88,7 +88,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       pool.setWithdrawalCredentials(withdrawalCredentials, {
         from: other,
       }),
-      'OwnablePausableUpgradeable: permission denied'
+      'OwnablePausable: access denied'
     );
     await checkCollectorBalance(pool, validatorDeposit);
     await checkPoolCollectedAmount(pool, validatorDeposit);
@@ -127,7 +127,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       pool.registerValidator(validator, {
         from: operator,
       }),
-      'Validators: public key has been already used'
+      'Validators: invalid public key'
     );
     await checkCollectorBalance(pool, validatorDeposit);
     await checkPoolCollectedAmount(pool, validatorDeposit);
@@ -147,7 +147,7 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       pool.registerValidator(validatorParams[1], {
         from: operator,
       }),
-      'Pool: insufficient collected amount'
+      'Pool: insufficient amount'
     );
 
     await checkCollectorBalance(pool, new BN(0));

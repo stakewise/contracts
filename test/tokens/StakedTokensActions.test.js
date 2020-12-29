@@ -116,7 +116,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.toggleTokenContract(token.address, true, {
           from: otherAccount,
         }),
-        'OwnablePausableUpgradeable: permission denied'
+        'OwnablePausable: access denied'
       );
     });
 
@@ -125,7 +125,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.toggleTokenContract(constants.ZERO_ADDRESS, true, {
           from: admin,
         }),
-        'StakedTokens: invalid token address'
+        'StakedTokens: invalid token'
       );
     });
 
@@ -155,7 +155,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.toggleTokenContract(token.address, false, {
           from: otherAccount,
         }),
-        'OwnablePausableUpgradeable: permission denied'
+        'OwnablePausable: access denied'
       );
     });
 
@@ -205,7 +205,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.stakeTokens(rewardEthToken.address, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: token is not supported'
+        'StakedTokens: unsupported token'
       );
     });
 
@@ -218,7 +218,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.stakeTokens(token.address, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: token is not supported'
+        'StakedTokens: unsupported token'
       );
     });
 
@@ -403,7 +403,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.withdrawTokens(otherAccount, stakedBalance, {
           from: tokenHolder1,
         }),
-        'StakedTokens: invalid tokens amount'
+        'StakedTokens: invalid amount'
       );
     });
 
@@ -412,7 +412,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
         stakedTokens.withdrawTokens(token.address, stakedBalance, {
           from: otherAccount,
         }),
-        'StakedTokens: invalid tokens amount'
+        'StakedTokens: invalid amount'
       );
     });
 
