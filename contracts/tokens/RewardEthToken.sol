@@ -128,17 +128,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(recipient != address(0), "RewardEthToken: invalid receiver");
 
         uint128 _rewardPerToken = rewardPerToken; // gas savings
-        Checkpoint memory senderCheckpoint = Checkpoint(
+        checkpoints[sender] = Checkpoint(
             balanceOf(sender).sub(amount, "RewardEthToken: invalid amount").toUint128(),
             _rewardPerToken
         );
-        Checkpoint memory recipientCheckpoint = Checkpoint(
+        checkpoints[recipient] = Checkpoint(
             balanceOf(recipient).add(amount).toUint128(),
             _rewardPerToken
         );
-
-        checkpoints[sender] = senderCheckpoint;
-        checkpoints[recipient] = recipientCheckpoint;
 
         emit Transfer(sender, recipient, amount);
     }
@@ -147,8 +144,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        Checkpoint memory checkpoint = Checkpoint(balanceOf(account).toUint128(), rewardPerToken);
-        checkpoints[account] = checkpoint;
+        checkpoints[account] = Checkpoint(balanceOf(account).toUint128(), rewardPerToken);
     }
 
     /**
@@ -156,11 +152,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      */
     function updateRewardCheckpoints(address account1, address account2) external override {
         uint128 _rewardPerToken = rewardPerToken; // gas savings
-        Checkpoint memory checkpoint1 = Checkpoint(balanceOf(account1).toUint128(), _rewardPerToken);
-        Checkpoint memory checkpoint2 = Checkpoint(balanceOf(account2).toUint128(), _rewardPerToken);
-
-        checkpoints[account1] = checkpoint1;
-        checkpoints[account2] = checkpoint2;
+        checkpoints[account1] = Checkpoint(balanceOf(account1).toUint128(), _rewardPerToken);
+        checkpoints[account2] = Checkpoint(balanceOf(account2).toUint128(), _rewardPerToken);
     }
 
     /**
@@ -180,14 +173,12 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         uint256 newRewardPerToken = uint256(rewardPerToken).add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits()));
 
         // update maintainer's reward
-        Checkpoint memory checkpoint = Checkpoint(
+        checkpoints[maintainer] = Checkpoint(
             balanceOf(maintainer).add(maintainerReward).toUint128(),
             newRewardPerToken.toUint128()
         );
-        checkpoints[maintainer] = checkpoint;
 
-        totalRewards = newTotalRewards.toUint128();
-        rewardPerToken = newRewardPerToken.toUint128();
+        (totalRewards, rewardPerToken) = (newTotalRewards.toUint128(), newRewardPerToken.toUint128());
         // solhint-disable-next-line not-rely-on-time
         updateTimestamp = block.timestamp.toUint64();
 
