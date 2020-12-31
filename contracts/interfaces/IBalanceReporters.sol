@@ -15,6 +15,12 @@ interface IBalanceReporters {
     event TotalRewardsVoteSubmitted(address indexed reporter, uint256 nonce, uint256 totalRewards);
 
     /**
+    * @dev Event for tracking RewardEthToken total rewards update preiod changes.
+    * @param totalRewardsUpdatePeriod - new total rewards update period.
+    */
+    event TotalRewardsUpdatePeriodUpdated(uint256 totalRewardsUpdatePeriod);
+
+    /**
     * @dev Event for tracking updated reward ETH uniswap pairs.
     * @param rewardEthUniswapPairs - new list of supported uniswap pairs.
     */
@@ -27,6 +33,11 @@ interface IBalanceReporters {
     function candidates(bytes32 _candidateId) external view returns (uint256);
 
     /**
+    * @dev Function for retrieving total rewards update period.
+    */
+    function totalRewardsUpdatePeriod() external view returns (uint256);
+
+    /**
     * @dev Function for retrieving supported reward ETH uniswap pairs.
     */
     function getRewardEthUniswapPairs() external view returns (address[] memory);
@@ -35,8 +46,9 @@ interface IBalanceReporters {
     * @dev Constructor for initializing the BalanceReporters contract.
     * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _totalRewardsUpdatePeriod - total rewards update period.
     */
-    function initialize(address _admin, address _rewardEthToken) external;
+    function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external;
 
     /**
     * @dev Function for checking whether an account has a reporter role.
@@ -47,10 +59,9 @@ interface IBalanceReporters {
     /**
     * @dev Function for checking whether an account has voted for the total rewards.
     * @param _reporter - reporter address to check.
-    * @param _nonce - vote nonce.
     * @param _totalRewards - total rewards submitted by the reporter.
     */
-    function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external view returns (bool);
+    function hasTotalRewardsVote(address _reporter, uint256 _totalRewards) external view returns (bool);
 
     /**
     * @dev Function for adding a reporter role to the account.
@@ -72,6 +83,13 @@ interface IBalanceReporters {
     * @param _rewardEthUniswapPairs - list of supported uniswap pairs.
     */
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external;
+
+    /**
+    * @dev Function for updating total rewards update period.
+    * Can only be called by an account with an admin role.
+    * @param _newTotalRewardsUpdatePeriod - new total rewards.
+    */
+    function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external;
 
     /**
     * @dev Function for voting for new RewardEthToken total rewards.

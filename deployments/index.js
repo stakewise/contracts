@@ -127,7 +127,8 @@ async function deployAllContracts({
   await initializeBalanceReporters(
     balanceReportersContractAddress,
     initialAdmin,
-    rewardEthTokenContractAddress
+    rewardEthTokenContractAddress,
+    initialSettings.totalRewardsUpdatePeriod
   );
   log(white('Initialized BalanceReporters contract'));
 

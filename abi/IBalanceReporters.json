@@ -16,6 +16,19 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalRewardsUpdatePeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "TotalRewardsUpdatePeriodUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "reporter",
@@ -91,11 +104,6 @@
       },
       {
         "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
         "name": "_totalRewards",
         "type": "uint256"
       }
@@ -122,6 +130,11 @@
         "internalType": "address",
         "name": "_rewardEthToken",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_totalRewardsUpdatePeriod",
+        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -172,6 +185,32 @@
     "name": "setRewardEthUniswapPairs",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newTotalRewardsUpdatePeriod",
+        "type": "uint256"
+      }
+    ],
+    "name": "setTotalRewardsUpdatePeriod",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalRewardsUpdatePeriod",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

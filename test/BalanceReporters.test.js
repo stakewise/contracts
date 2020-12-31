@@ -20,6 +20,8 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const BalanceReporters = artifacts.require('BalanceReporters');
 
+const totalRewardsUpdatePeriod = '86400';
+
 contract('BalanceReporters', ([_, ...accounts]) => {
   let balanceReporters, rewardEthToken, stakedEthToken;
   let [
@@ -53,7 +55,8 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     await initializeBalanceReporters(
       balanceReportersContractAddress,
       admin,
-      rewardEthTokenContractAddress
+      rewardEthTokenContractAddress,
+      totalRewardsUpdatePeriod
     );
 
     balanceReporters = await BalanceReporters.at(
@@ -163,6 +166,38 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     });
   });
 
+  describe('total rewards update period', () => {
+    it('admin user update total rewards period', async () => {
+      let newTotalRewardsUpdatePeriod = new BN('172800');
+      const receipt = await balanceReporters.setTotalRewardsUpdatePeriod(
+        newTotalRewardsUpdatePeriod,
+        {
+          from: admin,
+        }
+      );
+      expectEvent(receipt, 'TotalRewardsUpdatePeriodUpdated', {
+        totalRewardsUpdatePeriod: newTotalRewardsUpdatePeriod,
+      });
+      expect(await balanceReporters.totalRewardsUpdatePeriod()).bignumber.equal(
+        newTotalRewardsUpdatePeriod
+      );
+    });
+
+    it('anyone cannot update total rewards period', async () => {
+      let newTotalRewardsUpdatePeriod = new BN('172800');
+      await expectRevert(
+        balanceReporters.setTotalRewardsUpdatePeriod(
+          newTotalRewardsUpdatePeriod,
+          { from: anyone }
+        ),
+        'OwnablePausable: access denied'
+      );
+      expect(await balanceReporters.totalRewardsUpdatePeriod()).bignumber.equal(
+        new BN(totalRewardsUpdatePeriod)
+      );
+    });
+  });
+
   describe('total rewards voting', () => {
     let [reporter1, reporter2, reporter3, reporter4] = otherAccounts;
 
@@ -205,7 +240,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         from: reporter1,
       });
       expect(
-        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
+        await balanceReporters.hasTotalRewardsVote(reporter1, ether('1'))
       ).to.equal(true);
       await expectRevert(
         balanceReporters.voteForTotalRewards(ether('1'), {
@@ -226,7 +261,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         nonce: new BN(0),
       });
       expect(
-        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
+        await balanceReporters.hasTotalRewardsVote(reporter1, ether('1'))
       ).to.equal(true);
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
     });
@@ -237,7 +272,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         from: reporter1,
       });
       expect(
-        await balanceReporters.hasTotalRewardsVote(reporter1, '0', ether('1'))
+        await balanceReporters.hasTotalRewardsVote(reporter1, ether('1'))
       ).to.equal(true);
       expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter1,
@@ -275,7 +310,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         from: reporter1,
       });
       expect(
-        await balanceReporters.hasTotalRewardsVote(reporter1, '1', ether('1'))
+        await balanceReporters.hasTotalRewardsVote(reporter1, ether('1'))
       ).to.equal(true);
       expectEvent(receipt, 'TotalRewardsVoteSubmitted', {
         reporter: reporter1,
