@@ -37,14 +37,16 @@ async function deployBalanceReporters() {
 async function initializeBalanceReporters(
   balanceReportersContractAddress,
   adminAddress,
-  rewardEthTokenContractAddress
+  rewardEthTokenContractAddress,
+  totalRewardsUpdatePeriod
 ) {
   let BalanceReporters = await ethers.getContractFactory('BalanceReporters');
   BalanceReporters = BalanceReporters.attach(balanceReportersContractAddress);
 
   return BalanceReporters.initialize(
     adminAddress,
-    rewardEthTokenContractAddress
+    rewardEthTokenContractAddress,
+    totalRewardsUpdatePeriod
   );
 }
 

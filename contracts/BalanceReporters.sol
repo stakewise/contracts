@@ -22,6 +22,9 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
 
     bytes32 public constant REPORTER_ROLE = keccak256("REPORTER_ROLE");
 
+    // @dev Defines the period for total rewards update.
+    uint256 public override totalRewardsUpdatePeriod;
+
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
 
@@ -48,10 +51,13 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     /**
      * @dev See {IBalanceReporters-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken) external override initializer {
+    function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ReentrancyGuard_init_unchained();
         rewardEthToken = IRewardEthToken(_rewardEthToken);
+
+        totalRewardsUpdatePeriod = _totalRewardsUpdatePeriod;
+        emit TotalRewardsUpdatePeriodUpdated(_totalRewardsUpdatePeriod);
     }
 
     /**
@@ -64,8 +70,8 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     /**
      * @dev See {IBalanceReporters-hasTotalRewardsVote}.
      */
-    function hasTotalRewardsVote(address _reporter, uint256 _nonce, uint256 _totalRewards) external override view returns (bool) {
-        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), _nonce, _totalRewards));
+    function hasTotalRewardsVote(address _reporter, uint256 _totalRewards) external override view returns (bool) {
+        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), totalRewardsNonce.current(), _totalRewards));
         return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
     }
 
@@ -96,6 +102,14 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
         rewardEthUniswapPairs = _rewardEthUniswapPairs;
         emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs);
+    }
+
+    /**
+     * @dev See {IBalanceReporters-setTotalRewardsUpdatePeriod}.
+     */
+    function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external override onlyAdmin {
+        totalRewardsUpdatePeriod = _newTotalRewardsUpdatePeriod;
+        emit TotalRewardsUpdatePeriodUpdated(_newTotalRewardsUpdatePeriod);
     }
 
     /**

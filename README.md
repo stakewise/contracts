@@ -7,10 +7,11 @@
 The StakeWise smart contracts for tokenized staking and non-custodial validators.
 
 - **Extensible:** It is possible to create your own contract with logic for accumulating validator deposit amount.
-- **Upgradable:** By using [OpenZeppelin Upgrades](https://github.com/OpenZeppelin/openzeppelin-upgrades), it's possible to fix bugs and critical issues when the contracts are deployed to the production network.
-- **Role-based access:** By having [Operators](./contracts/access/Operators.sol), [Admins](./contracts/access/Admins.sol), and [Managers](./contracts/access/Managers.sol) contracts, it is possible to restrict user capabilities.
-- **Integration friendly:** Any contract state change is always followed by an emitted event. Applications can monitor and act on these events.
-- **Configurable:** Any global setting can be managed through the separate [Settings](./contracts/Settings.sol) contract.
+- **Upgradable:** By using [OpenZeppelin Upgrades](https://github.com/OpenZeppelin/openzeppelin-upgrades), it's possible to fix bugs and critical issues when the contracts are deployed to the mainnet.
+  Only the [Solos](./contracts/collectors/Solos.sol) contract cannot be upgraded to prevent the possibility of changing staker's withdrawal credentials.
+- **Role-based access:** By having [Operators](./contracts/Validators.sol), [Admins](./contracts/presets/OwnablePausableUpgradeable.sol), [Pausers](./contracts/presets/OwnablePausableUpgradeable.sol)
+  and [Reporters](./contracts/BalanceReporters.sol) roles, it is possible to restrict user capabilities.
+- **Integration friendly:** Any contract state emits event. Applications can monitor and act on these events.
 
 ## Deployment
 
