@@ -171,18 +171,20 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     */
     function _updateTokenRewards(address _token) private {
         Token storage token = tokens[_token];
-        uint256 claimedRewards = IRewardEthToken(rewardEthToken).balanceOf(_token);
-        if (token.totalSupply == 0 || claimedRewards == 0) {
+        uint256 totalSupply = token.totalSupply;
+        IRewardEthToken _rewardEthToken = IRewardEthToken(rewardEthToken);
+        uint256 claimedRewards = _rewardEthToken.balanceOf(_token);
+        if (totalSupply == 0 || claimedRewards == 0) {
             // no staked tokens or rewards
             return;
         }
 
         // calculate reward per token used for account reward calculation
-        token.rewardRate = token.rewardRate.add(claimedRewards.mul(1e18).div(token.totalSupply));
+        token.rewardRate = token.rewardRate.add(claimedRewards.mul(1e18).div(totalSupply));
         token.totalRewards = token.totalRewards.add(claimedRewards);
 
         // withdraw rewards from token
-        IRewardEthToken(rewardEthToken).claimRewards(_token, claimedRewards);
+        _rewardEthToken.claimRewards(_token, claimedRewards);
     }
 
     /**
