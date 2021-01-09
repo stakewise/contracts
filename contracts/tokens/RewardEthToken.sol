@@ -42,8 +42,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Previous total amount of rewards.
     uint128 private prevTotalRewards;
 
-    // @dev Reward per token for user reward calculation.
-    uint128 public override rewardPerToken;
+    // @dev Current reward per token for user reward calculation.
+    uint128 private curRewardPerToken;
+
+    // @dev Previous reward per token for user reward calculation.
+    uint128 private prevRewardPerToken;
 
     // @dev Last rewards update timestamp by balance reporters.
     uint64 public override updateTimestamp;
@@ -103,12 +106,20 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
+     * @dev See {IRewardEthToken-rewardPerToken}.
+     */
+    function rewardPerToken() public view override returns (uint128) {
+        // solhint-disable-next-line not-rely-on-time
+        return block.timestamp > updateTimestamp ? curRewardPerToken : prevRewardPerToken;
+    }
+
+    /**
      * @dev See {IERC20-balanceOf}.
      */
     function balanceOf(address account) public view override returns (uint256) {
         Checkpoint memory cp = checkpoints[account];
 
-        uint256 periodRewardPerToken = uint256(rewardPerToken).sub(cp.rewardPerToken);
+        uint256 periodRewardPerToken = uint256(rewardPerToken()).sub(cp.rewardPerToken);
         if (periodRewardPerToken == 0) {
             // no new rewards
             return cp.reward;
@@ -131,7 +142,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(sender != address(0), "RewardEthToken: invalid sender");
         require(recipient != address(0), "RewardEthToken: invalid receiver");
 
-        uint128 _rewardPerToken = rewardPerToken; // gas savings
+        uint128 _rewardPerToken = rewardPerToken(); // gas savings
         checkpoints[sender] = Checkpoint(
             balanceOf(sender).sub(amount, "RewardEthToken: invalid amount").toUint128(),
             _rewardPerToken
@@ -148,14 +159,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override {
-        checkpoints[account] = Checkpoint(balanceOf(account).toUint128(), rewardPerToken);
+        checkpoints[account] = Checkpoint(balanceOf(account).toUint128(), rewardPerToken());
     }
 
     /**
      * @dev See {IRewardEthToken-updateRewardCheckpoints}.
      */
     function updateRewardCheckpoints(address account1, address account2) external override {
-        uint128 _rewardPerToken = rewardPerToken; // gas savings
+        uint128 _rewardPerToken = rewardPerToken(); // gas savings
         checkpoints[account1] = Checkpoint(balanceOf(account1).toUint128(), _rewardPerToken);
         checkpoints[account2] = Checkpoint(balanceOf(account2).toUint128(), _rewardPerToken);
     }
@@ -166,9 +177,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == balanceReporters, "RewardEthToken: access denied");
 
-        // gas savings
-        uint128 _curTotalRewards = curTotalRewards;
-
+        uint128 _curTotalRewards = curTotalRewards; // gas savings
         uint256 periodRewards = newTotalRewards.sub(_curTotalRewards, "RewardEthToken: invalid new total rewards");
         if (periodRewards == 0) {
             // no new rewards
@@ -177,17 +186,18 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
 
         // calculate reward per token used for account reward calculation
         uint256 maintainerReward = periodRewards.mul(maintainerFee).div(10000);
-        uint256 newRewardPerToken = uint256(rewardPerToken).add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits()));
+        uint128 _curRewardPerToken = curRewardPerToken; // gas savings
+        uint128 newRewardPerToken = uint256(_curRewardPerToken).add(periodRewards.sub(maintainerReward).mul(1e18).div(stakedEthToken.totalDeposits())).toUint128();
 
         // update maintainer's reward
         checkpoints[maintainer] = Checkpoint(
             balanceOf(maintainer).add(maintainerReward).toUint128(),
-            newRewardPerToken.toUint128()
+            newRewardPerToken
         );
 
         // storage updates
         (prevTotalRewards, curTotalRewards) = (_curTotalRewards, newTotalRewards.toUint128());
-        rewardPerToken = newRewardPerToken.toUint128();
+        (prevRewardPerToken, curRewardPerToken) = (_curRewardPerToken, newRewardPerToken);
         // solhint-disable-next-line not-rely-on-time
         updateTimestamp = block.timestamp.toUint64();
 
