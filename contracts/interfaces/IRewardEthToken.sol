@@ -85,11 +85,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     function setMaintainerFee(uint256 _newMaintainerFee) external;
 
     /**
-    * @dev Function for retrieving the total rewards amount.
-    */
-    function totalRewards() external view returns (uint128);
-
-    /**
     * @dev Function for retrieving the last total rewards update timestamp.
     */
     function updateTimestamp() external view returns (uint64);

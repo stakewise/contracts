@@ -36,8 +36,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Maintainer percentage fee.
     uint256 public override maintainerFee;
 
-    // @dev Total amount of rewards.
-    uint128 public override totalRewards;
+    // @dev Current total amount of rewards.
+    uint128 private curTotalRewards;
+
+    // @dev Previous total amount of rewards.
+    uint128 private prevTotalRewards;
 
     // @dev Reward per token for user reward calculation.
     uint128 public override rewardPerToken;
@@ -95,7 +98,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() external view override returns (uint256) {
-        return totalRewards;
+        // solhint-disable-next-line not-rely-on-time
+        return block.timestamp > updateTimestamp ? curTotalRewards : prevTotalRewards;
     }
 
     /**
@@ -162,7 +166,10 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == balanceReporters, "RewardEthToken: access denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards, "RewardEthToken: invalid new total rewards");
+        // gas savings
+        uint128 _curTotalRewards = curTotalRewards;
+
+        uint256 periodRewards = newTotalRewards.sub(_curTotalRewards, "RewardEthToken: invalid new total rewards");
         if (periodRewards == 0) {
             // no new rewards
             return;
@@ -178,7 +185,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
             newRewardPerToken.toUint128()
         );
 
-        (totalRewards, rewardPerToken) = (newTotalRewards.toUint128(), newRewardPerToken.toUint128());
+        // storage updates
+        (prevTotalRewards, curTotalRewards) = (_curTotalRewards, newTotalRewards.toUint128());
+        rewardPerToken = newRewardPerToken.toUint128();
         // solhint-disable-next-line not-rely-on-time
         updateTimestamp = block.timestamp.toUint64();
 
