@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const {
   expectEvent,
   expectRevert,
+  time,
   ether,
   BN,
 } = require('@openzeppelin/test-helpers');
@@ -222,7 +223,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'Pausable: paused'
       );
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalSupply()).to.bignumber.equal(new BN(0));
     });
 
     it('only reporter can submit new total rewards', async () => {
@@ -232,7 +233,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'BalanceReporters: access denied'
       );
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalSupply()).to.bignumber.equal(new BN(0));
     });
 
     it('cannot vote for the same total rewards twice', async () => {
@@ -248,7 +249,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
         }),
         'BalanceReporters: already voted'
       );
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalSupply()).to.bignumber.equal(new BN(0));
     });
 
     it('does not submit rewards when not enough votes', async () => {
@@ -263,7 +264,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       expect(
         await balanceReporters.hasTotalRewardsVote(reporter1, ether('1'))
       ).to.equal(true);
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(new BN(0));
+      expect(await rewardEthToken.totalSupply()).to.bignumber.equal(new BN(0));
     });
 
     it('submits total rewards when enough votes collected', async () => {
@@ -301,9 +302,8 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       });
 
       // update submitted
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
-        ether('1')
-      );
+      await time.increase(time.duration.minutes(1));
+      expect(await rewardEthToken.totalSupply()).to.bignumber.equal(ether('1'));
 
       // vote again
       receipt = await balanceReporters.voteForTotalRewards(ether('1'), {

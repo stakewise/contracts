@@ -4,6 +4,7 @@ const {
   expectEvent,
   BN,
   ether,
+  time,
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
@@ -118,6 +119,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let receipt = await rewardEthToken.updateTotalRewards(newTotalRewards, {
         from: balanceReportersContractAddress,
       });
+      await time.increase(time.duration.minutes(1));
 
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards: newTotalRewards,
@@ -196,6 +198,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         await rewardEthToken.updateTotalRewards(totalRewards, {
           from: balanceReportersContractAddress,
         });
+        await time.increase(time.duration.minutes(1));
 
         // check maintainer reward
         await checkRewardEthToken({
@@ -279,6 +282,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
 
         // perform checks
+        await time.increase(time.duration.minutes(1));
         await checkRewardEthToken({
           rewardEthToken,
           totalSupply: new BN(0),
@@ -304,6 +308,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         let reward = tests[1][i].reward;
 
         // perform checks
+        await time.increase(time.duration.minutes(1));
         await checkRewardEthToken({
           rewardEthToken,
           totalSupply: new BN(0),
@@ -328,6 +333,8 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
+      await time.increase(time.duration.minutes(1));
+
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
@@ -386,6 +393,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         let reward = tests[3][i].reward;
 
         // perform checks
+        await time.increase(time.duration.minutes(1));
         await checkRewardEthToken({
           rewardEthToken,
           totalSupply: totalRewards,
@@ -440,6 +448,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
+      await time.increase(time.duration.minutes(1));
     });
 
     it('cannot transfer to zero address', async () => {
