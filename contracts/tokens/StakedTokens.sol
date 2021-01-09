@@ -171,18 +171,20 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
     */
     function _updateTokenRewards(address _token) private {
         Token storage token = tokens[_token];
-        uint256 claimedRewards = IRewardEthToken(rewardEthToken).balanceOf(_token);
-        if (token.totalSupply == 0 || claimedRewards == 0) {
+        uint256 totalSupply = token.totalSupply;
+        IRewardEthToken _rewardEthToken = IRewardEthToken(rewardEthToken);
+        uint256 claimedRewards = _rewardEthToken.balanceOf(_token);
+        if (totalSupply == 0 || claimedRewards == 0) {
             // no staked tokens or rewards
             return;
         }
 
         // calculate reward per token used for account reward calculation
-        token.rewardRate = token.rewardRate.add(claimedRewards.mul(1e18).div(token.totalSupply));
+        token.rewardRate = token.rewardRate.add(claimedRewards.mul(1e18).div(totalSupply));
         token.totalRewards = token.totalRewards.add(claimedRewards);
 
         // withdraw rewards from token
-        IRewardEthToken(rewardEthToken).claimRewards(_token, claimedRewards);
+        _rewardEthToken.claimRewards(_token, claimedRewards);
     }
 
     /**
@@ -195,7 +197,8 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         require(_prevBalance >= _newBalance || token.enabled, "StakedTokens: unsupported token");
 
         uint256 accountRewardRate = rewardRates[_token][_account];
-        if (token.rewardRate == accountRewardRate) {
+        uint256 tokenRewardRate = token.rewardRate;
+        if (tokenRewardRate == accountRewardRate) {
             // reward rate has not changed -> update only balance
             if (_newBalance != _prevBalance) {
                 balances[_token][_account] = _newBalance;
@@ -205,7 +208,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         }
 
         // update account reward rate
-        rewardRates[_token][_account] = token.rewardRate;
+        rewardRates[_token][_account] = tokenRewardRate;
 
         if (_prevBalance == 0) {
             // no previously staked tokens -> update only balance
@@ -215,7 +218,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         }
 
         // calculate period reward
-        uint256 periodReward = _prevBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
+        uint256 periodReward = _prevBalance.mul(tokenRewardRate.sub(accountRewardRate)).div(1e18);
 
         // withdraw rewards
         token.totalRewards = token.totalRewards.sub(periodReward);
