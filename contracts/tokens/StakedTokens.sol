@@ -197,7 +197,8 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         require(_prevBalance >= _newBalance || token.enabled, "StakedTokens: unsupported token");
 
         uint256 accountRewardRate = rewardRates[_token][_account];
-        if (token.rewardRate == accountRewardRate) {
+        uint256 tokenRewardRate = token.rewardRate;
+        if (tokenRewardRate == accountRewardRate) {
             // reward rate has not changed -> update only balance
             if (_newBalance != _prevBalance) {
                 balances[_token][_account] = _newBalance;
@@ -207,7 +208,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         }
 
         // update account reward rate
-        rewardRates[_token][_account] = token.rewardRate;
+        rewardRates[_token][_account] = tokenRewardRate;
 
         if (_prevBalance == 0) {
             // no previously staked tokens -> update only balance
@@ -217,7 +218,7 @@ contract StakedTokens is IStakedTokens, OwnablePausableUpgradeable, ReentrancyGu
         }
 
         // calculate period reward
-        uint256 periodReward = _prevBalance.mul(token.rewardRate.sub(accountRewardRate)).div(1e18);
+        uint256 periodReward = _prevBalance.mul(tokenRewardRate.sub(accountRewardRate)).div(1e18);
 
         // withdraw rewards
         token.totalRewards = token.totalRewards.sub(periodReward);
