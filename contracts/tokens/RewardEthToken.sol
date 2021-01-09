@@ -43,7 +43,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     uint128 public override rewardPerToken;
 
     // @dev Last rewards update timestamp by balance reporters.
-    uint64 public override updateTimestamp;
+    uint128 public override lastUpdateTimestamp;
 
     /**
       * @dev See {IRewardEthToken-initialize}.
@@ -180,9 +180,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
 
         (totalRewards, rewardPerToken) = (newTotalRewards.toUint128(), newRewardPerToken.toUint128());
         // solhint-disable-next-line not-rely-on-time
-        updateTimestamp = block.timestamp.toUint64();
+        lastUpdateTimestamp = block.timestamp.toUint128();
 
-        emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, updateTimestamp);
+        emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, lastUpdateTimestamp);
     }
 
     /**
