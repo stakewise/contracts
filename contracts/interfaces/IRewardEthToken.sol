@@ -35,13 +35,13 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardPerToken - calculated reward per token for account reward calculation.
-    * @param updateTimestamp - last rewards update timestamp by balance reporters.
+    * @param lastUpdateTimestamp - last rewards update timestamp by balance reporters.
     */
     event RewardsUpdated(
         uint256 periodRewards,
         uint256 totalRewards,
         uint256 rewardPerToken,
-        uint256 updateTimestamp
+        uint256 lastUpdateTimestamp
     );
 
     /**
@@ -92,7 +92,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
     */
-    function updateTimestamp() external view returns (uint64);
+    function lastUpdateTimestamp() external view returns (uint128);
 
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.

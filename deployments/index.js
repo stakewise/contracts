@@ -135,7 +135,18 @@ async function deployAllContracts({
   if (transferProxyAdminOwnership) {
     const admin = await getManifestAdmin(hre);
     await hre.upgrades.admin.transferProxyAdminOwnership(initialAdmin);
-    log(white(`Transferred proxy admin ownership to ${await admin.owner()}`));
+    let newOwner = await admin.owner();
+    for (let i = 0; i < 10; i++) {
+      if (newOwner === initialAdmin) {
+        log(white(`Transferred proxy admin ownership to ${newOwner}`));
+        return;
+      }
+      newOwner = await admin.owner();
+    }
+    throw Error(
+      `Failed to transfer proxy admin ownership: expected=${initialAdmin},
+       actual=${newOwner}`
+    );
   }
 
   return {

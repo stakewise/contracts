@@ -74,7 +74,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "updateTimestamp",
+        "name": "lastUpdateTimestamp",
         "type": "uint256"
       }
     ],
@@ -255,6 +255,19 @@
   },
   {
     "inputs": [],
+    "name": "lastUpdateTimestamp",
+    "outputs": [
+      {
+        "internalType": "uint128",
+        "name": "",
+        "type": "uint128"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "maintainer",
     "outputs": [
       {
@@ -426,19 +439,6 @@
     "name": "updateRewardCheckpoints",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "updateTimestamp",
-    "outputs": [
-      {
-        "internalType": "uint64",
-        "name": "",
-        "type": "uint64"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
