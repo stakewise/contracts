@@ -59,8 +59,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         external override initializer
     {
         __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init("StakeWise Reward ETH", "rwETH");
-        __ERC20Permit_init("StakeWise Reward ETH");
+        __ERC20_init("StakeWise Reward ETH2", "rETH2");
+        __ERC20Permit_init("StakeWise Reward ETH2");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         balanceReporters = _balanceReporters;
         stakedTokens = _stakedTokens;

@@ -236,7 +236,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           { deposit: ether('10'), reward: ether('0') },
           { deposit: ether('25'), reward: ether('0') },
         ],
-        // user1 transfers 4 stETH to user2
+        // user1 transfers 4 sETH2 to user2
         [
           { deposit: ether('5'), reward: ether('0') },
           { deposit: ether('6'), reward: ether('0') },
@@ -254,9 +254,9 @@ contract('RewardEthToken', ([_, ...accounts]) => {
             reward: ether('0.504496597075045422'),
           },
         ],
-        // user2 transfer 6 stETH to user0
-        // user1 transfers 0.104378606291388710 rwETH to user2
-        // user3 creates new deposit with 4 stETH
+        // user2 transfer 6 sETH2 to user0
+        // user1 transfers 0.104378606291388710 rWTH2 to user2
+        // user3 creates new deposit with 4 sETH2
         [
           {
             deposit: ether('11'),
@@ -296,7 +296,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
       }
 
-      // 1. user1 transfers 4 stETH to user2
+      // 1. user1 transfers 4 sETH2 to user2
       await stakedEthToken.transfer(otherAccounts[2], ether('4'), {
         from: otherAccounts[1],
       });
@@ -364,11 +364,11 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
       }
 
-      // 3. user2 transfer 6 stETH to user0
+      // 3. user2 transfer 6 sETH2 to user0
       await stakedEthToken.transfer(otherAccounts[0], ether('6'), {
         from: otherAccounts[2],
       });
-      // user1 transfers 0.104378606291388708 rwETH to user2
+      // user1 transfers 0.104378606291388708 tETH2 to user2
       await rewardEthToken.transfer(
         otherAccounts[2],
         ether('0.104378606291388708'),
@@ -376,7 +376,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
           from: otherAccounts[1],
         }
       );
-      // user3 creates new deposit with 4 stETH
+      // user3 creates new deposit with 4 sETH2
       await stakedEthToken.mint(otherAccounts[3], ether('4'), {
         from: poolContractAddress,
       });
@@ -403,7 +403,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         });
       }
 
-      // 5. user3 transfers 3.903576912806307183 stETH to user0
+      // 5. user3 transfers 3.903576912806307183 sETH2 to user0
       await stakedEthToken.transfer(
         otherAccounts[0],
         ether('3.903576912806307183'),
@@ -412,7 +412,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         }
       );
 
-      // user2 transfers 0.054442452002700437 rwETH to user3
+      // user2 transfers 0.054442452002700437 rETH2 to user3
       await rewardEthToken.transfer(
         otherAccounts[3],
         ether('0.054442452002700437'),
@@ -536,7 +536,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('can transfer rwETH tokens to different account', async () => {
+    it('can transfer rETH2 tokens to different account', async () => {
       let receipt = await rewardEthToken.transfer(sender2, value1, {
         from: sender1,
       });
