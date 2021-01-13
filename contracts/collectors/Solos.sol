@@ -85,7 +85,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
         }
         // the deposit can be canceled after lock has expired and it was not yet sent for staking
         // solhint-disable-next-line not-rely-on-time
-        solo.releaseTime = block.timestamp + cancelLockDuration;
+        solo.releaseTime = block.timestamp.add(cancelLockDuration);
 
         // emit event
         emit DepositAdded(soloId, msg.sender, msg.value, _withdrawalCredentials);
@@ -111,7 +111,7 @@ contract Solos is ISolos, ReentrancyGuard, OwnablePausable {
         if (newAmount > 0) {
             solo.amount = newAmount;
             // solhint-disable-next-line not-rely-on-time
-            solo.releaseTime = block.timestamp + cancelLockDuration;
+            solo.releaseTime = block.timestamp.add(cancelLockDuration);
         } else {
             delete solos[soloId];
         }
