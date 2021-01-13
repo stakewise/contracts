@@ -4,6 +4,7 @@ const {
   ether,
   expectRevert,
   expectEvent,
+  time,
 } = require('@openzeppelin/test-helpers');
 const {
   deployAndInitializeERC20Mock,
@@ -175,6 +176,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
+    await time.increase(time.duration.minutes(1));
 
     await checkRewards({
       totalRewards,
@@ -256,6 +258,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
+    await time.increase(time.duration.minutes(1));
 
     for (const holder of tokenHolders) {
       let reward = await stakedTokens.rewardOf(token.address, holder);
@@ -313,6 +316,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
+    await time.increase(time.duration.minutes(1));
 
     let reward = await stakedTokens.rewardOf(token.address, tokenHolder1);
     let receipt = await stakedTokens.withdrawRewards(token.address, {
@@ -352,6 +356,8 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     await rewardEthToken.updateTotalRewards(totalRewards, {
       from: balanceReportersContractAddress,
     });
+    await time.increase(time.duration.minutes(1));
+
     await checkRewards({
       totalRewards,
       fee: totalRewards.mul(maintainerFee).div(new BN(10000)),

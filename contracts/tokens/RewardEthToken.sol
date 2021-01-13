@@ -43,7 +43,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     uint128 public override rewardPerToken;
 
     // @dev Last rewards update timestamp by balance reporters.
-    uint128 public override lastUpdateTimestamp;
+    uint256 public override lastUpdateTimestamp;
 
     /**
       * @dev See {IRewardEthToken-initialize}.
@@ -126,6 +126,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
         require(sender != address(0), "RewardEthToken: invalid sender");
         require(recipient != address(0), "RewardEthToken: invalid receiver");
+        // solhint-disable-next-line not-rely-on-time, reason-string
+        require(block.timestamp > lastUpdateTimestamp, "RewardEthToken: cannot transfer during rewards update");
 
         uint128 _rewardPerToken = rewardPerToken; // gas savings
         checkpoints[sender] = Checkpoint(
@@ -180,7 +182,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
 
         (totalRewards, rewardPerToken) = (newTotalRewards.toUint128(), newRewardPerToken.toUint128());
         // solhint-disable-next-line not-rely-on-time
-        lastUpdateTimestamp = block.timestamp.toUint128();
+        lastUpdateTimestamp = block.timestamp;
 
         emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, lastUpdateTimestamp);
     }
