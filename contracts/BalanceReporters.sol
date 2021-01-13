@@ -128,8 +128,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
         emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
 
         // update rewards only if enough votes accumulated
-        // do not use safe math as votes number cannot overflow
-        if (candidateNewVotes * 3 > getRoleMemberCount(REPORTER_ROLE) * 2) {
+        if (candidateNewVotes.mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {
             totalRewardsNonce.increment();
             delete candidates[candidateId];
             rewardEthToken.updateTotalRewards(_newTotalRewards);
