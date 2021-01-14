@@ -140,6 +140,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
       from: balanceReportersContractAddress,
     });
     await checkRewards({ totalRewards, fee });
+    await time.increase(time.duration.minutes(1));
 
     // withdraw tokens
     for (const holder of tokenHolders) {
