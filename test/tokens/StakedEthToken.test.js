@@ -48,7 +48,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
   });
 
   describe('mint', () => {
-    it('anyone cannot mint stETH tokens', async () => {
+    it('anyone cannot mint sETH2 tokens', async () => {
       await expectRevert(
         stakedEthToken.mint(sender1, ether('10'), {
           from: sender1,
@@ -64,7 +64,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('pool can mint stETH tokens', async () => {
+    it('pool can mint sETH2 tokens', async () => {
       let value = ether('10');
       let receipt = await stakedEthToken.mint(sender1, value, {
         from: poolContractAddress,
@@ -186,7 +186,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('can transfer stETH tokens to different account', async () => {
+    it('can transfer sETH2 tokens to different account', async () => {
       let receipt = await stakedEthToken.transfer(sender2, value, {
         from: sender1,
       });

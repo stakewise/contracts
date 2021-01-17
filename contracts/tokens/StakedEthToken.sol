@@ -33,8 +33,8 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      */
     function initialize(address _admin, address _rewardEthToken, address _pool) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init("StakeWise Staked ETH", "stETH");
-        __ERC20Permit_init("StakeWise Staked ETH");
+        __ERC20_init("StakeWise Staked ETH2", "sETH2");
+        __ERC20Permit_init("StakeWise Staked ETH2");
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         pool = _pool;
     }

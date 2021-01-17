@@ -143,7 +143,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
     let [pair1, pair2, pair3] = otherAccounts;
     let pairs = [pair1, pair2, pair3];
 
-    it('admin user can set rwETH uniswap pairs', async () => {
+    it('admin user can set rETH2 uniswap pairs', async () => {
       const receipt = await balanceReporters.setRewardEthUniswapPairs(pairs, {
         from: admin,
       });
@@ -155,7 +155,7 @@ contract('BalanceReporters', ([_, ...accounts]) => {
       );
     });
 
-    it('anyone cannot set rwETH uniswap pairs', async () => {
+    it('anyone cannot set rETH2 uniswap pairs', async () => {
       await expectRevert(
         balanceReporters.setRewardEthUniswapPairs(pairs, { from: anyone }),
         'OwnablePausable: access denied'

@@ -95,7 +95,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
       rewardHolder3,
     ];
 
-    // mint stETH tokens
+    // mint sETH2 tokens
     for (const holder of rewardHolders) {
       await stakedEthToken.mint(holder, stakedBalance, {
         from: poolContractAddress,

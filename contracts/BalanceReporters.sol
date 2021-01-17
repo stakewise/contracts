@@ -28,7 +28,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
 
-    // @dev List of supported rwETH Uniswap pairs.
+    // @dev List of supported rETH2 Uniswap pairs.
     address[] private rewardEthUniswapPairs;
 
     // @dev Maps vote ID to whether it was submitted or not.
