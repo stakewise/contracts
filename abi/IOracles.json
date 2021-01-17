@@ -31,7 +31,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "reporter",
+        "name": "oracle",
         "type": "address"
       },
       {
@@ -58,7 +58,7 @@
         "type": "address"
       }
     ],
-    "name": "addReporter",
+    "name": "addOracle",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -99,7 +99,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_reporter",
+        "name": "_oracle",
         "type": "address"
       },
       {
@@ -150,7 +150,7 @@
         "type": "address"
       }
     ],
-    "name": "isReporter",
+    "name": "isOracle",
     "outputs": [
       {
         "internalType": "bool",
@@ -169,7 +169,7 @@
         "type": "address"
       }
     ],
-    "name": "removeReporter",
+    "name": "removeOracle",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

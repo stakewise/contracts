@@ -22,7 +22,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     poolContractAddress,
     admin,
     maintainer,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     stakedTokensContractAddress,
     ...otherAccounts
   ] = accounts;
@@ -30,7 +30,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
   beforeEach(async () => {
     [rewardEthToken, stakedEthToken] = await deployTokens({
       adminAddress: admin,
-      balanceReportersContractAddress,
+      oraclesContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
     });
@@ -105,7 +105,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
     });
 
-    it('balance reporters can update rewards', async () => {
+    it('oracles can update rewards', async () => {
       let deposit = ether('32');
       await stakedEthToken.mint(otherAccounts[0], deposit, {
         from: poolContractAddress,
@@ -117,7 +117,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let userReward = newTotalRewards.sub(maintainerReward);
 
       let receipt = await rewardEthToken.updateTotalRewards(newTotalRewards, {
-        from: balanceReportersContractAddress,
+        from: oraclesContractAddress,
       });
 
       expectEvent(receipt, 'RewardsUpdated', {
@@ -179,7 +179,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         // redeploy tokens
         [rewardEthToken, stakedEthToken] = await deployTokens({
           adminAddress: admin,
-          balanceReportersContractAddress,
+          oraclesContractAddress,
           stakedTokensContractAddress,
           poolContractAddress,
         });
@@ -195,7 +195,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
 
         // update rewards
         await rewardEthToken.updateTotalRewards(totalRewards, {
-          from: balanceReportersContractAddress,
+          from: oraclesContractAddress,
         });
 
         // check maintainer reward
@@ -327,7 +327,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let totalRewards = periodRewards;
       let rewardPerToken = ether('0.017396434381898118');
       let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
-        from: balanceReportersContractAddress,
+        from: oraclesContractAddress,
       });
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
@@ -439,7 +439,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       });
 
       await rewardEthToken.updateTotalRewards(totalRewards, {
-        from: balanceReportersContractAddress,
+        from: oraclesContractAddress,
       });
       await time.increase(time.duration.minutes(1));
     });
