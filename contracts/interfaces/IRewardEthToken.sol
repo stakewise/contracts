@@ -92,7 +92,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Function for retrieving the last total rewards update timestamp.
     */
-    function lastUpdateTimestamp() external view returns (uint128);
+    function lastUpdateTimestamp() external view returns (uint256);
 
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.

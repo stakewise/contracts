@@ -5,6 +5,7 @@ const {
   BN,
   ether,
   constants,
+  time,
 } = require('@openzeppelin/test-helpers');
 const {
   checkStakedEthToken,
@@ -440,6 +441,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       await rewardEthToken.updateTotalRewards(totalRewards, {
         from: balanceReportersContractAddress,
       });
+      await time.increase(time.duration.minutes(1));
     });
 
     it('cannot transfer to zero address', async () => {
