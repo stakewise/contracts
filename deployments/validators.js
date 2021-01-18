@@ -1,4 +1,7 @@
-const { ethers, upgrades } = require('hardhat');
+const { ethers, upgrades, network } = require('hardhat');
+const { calculateGasMargin } = require('./utils');
+
+let provider = new ethers.providers.Web3Provider(network.provider);
 
 async function deployValidators() {
   const Validators = await ethers.getContractFactory('Validators');
@@ -6,6 +9,7 @@ async function deployValidators() {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
+  await proxy.deployed();
   return proxy.address;
 }
 
@@ -18,11 +22,19 @@ async function initializeValidators(
   let Validators = await ethers.getContractFactory('Validators');
   Validators = Validators.attach(validatorsContractAddress);
 
-  return Validators.initialize(
-    adminAddress,
-    poolContractAddress,
-    solosContractAddress
-  );
+  const { hash } = await Validators.estimateGas
+    .initialize(adminAddress, poolContractAddress, solosContractAddress)
+    .then((estimatedGas) =>
+      Validators.initialize(
+        adminAddress,
+        poolContractAddress,
+        solosContractAddress,
+        {
+          gasLimit: calculateGasMargin(estimatedGas),
+        }
+      )
+    );
+  return provider.waitForTransaction(hash);
 }
 
 async function deployOracles() {
@@ -31,6 +43,7 @@ async function deployOracles() {
     unsafeAllowCustomTypes: true,
     initializer: false,
   });
+  await proxy.deployed();
   return proxy.address;
 }
 
@@ -43,11 +56,12 @@ async function initializeOracles(
   let Oracles = await ethers.getContractFactory('Oracles');
   Oracles = Oracles.attach(oraclesContractAddress);
 
-  return Oracles.initialize(
+  const { hash } = await Oracles.initialize(
     adminAddress,
     rewardEthTokenContractAddress,
     totalRewardsUpdatePeriod
   );
+  return provider.waitForTransaction(hash);
 }
 
 module.exports = {

@@ -1,5 +1,8 @@
-const { ethers, upgrades } = require('hardhat');
+const { ethers, upgrades, network } = require('hardhat');
+const { calculateGasMargin } = require('./utils');
 const { initialSettings } = require('./settings');
+
+let provider = new ethers.providers.Web3Provider(network.provider);
 
 async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');
@@ -7,6 +10,7 @@ async function deployPool() {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
+  await proxy.deployed();
   return proxy.address;
 }
 
@@ -20,13 +24,27 @@ async function initializePool(
   let Pool = await ethers.getContractFactory('Pool');
   Pool = Pool.attach(poolContractAddress);
 
-  return Pool.initialize(
-    adminAddress,
-    stakedEthTokenContractAddress,
-    vrcContractAddress,
-    validatorsContractAddress,
-    initialSettings.withdrawalCredentials
-  );
+  const { hash } = await Pool.estimateGas
+    .initialize(
+      adminAddress,
+      stakedEthTokenContractAddress,
+      vrcContractAddress,
+      validatorsContractAddress,
+      initialSettings.withdrawalCredentials
+    )
+    .then((estimatedGas) =>
+      Pool.initialize(
+        adminAddress,
+        stakedEthTokenContractAddress,
+        vrcContractAddress,
+        validatorsContractAddress,
+        initialSettings.withdrawalCredentials,
+        {
+          gasLimit: calculateGasMargin(estimatedGas),
+        }
+      )
+    );
+  return provider.waitForTransaction(hash);
 }
 
 async function deploySolos(

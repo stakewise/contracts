@@ -25,6 +25,10 @@ function log(message) {
   }
 }
 
+function delay(ms) {
+  return new Promise((res) => setTimeout(res, ms));
+}
+
 async function deployAllContracts({
   initialAdmin = initialSettings.admin,
   vrcContractAddress = initialSettings.VRC,
@@ -118,6 +122,7 @@ async function deployAllContracts({
         log(white(`Transferred proxy admin ownership to ${newOwner}`));
         return;
       }
+      await delay(5000);
       newOwner = await admin.owner();
     }
     throw Error(

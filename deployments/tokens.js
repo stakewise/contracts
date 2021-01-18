@@ -1,5 +1,8 @@
-const { ethers, upgrades } = require('hardhat');
+const { ethers, upgrades, network } = require('hardhat');
+const { calculateGasMargin } = require('./utils');
 const { initialSettings } = require('./settings');
+
+let provider = new ethers.providers.Web3Provider(network.provider);
 
 async function deployAndInitializeERC20Mock(
   ownerAddress,
@@ -19,6 +22,7 @@ async function deployStakedEthToken() {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
+  await proxy.deployed();
   return proxy.address;
 }
 
@@ -31,11 +35,23 @@ async function initializeStakedEthToken(
   let StakedEthToken = await ethers.getContractFactory('StakedEthToken');
   StakedEthToken = StakedEthToken.attach(stakedEthTokenContractAddress);
 
-  return StakedEthToken.initialize(
-    adminAddress,
-    rewardEthTokenContractAddress,
-    poolContractAddress
-  );
+  const { hash } = await StakedEthToken.estimateGas
+    .initialize(
+      adminAddress,
+      rewardEthTokenContractAddress,
+      poolContractAddress
+    )
+    .then((estimatedGas) =>
+      StakedEthToken.initialize(
+        adminAddress,
+        rewardEthTokenContractAddress,
+        poolContractAddress,
+        {
+          gasLimit: calculateGasMargin(estimatedGas),
+        }
+      )
+    );
+  return provider.waitForTransaction(hash);
 }
 
 async function deployRewardEthToken() {
@@ -44,6 +60,7 @@ async function deployRewardEthToken() {
     initializer: false,
     unsafeAllowCustomTypes: true,
   });
+  await proxy.deployed();
   return proxy.address;
 }
 
@@ -56,13 +73,27 @@ async function initializeRewardEthToken(
   let RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
 
-  return RewardEthToken.initialize(
-    adminAddress,
-    stakedEthTokenContractAddress,
-    oraclesContractAddress,
-    initialSettings.maintainer,
-    initialSettings.maintainerFee
-  );
+  const { hash } = await RewardEthToken.estimateGas
+    .initialize(
+      adminAddress,
+      stakedEthTokenContractAddress,
+      oraclesContractAddress,
+      initialSettings.maintainer,
+      initialSettings.maintainerFee
+    )
+    .then((estimatedGas) =>
+      RewardEthToken.initialize(
+        adminAddress,
+        stakedEthTokenContractAddress,
+        oraclesContractAddress,
+        initialSettings.maintainer,
+        initialSettings.maintainerFee,
+        {
+          gasLimit: calculateGasMargin(estimatedGas),
+        }
+      )
+    );
+  return provider.waitForTransaction(hash);
 }
 
 module.exports = {
