@@ -329,6 +329,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
       let receipt = await rewardEthToken.updateTotalRewards(totalRewards, {
         from: oraclesContractAddress,
       });
+      await time.increase(time.duration.minutes(1));
       expectEvent(receipt, 'RewardsUpdated', {
         periodRewards,
         totalRewards,
