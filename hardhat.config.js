@@ -145,7 +145,7 @@ module.exports = {
       'OwnablePausableUpgradeable',
       'IOracles',
       'IDepositContract',
-      'IERC20',
+      'IERC20Upgradeable',
       'IPool',
       'IRewardEthToken',
       'ISolos',
