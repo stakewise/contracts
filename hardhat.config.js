@@ -150,7 +150,6 @@ module.exports = {
       'IRewardEthToken',
       'ISolos',
       'IStakedEthToken',
-      'IStakedTokens',
       'IValidators',
     ],
     clear: true,

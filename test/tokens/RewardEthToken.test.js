@@ -23,7 +23,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     admin,
     maintainer,
     oraclesContractAddress,
-    stakedTokensContractAddress,
     ...otherAccounts
   ] = accounts;
 
@@ -31,7 +30,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     [rewardEthToken, stakedEthToken] = await deployTokens({
       adminAddress: admin,
       oraclesContractAddress,
-      stakedTokensContractAddress,
       poolContractAddress,
     });
 
@@ -180,7 +178,6 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         [rewardEthToken, stakedEthToken] = await deployTokens({
           adminAddress: admin,
           oraclesContractAddress,
-          stakedTokensContractAddress,
           poolContractAddress,
         });
         await rewardEthToken.setMaintainer(maintainer, { from: admin });

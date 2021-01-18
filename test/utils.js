@@ -152,7 +152,6 @@ async function checkRewardEthToken({
 async function deployTokens({
   adminAddress,
   oraclesContractAddress,
-  stakedTokensContractAddress,
   poolContractAddress,
 }) {
   const stakedEthTokenContractAddress = await deployStakedEthToken();
@@ -167,8 +166,7 @@ async function deployTokens({
     rewardEthTokenContractAddress,
     adminAddress,
     stakedEthTokenContractAddress,
-    oraclesContractAddress,
-    stakedTokensContractAddress
+    oraclesContractAddress
   );
 
   return [
