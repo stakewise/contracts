@@ -229,7 +229,7 @@
       },
       {
         "internalType": "address",
-        "name": "_balanceReporters",
+        "name": "_oracles",
         "type": "address"
       },
       {

@@ -143,7 +143,7 @@ module.exports = {
     only: [
       'AccessControl',
       'OwnablePausableUpgradeable',
-      'IBalanceReporters',
+      'IOracles',
       'IDepositContract',
       'IERC20',
       'IPool',

@@ -31,11 +31,11 @@ interface IRewardEthToken is IERC20Upgradeable {
     }
 
     /**
-    * @dev Event for tracking rewards update by balance reporters.
+    * @dev Event for tracking rewards update by oracles.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardPerToken - calculated reward per token for account reward calculation.
-    * @param lastUpdateTimestamp - last rewards update timestamp by balance reporters.
+    * @param lastUpdateTimestamp - last rewards update timestamp by oracles.
     */
     event RewardsUpdated(
         uint256 periodRewards,
@@ -48,7 +48,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @dev Constructor for initializing the RewardEthToken contract.
     * @param _admin - address of the contract admin.
     * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _balanceReporters - address of the BalanceReporters contract.
+    * @param _oracles - address of the Oracles contract.
     * @param _stakedTokens - address of the StakedTokens contract.
     * @param _maintainer - maintainer's address.
     * @param _maintainerFee - maintainer's fee. Must be less than 10000 (100.00%).
@@ -56,7 +56,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     function initialize(
         address _admin,
         address _stakedEthToken,
-        address _balanceReporters,
+        address _oracles,
         address _stakedTokens,
         address _maintainer,
         uint256 _maintainerFee
@@ -120,7 +120,7 @@ interface IRewardEthToken is IERC20Upgradeable {
 
     /**
     * @dev Function for updating validators total rewards.
-    * Can only be called by Balance Reporters contract.
+    * Can only be called by Oracles contract.
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(uint256 newTotalRewards) external;

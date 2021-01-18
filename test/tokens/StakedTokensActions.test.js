@@ -55,7 +55,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
   let [
     poolContractAddress,
     admin,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     rewardHolder1,
     rewardHolder2,
     rewardHolder3,
@@ -72,7 +72,7 @@ contract('StakedTokens Actions', ([_, ...accounts]) => {
     let stakedTokensContractAddress = await deployStakedTokens();
     [rewardEthToken, stakedEthToken] = await deployTokens({
       adminAddress: admin,
-      balanceReportersContractAddress,
+      oraclesContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
     });

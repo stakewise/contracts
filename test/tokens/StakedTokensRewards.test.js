@@ -24,7 +24,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     poolContractAddress,
     admin,
     maintainer,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     rewardsHolder1,
     rewardsHolder2,
     rewardsHolder3,
@@ -65,7 +65,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     let stakedTokensContractAddress = await deployStakedTokens();
     [rewardEthToken, stakedEthToken] = await deployTokens({
       adminAddress: admin,
-      balanceReportersContractAddress,
+      oraclesContractAddress,
       stakedTokensContractAddress,
       poolContractAddress,
     });
@@ -121,7 +121,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   it('distributes rewards correctly', async () => {
     let totalRewards = ether('100');
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
 
     let fee = totalRewards.mul(maintainerFee).div(new BN(10000));
@@ -137,7 +137,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
 
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
     await checkRewards({ totalRewards, fee });
     await time.increase(time.duration.minutes(1));
@@ -175,7 +175,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
 
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
     await time.increase(time.duration.minutes(1));
 
@@ -257,7 +257,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
     let tokenReward = rewardHolderReward.div(new BN(tokenHolders.length));
 
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
     await time.increase(time.duration.minutes(1));
 
@@ -315,7 +315,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   it('cannot withdraw rewards multiple times', async () => {
     let totalRewards = ether('100');
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
     await time.increase(time.duration.minutes(1));
 
@@ -355,7 +355,7 @@ contract('StakedTokens Rewards', ([_, ...accounts]) => {
   it('calculates checkpoints correctly', async () => {
     let totalRewards = ether('100');
     await rewardEthToken.updateTotalRewards(totalRewards, {
-      from: balanceReportersContractAddress,
+      from: oraclesContractAddress,
     });
     await time.increase(time.duration.minutes(1));
 

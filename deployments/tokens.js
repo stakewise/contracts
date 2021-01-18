@@ -51,7 +51,7 @@ async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
   adminAddress,
   stakedEthTokenContractAddress,
-  balanceReportersContractAddress,
+  oraclesContractAddress,
   stakedTokensContractAddress
 ) {
   let RewardEthToken = await ethers.getContractFactory('RewardEthToken');
@@ -60,7 +60,7 @@ async function initializeRewardEthToken(
   return RewardEthToken.initialize(
     adminAddress,
     stakedEthTokenContractAddress,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     stakedTokensContractAddress,
     initialSettings.maintainer,
     initialSettings.maintainerFee

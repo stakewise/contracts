@@ -8,8 +8,8 @@ const { initialSettings } = require('./settings');
 const {
   deployValidators,
   initializeValidators,
-  deployBalanceReporters,
-  initializeBalanceReporters,
+  deployOracles,
+  initializeOracles,
 } = require('./validators');
 const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
@@ -73,14 +73,8 @@ async function deployAllContracts({
     )
   );
 
-  const balanceReportersContractAddress = await deployBalanceReporters();
-  log(
-    white(
-      `Deployed BalanceReporters contract: ${green(
-        balanceReportersContractAddress
-      )}`
-    )
-  );
+  const oraclesContractAddress = await deployOracles();
+  log(white(`Deployed Oracles contract: ${green(oraclesContractAddress)}`));
 
   // Initialize contracts
   await initializeValidators(
@@ -112,7 +106,7 @@ async function deployAllContracts({
     rewardEthTokenContractAddress,
     initialAdmin,
     stakedEthTokenContractAddress,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     stakedTokensContractAddress
   );
   log(white('Initialized RewardEthToken contract'));
@@ -124,13 +118,13 @@ async function deployAllContracts({
   );
   log(white('Initialized StakedTokens contract'));
 
-  await initializeBalanceReporters(
-    balanceReportersContractAddress,
+  await initializeOracles(
+    oraclesContractAddress,
     initialAdmin,
     rewardEthTokenContractAddress,
     initialSettings.totalRewardsUpdatePeriod
   );
-  log(white('Initialized BalanceReporters contract'));
+  log(white('Initialized Oracles contract'));
 
   if (transferProxyAdminOwnership) {
     const admin = await getManifestAdmin(hre);
@@ -151,7 +145,7 @@ async function deployAllContracts({
 
   return {
     validators: validatorsContractAddress,
-    balanceReporters: balanceReportersContractAddress,
+    oracles: oraclesContractAddress,
     pool: poolContractAddress,
     solos: solosContractAddress,
     stakedEthToken: stakedEthTokenContractAddress,

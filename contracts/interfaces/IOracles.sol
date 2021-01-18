@@ -3,16 +3,16 @@
 pragma solidity 0.7.5;
 
 /**
- * @dev Interface of the BalanceReporters contract.
+ * @dev Interface of the Oracles contract.
  */
-interface IBalanceReporters {
+interface IOracles {
     /**
     * @dev Event for tracking votes for RewardEthToken total rewards.
-    * @param reporter - address of the account which submitted vote.
+    * @param oracle - address of the account which submitted vote.
     * @param nonce - update nonce.
     * @param totalRewards - submitted value of total rewards.
     */
-    event TotalRewardsVoteSubmitted(address indexed reporter, uint256 nonce, uint256 totalRewards);
+    event TotalRewardsVoteSubmitted(address indexed oracle, uint256 nonce, uint256 totalRewards);
 
     /**
     * @dev Event for tracking RewardEthToken total rewards update preiod changes.
@@ -43,7 +43,7 @@ interface IBalanceReporters {
     function getRewardEthUniswapPairs() external view returns (address[] memory);
 
     /**
-    * @dev Constructor for initializing the BalanceReporters contract.
+    * @dev Constructor for initializing the Oracles contract.
     * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _totalRewardsUpdatePeriod - total rewards update period.
@@ -51,31 +51,31 @@ interface IBalanceReporters {
     function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external;
 
     /**
-    * @dev Function for checking whether an account has a reporter role.
+    * @dev Function for checking whether an account has an oracle role.
     * @param _account - account to check.
     */
-    function isReporter(address _account) external view returns (bool);
+    function isOracle(address _account) external view returns (bool);
 
     /**
     * @dev Function for checking whether an account has voted for the total rewards.
-    * @param _reporter - reporter address to check.
-    * @param _totalRewards - total rewards submitted by the reporter.
+    * @param _oracle - oracle address to check.
+    * @param _totalRewards - total rewards submitted by the oracle.
     */
-    function hasTotalRewardsVote(address _reporter, uint256 _totalRewards) external view returns (bool);
+    function hasTotalRewardsVote(address _oracle, uint256 _totalRewards) external view returns (bool);
 
     /**
-    * @dev Function for adding a reporter role to the account.
+    * @dev Function for adding an oracle role to the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to assign a reporter role to.
+    * @param _account - account to assign an oracle role to.
     */
-    function addReporter(address _account) external;
+    function addOracle(address _account) external;
 
     /**
-    * @dev Function for removing a reporter role from the account.
+    * @dev Function for removing an oracle role from the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to remove a reporter role from.
+    * @param _account - account to remove an oracle role from.
     */
-    function removeReporter(address _account) external;
+    function removeOracle(address _account) external;
 
     /**
     * @dev Function for updating list of supported reward ETH uniswap pairs.
@@ -93,7 +93,7 @@ interface IBalanceReporters {
 
     /**
     * @dev Function for voting for new RewardEthToken total rewards.
-    * Can only be called by an account with a reporter role.
+    * Can only be called by an account with an oracle role.
     * @param _newTotalRewards - total rewards to give a vote for.
     */
     function voteForTotalRewards(uint256 _newTotalRewards) external;

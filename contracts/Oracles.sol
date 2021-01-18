@@ -8,19 +8,19 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
-import "./interfaces/IBalanceReporters.sol";
+import "./interfaces/IOracles.sol";
 
 /**
- * @title BalanceReporters
+ * @title Oracles
  *
- * @dev Balance reporters contract stores accounts responsible for submitting pool total rewards to RewardEthToken contract.
- * Rewards are updated only when a threshold of inputs from different reporters received.
+ * @dev Oracles contract stores accounts responsible for submitting off-chain data.
+ * The threshold of inputs from different oracles is required to submit the data.
  */
-contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, OwnablePausableUpgradeable {
+contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgradeable {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    bytes32 public constant REPORTER_ROLE = keccak256("REPORTER_ROLE");
+    bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
     // @dev Defines the period for total rewards update.
     uint256 public override totalRewardsUpdatePeriod;
@@ -41,15 +41,15 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     CountersUpgradeable.Counter private totalRewardsNonce;
 
     /**
-    * @dev Modifier for checking whether the caller is a reporter.
+    * @dev Modifier for checking whether the caller is an oracle.
     */
-    modifier onlyReporter() {
-        require(hasRole(REPORTER_ROLE, msg.sender), "BalanceReporters: access denied");
+    modifier onlyOracle() {
+        require(hasRole(ORACLE_ROLE, msg.sender), "Oracles: access denied");
         _;
     }
 
     /**
-     * @dev See {IBalanceReporters-initialize}.
+     * @dev See {IOracles-initialize}.
      */
     function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
@@ -61,43 +61,43 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
-     * @dev See {IBalanceReporters-getRewardEthUniswapPairs}.
+     * @dev See {IOracles-getRewardEthUniswapPairs}.
      */
     function getRewardEthUniswapPairs() public override view returns (address[] memory) {
         return rewardEthUniswapPairs;
     }
 
     /**
-     * @dev See {IBalanceReporters-hasTotalRewardsVote}.
+     * @dev See {IOracles-hasTotalRewardsVote}.
      */
-    function hasTotalRewardsVote(address _reporter, uint256 _totalRewards) external override view returns (bool) {
+    function hasTotalRewardsVote(address _oracle, uint256 _totalRewards) external override view returns (bool) {
         bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), totalRewardsNonce.current(), _totalRewards));
-        return submittedVotes[keccak256(abi.encodePacked(_reporter, candidateId))];
+        return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
     }
 
     /**
-     * @dev See {IBalanceReporters-isReporter}.
+     * @dev See {IOracles-isOracle}.
      */
-    function isReporter(address _account) external override view returns (bool) {
-        return hasRole(REPORTER_ROLE, _account);
+    function isOracle(address _account) external override view returns (bool) {
+        return hasRole(ORACLE_ROLE, _account);
     }
 
     /**
-     * @dev See {IBalanceReporters-addReporter}.
+     * @dev See {IOracles-addOracle}.
      */
-    function addReporter(address _account) external override {
-        grantRole(REPORTER_ROLE, _account);
+    function addOracle(address _account) external override {
+        grantRole(ORACLE_ROLE, _account);
     }
 
     /**
-     * @dev See {IBalanceReporters-removeReporter}.
+     * @dev See {IOracles-removeOracle}.
      */
-    function removeReporter(address _account) external override {
-        revokeRole(REPORTER_ROLE, _account);
+    function removeOracle(address _account) external override {
+        revokeRole(ORACLE_ROLE, _account);
     }
 
     /**
-     * @dev See {IBalanceReporters-setRewardEthUniswapPairs}.
+     * @dev See {IOracles-setRewardEthUniswapPairs}.
      */
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
         rewardEthUniswapPairs = _rewardEthUniswapPairs;
@@ -105,7 +105,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
-     * @dev See {IBalanceReporters-setTotalRewardsUpdatePeriod}.
+     * @dev See {IOracles-setTotalRewardsUpdatePeriod}.
      */
     function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external override onlyAdmin {
         totalRewardsUpdatePeriod = _newTotalRewardsUpdatePeriod;
@@ -113,13 +113,13 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
     }
 
     /**
-     * @dev See {IBalanceReporters-voteForTotalRewards}.
+     * @dev See {IOracles-voteForTotalRewards}.
      */
-    function voteForTotalRewards(uint256 _newTotalRewards) external override onlyReporter whenNotPaused nonReentrant {
+    function voteForTotalRewards(uint256 _newTotalRewards) external override onlyOracle whenNotPaused nonReentrant {
         uint256 nonce = totalRewardsNonce.current();
         bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), nonce, _newTotalRewards));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
-        require(!submittedVotes[voteId], "BalanceReporters: already voted");
+        require(!submittedVotes[voteId], "Oracles: already voted");
 
         // mark vote as submitted, update candidate votes number
         submittedVotes[voteId] = true;
@@ -128,7 +128,7 @@ contract BalanceReporters is IBalanceReporters, ReentrancyGuardUpgradeable, Owna
         emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
 
         // update rewards only if enough votes accumulated
-        if (candidateNewVotes.mul(3) > getRoleMemberCount(REPORTER_ROLE).mul(2)) {
+        if (candidateNewVotes.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2)) {
             totalRewardsNonce.increment();
             delete candidates[candidateId];
             rewardEthToken.updateTotalRewards(_newTotalRewards);

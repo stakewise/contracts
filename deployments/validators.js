@@ -25,25 +25,25 @@ async function initializeValidators(
   );
 }
 
-async function deployBalanceReporters() {
-  const BalanceReporters = await ethers.getContractFactory('BalanceReporters');
-  const proxy = await upgrades.deployProxy(BalanceReporters, [], {
+async function deployOracles() {
+  const Oracles = await ethers.getContractFactory('Oracles');
+  const proxy = await upgrades.deployProxy(Oracles, [], {
     unsafeAllowCustomTypes: true,
     initializer: false,
   });
   return proxy.address;
 }
 
-async function initializeBalanceReporters(
-  balanceReportersContractAddress,
+async function initializeOracles(
+  oraclesContractAddress,
   adminAddress,
   rewardEthTokenContractAddress,
   totalRewardsUpdatePeriod
 ) {
-  let BalanceReporters = await ethers.getContractFactory('BalanceReporters');
-  BalanceReporters = BalanceReporters.attach(balanceReportersContractAddress);
+  let Oracles = await ethers.getContractFactory('Oracles');
+  Oracles = Oracles.attach(oraclesContractAddress);
 
-  return BalanceReporters.initialize(
+  return Oracles.initialize(
     adminAddress,
     rewardEthTokenContractAddress,
     totalRewardsUpdatePeriod
@@ -53,6 +53,6 @@ async function initializeBalanceReporters(
 module.exports = {
   deployValidators,
   initializeValidators,
-  deployBalanceReporters,
-  initializeBalanceReporters,
+  deployOracles,
+  initializeOracles,
 };

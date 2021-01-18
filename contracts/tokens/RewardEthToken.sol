@@ -21,8 +21,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Address of the StakedEthToken contract.
     IStakedEthToken private stakedEthToken;
 
-    // @dev Address of the BalanceReporters contract.
-    address private balanceReporters;
+    // @dev Address of the Oracles contract.
+    address private oracles;
 
     // @dev Address of the StakedTokens contract.
     address private stakedTokens;
@@ -42,7 +42,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Reward per token for user reward calculation.
     uint128 public override rewardPerToken;
 
-    // @dev Last rewards update timestamp by balance reporters.
+    // @dev Last rewards update timestamp by oracles.
     uint256 public override lastUpdateTimestamp;
 
     /**
@@ -51,7 +51,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function initialize(
         address _admin,
         address _stakedEthToken,
-        address _balanceReporters,
+        address _oracles,
         address _stakedTokens,
         address _maintainer,
         uint256 _maintainerFee
@@ -62,7 +62,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         __ERC20_init("StakeWise Reward ETH2", "rETH2");
         __ERC20Permit_init("StakeWise Reward ETH2");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
-        balanceReporters = _balanceReporters;
+        oracles = _oracles;
         stakedTokens = _stakedTokens;
 
         // set maintainer
@@ -162,7 +162,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-updateTotalRewards}.
      */
     function updateTotalRewards(uint256 newTotalRewards) external override {
-        require(msg.sender == balanceReporters, "RewardEthToken: access denied");
+        require(msg.sender == oracles, "RewardEthToken: access denied");
 
         uint256 periodRewards = newTotalRewards.sub(totalRewards, "RewardEthToken: invalid new total rewards");
         if (periodRewards == 0) {

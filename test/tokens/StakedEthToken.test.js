@@ -21,7 +21,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
   let [
     poolContractAddress,
     admin,
-    balanceReportersContractAddress,
+    oraclesContractAddress,
     stakedTokensContractAddress,
     sender1,
     sender2,
@@ -40,7 +40,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       rewardEthTokenContractAddress,
       admin,
       stakedEthTokenContractAddress,
-      balanceReportersContractAddress,
+      oraclesContractAddress,
       stakedTokensContractAddress
     );
 
