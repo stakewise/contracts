@@ -29,7 +29,6 @@ contract('Oracles', ([_, ...accounts]) => {
     oracle,
     anotherOracle,
     poolContractAddress,
-    stakedTokensContractAddress,
     anyone,
     ...otherAccounts
   ] = accounts;
@@ -48,8 +47,7 @@ contract('Oracles', ([_, ...accounts]) => {
       rewardEthTokenContractAddress,
       admin,
       stakedEthTokenContractAddress,
-      oraclesContractAddress,
-      stakedTokensContractAddress
+      oraclesContractAddress
     );
 
     await initializeOracles(

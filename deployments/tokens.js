@@ -51,8 +51,7 @@ async function initializeRewardEthToken(
   rewardEthTokenContractAddress,
   adminAddress,
   stakedEthTokenContractAddress,
-  oraclesContractAddress,
-  stakedTokensContractAddress
+  oraclesContractAddress
 ) {
   let RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   RewardEthToken = RewardEthToken.attach(rewardEthTokenContractAddress);
@@ -61,30 +60,9 @@ async function initializeRewardEthToken(
     adminAddress,
     stakedEthTokenContractAddress,
     oraclesContractAddress,
-    stakedTokensContractAddress,
     initialSettings.maintainer,
     initialSettings.maintainerFee
   );
-}
-
-async function deployStakedTokens() {
-  const StakedTokens = await ethers.getContractFactory('StakedTokens');
-  const proxy = await upgrades.deployProxy(StakedTokens, [], {
-    initializer: false,
-    unsafeAllowCustomTypes: true,
-  });
-  return proxy.address;
-}
-
-async function initializeStakedTokens(
-  stakedTokensContractAddress,
-  adminAddress,
-  rewardEthTokenContractAddress
-) {
-  let StakedTokens = await ethers.getContractFactory('StakedTokens');
-  StakedTokens = StakedTokens.attach(stakedTokensContractAddress);
-
-  return StakedTokens.initialize(adminAddress, rewardEthTokenContractAddress);
 }
 
 module.exports = {
@@ -93,6 +71,4 @@ module.exports = {
   initializeStakedEthToken,
   deployRewardEthToken,
   initializeRewardEthToken,
-  deployStakedTokens,
-  initializeStakedTokens,
 };

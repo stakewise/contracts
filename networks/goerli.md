@@ -59,12 +59,6 @@
 - Proxy: [0xE69eDC0162227A76Bc1D04384fe8b468C7Ad67DB](https://goerli.etherscan.io/address/0xE69eDC0162227A76Bc1D04384fe8b468C7Ad67DB)
 - Transaction: [0xbda42296afaa92b89ca3df2e56df6a6502674e86bf897465059cc2fd25db4c54](https://goerli.etherscan.io/tx/0xbda42296afaa92b89ca3df2e56df6a6502674e86bf897465059cc2fd25db4c54)
 
-## StakedTokens Contract
-
-- Implementation: [0x8147243aCeD45e4DB65FA46D30bab6262FdD2Cec](https://goerli.etherscan.io/address/0x8147243aCeD45e4DB65FA46D30bab6262FdD2Cec)
-- Proxy: [0xf96fa39cfcAb2385581F62c39131101BC7EB0D3B](https://goerli.etherscan.io/address/0xf96fa39cfcAb2385581F62c39131101BC7EB0D3B)
-- Transaction: [0xcea1b81c5ec4470c9c04886de8bc0e07f053da2032cbb8900864ec3913c9e733](https://goerli.etherscan.io/tx/0xcea1b81c5ec4470c9c04886de8bc0e07f053da2032cbb8900864ec3913c9e733)
-
 ## Oracles Contract
 
 - Implementation: [0xeeA7c0B955Cb2B88E83F8749eE8806af9aD09496](https://goerli.etherscan.io/address/0xeeA7c0B955Cb2B88E83F8749eE8806af9aD09496)

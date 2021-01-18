@@ -22,7 +22,6 @@ contract('StakedEthToken', ([_, ...accounts]) => {
     poolContractAddress,
     admin,
     oraclesContractAddress,
-    stakedTokensContractAddress,
     sender1,
     sender2,
   ] = accounts;
@@ -40,8 +39,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       rewardEthTokenContractAddress,
       admin,
       stakedEthTokenContractAddress,
-      oraclesContractAddress,
-      stakedTokensContractAddress
+      oraclesContractAddress
     );
 
     stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);

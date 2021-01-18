@@ -15,10 +15,8 @@ const { deploySolos, deployPool, initializePool } = require('./collectors');
 const {
   deployRewardEthToken,
   deployStakedEthToken,
-  deployStakedTokens,
   initializeRewardEthToken,
   initializeStakedEthToken,
-  initializeStakedTokens,
 } = require('./tokens');
 
 function log(message) {
@@ -66,13 +64,6 @@ async function deployAllContracts({
     )
   );
 
-  const stakedTokensContractAddress = await deployStakedTokens();
-  log(
-    white(
-      `Deployed StakedTokens contract: ${green(stakedTokensContractAddress)}`
-    )
-  );
-
   const oraclesContractAddress = await deployOracles();
   log(white(`Deployed Oracles contract: ${green(oraclesContractAddress)}`));
 
@@ -106,17 +97,9 @@ async function deployAllContracts({
     rewardEthTokenContractAddress,
     initialAdmin,
     stakedEthTokenContractAddress,
-    oraclesContractAddress,
-    stakedTokensContractAddress
+    oraclesContractAddress
   );
   log(white('Initialized RewardEthToken contract'));
-
-  await initializeStakedTokens(
-    stakedTokensContractAddress,
-    initialAdmin,
-    rewardEthTokenContractAddress
-  );
-  log(white('Initialized StakedTokens contract'));
 
   await initializeOracles(
     oraclesContractAddress,

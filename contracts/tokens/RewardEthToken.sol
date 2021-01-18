@@ -24,9 +24,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Address of the Oracles contract.
     address private oracles;
 
-    // @dev Address of the StakedTokens contract.
-    address private stakedTokens;
-
     // @dev Maps account address to its reward checkpoint.
     mapping(address => Checkpoint) public override checkpoints;
 
@@ -52,7 +49,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         address _admin,
         address _stakedEthToken,
         address _oracles,
-        address _stakedTokens,
         address _maintainer,
         uint256 _maintainerFee
     )
@@ -63,7 +59,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         __ERC20Permit_init("StakeWise Reward ETH2");
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         oracles = _oracles;
-        stakedTokens = _stakedTokens;
 
         // set maintainer
         maintainer = _maintainer;
@@ -185,13 +180,5 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         lastUpdateTimestamp = block.timestamp;
 
         emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, lastUpdateTimestamp);
-    }
-
-    /**
-     * @dev See {IRewardEthToken-claimRewards}.
-     */
-    function claimRewards(address tokenContract, uint256 claimedRewards) external override {
-        require(msg.sender == stakedTokens, "RewardEthToken: access denied");
-        _transfer(tokenContract, stakedTokens, claimedRewards);
     }
 }

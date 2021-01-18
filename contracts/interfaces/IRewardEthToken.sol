@@ -49,7 +49,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param _admin - address of the contract admin.
     * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _oracles - address of the Oracles contract.
-    * @param _stakedTokens - address of the StakedTokens contract.
     * @param _maintainer - maintainer's address.
     * @param _maintainerFee - maintainer's fee. Must be less than 10000 (100.00%).
     */
@@ -57,7 +56,6 @@ interface IRewardEthToken is IERC20Upgradeable {
         address _admin,
         address _stakedEthToken,
         address _oracles,
-        address _stakedTokens,
         address _maintainer,
         uint256 _maintainerFee
     ) external;
@@ -124,11 +122,4 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(uint256 newTotalRewards) external;
-
-    /**
-    * @dev Function for claiming rewards. Can only be called by StakedTokens contract.
-    * @param tokenContract - address of the token contract.
-    * @param claimedRewards - total rewards to claim.
-    */
-    function claimRewards(address tokenContract, uint256 claimedRewards) external;
 }
