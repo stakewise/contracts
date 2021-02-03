@@ -32,5 +32,5 @@
 
 ## Proxy Admin
 
-- Implementation: [0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22](https://goerli.etherscan.io/address/0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22)
+- Contract: [0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22](https://etherscan.io/address/0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22)
 - Transaction: [0x3490ab3e78ab96f5059d9ea25c009d476eec9d8c4d4d7009bb33f130e5046ab7](https://etherscan.io/tx/0x3490ab3e78ab96f5059d9ea25c009d476eec9d8c4d4d7009bb33f130e5046ab7)
