@@ -21,6 +21,29 @@ interface IRewardEthToken is IERC20Upgradeable {
     event MaintainerFeeUpdated(uint256 maintainerFee);
 
     /**
+    * @dev Event for tracking added gauges.
+    * @param gauge - address of the gauge.
+    * @param sender - address of the sender.
+    */
+    event GaugeRemoved(address indexed gauge, address indexed sender);
+
+    /**
+    * @dev Event for tracking removed gauges.
+    * @param gauge - address of the gauge.
+    * @param holder - address of the rewards holder.
+    * @param sender - address of the sender.
+    */
+    event GaugeAdded(address indexed gauge, address indexed holder, address indexed sender);
+
+    /**
+    * @dev Event for tracking skimmed rewards.
+    * @param from - address the rewards are skimmed from.
+    * @param to - address the rewards are skimmed to.
+    * @param amount - amount of skimmed rewards.
+    */
+    event RewardsSkimmed(address indexed from, address indexed to, uint256 amount);
+
+    /**
     * @dev Structure for storing information about user reward checkpoint.
     * @param rewardPerToken - user reward per token.
     * @param reward - user reward checkpoint.
@@ -122,4 +145,35 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(uint256 newTotalRewards) external;
+
+    /**
+    * @dev Function for retrieving a holder the rewards are skimmed for.
+    * @param gauge - address of the gauge to check.
+    */
+    function gauges(address gauge) external view returns (address);
+
+    /**
+    * @dev Function for checking whether holder rewards are skimmed.
+    * @param holder - address of the holder to check.
+    */
+    function skimmedHolders(address holder) external view returns (bool);
+
+    /**
+    * @dev Function for adding gauge to the registry.
+    * @param gauge - address of the gauge to add.
+    * @param holder - address of the holder to skim the rewards for.
+    */
+    function addGauge(address gauge, address holder) external;
+
+    /**
+    * @dev Function for removing gauge from the registry.
+    * @param gauge - address of the gauge to remove.
+    */
+    function removeGauge(address gauge) external;
+
+    /**
+    * @dev Function for skimming rewards.
+    * Can only be called by registered gauges.
+    */
+    function skimRewards() external;
 }

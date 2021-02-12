@@ -42,6 +42,12 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Last rewards update timestamp by oracles.
     uint256 public override lastUpdateTimestamp;
 
+    // @dev Maps gauge address to the staked tokens address it can skim rewards from.
+    mapping(address => address) public override gauges;
+
+    // @dev Maps rewards holder address to whether it is skimmed or not.
+    mapping(address => bool) public override skimmedHolders;
+
     /**
       * @dev See {IRewardEthToken-initialize}.
       */
@@ -84,6 +90,28 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(_newMaintainerFee < 10000, "RewardEthToken: invalid fee");
         maintainerFee = _newMaintainerFee;
         emit MaintainerFeeUpdated(_newMaintainerFee);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-addGauge}.
+     */
+    function addGauge(address gauge, address holder) external override onlyAdmin {
+        require(gauge != address(0), "RewardEthToken: invalid gauge address");
+        require(holder != address(0), "RewardEthToken: invalid holder address");
+        require(!skimmedHolders[holder], "RewardEthToken: holder is already skimmed");
+
+        gauges[gauge] = holder;
+        skimmedHolders[holder] = true;
+        emit GaugeAdded(gauge, holder, msg.sender);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-removeGauge}.
+     */
+    function removeGauge(address gauge) external override onlyAdmin {
+        delete skimmedHolders[gauges[gauge]];
+        delete gauges[gauge];
+        emit GaugeRemoved(gauge, msg.sender);
     }
 
     /**
@@ -180,5 +208,19 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         lastUpdateTimestamp = block.timestamp;
 
         emit RewardsUpdated(periodRewards, newTotalRewards, newRewardPerToken, lastUpdateTimestamp);
+    }
+
+    /**
+     * @dev See {IRewardEthToken-skimRewards}.
+     */
+    function skimRewards() external override {
+        address rewardsHolder = gauges[msg.sender];
+        require(rewardsHolder != address(0), "RewardEthToken: permission denied");
+
+        uint256 amount = balanceOf(rewardsHolder);
+        if (amount > 0) {
+            _transfer(rewardsHolder, msg.sender, amount);
+            emit RewardsSkimmed(rewardsHolder, msg.sender, amount);
+        }
     }
 }
