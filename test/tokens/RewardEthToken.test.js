@@ -23,6 +23,7 @@ contract('RewardEthToken', ([_, ...accounts]) => {
     admin,
     maintainer,
     oraclesContractAddress,
+    gauge,
     ...otherAccounts
   ] = accounts;
 
@@ -559,6 +560,117 @@ contract('RewardEthToken', ([_, ...accounts]) => {
         account: sender2,
         balance: value1.add(value2),
         deposit: value2,
+      });
+    });
+  });
+
+  describe('adding gauge', () => {
+    let rewardsHolder = otherAccounts[0];
+
+    it('fails to add with invalid gauge', async () => {
+      await expectRevert(
+        rewardEthToken.addGauge(constants.ZERO_ADDRESS, rewardsHolder, {
+          from: admin,
+        }),
+        'RewardEthToken: invalid gauge address'
+      );
+    });
+
+    it('fails to add with invalid holder', async () => {
+      await expectRevert(
+        rewardEthToken.addGauge(gauge, constants.ZERO_ADDRESS, {
+          from: admin,
+        }),
+        'RewardEthToken: invalid holder address'
+      );
+    });
+
+    it('fails to add for the holder with already skimmed rewards', async () => {
+      await rewardEthToken.addGauge(gauge, rewardsHolder, {
+        from: admin,
+      });
+
+      await expectRevert(
+        rewardEthToken.addGauge(gauge, rewardsHolder, {
+          from: admin,
+        }),
+        'RewardEthToken: holder is already skimmed'
+      );
+    });
+
+    it('not admin user fails to add gauge', async () => {
+      await expectRevert(
+        rewardEthToken.addGauge(gauge, rewardsHolder, {
+          from: otherAccounts[0],
+        }),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('admin user can add gauge', async () => {
+      let receipt = await rewardEthToken.addGauge(gauge, rewardsHolder, {
+        from: admin,
+      });
+
+      await expectEvent(receipt, 'GaugeAdded', {
+        gauge,
+        sender: admin,
+      });
+      expect(await rewardEthToken.gauges(gauge)).to.equal(rewardsHolder);
+    });
+  });
+
+  describe('removing gauge', () => {
+    beforeEach(async () => {
+      await rewardEthToken.addGauge(gauge, otherAccounts[0], {
+        from: admin,
+      });
+    });
+
+    it('not admin user fails to remove gauge', async () => {
+      await expectRevert(
+        rewardEthToken.removeGauge(gauge, {
+          from: otherAccounts[0],
+        }),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('admin user can remove gauge', async () => {
+      let receipt = await rewardEthToken.removeGauge(gauge, {
+        from: admin,
+      });
+      await expectEvent(receipt, 'GaugeRemoved', {
+        gauge: gauge,
+        sender: admin,
+      });
+
+      expect(await rewardEthToken.gauges(gauge)).to.equal(
+        constants.ZERO_ADDRESS
+      );
+    });
+  });
+
+  describe('skim rewards', () => {
+    let rewardsHolders = otherAccounts[0];
+    beforeEach(async () => {
+      await rewardEthToken.addGauge(gauge, rewardsHolders, {
+        from: admin,
+      });
+    });
+
+    it('not gauge fails to skim rewards', async () => {
+      await expectRevert(
+        rewardEthToken.skimRewards({
+          from: otherAccounts[0],
+        }),
+        'RewardEthToken: permission denied'
+      );
+    });
+
+    it('gauge can skim rewards', async () => {
+      await rewardEthToken.skimRewards({
+        from: gauge,
       });
     });
   });
