@@ -8,6 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
+import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 
 /**
@@ -22,8 +23,8 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
 
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
-    // @dev Defines the period for total rewards update.
-    uint256 public override totalRewardsUpdatePeriod;
+    // @dev Defines how often oracles submit data.
+    uint256 public override syncPeriod;
 
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
@@ -37,8 +38,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
 
-    // @dev Nonce for RewardEthToken total rewards.
-    CountersUpgradeable.Counter private totalRewardsNonce;
+    // @dev Nonce is used to protect from submitting the same vote several times.
+    CountersUpgradeable.Counter private nonce;
+
+    // @dev Address of the Pool contract.
+    IPool private pool;
 
     /**
     * @dev Modifier for checking whether the caller is an oracle.
@@ -51,13 +55,21 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     /**
      * @dev See {IOracles-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external override initializer {
+    function initialize(address _admin, address _rewardEthToken, uint256 _syncPeriod) external override initializer {
         __OwnablePausableUpgradeable_init(_admin);
         __ReentrancyGuard_init_unchained();
         rewardEthToken = IRewardEthToken(_rewardEthToken);
 
-        totalRewardsUpdatePeriod = _totalRewardsUpdatePeriod;
-        emit TotalRewardsUpdatePeriodUpdated(_totalRewardsUpdatePeriod);
+        syncPeriod = _syncPeriod;
+        emit SyncPeriodUpdated(_syncPeriod, msg.sender);
+    }
+
+    /**
+     * @dev See {IOracles-upgrade}.
+     */
+    function upgrade(address _pool) external override onlyAdmin whenPaused {
+        require(address(pool) == address(0), "Oracles: already upgraded");
+        pool = IPool(_pool);
     }
 
     /**
@@ -68,10 +80,17 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-hasTotalRewardsVote}.
+     * @dev See {IOracles-hasVote}.
      */
-    function hasTotalRewardsVote(address _oracle, uint256 _totalRewards) external override view returns (bool) {
-        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), totalRewardsNonce.current(), _totalRewards));
+    function hasVote(
+        address _oracle,
+        uint256 _totalRewards,
+        uint256 _activationDuration,
+        uint256 _beaconActivatingAmount
+    )
+        external override view returns (bool)
+    {
+        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activationDuration, _beaconActivatingAmount));
         return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
     }
 
@@ -101,23 +120,29 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
      */
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
         rewardEthUniswapPairs = _rewardEthUniswapPairs;
-        emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs);
+        emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs, msg.sender);
     }
 
     /**
-     * @dev See {IOracles-setTotalRewardsUpdatePeriod}.
+     * @dev See {IOracles-setSyncPeriod}.
      */
-    function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external override onlyAdmin {
-        totalRewardsUpdatePeriod = _newTotalRewardsUpdatePeriod;
-        emit TotalRewardsUpdatePeriodUpdated(_newTotalRewardsUpdatePeriod);
+    function setSyncPeriod(uint256 _syncPeriod) external override onlyAdmin {
+        syncPeriod = _syncPeriod;
+        emit SyncPeriodUpdated(_syncPeriod, msg.sender);
     }
 
     /**
-     * @dev See {IOracles-voteForTotalRewards}.
+     * @dev See {IOracles-vote}.
      */
-    function voteForTotalRewards(uint256 _newTotalRewards) external override onlyOracle whenNotPaused nonReentrant {
-        uint256 nonce = totalRewardsNonce.current();
-        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), nonce, _newTotalRewards));
+    function vote(
+        uint256 _totalRewards,
+        uint256 _activationDuration,
+        uint256 _beaconActivatingAmount
+    )
+        external override onlyOracle whenNotPaused nonReentrant
+    {
+        uint256 _nonce = nonce.current();
+        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _beaconActivatingAmount));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
 
@@ -125,13 +150,26 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
+        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activationDuration, _beaconActivatingAmount);
 
-        // update rewards only if enough votes accumulated
+        // update only if enough votes accumulated
         if (candidateNewVotes.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2)) {
-            totalRewardsNonce.increment();
+            nonce.increment();
             delete candidates[candidateId];
-            rewardEthToken.updateTotalRewards(_newTotalRewards);
+
+            // update activation duration
+            if (_activationDuration != pool.activationDuration()) {
+                pool.setActivationDuration(_activationDuration);
+            }
+
+            // update total activating amount
+            uint256 totalActivatingAmount = _beaconActivatingAmount.add(address(pool).balance);
+            if (totalActivatingAmount != pool.totalActivatingAmount()) {
+                pool.setTotalActivatingAmount(totalActivatingAmount);
+            }
+
+            // update total rewards
+            rewardEthToken.updateTotalRewards(_totalRewards);
 
             // force reserves to match balances
             for (uint256 i = 0; i < rewardEthUniswapPairs.length; i++) {

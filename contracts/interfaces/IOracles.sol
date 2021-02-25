@@ -7,35 +7,45 @@ pragma solidity 0.7.5;
  */
 interface IOracles {
     /**
-    * @dev Event for tracking votes for RewardEthToken total rewards.
+    * @dev Event for tracking oracle votes.
     * @param oracle - address of the account which submitted vote.
     * @param nonce - update nonce.
     * @param totalRewards - submitted value of total rewards.
+    * @param activationDuration - submitted value of activation duration.
+    * @param beaconActivatingAmount - submitted value of beacon activating amount.
     */
-    event TotalRewardsVoteSubmitted(address indexed oracle, uint256 nonce, uint256 totalRewards);
+    event VoteSubmitted(
+        address indexed oracle,
+        uint256 nonce,
+        uint256 totalRewards,
+        uint256 activationDuration,
+        uint256 beaconActivatingAmount
+    );
 
     /**
-    * @dev Event for tracking RewardEthToken total rewards update preiod changes.
-    * @param totalRewardsUpdatePeriod - new total rewards update period.
+    * @dev Event for tracking changes of oracles' sync periods.
+    * @param syncPeriod - new sync period.
+    * @param sender - address of the transaction sender.
     */
-    event TotalRewardsUpdatePeriodUpdated(uint256 totalRewardsUpdatePeriod);
+    event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
 
     /**
     * @dev Event for tracking updated reward ETH uniswap pairs.
     * @param rewardEthUniswapPairs - new list of supported uniswap pairs.
+    * @param sender - address of the transaction sender.
     */
-    event RewardEthUniswapPairsUpdated(address[] rewardEthUniswapPairs);
+    event RewardEthUniswapPairsUpdated(address[] rewardEthUniswapPairs, address indexed sender);
 
     /**
-    * @dev Function for retrieving number of votes for the rewards update candidate.
+    * @dev Function for retrieving number of votes of the submission candidate.
     * @param _candidateId - ID of the candidate to retrieve number of votes for.
     */
     function candidates(bytes32 _candidateId) external view returns (uint256);
 
     /**
-    * @dev Function for retrieving total rewards update period.
+    * @dev Function for retrieving oracles sync period.
     */
-    function totalRewardsUpdatePeriod() external view returns (uint256);
+    function syncPeriod() external view returns (uint256);
 
     /**
     * @dev Function for retrieving supported reward ETH uniswap pairs.
@@ -46,9 +56,15 @@ interface IOracles {
     * @dev Constructor for initializing the Oracles contract.
     * @param _admin - address of the contract admin.
     * @param _rewardEthToken - address of the RewardEthToken contract.
-    * @param _totalRewardsUpdatePeriod - total rewards update period.
+    * @param _syncPeriod - oracles' sync period.
     */
-    function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external;
+    function initialize(address _admin, address _rewardEthToken, uint256 _syncPeriod) external;
+
+    /**
+    * @dev Function for upgrading the Oracles contract.
+    * @param _pool - address of the Pool contract.
+    */
+    function upgrade(address _pool) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
@@ -57,11 +73,18 @@ interface IOracles {
     function isOracle(address _account) external view returns (bool);
 
     /**
-    * @dev Function for checking whether an account has voted for the total rewards.
+    * @dev Function for checking whether an oracle has voted.
     * @param _oracle - oracle address to check.
-    * @param _totalRewards - total rewards submitted by the oracle.
+    * @param _totalRewards - voted total rewards.
+    * @param _activationDuration - voted activation duration.
+    * @param _beaconActivatingAmount - voted beacon activating amount.
     */
-    function hasTotalRewardsVote(address _oracle, uint256 _totalRewards) external view returns (bool);
+    function hasVote(
+        address _oracle,
+        uint256 _totalRewards,
+        uint256 _activationDuration,
+        uint256 _beaconActivatingAmount
+    ) external view returns (bool);
 
     /**
     * @dev Function for adding an oracle role to the account.
@@ -85,16 +108,18 @@ interface IOracles {
     function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external;
 
     /**
-    * @dev Function for updating total rewards update period.
+    * @dev Function for updating oracles sync period. The number of seconds after they will submit the off-chain data.
     * Can only be called by an account with an admin role.
-    * @param _newTotalRewardsUpdatePeriod - new total rewards.
+    * @param _syncPeriod - new sync period.
     */
-    function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external;
+    function setSyncPeriod(uint256 _syncPeriod) external;
 
     /**
-    * @dev Function for voting for new RewardEthToken total rewards.
+    * @dev Function for submitting oracle vote. The last vote required for quorum will update the values.
     * Can only be called by an account with an oracle role.
-    * @param _newTotalRewards - total rewards to give a vote for.
+    * @param _totalRewards - voted total rewards.
+    * @param _activationDuration - voted activation duration.
+    * @param _beaconActivatingAmount - voted beacon activating amount.
     */
-    function voteForTotalRewards(uint256 _newTotalRewards) external;
+    function vote(uint256 _totalRewards, uint256 _activationDuration, uint256 _beaconActivatingAmount) external;
 }
