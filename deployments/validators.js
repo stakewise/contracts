@@ -7,7 +7,6 @@ async function deployValidators() {
   const Validators = await ethers.getContractFactory('Validators');
   const proxy = await upgrades.deployProxy(Validators, [], {
     initializer: false,
-    unsafeAllowCustomTypes: true,
   });
   await proxy.deployed();
   return proxy.address;
@@ -40,7 +39,6 @@ async function initializeValidators(
 async function deployOracles() {
   const Oracles = await ethers.getContractFactory('Oracles');
   const proxy = await upgrades.deployProxy(Oracles, [], {
-    unsafeAllowCustomTypes: true,
     initializer: false,
   });
   await proxy.deployed();
@@ -51,7 +49,7 @@ async function initializeOracles(
   oraclesContractAddress,
   adminAddress,
   rewardEthTokenContractAddress,
-  totalRewardsUpdatePeriod
+  oraclesSyncPeriod
 ) {
   let Oracles = await ethers.getContractFactory('Oracles');
   Oracles = Oracles.attach(oraclesContractAddress);
@@ -59,9 +57,33 @@ async function initializeOracles(
   const { hash } = await Oracles.initialize(
     adminAddress,
     rewardEthTokenContractAddress,
-    totalRewardsUpdatePeriod
+    oraclesSyncPeriod
   );
   return provider.waitForTransaction(hash);
+}
+
+async function prepareOraclesUpgrade(oraclesContractAddress) {
+  const Oracles = await ethers.getContractFactory('Oracles');
+  return upgrades.prepareUpgrade(oraclesContractAddress, Oracles);
+}
+
+async function prepareOraclesUpgradeData(poolContractAddress) {
+  const Oracles = await ethers.getContractFactory('Oracles');
+  return Oracles.interface.encodeFunctionData('upgrade', [poolContractAddress]);
+}
+
+async function upgradeOracles(
+  oraclesContractAddress,
+  nextImplementation,
+  data
+) {
+  const admin = await upgrades.admin.getInstance();
+  const proxy = await admin.upgradeAndCall(
+    oraclesContractAddress,
+    nextImplementation,
+    data
+  );
+  return proxy.address;
 }
 
 module.exports = {
@@ -69,4 +91,7 @@ module.exports = {
   initializeValidators,
   deployOracles,
   initializeOracles,
+  prepareOraclesUpgrade,
+  prepareOraclesUpgradeData,
+  upgradeOracles,
 };

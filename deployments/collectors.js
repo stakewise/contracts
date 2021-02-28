@@ -8,7 +8,6 @@ async function deployPool() {
   const Pool = await ethers.getContractFactory('Pool');
   const proxy = await upgrades.deployProxy(Pool, [], {
     initializer: false,
-    unsafeAllowCustomTypes: true,
   });
   await proxy.deployed();
   return proxy.address;
@@ -47,6 +46,38 @@ async function initializePool(
   return provider.waitForTransaction(hash);
 }
 
+async function preparePoolUpgrade(poolContractAddress) {
+  const Pool = await ethers.getContractFactory('Pool');
+  return upgrades.prepareUpgrade(poolContractAddress, Pool);
+}
+
+async function preparePoolUpgradeData(
+  oraclesContractAddress,
+  activationDuration,
+  beaconActivatingAmount,
+  minActivatingDeposit,
+  minActivatingShare
+) {
+  const Pool = await ethers.getContractFactory('Pool');
+  return Pool.interface.encodeFunctionData('upgrade', [
+    oraclesContractAddress,
+    activationDuration,
+    beaconActivatingAmount,
+    minActivatingDeposit,
+    minActivatingShare,
+  ]);
+}
+
+async function upgradePool(poolContractAddress, nextImplementation, data) {
+  const admin = await upgrades.admin.getInstance();
+  const proxy = await admin.upgradeAndCall(
+    poolContractAddress,
+    nextImplementation,
+    data
+  );
+  return proxy.address;
+}
+
 async function deploySolos(
   adminAddress,
   vrcContractAddress,
@@ -69,5 +100,8 @@ async function deploySolos(
 module.exports = {
   deployPool,
   initializePool,
+  upgradePool,
+  preparePoolUpgrade,
+  preparePoolUpgradeData,
   deploySolos,
 };

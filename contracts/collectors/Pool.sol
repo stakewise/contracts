@@ -129,7 +129,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-setActivationDuration}.
      */
     function setActivationDuration(uint256 _activationDuration) external override {
-        require(msg.sender == oracles, "Pool: access denied");
+        require(msg.sender == oracles || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
         activationDuration = _activationDuration;
         emit ActivationDurationUpdated(_activationDuration, msg.sender);
     }

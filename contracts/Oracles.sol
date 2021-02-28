@@ -5,7 +5,6 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
 import "./interfaces/IPool.sol";
@@ -29,7 +28,7 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
 
-    // @dev List of supported rETH2 Uniswap pairs.
+    // @dev [Deprecated] List of supported rETH2 Uniswap pairs.
     address[] private rewardEthUniswapPairs;
 
     // @dev Maps vote ID to whether it was submitted or not.
@@ -73,13 +72,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-getRewardEthUniswapPairs}.
-     */
-    function getRewardEthUniswapPairs() public override view returns (address[] memory) {
-        return rewardEthUniswapPairs;
-    }
-
-    /**
      * @dev See {IOracles-hasVote}.
      */
     function hasVote(
@@ -113,14 +105,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
      */
     function removeOracle(address _account) external override {
         revokeRole(ORACLE_ROLE, _account);
-    }
-
-    /**
-     * @dev See {IOracles-setRewardEthUniswapPairs}.
-     */
-    function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
-        rewardEthUniswapPairs = _rewardEthUniswapPairs;
-        emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs, msg.sender);
     }
 
     /**
@@ -170,11 +154,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
 
             // update total rewards
             rewardEthToken.updateTotalRewards(_totalRewards);
-
-            // force reserves to match balances
-            for (uint256 i = 0; i < rewardEthUniswapPairs.length; i++) {
-                IUniswapV2Pair(rewardEthUniswapPairs[i]).sync();
-            }
         }
     }
 }

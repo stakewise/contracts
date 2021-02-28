@@ -30,13 +30,6 @@ interface IOracles {
     event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
 
     /**
-    * @dev Event for tracking updated reward ETH uniswap pairs.
-    * @param rewardEthUniswapPairs - new list of supported uniswap pairs.
-    * @param sender - address of the transaction sender.
-    */
-    event RewardEthUniswapPairsUpdated(address[] rewardEthUniswapPairs, address indexed sender);
-
-    /**
     * @dev Function for retrieving number of votes of the submission candidate.
     * @param _candidateId - ID of the candidate to retrieve number of votes for.
     */
@@ -46,11 +39,6 @@ interface IOracles {
     * @dev Function for retrieving oracles sync period.
     */
     function syncPeriod() external view returns (uint256);
-
-    /**
-    * @dev Function for retrieving supported reward ETH uniswap pairs.
-    */
-    function getRewardEthUniswapPairs() external view returns (address[] memory);
 
     /**
     * @dev Constructor for initializing the Oracles contract.
@@ -99,13 +87,6 @@ interface IOracles {
     * @param _account - account to remove an oracle role from.
     */
     function removeOracle(address _account) external;
-
-    /**
-    * @dev Function for updating list of supported reward ETH uniswap pairs.
-    * Can only be called by an account with an admin role.
-    * @param _rewardEthUniswapPairs - list of supported uniswap pairs.
-    */
-    function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external;
 
     /**
     * @dev Function for updating oracles sync period. The number of seconds after they will submit the off-chain data.

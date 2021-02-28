@@ -10,8 +10,18 @@ const {
   initializeValidators,
   deployOracles,
   initializeOracles,
+  prepareOraclesUpgrade,
+  prepareOraclesUpgradeData,
+  upgradeOracles,
 } = require('./validators');
-const { deploySolos, deployPool, initializePool } = require('./collectors');
+const {
+  deploySolos,
+  deployPool,
+  initializePool,
+  preparePoolUpgrade,
+  preparePoolUpgradeData,
+  upgradePool,
+} = require('./collectors');
 const {
   deployRewardEthToken,
   deployStakedEthToken,
@@ -109,7 +119,7 @@ async function deployAllContracts({
     oraclesContractAddress,
     initialAdmin,
     rewardEthTokenContractAddress,
-    initialSettings.totalRewardsUpdatePeriod
+    initialSettings.oraclesSyncPeriod
   );
   log(white('Initialized Oracles contract'));
 
@@ -141,6 +151,57 @@ async function deployAllContracts({
   };
 }
 
+async function prepareAllContractsUpgrades({
+  poolContractAddress,
+  oraclesContractAddress,
+}) {
+  const poolImplementation = await preparePoolUpgrade(poolContractAddress);
+  const poolUpgradeData = await preparePoolUpgradeData(
+    oraclesContractAddress,
+    initialSettings.activationDuration,
+    initialSettings.beaconActivatingAmount,
+    initialSettings.minActivatingDeposit,
+    initialSettings.minActivatingShare
+  );
+
+  const oraclesImplementation = await prepareOraclesUpgrade(
+    oraclesContractAddress
+  );
+  const oraclesUpgradeData = await prepareOraclesUpgradeData(
+    poolContractAddress
+  );
+
+  return {
+    poolImplementation,
+    poolUpgradeData,
+    oraclesImplementation,
+    oraclesUpgradeData,
+  };
+}
+
+async function upgradeAllContracts({
+  poolContractAddress,
+  oraclesContractAddress,
+} = {}) {
+  let preparedUpgrades = await prepareAllContractsUpgrades({
+    poolContractAddress,
+    oraclesContractAddress,
+  });
+
+  await upgradePool(
+    poolContractAddress,
+    preparedUpgrades.poolImplementation,
+    preparedUpgrades.poolUpgradeData
+  );
+  await upgradeOracles(
+    oraclesContractAddress,
+    preparedUpgrades.oraclesImplementation,
+    preparedUpgrades.oraclesUpgradeData
+  );
+}
+
 module.exports = {
   deployAllContracts,
+  prepareAllContractsUpgrades,
+  upgradeAllContracts,
 };

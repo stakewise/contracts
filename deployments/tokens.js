@@ -20,7 +20,6 @@ async function deployStakedEthToken() {
   const StakedEthToken = await ethers.getContractFactory('StakedEthToken');
   const proxy = await upgrades.deployProxy(StakedEthToken, [], {
     initializer: false,
-    unsafeAllowCustomTypes: true,
   });
   await proxy.deployed();
   return proxy.address;
@@ -58,7 +57,6 @@ async function deployRewardEthToken() {
   const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   const proxy = await upgrades.deployProxy(RewardEthToken, [], {
     initializer: false,
-    unsafeAllowCustomTypes: true,
   });
   await proxy.deployed();
   return proxy.address;

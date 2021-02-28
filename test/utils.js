@@ -38,12 +38,12 @@ async function checkCollectorBalance(
   ).to.be.bignumber.equal(correctBalance);
 }
 
-async function checkPoolCollectedAmount(
+async function checkPoolTotalActivatingAmount(
   poolContract,
   correctAmount = new BN(0)
 ) {
-  let collectedAmount = await poolContract.collectedAmount();
-  expect(collectedAmount).to.be.bignumber.equal(correctAmount);
+  let totalActivatingAmount = await poolContract.totalActivatingAmount();
+  expect(totalActivatingAmount).to.be.bignumber.equal(correctAmount);
 }
 
 async function checkSoloDepositAdded({
@@ -181,7 +181,7 @@ module.exports = {
   checkSoloDepositAdded,
   checkValidatorRegistered,
   getDepositAmount,
-  checkPoolCollectedAmount,
+  checkPoolTotalActivatingAmount,
   checkStakedEthToken,
   checkRewardEthToken,
   deployTokens,

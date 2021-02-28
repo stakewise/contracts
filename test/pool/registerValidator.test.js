@@ -4,11 +4,18 @@ const {
   expectEvent,
   ether,
 } = require('@openzeppelin/test-helpers');
+const { upgrades } = require('hardhat');
 const { deployAllContracts } = require('../../deployments');
+const {
+  preparePoolUpgrade,
+  preparePoolUpgradeData,
+  upgradePool,
+} = require('../../deployments/collectors');
+const { initialSettings } = require('../../deployments/settings');
 const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
-  checkPoolCollectedAmount,
+  checkPoolTotalActivatingAmount,
   getDepositAmount,
 } = require('../utils');
 const { validatorParams } = require('./validatorParams');
@@ -21,7 +28,7 @@ const withdrawalCredentials =
   '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
 const validator = validatorParams[0];
 
-contract('Pool (register validator)', ([_, ...accounts]) => {
+contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
   let vrc, pool;
   let [admin, operator, sender1, sender2, other] = accounts;
 
@@ -56,6 +63,20 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       from: sender2,
       value: amount2,
     });
+
+    const proxyAdmin = await upgrades.admin.getInstance();
+    await pool.addAdmin(proxyAdmin.address, { from: admin });
+    await pool.pause({ from: admin });
+    const poolImplementation = await preparePoolUpgrade(poolContractAddress);
+    const poolUpgradeData = await preparePoolUpgradeData(
+      oracles,
+      initialSettings.activationDuration,
+      initialSettings.beaconActivatingAmount,
+      initialSettings.minActivatingDeposit,
+      initialSettings.minActivatingShare
+    );
+    await upgradePool(poolContractAddress, poolImplementation, poolUpgradeData);
+    await pool.unpause({ from: admin });
   });
 
   it('fails to register validator with callers other than operator', async () => {
@@ -65,8 +86,6 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       }),
       'Pool: access denied'
     );
-    await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolCollectedAmount(pool, validatorDeposit);
   });
 
   it('fails to register validator with paused pool', async () => {
@@ -79,31 +98,6 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       }),
       'Pausable: paused'
     );
-    await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolCollectedAmount(pool, validatorDeposit);
-  });
-
-  it('not admin fails to update withdrawal credentials', async () => {
-    await expectRevert(
-      pool.setWithdrawalCredentials(withdrawalCredentials, {
-        from: other,
-      }),
-      'OwnablePausable: access denied'
-    );
-    await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolCollectedAmount(pool, validatorDeposit);
-  });
-
-  it('admin can update withdrawal credentials', async () => {
-    let receipt = await pool.setWithdrawalCredentials(withdrawalCredentials, {
-      from: admin,
-    });
-
-    await expectEvent(receipt, 'WithdrawalCredentialsUpdated', {
-      withdrawalCredentials,
-    });
-    await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolCollectedAmount(pool, validatorDeposit);
   });
 
   it('fails to register validator with used public key', async () => {
@@ -130,7 +124,12 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       'Validators: invalid public key'
     );
     await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolCollectedAmount(pool, validatorDeposit);
+    await checkPoolTotalActivatingAmount(
+      pool,
+      new BN(initialSettings.beaconActivatingAmount).add(
+        validatorDeposit.mul(new BN(2))
+      )
+    );
   });
 
   it('fails to register validator when validator deposit amount is not collect', async () => {
@@ -143,15 +142,17 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       from: operator,
     });
 
-    await expectRevert(
+    await expectRevert.unspecified(
       pool.registerValidator(validatorParams[1], {
         from: operator,
-      }),
-      'Pool: insufficient amount'
+      })
     );
 
     await checkCollectorBalance(pool, new BN(0));
-    await checkPoolCollectedAmount(pool, new BN(0));
+    await checkPoolTotalActivatingAmount(
+      pool,
+      new BN(initialSettings.beaconActivatingAmount).add(validatorDeposit)
+    );
   });
 
   it('registers validator', async () => {
@@ -170,9 +171,13 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
       totalAmount = totalAmount.add(validatorDeposit);
     }
 
+    let totalActivatingAmount = new BN(
+      initialSettings.beaconActivatingAmount
+    ).add(totalAmount);
+
     // check balance increased correctly
     await checkCollectorBalance(pool, totalAmount);
-    await checkPoolCollectedAmount(pool, totalAmount);
+    await checkPoolTotalActivatingAmount(pool, totalActivatingAmount);
 
     // register validators
     for (let i = 0; i < validatorParams.length; i++) {
@@ -188,6 +193,6 @@ contract('Pool (register validator)', ([_, ...accounts]) => {
 
     // check balance empty
     await checkCollectorBalance(pool);
-    await checkPoolCollectedAmount(pool);
+    await checkPoolTotalActivatingAmount(pool, totalActivatingAmount);
   });
 });
