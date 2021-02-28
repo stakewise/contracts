@@ -36,3 +36,4 @@ build
 cache
 artifacts
 .openzeppelin/unknown-*.json
+.husky
