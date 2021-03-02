@@ -168,7 +168,8 @@ async function prepareAllContractsUpgrades({
     oraclesContractAddress
   );
   const oraclesUpgradeData = await prepareOraclesUpgradeData(
-    poolContractAddress
+    poolContractAddress,
+    initialSettings.depositsActivationEnabled
   );
 
   return {

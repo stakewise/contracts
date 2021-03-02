@@ -43,6 +43,9 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     // @dev Address of the Pool contract.
     IPool private pool;
 
+    // @dev Defines whether deposits activation is enabled.
+    bool public override depositsActivationEnabled;
+
     /**
     * @dev Modifier for checking whether the caller is an oracle.
     */
@@ -66,9 +69,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     /**
      * @dev See {IOracles-upgrade}.
      */
-    function upgrade(address _pool) external override onlyAdmin whenPaused {
+    function upgrade(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
         require(address(pool) == address(0), "Oracles: already upgraded");
         pool = IPool(_pool);
+        depositsActivationEnabled = _depositsActivationEnabled;
+        emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);
     }
 
     /**
@@ -116,6 +121,14 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
+     * @dev See {IOracles-toggleDepositsActivation}.
+     */
+    function toggleDepositsActivation(bool _depositsActivationEnabled) external override onlyAdmin {
+        depositsActivationEnabled = _depositsActivationEnabled;
+        emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);
+    }
+
+    /**
      * @dev See {IOracles-vote}.
      */
     function vote(
@@ -129,6 +142,7 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _beaconActivatingAmount));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
+        require(rewardEthToken.lastUpdateTimestamp().add(syncPeriod) <= block.timestamp, "Oracles: vote submitted too early");
 
         // mark vote as submitted, update candidate votes number
         submittedVotes[voteId] = true;
@@ -141,6 +155,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
             nonce.increment();
             delete candidates[candidateId];
 
+            // update total rewards
+            rewardEthToken.updateTotalRewards(_totalRewards);
+
+            if (!depositsActivationEnabled) return;
+
             // update activation duration
             if (_activationDuration != pool.activationDuration()) {
                 pool.setActivationDuration(_activationDuration);
@@ -151,9 +170,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
             if (totalActivatingAmount != pool.totalActivatingAmount()) {
                 pool.setTotalActivatingAmount(totalActivatingAmount);
             }
-
-            // update total rewards
-            rewardEthToken.updateTotalRewards(_totalRewards);
         }
     }
 }

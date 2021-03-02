@@ -1,5 +1,6 @@
 const { upgrades } = require('hardhat');
 const { expectRevert } = require('@openzeppelin/test-helpers');
+const { initialSettings } = require('../../deployments/settings');
 const {
   deployAllContracts,
   upgradeAllContracts,
@@ -35,14 +36,18 @@ contract('Oracles (upgrading)', ([admin, sender1]) => {
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, { from: sender1 }),
+      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
+        from: sender1,
+      }),
       'OwnablePausable: access denied'
     );
   });
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, { from: admin }),
+      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
+        from: admin,
+      }),
       'Pausable: not paused'
     );
   });
@@ -50,7 +55,9 @@ contract('Oracles (upgrading)', ([admin, sender1]) => {
   it('fails to upgrade twice', async () => {
     await oracles.pause({ from: admin });
     await expectRevert(
-      oracles.upgrade(pool.address, { from: admin }),
+      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
+        from: admin,
+      }),
       'Oracles: already upgraded'
     );
   });

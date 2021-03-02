@@ -143,6 +143,28 @@ contract('Oracles', ([_, ...accounts]) => {
     });
   });
 
+  describe('deposits activation toggling', () => {
+    it('admin user can toggle deposits activation', async () => {
+      const receipt = await oracles.toggleDepositsActivation(false, {
+        from: admin,
+      });
+      expectEvent(receipt, 'DepositsActivationToggled', {
+        enabled: false,
+        sender: admin,
+      });
+      expect(await oracles.depositsActivationEnabled()).equal(false);
+    });
+
+    it('anyone cannot toggle deposits activation', async () => {
+      await expectRevert(
+        oracles.toggleDepositsActivation(false, {
+          from: anyone,
+        }),
+        'OwnablePausable: access denied'
+      );
+    });
+  });
+
   describe('oracles voting', () => {
     let [oracle1, oracle2, oracle3, oracle4] = otherAccounts;
     let totalRewards = ether('1');
@@ -200,6 +222,8 @@ contract('Oracles', ([_, ...accounts]) => {
           beaconActivatingAmount
         )
       ).to.equal(true);
+      await time.increase(initialSettings.oraclesSyncPeriod);
+
       await expectRevert(
         oracles.vote(totalRewards, activationDuration, beaconActivatingAmount, {
           from: oracle1,
@@ -312,7 +336,16 @@ contract('Oracles', ([_, ...accounts]) => {
         beaconActivatingAmount.add(poolDeposit)
       );
 
-      // vote again
+      // early vote gets reverted
+      await expectRevert(
+        oracles.vote(totalRewards, activationDuration, beaconActivatingAmount, {
+          from: oracle1,
+        }),
+        'Oracles: vote submitted too early'
+      );
+
+      // new vote comes with different nonce
+      await time.increase(initialSettings.oraclesSyncPeriod);
       receipt = await oracles.vote(
         totalRewards,
         activationDuration,
@@ -411,9 +444,15 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.totalActivatingAmount()).to.bignumber.equal(
         beaconActivatingAmount.add(poolDeposit)
       );
+    });
 
-      // vote again
-      receipt = await oracles.vote(
+    it('does not update activation data when activation disabled', async () => {
+      await oracles.toggleDepositsActivation(false, {
+        from: admin,
+      });
+
+      // oracle 1 submits
+      await oracles.vote(
         totalRewards,
         activationDuration,
         beaconActivatingAmount,
@@ -421,21 +460,37 @@ contract('Oracles', ([_, ...accounts]) => {
           from: oracle1,
         }
       );
-      expect(
-        await oracles.hasVote(
-          oracle1,
-          totalRewards,
-          activationDuration,
-          beaconActivatingAmount
-        )
-      ).to.equal(true);
-      expectEvent(receipt, 'VoteSubmitted', {
-        oracle: oracle1,
+
+      // oracle 2 submits
+      await oracles.vote(
         totalRewards,
         activationDuration,
         beaconActivatingAmount,
-        nonce: new BN(1),
-      });
+        {
+          from: oracle2,
+        }
+      );
+
+      // oracle 3 submits
+      await oracles.vote(
+        totalRewards,
+        activationDuration,
+        beaconActivatingAmount,
+        {
+          from: oracle3,
+        }
+      );
+
+      // update submitted
+      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
+        totalRewards
+      );
+      expect(await pool.activationDuration()).to.bignumber.equal(
+        new BN(initialSettings.activationDuration)
+      );
+      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
+        new BN(initialSettings.beaconActivatingAmount).add(poolDeposit)
+      );
     });
   });
 });

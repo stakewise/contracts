@@ -30,6 +30,13 @@ interface IOracles {
     event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
 
     /**
+    * @dev Event for tracking deposits activation toggles.
+    * @param enabled - defines whether deposits activation is enabled.
+    * @param sender - address of the transaction sender.
+    */
+    event DepositsActivationToggled(bool enabled, address indexed sender);
+
+    /**
     * @dev Function for retrieving number of votes of the submission candidate.
     * @param _candidateId - ID of the candidate to retrieve number of votes for.
     */
@@ -39,6 +46,11 @@ interface IOracles {
     * @dev Function for retrieving oracles sync period.
     */
     function syncPeriod() external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving whether deposits activation is enabled.
+    */
+    function depositsActivationEnabled() external view returns (bool);
 
     /**
     * @dev Constructor for initializing the Oracles contract.
@@ -51,8 +63,9 @@ interface IOracles {
     /**
     * @dev Function for upgrading the Oracles contract.
     * @param _pool - address of the Pool contract.
+    * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
     */
-    function upgrade(address _pool) external;
+    function upgrade(address _pool, bool _depositsActivationEnabled) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
@@ -94,6 +107,13 @@ interface IOracles {
     * @param _syncPeriod - new sync period.
     */
     function setSyncPeriod(uint256 _syncPeriod) external;
+
+    /**
+    * @dev Function for toggling pool deposits activation.
+    * Can only be called by an account with an admin role.
+    * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
+    */
+    function toggleDepositsActivation(bool _depositsActivationEnabled) external;
 
     /**
     * @dev Function for submitting oracle vote. The last vote required for quorum will update the values.

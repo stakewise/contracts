@@ -12,6 +12,7 @@ const initialSettings = {
   beaconActivatingAmount: '320000000000000000000', // 320 ETH
   minActivatingDeposit: '5000000000000000000', // 5 ETH
   minActivatingShare: '50000000000000000', // 5 %
+  depositsActivationEnabled: true,
 };
 
 module.exports = {

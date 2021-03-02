@@ -67,9 +67,15 @@ async function prepareOraclesUpgrade(oraclesContractAddress) {
   return upgrades.prepareUpgrade(oraclesContractAddress, Oracles);
 }
 
-async function prepareOraclesUpgradeData(poolContractAddress) {
+async function prepareOraclesUpgradeData(
+  poolContractAddress,
+  depositsActivationEnabled
+) {
   const Oracles = await ethers.getContractFactory('Oracles');
-  return Oracles.interface.encodeFunctionData('upgrade', [poolContractAddress]);
+  return Oracles.interface.encodeFunctionData('upgrade', [
+    poolContractAddress,
+    depositsActivationEnabled,
+  ]);
 }
 
 async function upgradeOracles(
