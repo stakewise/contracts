@@ -11,7 +11,7 @@ const initialSettings = {
   activationDuration: '432000', // 5 days
   beaconActivatingAmount: '320000000000000000000', // 320 ETH
   minActivatingDeposit: '5000000000000000000', // 5 ETH
-  minActivatingShare: '50000000000000000', // 5 %
+  minActivatingShare: '500', // 5 %
   depositsActivationEnabled: true,
 };
 

@@ -167,7 +167,7 @@ contract('Pool (add deposit)', (accounts) => {
     });
 
     it('places deposit of user to the activation queue with exceeded max activating share', async () => {
-      await pool.setMinActivatingShare(ether('0.1'), { from: admin }); // 10 %
+      await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       // User 1 creates a deposit
@@ -224,7 +224,7 @@ contract('Pool (add deposit)', (accounts) => {
     });
 
     it('activates deposit of user immediately with not exceeded max activating share', async () => {
-      await pool.setMinActivatingShare(ether('0.1'), { from: admin }); // 10 %
+      await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       // User 1 creates a deposit
@@ -345,7 +345,7 @@ contract('Pool (add deposit)', (accounts) => {
       await expectEvent(receipt, 'Activated', {
         account: sender1,
         activationTime,
-        amount: depositAmount,
+        value: depositAmount,
         sender: sender1,
       });
 
@@ -465,13 +465,13 @@ contract('Pool (add deposit)', (accounts) => {
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
         activationTime: activationTime1,
-        amount: depositAmount1,
+        value: depositAmount1,
         sender: sender3,
       });
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
         activationTime: activationTime2,
-        amount: depositAmount2,
+        value: depositAmount2,
         sender: sender3,
       });
 

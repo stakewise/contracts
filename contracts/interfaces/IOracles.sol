@@ -2,10 +2,12 @@
 
 pragma solidity 0.7.5;
 
+import "./IOwnablePausable.sol";
+
 /**
  * @dev Interface of the Oracles contract.
  */
-interface IOracles {
+interface IOracles is IOwnablePausable {
     /**
     * @dev Event for tracking oracle votes.
     * @param oracle - address of the account which submitted vote.

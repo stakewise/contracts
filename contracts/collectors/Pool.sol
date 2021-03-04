@@ -121,6 +121,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-setMinActivatingShare}.
      */
     function setMinActivatingShare(uint256 _minActivatingShare) external override onlyAdmin {
+        require(_minActivatingShare < 10000, "Pool: invalid share");
         minActivatingShare = _minActivatingShare;
         emit MinActivatingShareUpdated(_minActivatingShare, msg.sender);
     }
@@ -176,10 +177,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         }
 
         // calculate activating share
-        uint256 activatingShare = newTotalActivatingAmount.mul(1e18).div(totalSupply);
+        // multiply by 10000 as minActivatingShare is stored  up to 10000 (5.25% -> 525)
+        uint256 activatingShare = newTotalActivatingAmount.mul(1e22).div(totalSupply);
 
         // mint tokens if current activating share does not exceed the minimum
-        if (activatingShare <= minActivatingShare) {
+        if (activatingShare <= minActivatingShare.mul(1e18)) {
             _stakedEthToken.mint(msg.sender, msg.value);
         } else {
             // lock deposit amount until activation duration has passed

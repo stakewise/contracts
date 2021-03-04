@@ -70,7 +70,7 @@ contract('Pool (settings)', ([admin, anyone, oracles]) => {
   describe('min activating share', () => {
     it('not admin fails to set min activating share', async () => {
       await expectRevert(
-        pool.setMinActivatingShare(ether('0.1'), {
+        pool.setMinActivatingShare('1000', {
           from: anyone,
         }),
         'OwnablePausable: access denied'
@@ -78,7 +78,7 @@ contract('Pool (settings)', ([admin, anyone, oracles]) => {
     });
 
     it('admin can set min activating share', async () => {
-      let minActivatingShare = ether('0.1');
+      let minActivatingShare = '1000';
       let receipt = await pool.setMinActivatingShare(minActivatingShare, {
         from: admin,
       });
@@ -88,6 +88,15 @@ contract('Pool (settings)', ([admin, anyone, oracles]) => {
       });
       expect(await pool.minActivatingShare()).to.bignumber.equal(
         minActivatingShare
+      );
+    });
+
+    it('fails to set invalid min activating share', async () => {
+      await expectRevert(
+        pool.setMinActivatingShare(10000, {
+          from: admin,
+        }),
+        'Pool: invalid share'
       );
     });
   });

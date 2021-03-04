@@ -3,11 +3,13 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "./IOwnablePausable.sol";
+import "./IERC20PermitUpgradeable.sol";
 
 /**
  * @dev Interface of the RewardEthToken contract.
  */
-interface IRewardEthToken is IERC20Upgradeable {
+interface IRewardEthToken is IOwnablePausable, IERC20Upgradeable, IERC20PermitUpgradeable {
     /**
     * @dev Event for tracking updated maintainer.
     * @param maintainer - address of the new maintainer, where the fee will be paid.

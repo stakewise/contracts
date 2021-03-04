@@ -2,10 +2,12 @@
 
 pragma solidity 0.7.5;
 
+import "./IOwnablePausable.sol";
+
 /**
  * @dev Interface of the Validators contract.
  */
-interface IValidators {
+interface IValidators is IOwnablePausable {
     /**
     * @dev Constructor for initializing the Validators contract.
     * @param _admin - address of the contract admin.

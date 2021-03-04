@@ -4,11 +4,12 @@ pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "./IDepositContract.sol";
+import "./IOwnablePausable.sol";
 
 /**
  * @dev Interface of the Pool contract.
  */
-interface IPool {
+interface IPool is IOwnablePausable {
     /**
     * @dev Event for tracking new pool withdrawal credentials.
     * @param withdrawalCredentials - new withdrawal credentials for the pool validators.
@@ -34,10 +35,10 @@ interface IPool {
     * @dev Event for tracking activated deposits.
     * @param account - account the deposit was activated for.
     * @param activationTime - activation time of the deposit.
-    * @param amount - amount activated.
+    * @param value - amount activated.
     * @param sender - address of the transaction sender.
     */
-    event Activated(address indexed account, uint256 activationTime, uint256 amount, address indexed sender);
+    event Activated(address indexed account, uint256 activationTime, uint256 value, address indexed sender);
 
     /**
     * @dev Event for tracking activation duration updates.
