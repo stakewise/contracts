@@ -142,6 +142,7 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _beaconActivatingAmount));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
+        // solhint-disable-next-line not-rely-on-time
         require(rewardEthToken.lastUpdateTimestamp().add(syncPeriod) <= block.timestamp, "Oracles: vote submitted too early");
 
         // mark vote as submitted, update candidate votes number
