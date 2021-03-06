@@ -68,19 +68,20 @@ jobs:
           name: Report gas changes
           command: npx codechecks
 
-  coverage:
-    executor: default
-    steps:
-      - checkout
-      - attach_workspace:
-          at: /tmp/workspace
-      - run:
-          name: Run coverage tests
-          command: yarn coverage
-      - run:
-          name: Upload coverage
-          command: |
-            bash <(curl -s https://codecov.io/bash)
+# FIXME: https://github.com/sc-forks/solidity-coverage/issues/574
+#  coverage:
+#    executor: default
+#    steps:
+#      - checkout
+#      - attach_workspace:
+#          at: /tmp/workspace
+#      - run:
+#          name: Run coverage tests
+#          command: yarn coverage
+#      - run:
+#          name: Upload coverage
+#          command: |
+#            bash <(curl -s https://codecov.io/bash)
 
 workflows:
   version: 2
@@ -96,7 +97,6 @@ workflows:
       - test:
           requires:
             - compile
-# FIXME: https://github.com/sc-forks/solidity-coverage/issues/574
 #      - coverage:
 #          requires:
 #            - compile
