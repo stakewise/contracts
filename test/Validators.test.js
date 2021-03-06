@@ -23,7 +23,7 @@ const validatorDeposit = ether('32');
 
 contract('Validators', ([operator, anotherOperator, anyone]) => {
   const admin = contractSettings.admin;
-  let pool, solos, validators;
+  let pool, validators;
 
   after(async () => stopImpersonatingAccount(admin));
 
