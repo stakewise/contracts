@@ -83,14 +83,11 @@ task('test')
     await runSuper(taskArguments);
   });
 
-task('coverage')
-  .setAction(async (taskArguments, hre, runSuper) => {
-    log(
-      gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString()))
-    );
+task('coverage').setAction(async (taskArguments, hre, runSuper) => {
+  log(gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString())));
 
-    await runSuper(taskArguments);
-  });
+  await runSuper(taskArguments);
+});
 
 task('verify')
   .addFlag('optimizer', 'Compile with the optimizer')

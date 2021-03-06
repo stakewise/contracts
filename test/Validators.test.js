@@ -14,7 +14,6 @@ const {
 } = require('./utils');
 
 const Pool = artifacts.require('Pool');
-const Solos = artifacts.require('Solos');
 const Validators = artifacts.require('Validators');
 
 const validatorId = web3.utils.soliditySha3(
@@ -32,7 +31,6 @@ contract('Validators', ([operator, anotherOperator, anyone]) => {
     await impersonateAccount(admin);
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
-    solos = await Solos.at(contracts.pool);
     validators = await Validators.at(contracts.validators);
     await validators.addOperator(operator, { from: admin });
   });
