@@ -1,33 +1,16 @@
 const hre = require('hardhat');
-const {
-  getManifestAdmin,
-} = require('@openzeppelin/hardhat-upgrades/dist/admin.js');
 const { white, green } = require('chalk');
-const { initialSettings } = require('./settings');
-
+const { contractSettings, contracts } = require('./settings');
 const {
-  deployValidators,
-  initializeValidators,
-  deployOracles,
-  initializeOracles,
   prepareOraclesUpgrade,
   prepareOraclesUpgradeData,
   upgradeOracles,
 } = require('./validators');
 const {
-  deploySolos,
-  deployPool,
-  initializePool,
   preparePoolUpgrade,
   preparePoolUpgradeData,
   upgradePool,
 } = require('./collectors');
-const {
-  deployRewardEthToken,
-  deployStakedEthToken,
-  initializeRewardEthToken,
-  initializeStakedEthToken,
-} = require('./tokens');
 
 function log(message) {
   if (hre.config != null && hre.config.suppressLogs !== true) {
@@ -35,142 +18,35 @@ function log(message) {
   }
 }
 
-function delay(ms) {
-  return new Promise((res) => setTimeout(res, ms));
-}
-
-async function deployAllContracts({
-  initialAdmin = initialSettings.admin,
-  vrcContractAddress = initialSettings.VRC,
-  transferProxyAdminOwnership = false,
-} = {}) {
-  // Deploy contracts
-  const validatorsContractAddress = await deployValidators();
+async function prepareContractsUpgrades() {
+  const poolImplementation = await preparePoolUpgrade(contracts.pool);
   log(
-    white(`Deployed Validators contract: ${green(validatorsContractAddress)}`)
+    white(`Deployed Pool implementation contract: ${green(poolImplementation)}`)
   );
 
-  const poolContractAddress = await deployPool();
-  log(white(`Deployed Pool contract: ${green(poolContractAddress)}`));
-
-  const solosContractAddress = await deploySolos(
-    initialAdmin,
-    vrcContractAddress,
-    validatorsContractAddress
-  );
-  log(white(`Deployed Solos contract: ${green(solosContractAddress)}`));
-
-  const stakedEthTokenContractAddress = await deployStakedEthToken();
-  log(
-    white(
-      `Deployed StakedEthToken contract: ${green(
-        stakedEthTokenContractAddress
-      )}`
-    )
-  );
-
-  const rewardEthTokenContractAddress = await deployRewardEthToken();
-  log(
-    white(
-      `Deployed RewardEthToken contract: ${green(
-        rewardEthTokenContractAddress
-      )}`
-    )
-  );
-
-  const oraclesContractAddress = await deployOracles();
-  log(white(`Deployed Oracles contract: ${green(oraclesContractAddress)}`));
-
-  // Initialize contracts
-  await initializeValidators(
-    validatorsContractAddress,
-    initialAdmin,
-    poolContractAddress,
-    solosContractAddress
-  );
-  log(white('Initialized Validators contract'));
-
-  await initializePool(
-    poolContractAddress,
-    initialAdmin,
-    stakedEthTokenContractAddress,
-    vrcContractAddress,
-    validatorsContractAddress
-  );
-  log(white('Initialized Pool contract'));
-
-  await initializeStakedEthToken(
-    stakedEthTokenContractAddress,
-    initialAdmin,
-    rewardEthTokenContractAddress,
-    poolContractAddress
-  );
-  log(white('Initialized StakedEthToken contract'));
-
-  await initializeRewardEthToken(
-    rewardEthTokenContractAddress,
-    initialAdmin,
-    stakedEthTokenContractAddress,
-    oraclesContractAddress
-  );
-  log(white('Initialized RewardEthToken contract'));
-
-  await initializeOracles(
-    oraclesContractAddress,
-    initialAdmin,
-    rewardEthTokenContractAddress,
-    initialSettings.oraclesSyncPeriod
-  );
-  log(white('Initialized Oracles contract'));
-
-  if (transferProxyAdminOwnership) {
-    const admin = await getManifestAdmin(hre);
-    await hre.upgrades.admin.transferProxyAdminOwnership(initialAdmin);
-    let newOwner = await admin.owner();
-    for (let i = 0; i < 10; i++) {
-      if (newOwner === initialAdmin) {
-        log(white(`Transferred proxy admin ownership to ${newOwner}`));
-        return;
-      }
-      await delay(5000);
-      newOwner = await admin.owner();
-    }
-    throw Error(
-      `Failed to transfer proxy admin ownership: expected=${initialAdmin},
-       actual=${newOwner}`
-    );
-  }
-
-  return {
-    validators: validatorsContractAddress,
-    oracles: oraclesContractAddress,
-    pool: poolContractAddress,
-    solos: solosContractAddress,
-    stakedEthToken: stakedEthTokenContractAddress,
-    rewardEthToken: rewardEthTokenContractAddress,
-  };
-}
-
-async function prepareAllContractsUpgrades({
-  poolContractAddress,
-  oraclesContractAddress,
-}) {
-  const poolImplementation = await preparePoolUpgrade(poolContractAddress);
   const poolUpgradeData = await preparePoolUpgradeData(
-    oraclesContractAddress,
-    initialSettings.activationDuration,
-    initialSettings.beaconActivatingAmount,
-    initialSettings.minActivatingDeposit,
-    initialSettings.minActivatingShare
+    contracts.oracles,
+    contractSettings.activationDuration,
+    contractSettings.beaconActivatingAmount,
+    contractSettings.minActivatingDeposit,
+    contractSettings.minActivatingShare
+  );
+  log(white(`Pool upgrade data: ${green(poolUpgradeData)}`));
+
+  const oraclesImplementation = await prepareOraclesUpgrade(contracts.oracles);
+  log(
+    white(
+      `Deployed Oracles implementation contract: ${green(
+        oraclesImplementation
+      )}`
+    )
   );
 
-  const oraclesImplementation = await prepareOraclesUpgrade(
-    oraclesContractAddress
-  );
   const oraclesUpgradeData = await prepareOraclesUpgradeData(
-    poolContractAddress,
-    initialSettings.depositsActivationEnabled
+    contracts.pool,
+    contractSettings.depositsActivationEnabled
   );
+  log(white(`Oracles upgrade data: ${green(oraclesUpgradeData)}`));
 
   return {
     poolImplementation,
@@ -180,29 +56,43 @@ async function prepareAllContractsUpgrades({
   };
 }
 
-async function upgradeAllContracts({
-  poolContractAddress,
-  oraclesContractAddress,
-} = {}) {
-  let preparedUpgrades = await prepareAllContractsUpgrades({
-    poolContractAddress,
-    oraclesContractAddress,
-  });
+async function upgradeContracts() {
+  let preparedUpgrades = await prepareContractsUpgrades();
+  const signer = await hre.ethers.provider.getSigner(contractSettings.admin);
+
+  const Pool = await hre.ethers.getContractFactory('Pool');
+  let pool = Pool.attach(contracts.pool);
+  await pool.connect(signer).pause();
+  await pool.connect(signer).addAdmin(contracts.proxyAdmin);
+
+  const Oracles = await hre.ethers.getContractFactory('Oracles');
+  let oracles = Oracles.attach(contracts.oracles);
+  await oracles.connect(signer).pause();
+  await oracles.connect(signer).addAdmin(contracts.proxyAdmin);
 
   await upgradePool(
-    poolContractAddress,
+    contractSettings.admin,
+    contracts.proxyAdmin,
+    contracts.pool,
     preparedUpgrades.poolImplementation,
     preparedUpgrades.poolUpgradeData
   );
+  log(white('Upgraded Pool contract'));
+
   await upgradeOracles(
-    oraclesContractAddress,
+    contractSettings.admin,
+    contracts.proxyAdmin,
+    contracts.oracles,
     preparedUpgrades.oraclesImplementation,
     preparedUpgrades.oraclesUpgradeData
   );
+  log(white('Upgraded Oracles contract'));
+
+  await pool.connect(signer).unpause();
+  await oracles.connect(signer).unpause();
 }
 
 module.exports = {
-  deployAllContracts,
-  prepareAllContractsUpgrades,
-  upgradeAllContracts,
+  prepareContractsUpgrades,
+  upgradeContracts,
 };

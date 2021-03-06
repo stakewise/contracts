@@ -1,54 +1,49 @@
-const { ethers, upgrades, network } = require('hardhat');
-const { calculateGasMargin } = require('./utils');
-const { initialSettings } = require('./settings');
+const hre = require('hardhat');
+const {
+  getProxyAdminFactory,
+} = require('@openzeppelin/hardhat-upgrades/dist/proxy-factory');
+const { deploy } = require('@openzeppelin/hardhat-upgrades/dist/utils/deploy');
+const {
+  readValidations,
+} = require('@openzeppelin/hardhat-upgrades/dist/validations');
+const {
+  assertUpgradeSafe,
+  fetchOrDeploy,
+  getStorageLayout,
+  getStorageLayoutForAddress,
+  getImplementationAddress,
+  getVersion,
+  getUnlinkedBytecode,
+  Manifest,
+} = require('@openzeppelin/upgrades-core');
 
-let provider = new ethers.providers.Web3Provider(network.provider);
-
-async function deployPool() {
-  const Pool = await ethers.getContractFactory('Pool');
-  const proxy = await upgrades.deployProxy(Pool, [], {
-    initializer: false,
-  });
-  await proxy.deployed();
-  return proxy.address;
-}
-
-async function initializePool(
-  poolContractAddress,
-  adminAddress,
-  stakedEthTokenContractAddress,
-  vrcContractAddress,
-  validatorsContractAddress
-) {
-  let Pool = await ethers.getContractFactory('Pool');
-  Pool = Pool.attach(poolContractAddress);
-
-  const { hash } = await Pool.estimateGas
-    .initialize(
-      adminAddress,
-      stakedEthTokenContractAddress,
-      vrcContractAddress,
-      validatorsContractAddress,
-      initialSettings.withdrawalCredentials
-    )
-    .then((estimatedGas) =>
-      Pool.initialize(
-        adminAddress,
-        stakedEthTokenContractAddress,
-        vrcContractAddress,
-        validatorsContractAddress,
-        initialSettings.withdrawalCredentials,
-        {
-          gasLimit: calculateGasMargin(estimatedGas),
-        }
-      )
-    );
-  return provider.waitForTransaction(hash);
-}
-
+// overrides: https://github.com/OpenZeppelin/openzeppelin-upgrades/blob/%40openzeppelin/hardhat-upgrades%401.6.0/packages/plugin-hardhat/src/upgrade-proxy.ts#L34
 async function preparePoolUpgrade(poolContractAddress) {
-  const Pool = await ethers.getContractFactory('Pool');
-  return upgrades.prepareUpgrade(poolContractAddress, Pool);
+  const { provider } = hre.network;
+  const manifest = await Manifest.forNetwork(provider);
+  const Pool = await hre.ethers.getContractFactory('Pool');
+
+  const validations = await readValidations(hre);
+
+  const unlinkedBytecode = getUnlinkedBytecode(validations, Pool.bytecode);
+  const version = getVersion(unlinkedBytecode, Pool.bytecode);
+  assertUpgradeSafe(validations, version, {});
+
+  const currentImplAddress = await getImplementationAddress(
+    provider,
+    poolContractAddress
+  );
+  await getStorageLayoutForAddress(manifest, validations, currentImplAddress);
+  const layout = getStorageLayout(validations, version);
+
+  // skip storage check as it contains variable rename
+  // from `collectedAmount` to `activatingAmount`
+  // TODO: re-enable in future upgrades
+
+  return await fetchOrDeploy(version, provider, async () => {
+    const deployment = await deploy(Pool);
+    return { ...deployment, layout };
+  });
 }
 
 async function preparePoolUpgradeData(
@@ -58,8 +53,8 @@ async function preparePoolUpgradeData(
   minActivatingDeposit,
   minActivatingShare
 ) {
-  const Pool = await ethers.getContractFactory('Pool');
-  return Pool.interface.encodeFunctionData('upgrade', [
+  const Pool = await hre.ethers.getContractFactory('Pool');
+  return Pool.interface.encodeFunctionData('initialize', [
     oraclesContractAddress,
     activationDuration,
     beaconActivatingAmount,
@@ -68,40 +63,25 @@ async function preparePoolUpgradeData(
   ]);
 }
 
-async function upgradePool(poolContractAddress, nextImplementation, data) {
-  const admin = await upgrades.admin.getInstance();
-  const proxy = await admin.upgradeAndCall(
-    poolContractAddress,
-    nextImplementation,
-    data
-  );
+async function upgradePool(
+  adminAddress,
+  proxyAdminContractAddress,
+  poolContractAddress,
+  nextImplementation,
+  data
+) {
+  const signer = await hre.ethers.provider.getSigner(adminAddress);
+  const AdminFactory = await getProxyAdminFactory(hre);
+  const proxyAdmin = AdminFactory.attach(proxyAdminContractAddress);
+
+  const proxy = await proxyAdmin
+    .connect(signer)
+    .upgradeAndCall(poolContractAddress, nextImplementation, data);
   return proxy.address;
 }
 
-async function deploySolos(
-  adminAddress,
-  vrcContractAddress,
-  validatorsContractAddress
-) {
-  // Solos is deployed without proxy as it's non-custodial
-  const Solos = await ethers.getContractFactory('Solos');
-  const solos = await Solos.deploy(
-    adminAddress,
-    vrcContractAddress,
-    validatorsContractAddress,
-    initialSettings.validatorPrice,
-    initialSettings.cancelLockDuration
-  );
-
-  await solos.deployed();
-  return solos.address;
-}
-
 module.exports = {
-  deployPool,
-  initializePool,
   upgradePool,
   preparePoolUpgrade,
   preparePoolUpgradeData,
-  deploySolos,
 };
