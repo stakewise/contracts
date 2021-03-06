@@ -10,7 +10,9 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const optimizerRuns = 5000000;
+const GAS_PRICE = 20e9; // 20 Gwei
+const BLOCK_NUMBER = 11985170;
+const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
 extendEnvironment((hre) => {
@@ -21,22 +23,18 @@ function optimizeIfRequired({ hre, taskArguments: { optimizer } }) {
   if (optimizer || hre.optimizer) {
     // only show message once if re-run
     if (hre.optimizer === undefined) {
-      console.log(
-        gray('Adding optimizer, runs', yellow(optimizerRuns.toString()))
-      );
+      log(gray('Adding optimizer, runs', yellow(OPTIMIZER_RUNS.toString())));
     }
 
     // Use optimizer (slower) but simulates real contract size limits and gas usage
     hre.config.solidity.compilers[0].settings.optimizer = {
       enabled: true,
-      runs: optimizerRuns,
+      runs: OPTIMIZER_RUNS,
     };
     hre.config.networks.hardhat.allowUnlimitedContractSize = false;
   } else {
     if (hre.optimizer === undefined) {
-      console.log(
-        gray('Optimizer disabled. Unlimited contract sizes allowed.')
-      );
+      log(gray('Optimizer disabled. Unlimited contract sizes allowed.'));
     }
     hre.config.solidity.compilers[0].settings.optimizer = { enabled: false };
     hre.config.networks.hardhat.allowUnlimitedContractSize = true;
@@ -56,22 +54,20 @@ task('compile')
 task('test')
   .addFlag('optimizer', 'Compile with the optimizer')
   .addFlag('gas', 'Compile gas usage')
-  .addFlag('noWarnings', 'Silence upgrade warnings')
   .addOptionalParam('grep', 'Filter tests to only those with given logic')
   .setAction(async (taskArguments, hre, runSuper) => {
-    const { gas, grep, noWarnings } = taskArguments;
+    const { gas, grep } = taskArguments;
 
     optimizeIfRequired({ hre, taskArguments });
-
-    if (noWarnings) {
-      console.log(gray('Silencing upgrades warnings'));
-      hre.upgrades.silenceWarnings();
-    }
 
     if (grep) {
       console.log(gray('Filtering tests to those containing'), yellow(grep));
       hre.config.mocha.grep = grep;
     }
+
+    log(
+      gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString()))
+    );
 
     if (gas) {
       console.log(
@@ -88,13 +84,11 @@ task('test')
   });
 
 task('coverage')
-  .addFlag('noWarnings', 'Silence upgrade warnings')
   .setAction(async (taskArguments, hre, runSuper) => {
-    const { noWarnings } = taskArguments;
-    if (noWarnings) {
-      console.log(gray('Silencing upgrades warnings'));
-      hre.upgrades.silenceWarnings();
-    }
+    log(
+      gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString()))
+    );
+
     await runSuper(taskArguments);
   });
 
@@ -105,8 +99,6 @@ task('verify')
     await runSuper(taskArguments);
   });
 
-const GAS_PRICE = 20e9; // 20 Gwei
-
 module.exports = {
   solidity: {
     version: '0.7.5',
@@ -116,12 +108,10 @@ module.exports = {
       blockGasLimit: 0x1fffffffffffff,
       gasPrice: GAS_PRICE,
       allowUnlimitedContractSize: true,
-    },
-    coverage: {
-      url: 'http://localhost:8555',
-      blockGasLimit: 0x1fffffffffffff,
-      gasPrice: GAS_PRICE,
-      allowUnlimitedContractSize: true,
+      forking: {
+        url: process.env.HARDHAT_FORK_API_URL,
+        blockNumber: BLOCK_NUMBER,
+      },
     },
     local: {
       url: 'http://localhost:8545',

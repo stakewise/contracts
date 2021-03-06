@@ -12,17 +12,16 @@
   ],
   "scripts": {
     "compile": "hardhat compile",
-    "coverage": "NODE_OPTIONS=\"--max-old-space-size=4096\" hardhat coverage --network coverage",
+    "coverage": "NODE_OPTIONS=\"--max-old-space-size=4096\" hardhat coverage",
     "format": "prettier --write \"**/*.js\" \"*.json\"",
     "lint": "solhint --max-warnings 0 \"contracts/**/*.sol\" && eslint \"**/*.js\"",
     "lint:fix": "eslint --fix \"**/*.js\"",
     "slither": "pip3 install --user slither-analyzer && slither .",
     "test": "hardhat test",
-    "test:gas": "./scripts/test.sh",
-    "deploy": "yarn compile --optimizer && npx hardhat run --no-compile scripts/deploy.js",
-    "verify": "npx hardhat verify --optimizer",
-    "deployDAI": "yarn compile --optimizer && npx hardhat run --no-compile scripts/deployDAI.js",
-    "deployVRC": "npx hardhat run --no-compile scripts/deployVRC.js"
+    "test:gas": "hardhat test --gas --optimizer",
+    "prepare-upgrade": "yarn compile --optimizer && npx hardhat run --no-compile scripts/prepareUpgrade.js",
+    "upgrade-contracts": "yarn compile --optimizer && npx hardhat run --no-compile scripts/upgrade.js",
+    "verify": "npx hardhat verify --optimizer"
   },
   "husky": {
     "hooks": {
@@ -63,7 +62,6 @@
     "eth-sig-util": "^3.0.1",
     "ethereumjs-util": "^7.0.8",
     "ethers": "^5.0.31",
-    "ganache-cli": "^6.12.2",
     "hardhat": "^2.0.11",
     "hardhat-abi-exporter": "^2.0.8",
     "hardhat-contract-sizer": "^2.0.2",

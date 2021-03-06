@@ -96,6 +96,7 @@ workflows:
       - test:
           requires:
             - compile
-      - coverage:
-          requires:
-            - compile
+# FIXME: https://github.com/sc-forks/solidity-coverage/issues/574
+#      - coverage:
+#          requires:
+#            - compile
