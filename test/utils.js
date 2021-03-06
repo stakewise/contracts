@@ -1,15 +1,7 @@
+const hre = require('hardhat');
 const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
-const {
-  deployStakedEthToken,
-  deployRewardEthToken,
-  initializeStakedEthToken,
-  initializeRewardEthToken,
-} = require('../deployments/tokens');
-
-const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -127,18 +119,11 @@ async function checkRewardEthToken({
   rewardEthToken,
   totalSupply,
   account,
-  reward,
   balance,
 }) {
   if (totalSupply != null) {
     expect(await rewardEthToken.totalSupply()).to.be.bignumber.equal(
       totalSupply
-    );
-  }
-
-  if (account != null && reward != null) {
-    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
-      reward
     );
   }
 
@@ -149,30 +134,139 @@ async function checkRewardEthToken({
   }
 }
 
-async function deployTokens({
-  adminAddress,
-  oraclesContractAddress,
-  poolContractAddress,
-}) {
-  const stakedEthTokenContractAddress = await deployStakedEthToken();
-  const rewardEthTokenContractAddress = await deployRewardEthToken();
-  await initializeStakedEthToken(
-    stakedEthTokenContractAddress,
-    adminAddress,
-    rewardEthTokenContractAddress,
-    poolContractAddress
-  );
-  await initializeRewardEthToken(
-    rewardEthTokenContractAddress,
-    adminAddress,
-    stakedEthTokenContractAddress,
-    oraclesContractAddress
-  );
+async function getOracleAccounts({ oracles }) {
+  let oracleAccounts = [];
+  let oracleRole = await oracles.ORACLE_ROLE();
+  for (let i = 0; i < (await oracles.getRoleMemberCount(oracleRole)); i++) {
+    let oracle = await oracles.getRoleMember(oracleRole, i);
+    await impersonateAccount(oracle);
+    oracleAccounts.push(oracle);
+  }
+  return oracleAccounts;
+}
 
-  return [
-    await RewardEthToken.at(rewardEthTokenContractAddress),
-    await StakedEthToken.at(stakedEthTokenContractAddress),
-  ];
+async function setActivationDuration({
+  rewardEthToken,
+  oracles,
+  oracleAccounts,
+  pool,
+  activationDuration,
+}) {
+  let prevActivationDuration = await pool.activationDuration();
+  if (prevActivationDuration.eq(activationDuration)) {
+    return;
+  }
+
+  let totalRewards = await rewardEthToken.totalRewards();
+  let beaconActivatingAmount = (await pool.totalActivatingAmount()).sub(
+    await balance.current(pool.address)
+  );
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.vote(
+      totalRewards,
+      activationDuration,
+      beaconActivatingAmount,
+      {
+        from: oracleAccounts[i],
+      }
+    );
+    if ((await pool.activationDuration()).eq(activationDuration)) {
+      return receipt;
+    }
+  }
+}
+
+async function setTotalActivatingAmount({
+  rewardEthToken,
+  oracles,
+  oracleAccounts,
+  pool,
+  totalActivatingAmount,
+}) {
+  let prevTotalActivatingAmount = await pool.totalActivatingAmount();
+  if (prevTotalActivatingAmount.eq(totalActivatingAmount)) {
+    return;
+  }
+
+  let totalRewards = await rewardEthToken.totalRewards();
+  let activationDuration = await pool.activationDuration();
+  let beaconActivatingAmount = totalActivatingAmount.sub(
+    await balance.current(pool.address)
+  );
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.vote(
+      totalRewards,
+      activationDuration,
+      beaconActivatingAmount,
+      {
+        from: oracleAccounts[i],
+      }
+    );
+    if ((await pool.totalActivatingAmount()).eq(totalActivatingAmount)) {
+      return receipt;
+    }
+  }
+}
+
+async function setTotalRewards({
+  rewardEthToken,
+  oracles,
+  oracleAccounts,
+  pool,
+  totalRewards,
+}) {
+  if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+    return;
+  }
+
+  let activationDuration = await pool.activationDuration();
+  let beaconActivatingAmount = (await pool.totalActivatingAmount()).sub(
+    await balance.current(pool.address)
+  );
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.vote(
+      totalRewards,
+      activationDuration,
+      beaconActivatingAmount,
+      {
+        from: oracleAccounts[i],
+      }
+    );
+    if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+      return receipt;
+    }
+  }
+}
+
+async function impersonateAccount(account) {
+  return hre.network.provider.request({
+    method: 'hardhat_impersonateAccount',
+    params: [account],
+  });
+}
+
+async function stopImpersonatingAccount(account) {
+  return hre.network.provider.request({
+    method: 'hardhat_stopImpersonatingAccount',
+    params: [account],
+  });
+}
+
+async function resetFork() {
+  await hre.network.provider.request({
+    method: 'hardhat_reset',
+    params: [
+      {
+        forking: {
+          jsonRpcUrl: hre.config.networks.hardhat.forking.url,
+          blockNumber: hre.config.networks.hardhat.forking.blockNumber,
+        },
+      },
+    ],
+  });
 }
 
 module.exports = {
@@ -184,5 +278,11 @@ module.exports = {
   checkPoolTotalActivatingAmount,
   checkStakedEthToken,
   checkRewardEthToken,
-  deployTokens,
+  impersonateAccount,
+  stopImpersonatingAccount,
+  resetFork,
+  setActivationDuration,
+  setTotalActivatingAmount,
+  setTotalRewards,
+  getOracleAccounts,
 };

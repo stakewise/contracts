@@ -1,19 +1,21 @@
 const { expect } = require('chai');
-const { upgrades } = require('hardhat');
 const {
   ether,
+  balance,
   expectRevert,
   expectEvent,
   BN,
   time,
 } = require('@openzeppelin/test-helpers');
 const {
-  preparePoolUpgrade,
-  preparePoolUpgradeData,
-  upgradePool,
-} = require('../../deployments/collectors');
-const { initialSettings } = require('../../deployments/settings');
-const { deployAllContracts } = require('../../deployments');
+  setActivationDuration,
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
+  getOracleAccounts,
+} = require('../utils');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   getDepositAmount,
   checkCollectorBalance,
@@ -23,36 +25,38 @@ const {
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
+const RewardEthToken = artifacts.require('RewardEthToken');
+const Oracles = artifacts.require('Oracles');
 
-contract('Pool (add deposit)', (accounts) => {
-  let pool, stakedEthToken;
-  let [admin, sender1, sender2, sender3, oracles] = accounts;
+contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
+  const admin = contractSettings.admin;
+  let pool,
+    stakedEthToken,
+    totalSupply,
+    totalActivating,
+    poolBalance,
+    oracleAccounts,
+    rewardEthToken,
+    oracles;
+
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let {
-      pool: poolContractAddress,
-      stakedEthToken: stakedEthTokenContractAddress,
-    } = await deployAllContracts({ initialAdmin: admin });
+    await impersonateAccount(admin);
+    await upgradeContracts();
 
-    const proxyAdmin = await upgrades.admin.getInstance();
+    pool = await Pool.at(contracts.pool);
+    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    oracles = await Oracles.at(contracts.oracles);
+    oracleAccounts = await getOracleAccounts({ oracles });
 
-    // upgrade pool
-    pool = await Pool.at(poolContractAddress);
-    await pool.addAdmin(proxyAdmin.address, { from: admin });
-    await pool.pause({ from: admin });
-    const poolImplementation = await preparePoolUpgrade(poolContractAddress);
-    const poolUpgradeData = await preparePoolUpgradeData(
-      oracles,
-      initialSettings.activationDuration,
-      initialSettings.beaconActivatingAmount,
-      initialSettings.minActivatingDeposit,
-      initialSettings.minActivatingShare
-    );
-    await upgradePool(poolContractAddress, poolImplementation, poolUpgradeData);
-    await pool.unpause({ from: admin });
-
-    stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
+    totalSupply = await stakedEthToken.totalSupply();
+    totalActivating = await pool.totalActivatingAmount();
+    poolBalance = await balance.current(pool.address);
   });
+
+  afterEach(async () => resetFork());
 
   describe('adding deposit', () => {
     it('fails to add a deposit with zero amount', async () => {
@@ -78,16 +82,19 @@ contract('Pool (add deposit)', (accounts) => {
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
       let depositAmount1 = getDepositAmount({
-        max: new BN(initialSettings.minActivatingDeposit),
+        max: new BN(contractSettings.minActivatingDeposit),
       });
-      let totalSupply = depositAmount1;
+      totalSupply = totalSupply.add(depositAmount1);
+      totalActivating = totalActivating.add(depositAmount1);
+      poolBalance = poolBalance.add(depositAmount1);
+
       await pool.addDeposit({
         from: sender1,
         value: depositAmount1,
       });
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: depositAmount1,
+        totalSupply,
         account: sender1,
         balance: depositAmount1,
         deposit: depositAmount1,
@@ -95,13 +102,16 @@ contract('Pool (add deposit)', (accounts) => {
 
       // User 2 creates a deposit
       let depositAmount2 = getDepositAmount({
-        max: new BN(initialSettings.minActivatingDeposit),
+        max: new BN(contractSettings.minActivatingDeposit),
       });
+      totalSupply = totalSupply.add(depositAmount2);
+      totalActivating = totalActivating.add(depositAmount2);
+      poolBalance = poolBalance.add(depositAmount2);
+
       await pool.addDeposit({
         from: sender2,
         value: depositAmount2,
       });
-      totalSupply = totalSupply.add(depositAmount2);
       await checkStakedEthToken({
         stakedEthToken,
         totalSupply,
@@ -111,45 +121,48 @@ contract('Pool (add deposit)', (accounts) => {
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, totalSupply);
-      await checkPoolTotalActivatingAmount(
-        pool,
-        new BN(initialSettings.beaconActivatingAmount).add(totalSupply)
-      );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
 
     it('mints tokens for users with activation duration disabled', async () => {
       // disable activation duration
-      await pool.setActivationDuration(new BN('0'), {
-        from: oracles,
+      await setActivationDuration({
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        activationDuration: new BN(0),
       });
 
       // User 1 creates a deposit
-      let depositAmount1 = getDepositAmount({
-        min: new BN(initialSettings.minActivatingDeposit),
-      });
-      let totalSupply = depositAmount1;
+      let depositAmount1 = getDepositAmount();
+      totalSupply = totalSupply.add(depositAmount1);
+      totalActivating = totalActivating.add(depositAmount1);
+      poolBalance = poolBalance.add(depositAmount1);
+
       await pool.addDeposit({
         from: sender1,
         value: depositAmount1,
       });
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: depositAmount1,
+        totalSupply,
         account: sender1,
         balance: depositAmount1,
         deposit: depositAmount1,
       });
 
       // User 2 creates a deposit
-      let depositAmount2 = getDepositAmount({
-        min: new BN(initialSettings.minActivatingDeposit),
-      });
+      let depositAmount2 = getDepositAmount();
+      totalSupply = totalSupply.add(depositAmount2);
+      totalActivating = totalActivating.add(depositAmount2);
+      poolBalance = poolBalance.add(depositAmount2);
+
       await pool.addDeposit({
         from: sender2,
         value: depositAmount2,
       });
-      totalSupply = totalSupply.add(depositAmount2);
       await checkStakedEthToken({
         stakedEthToken,
         totalSupply,
@@ -159,117 +172,67 @@ contract('Pool (add deposit)', (accounts) => {
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, totalSupply);
-      await checkPoolTotalActivatingAmount(
-        pool,
-        new BN(initialSettings.beaconActivatingAmount).add(totalSupply)
-      );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
 
     it('places deposit of user to the activation queue with exceeded max activating share', async () => {
       await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
-      // User 1 creates a deposit
-      let depositAmount1 = ether('10');
-
-      // check first deposit is minted immediately
-      await pool.addDeposit({
-        from: sender1,
-        value: depositAmount1,
-      });
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply: depositAmount1,
-        account: sender1,
-        balance: depositAmount1,
-        deposit: depositAmount1,
-      });
-
-      let totalBeaconActivatingAmount = ether('0.5');
-      await pool.setTotalActivatingAmount(totalBeaconActivatingAmount, {
-        from: oracles,
-      });
-
-      // User 2 creates a deposit
-      let depositAmount2 = ether('0.51');
+      // deposit more than 10 %
+      let depositAmount = totalSupply.div(new BN(10));
+      totalActivating = totalActivating.add(depositAmount);
+      poolBalance = poolBalance.add(depositAmount);
 
       // check deposit amount placed in activation queue
       let receipt = await pool.addDeposit({
-        from: sender2,
-        value: depositAmount2,
+        from: sender1,
+        value: depositAmount,
       });
       await expectEvent(receipt, 'ActivationScheduled', {
-        sender: sender2,
-        value: depositAmount2,
+        sender: sender1,
+        value: depositAmount,
       });
       expect(
-        await pool.activations(sender2, receipt.logs[0].args.activationTime)
-      ).to.bignumber.equal(depositAmount2);
-
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply: depositAmount1,
-        account: sender1,
-        balance: depositAmount1,
-        deposit: depositAmount1,
-      });
+        await pool.activations(sender1, receipt.logs[0].args.activationTime)
+      ).to.bignumber.equal(depositAmount);
 
       // check contract balance
-      await checkCollectorBalance(pool, depositAmount1.add(depositAmount2));
-      await checkPoolTotalActivatingAmount(
-        pool,
-        totalBeaconActivatingAmount.add(depositAmount2)
+      await checkCollectorBalance(pool, poolBalance);
+      expect(await stakedEthToken.totalSupply()).to.bignumber.equal(
+        totalSupply
       );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
 
     it('activates deposit of user immediately with not exceeded max activating share', async () => {
       await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
-      // User 1 creates a deposit
-      let depositAmount1 = ether('10');
-
-      // check first deposit is minted immediately
-      await pool.addDeposit({
-        from: sender1,
-        value: depositAmount1,
-      });
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply: depositAmount1,
-        account: sender1,
-        balance: depositAmount1,
-        deposit: depositAmount1,
-      });
-
-      let totalBeaconActivatingAmount = ether('0.5');
-      await pool.setTotalActivatingAmount(totalBeaconActivatingAmount, {
-        from: oracles,
-      });
-
-      // User 2 creates a deposit
-      let depositAmount2 = ether('0.5');
+      // deposit less than 10 %
+      let depositAmount = ether('1');
+      totalActivating = totalActivating.add(depositAmount);
+      totalSupply = totalSupply.add(depositAmount);
+      poolBalance = poolBalance.add(depositAmount);
 
       // check deposit amount added immediately
       await pool.addDeposit({
-        from: sender2,
-        value: depositAmount2,
+        from: sender1,
+        value: depositAmount,
       });
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: depositAmount1.add(depositAmount2),
-        account: sender2,
-        balance: depositAmount2,
-        deposit: depositAmount2,
+        totalSupply,
+        account: sender1,
+        balance: depositAmount,
+        deposit: depositAmount,
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, depositAmount1.add(depositAmount2));
-      await checkPoolTotalActivatingAmount(
-        pool,
-        totalBeaconActivatingAmount.add(depositAmount2)
-      );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
   });
 
@@ -277,21 +240,15 @@ contract('Pool (add deposit)', (accounts) => {
     let activationTime, depositAmount;
 
     beforeEach(async () => {
-      // first deposit mints automatically
-      await pool.addDeposit({
-        value: ether('1'),
-        from: sender2,
-      });
-
-      depositAmount = getDepositAmount({
-        min: new BN(initialSettings.minActivatingDeposit),
-      });
-
+      depositAmount = totalSupply.div(new BN(10));
       let receipt = await pool.addDeposit({
         from: sender1,
         value: depositAmount,
       });
       activationTime = receipt.logs[0].args.activationTime;
+
+      totalActivating = totalActivating.add(depositAmount);
+      poolBalance = poolBalance.add(depositAmount);
     });
 
     it('fails to activate with invalid activation time', async () => {
@@ -348,55 +305,43 @@ contract('Pool (add deposit)', (accounts) => {
         value: depositAmount,
         sender: sender1,
       });
+      totalSupply = totalSupply.add(depositAmount);
 
       await checkStakedEthToken({
         stakedEthToken,
+        totalSupply,
         account: sender1,
         balance: depositAmount,
         deposit: depositAmount,
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, depositAmount.add(ether('1')));
-      await checkPoolTotalActivatingAmount(
-        pool,
-        depositAmount
-          .add(ether('1'))
-          .add(new BN(initialSettings.beaconActivatingAmount))
-      );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
   });
 
   describe('activating multiple', () => {
-    let activationTime1, activationTime2, depositAmount1, depositAmount2;
+    let activationTime1, activationTime2, depositAmount;
 
     beforeEach(async () => {
-      // first deposit mints automatically
-      await pool.addDeposit({
-        value: ether('1'),
-        from: sender2,
-      });
-
-      depositAmount1 = getDepositAmount({
-        min: new BN(initialSettings.minActivatingDeposit),
-      });
-
-      depositAmount2 = getDepositAmount({
-        min: new BN(initialSettings.minActivatingDeposit),
-      });
+      depositAmount = totalSupply.div(new BN(10));
 
       let receipt = await pool.addDeposit({
         from: sender3,
-        value: depositAmount1,
+        value: depositAmount,
       });
       activationTime1 = receipt.logs[0].args.activationTime;
       await time.increase(time.duration.days(1));
 
       receipt = await pool.addDeposit({
         from: sender3,
-        value: depositAmount2,
+        value: depositAmount,
       });
       activationTime2 = receipt.logs[0].args.activationTime;
+
+      totalActivating = totalActivating.add(depositAmount.mul(new BN(2)));
+      poolBalance = poolBalance.add(depositAmount.mul(new BN(2)));
     });
 
     it('fails to activate with invalid activation time', async () => {
@@ -453,36 +398,32 @@ contract('Pool (add deposit)', (accounts) => {
           from: sender3,
         }
       );
+      totalSupply = totalSupply.add(depositAmount.mul(new BN(2)));
 
-      let totalBalance = depositAmount1.add(depositAmount2);
       await checkStakedEthToken({
         stakedEthToken,
+        totalSupply,
         account: sender3,
-        balance: totalBalance,
-        deposit: totalBalance,
+        balance: depositAmount.mul(new BN(2)),
+        deposit: depositAmount.mul(new BN(2)),
       });
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
         activationTime: activationTime1,
-        value: depositAmount1,
+        value: depositAmount,
         sender: sender3,
       });
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
         activationTime: activationTime2,
-        value: depositAmount2,
+        value: depositAmount,
         sender: sender3,
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, totalBalance.add(ether('1')));
-      await checkPoolTotalActivatingAmount(
-        pool,
-        totalBalance
-          .add(ether('1'))
-          .add(new BN(initialSettings.beaconActivatingAmount))
-      );
+      await checkCollectorBalance(pool, poolBalance);
+      await checkPoolTotalActivatingAmount(pool, totalActivating);
     });
   });
 });

@@ -7,43 +7,34 @@ const {
   constants,
 } = require('@openzeppelin/test-helpers');
 const {
-  deployStakedEthToken,
-  deployRewardEthToken,
-  initializeStakedEthToken,
-  initializeRewardEthToken,
-} = require('../../deployments/tokens');
-const { checkStakedEthToken } = require('../utils');
+  impersonateAccount,
+  stopImpersonatingAccount,
+  resetFork,
+  checkStakedEthToken,
+} = require('../utils');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
+const Pool = artifacts.require('Pool');
 
-contract('StakedEthToken', ([_, ...accounts]) => {
-  let stakedEthToken;
-  let [
-    poolContractAddress,
-    admin,
-    oraclesContractAddress,
-    sender1,
-    sender2,
-  ] = accounts;
+contract('StakedEthToken', ([sender1, sender2]) => {
+  const admin = contractSettings.admin;
+  let stakedEthToken, pool, totalSupply;
 
   beforeEach(async () => {
-    const stakedEthTokenContractAddress = await deployStakedEthToken();
-    const rewardEthTokenContractAddress = await deployRewardEthToken();
-    await initializeStakedEthToken(
-      stakedEthTokenContractAddress,
-      admin,
-      rewardEthTokenContractAddress,
-      poolContractAddress
-    );
-    await initializeRewardEthToken(
-      rewardEthTokenContractAddress,
-      admin,
-      stakedEthTokenContractAddress,
-      oraclesContractAddress
-    );
+    await impersonateAccount(admin);
+    await upgradeContracts();
 
-    stakedEthToken = await StakedEthToken.at(stakedEthTokenContractAddress);
+    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    pool = await Pool.at(contracts.pool);
+
+    totalSupply = await stakedEthToken.totalSupply();
   });
+
+  after(async () => stopImpersonatingAccount(admin));
+
+  afterEach(async () => resetFork());
 
   describe('mint', () => {
     it('anyone cannot mint sETH2 tokens', async () => {
@@ -55,30 +46,10 @@ contract('StakedEthToken', ([_, ...accounts]) => {
       );
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: new BN(0),
+        totalSupply,
         account: sender1,
         balance: new BN(0),
         deposit: new BN(0),
-      });
-    });
-
-    it('pool can mint sETH2 tokens', async () => {
-      let value = ether('10');
-      let receipt = await stakedEthToken.mint(sender1, value, {
-        from: poolContractAddress,
-      });
-      expectEvent(receipt, 'Transfer', {
-        from: constants.ZERO_ADDRESS,
-        to: sender1,
-        value,
-      });
-
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply: value,
-        account: sender1,
-        balance: value,
-        deposit: value,
       });
     });
   });
@@ -87,9 +58,14 @@ contract('StakedEthToken', ([_, ...accounts]) => {
     let value = ether('10');
 
     beforeEach(async () => {
-      await stakedEthToken.mint(sender1, value, {
-        from: poolContractAddress,
+      await pool.setMinActivatingDeposit(value.add(ether('1')), {
+        from: admin,
       });
+      await pool.addDeposit({
+        from: sender1,
+        value,
+      });
+      totalSupply = totalSupply.add(value);
     });
 
     it('cannot transfer to zero address', async () => {
@@ -102,7 +78,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: value,
         deposit: value,
@@ -119,7 +95,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: value,
         deposit: value,
@@ -139,7 +115,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: value,
         deposit: value,
@@ -159,7 +135,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: value,
         deposit: value,
@@ -177,7 +153,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: value,
         deposit: value,
@@ -197,7 +173,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender1,
         balance: new BN(0),
         deposit: new BN(0),
@@ -205,7 +181,7 @@ contract('StakedEthToken', ([_, ...accounts]) => {
 
       await checkStakedEthToken({
         stakedEthToken,
-        totalSupply: value,
+        totalSupply,
         account: sender2,
         balance: value,
         deposit: value,

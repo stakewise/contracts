@@ -5,8 +5,15 @@ const {
   constants,
   expectRevert,
 } = require('@openzeppelin/test-helpers');
-const { deployAllContracts } = require('../../deployments');
-const { checkCollectorBalance, checkSoloDepositAdded } = require('../utils');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const {
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
+  checkCollectorBalance,
+  checkSoloDepositAdded,
+} = require('../utils');
 
 const Solos = artifacts.require('Solos');
 
@@ -14,16 +21,20 @@ const validatorDeposit = ether('32');
 const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
-contract('Solos (add deposit)', ([_, ...accounts]) => {
+contract('Solos (add deposit)', ([sender1, sender2]) => {
+  const admin = contractSettings.admin;
   let solos;
-  let [admin, sender1, sender2] = accounts;
+
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let { solos: solosContractAddress } = await deployAllContracts({
-      initialAdmin: admin,
-    });
-    solos = await Solos.at(solosContractAddress);
+    await impersonateAccount(admin);
+    await upgradeContracts();
+
+    solos = await Solos.at(contracts.solos);
   });
+
+  afterEach(async () => resetFork());
 
   it('fails to add a deposit with invalid withdrawal credentials', async () => {
     await expectRevert(

@@ -3,20 +3,18 @@ const {
   expectRevert,
   expectEvent,
   ether,
+  balance,
 } = require('@openzeppelin/test-helpers');
-const { upgrades } = require('hardhat');
-const { deployAllContracts } = require('../../deployments');
-const {
-  preparePoolUpgrade,
-  preparePoolUpgradeData,
-  upgradePool,
-} = require('../../deployments/collectors');
-const { initialSettings } = require('../../deployments/settings');
-const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const { vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
   checkPoolTotalActivatingAmount,
-  getDepositAmount,
+  checkValidatorRegistered,
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
 } = require('../utils');
 const { validatorParams } = require('./validatorParams');
 
@@ -28,56 +26,34 @@ const withdrawalCredentials =
   '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
 const validator = validatorParams[0];
 
-contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
-  let vrc, pool;
-  let [admin, operator, sender1, sender2, other] = accounts;
+contract('Pool (register validator)', ([operator, sender, other]) => {
+  const admin = contractSettings.admin;
+  let pool, vrc;
 
   before(async () => {
-    vrc = new web3.eth.Contract(vrcAbi, await deployAndInitializeVRC());
+    vrc = new web3.eth.Contract(vrcAbi, contractSettings.VRC);
   });
+
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let {
-      pool: poolContractAddress,
-      validators: validatorsContractAddress,
-    } = await deployAllContracts({
-      initialAdmin: admin,
-      vrcContractAddress: vrc.options.address,
-    });
-    pool = await Pool.at(poolContractAddress);
+    await impersonateAccount(admin);
+    await upgradeContracts();
 
-    let validators = await Validators.at(validatorsContractAddress);
+    pool = await Pool.at(contracts.pool);
+    let validators = await Validators.at(contracts.validators);
     await validators.addOperator(operator, { from: admin });
 
-    // register pool
-    let amount1 = getDepositAmount({
-      max: validatorDeposit.div(new BN(2)),
-    });
+    // collect validator deposit
+    let poolBalance = await balance.current(pool.address);
+    let depositAmount = validatorDeposit.sub(poolBalance);
     await pool.addDeposit({
-      from: sender1,
-      value: amount1,
+      from: sender,
+      value: depositAmount,
     });
-
-    let amount2 = validatorDeposit.sub(amount1);
-    await pool.addDeposit({
-      from: sender2,
-      value: amount2,
-    });
-
-    const proxyAdmin = await upgrades.admin.getInstance();
-    await pool.addAdmin(proxyAdmin.address, { from: admin });
-    await pool.pause({ from: admin });
-    const poolImplementation = await preparePoolUpgrade(poolContractAddress);
-    const poolUpgradeData = await preparePoolUpgradeData(
-      oracles,
-      initialSettings.activationDuration,
-      initialSettings.beaconActivatingAmount,
-      initialSettings.minActivatingDeposit,
-      initialSettings.minActivatingShare
-    );
-    await upgradePool(poolContractAddress, poolImplementation, poolUpgradeData);
-    await pool.unpause({ from: admin });
   });
+
+  afterEach(async () => resetFork());
 
   it('fails to register validator with callers other than operator', async () => {
     await expectRevert(
@@ -107,7 +83,7 @@ contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
 
     // create new deposit
     await pool.addDeposit({
-      from: sender1,
+      from: sender,
       value: validatorDeposit,
     });
 
@@ -126,7 +102,7 @@ contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
     await checkCollectorBalance(pool, validatorDeposit);
     await checkPoolTotalActivatingAmount(
       pool,
-      new BN(initialSettings.beaconActivatingAmount).add(
+      new BN(contractSettings.beaconActivatingAmount).add(
         validatorDeposit.mul(new BN(2))
       )
     );
@@ -151,7 +127,7 @@ contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
     await checkCollectorBalance(pool, new BN(0));
     await checkPoolTotalActivatingAmount(
       pool,
-      new BN(initialSettings.beaconActivatingAmount).add(validatorDeposit)
+      new BN(contractSettings.beaconActivatingAmount).add(validatorDeposit)
     );
   });
 
@@ -165,14 +141,14 @@ contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
 
     for (let i = 1; i < validatorParams.length; i++) {
       await pool.addDeposit({
-        from: sender1,
+        from: sender,
         value: validatorDeposit,
       });
       totalAmount = totalAmount.add(validatorDeposit);
     }
 
     let totalActivatingAmount = new BN(
-      initialSettings.beaconActivatingAmount
+      contractSettings.beaconActivatingAmount
     ).add(totalAmount);
 
     // check balance increased correctly
@@ -189,6 +165,14 @@ contract('Pool (register validator)', ([_, oracles, ...accounts]) => {
         operator,
       });
       totalAmount = totalAmount.sub(validatorDeposit);
+      await checkValidatorRegistered({
+        vrc,
+        operator,
+        transaction: receipt.tx,
+        pubKey: validatorParams[i].publicKey,
+        withdrawalCredentials,
+        signature: validatorParams[i].signature,
+      });
     }
 
     // check balance empty

@@ -1,64 +1,67 @@
-const { upgrades } = require('hardhat');
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const { initialSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const { upgradeContracts } = require('../../deployments');
 const {
-  deployAllContracts,
-  upgradeAllContracts,
-} = require('../../deployments');
+  impersonateAccount,
+  stopImpersonatingAccount,
+  resetFork,
+} = require('../utils');
 
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
-contract('Oracles (upgrading)', ([admin, sender1]) => {
+contract('Oracles (upgrading)', ([anyone]) => {
   let oracles, pool;
 
+  after(async () => stopImpersonatingAccount(contractSettings.admin));
+
   beforeEach(async () => {
-    let {
-      pool: poolContractAddress,
-      oracles: oraclesContractAddress,
-    } = await deployAllContracts({
-      initialAdmin: admin,
-    });
+    await impersonateAccount(contractSettings.admin);
+    await upgradeContracts();
 
-    // upgrade pool
-    const proxyAdmin = await upgrades.admin.getInstance();
-    oracles = await Oracles.at(oraclesContractAddress);
-    pool = await Pool.at(poolContractAddress);
-    await pool.addAdmin(proxyAdmin.address, { from: admin });
-    await oracles.addAdmin(proxyAdmin.address, { from: admin });
-
-    await oracles.pause({ from: admin });
-    await pool.pause({ from: admin });
-    await upgradeAllContracts({ poolContractAddress, oraclesContractAddress });
-    await oracles.unpause({ from: admin });
-    await pool.unpause({ from: admin });
+    oracles = await Oracles.at(contracts.oracles);
+    pool = await Pool.at(contracts.pool);
   });
+
+  afterEach(async () => resetFork());
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
-        from: sender1,
-      }),
+      oracles.initialize(
+        pool.address,
+        contractSettings.depositsActivationEnabled,
+        {
+          from: anyone,
+        }
+      ),
       'OwnablePausable: access denied'
     );
   });
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
-        from: admin,
-      }),
+      oracles.initialize(
+        pool.address,
+        contractSettings.depositsActivationEnabled,
+        {
+          from: contractSettings.admin,
+        }
+      ),
       'Pausable: not paused'
     );
   });
 
   it('fails to upgrade twice', async () => {
-    await oracles.pause({ from: admin });
+    await oracles.pause({ from: contractSettings.admin });
     await expectRevert(
-      oracles.upgrade(pool.address, initialSettings.depositsActivationEnabled, {
-        from: admin,
-      }),
-      'Oracles: already upgraded'
+      oracles.initialize(
+        pool.address,
+        contractSettings.depositsActivationEnabled,
+        {
+          from: contractSettings.admin,
+        }
+      ),
+      'Oracles: already initialized'
     );
   });
 });

@@ -5,12 +5,16 @@ const {
   constants,
   ether,
 } = require('@openzeppelin/test-helpers');
-const { deployAllContracts } = require('../../deployments');
-const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const { vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
   checkSolo,
   checkValidatorRegistered,
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
 } = require('../utils');
 const { validatorParams } = require('./validatorParams');
 
@@ -21,25 +25,22 @@ const validatorPrice = ether('10');
 const validatorDeposit = ether('32');
 const validator = validatorParams[0];
 
-contract('Solos (register validator)', ([_, ...accounts]) => {
+contract('Solos (register validator)', ([operator, sender, other]) => {
+  const admin = contractSettings.admin;
   let vrc, solos, soloId;
-  let [admin, operator, sender, other] = accounts;
 
   before(async () => {
-    vrc = new web3.eth.Contract(vrcAbi, await deployAndInitializeVRC());
+    vrc = new web3.eth.Contract(vrcAbi, contractSettings.VRC);
   });
 
-  beforeEach(async () => {
-    let {
-      solos: solosContractAddress,
-      validators: validatorsContractAddress,
-    } = await deployAllContracts({
-      initialAdmin: admin,
-      vrcContractAddress: vrc.options.address,
-    });
-    solos = await Solos.at(solosContractAddress);
+  after(async () => stopImpersonatingAccount(admin));
 
-    let validators = await Validators.at(validatorsContractAddress);
+  beforeEach(async () => {
+    await impersonateAccount(admin);
+    await upgradeContracts();
+
+    solos = await Solos.at(contracts.solos);
+    let validators = await Validators.at(contracts.validators);
     await validators.addOperator(operator, { from: admin });
 
     await solos.setValidatorPrice(validatorPrice, {
@@ -57,6 +58,8 @@ contract('Solos (register validator)', ([_, ...accounts]) => {
       validator.withdrawalCredentials
     );
   });
+
+  afterEach(async () => resetFork());
 
   it('fails to register validator for invalid solo ID', async () => {
     let validator = { soloId: constants.ZERO_BYTES32, ...validatorParams[0] };

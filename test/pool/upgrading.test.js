@@ -1,56 +1,45 @@
-const { upgrades } = require('hardhat');
 const { expect } = require('chai');
 const { expectRevert } = require('@openzeppelin/test-helpers');
-const { initialSettings } = require('../../deployments/settings');
 const {
-  deployAllContracts,
-  upgradeAllContracts,
-} = require('../../deployments');
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
+} = require('../utils');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const { upgradeContracts } = require('../../deployments');
 
-const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
-contract('Pool (upgrading)', ([admin, sender1]) => {
-  let pool, oracles;
+contract('Pool (upgrading)', ([sender]) => {
+  const admin = contractSettings.admin;
+  let pool;
+
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let {
-      pool: poolContractAddress,
-      oracles: oraclesContractAddress,
-    } = await deployAllContracts({
-      initialAdmin: admin,
-    });
-
-    // upgrade pool
-    const proxyAdmin = await upgrades.admin.getInstance();
-    oracles = await Oracles.at(oraclesContractAddress);
-    pool = await Pool.at(poolContractAddress);
-    await pool.addAdmin(proxyAdmin.address, { from: admin });
-    await oracles.addAdmin(proxyAdmin.address, { from: admin });
-
-    await oracles.pause({ from: admin });
-    await pool.pause({ from: admin });
-    await upgradeAllContracts({ poolContractAddress, oraclesContractAddress });
-    await oracles.unpause({ from: admin });
-    await pool.unpause({ from: admin });
+    await impersonateAccount(admin);
+    await upgradeContracts();
+    pool = await Pool.at(contracts.pool);
 
     expect(await pool.activationDuration()).to.bignumber.equal(
-      initialSettings.activationDuration
+      contractSettings.activationDuration
     );
     expect(await pool.minActivatingDeposit()).to.bignumber.equal(
-      initialSettings.minActivatingDeposit
+      contractSettings.minActivatingDeposit
     );
   });
 
+  afterEach(async () => resetFork());
+
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      pool.upgrade(
-        oracles.address,
-        initialSettings.activationDuration,
-        initialSettings.beaconActivatingAmount,
-        initialSettings.minActivatingDeposit,
-        initialSettings.minActivatingShare,
-        { from: sender1 }
+      pool.initialize(
+        contracts.oracles,
+        contractSettings.activationDuration,
+        contractSettings.beaconActivatingAmount,
+        contractSettings.minActivatingDeposit,
+        contractSettings.minActivatingShare,
+        { from: sender }
       ),
       'OwnablePausable: access denied'
     );
@@ -58,12 +47,12 @@ contract('Pool (upgrading)', ([admin, sender1]) => {
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      pool.upgrade(
-        oracles.address,
-        initialSettings.activationDuration,
-        initialSettings.beaconActivatingAmount,
-        initialSettings.minActivatingDeposit,
-        initialSettings.minActivatingShare,
+      pool.initialize(
+        contracts.oracles,
+        contractSettings.activationDuration,
+        contractSettings.beaconActivatingAmount,
+        contractSettings.minActivatingDeposit,
+        contractSettings.minActivatingShare,
         { from: admin }
       ),
       'Pausable: not paused'
@@ -73,15 +62,15 @@ contract('Pool (upgrading)', ([admin, sender1]) => {
   it('fails to upgrade twice', async () => {
     await pool.pause({ from: admin });
     await expectRevert(
-      pool.upgrade(
-        oracles.address,
-        initialSettings.activationDuration,
-        initialSettings.beaconActivatingAmount,
-        initialSettings.minActivatingDeposit,
-        initialSettings.minActivatingShare,
+      pool.initialize(
+        contracts.oracles,
+        contractSettings.activationDuration,
+        contractSettings.beaconActivatingAmount,
+        contractSettings.minActivatingDeposit,
+        contractSettings.minActivatingShare,
         { from: admin }
       ),
-      'Pool: already upgraded'
+      'Pool: already initialized'
     );
   });
 });

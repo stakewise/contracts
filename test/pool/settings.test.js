@@ -1,46 +1,43 @@
 const { expect } = require('chai');
-const { upgrades } = require('hardhat');
 const {
+  balance,
   ether,
   expectRevert,
   expectEvent,
   BN,
 } = require('@openzeppelin/test-helpers');
 const {
-  preparePoolUpgrade,
-  preparePoolUpgradeData,
-  upgradePool,
-} = require('../../deployments/collectors');
-const { initialSettings } = require('../../deployments/settings');
-const { deployAllContracts } = require('../../deployments');
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
+  setActivationDuration,
+  setTotalActivatingAmount,
+  getOracleAccounts,
+} = require('../utils');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
 
 const Pool = artifacts.require('Pool');
+const Oracles = artifacts.require('Oracles');
+const RewardEthToken = artifacts.require('RewardEthToken');
 
-contract('Pool (settings)', ([admin, anyone, oracles]) => {
-  let pool;
+contract('Pool (settings)', ([anyone]) => {
+  const admin = contractSettings.admin;
+  let pool, oracles, oracleAccounts, rewardEthToken;
+
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let { pool: poolContractAddress } = await deployAllContracts({
-      initialAdmin: admin,
-    });
+    await impersonateAccount(admin);
+    await upgradeContracts();
+    pool = await Pool.at(contracts.pool);
 
-    const proxyAdmin = await upgrades.admin.getInstance();
-
-    // upgrade pool
-    pool = await Pool.at(poolContractAddress);
-    await pool.addAdmin(proxyAdmin.address, { from: admin });
-    await pool.pause({ from: admin });
-    const poolImplementation = await preparePoolUpgrade(poolContractAddress);
-    const poolUpgradeData = await preparePoolUpgradeData(
-      oracles,
-      initialSettings.activationDuration,
-      initialSettings.beaconActivatingAmount,
-      initialSettings.minActivatingDeposit,
-      initialSettings.minActivatingShare
-    );
-    await upgradePool(poolContractAddress, poolImplementation, poolUpgradeData);
-    await pool.unpause({ from: admin });
+    oracles = await Oracles.at(contracts.oracles);
+    oracleAccounts = await getOracleAccounts({ oracles });
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
   });
+
+  afterEach(async () => resetFork());
 
   describe('min activating deposit', () => {
     it('not admin fails to set min activating deposit', async () => {
@@ -113,13 +110,22 @@ contract('Pool (settings)', ([admin, anyone, oracles]) => {
 
     it('oracles contract can set activation duration', async () => {
       let activationDuration = new BN('2592000');
-      let receipt = await pool.setActivationDuration(activationDuration, {
-        from: oracles,
-      });
-      await expectEvent(receipt, 'ActivationDurationUpdated', {
+      let receipt = await setActivationDuration({
+        pool,
+        rewardEthToken,
         activationDuration,
-        sender: oracles,
+        oracleAccounts,
+        oracles,
       });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        Pool,
+        'ActivationDurationUpdated',
+        {
+          activationDuration,
+          sender: contracts.oracles,
+        }
+      );
       expect(await pool.activationDuration()).to.bignumber.equal(
         activationDuration
       );
@@ -137,14 +143,25 @@ contract('Pool (settings)', ([admin, anyone, oracles]) => {
     });
 
     it('oracles contract can set total activating amount', async () => {
-      let totalActivatingAmount = new BN('100');
-      let receipt = await pool.setTotalActivatingAmount(totalActivatingAmount, {
-        from: oracles,
-      });
-      await expectEvent(receipt, 'TotalActivatingAmountUpdated', {
+      let totalActivatingAmount = (await balance.current(pool.address)).add(
+        ether('10')
+      );
+      let receipt = await setTotalActivatingAmount({
+        pool,
+        rewardEthToken,
         totalActivatingAmount,
-        sender: oracles,
+        oracleAccounts,
+        oracles,
       });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        Pool,
+        'TotalActivatingAmountUpdated',
+        {
+          totalActivatingAmount,
+          sender: contracts.oracles,
+        }
+      );
       expect(await pool.totalActivatingAmount()).to.bignumber.equal(
         totalActivatingAmount
       );
