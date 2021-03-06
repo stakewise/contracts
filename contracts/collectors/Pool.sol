@@ -55,36 +55,15 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-initialize}.
      */
     function initialize(
-        address _admin,
-        address _stakedEthToken,
-        address _validatorRegistration,
-        address _validators,
-        bytes32 _withdrawalCredentials
-    )
-        external override initializer
-    {
-        __OwnablePausableUpgradeable_init(_admin);
-        stakedEthToken = IStakedEthToken(_stakedEthToken);
-        validatorRegistration = IDepositContract(_validatorRegistration);
-        validators = IValidators(_validators);
-
-        // set withdrawal credentials
-        withdrawalCredentials = _withdrawalCredentials;
-        emit WithdrawalCredentialsUpdated(_withdrawalCredentials);
-    }
-
-    /**
-     * @dev See {IPool-upgrade}.
-     */
-    function upgrade(
         address _oracles,
         uint256 _activationDuration,
         uint256 _beaconActivatingAmount,
         uint256 _minActivatingDeposit,
         uint256 _minActivatingShare
-    ) external override onlyAdmin whenPaused
+    )
+        external override onlyAdmin whenPaused
     {
-        require(oracles == address(0), "Pool: already upgraded");
+        require(oracles == address(0), "Pool: already initialized");
         oracles = _oracles;
 
         activationDuration = _activationDuration;

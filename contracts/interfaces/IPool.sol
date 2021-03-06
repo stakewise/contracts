@@ -82,30 +82,14 @@ interface IPool is IOwnablePausable {
     }
 
     /**
-    * @dev Constructor for initializing the Pool contract.
-    * @param _admin - address of the contract admin.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _validatorRegistration - address of the VRC (deployed by Ethereum).
-    * @param _validators - address of the Validators contract.
-    * @param _withdrawalCredentials - withdrawal credentials for the pool validators.
-    */
-    function initialize(
-        address _admin,
-        address _stakedEthToken,
-        address _validatorRegistration,
-        address _validators,
-        bytes32 _withdrawalCredentials
-    ) external;
-
-    /**
-    * @dev Function for upgrading the Pools contract.
+    * @dev Function for initializing activation functionality for the Pools contract.
     * @param _oracles - address of the Oracles contract.
     * @param _activationDuration - initial activation duration.
     * @param _beaconActivatingAmount - total activating amount in beacon chain.
     * @param _minActivatingDeposit - minimal deposit in Wei to be considered for the activation period.
     * @param _minActivatingShare - minimal activating share required for considering deposit for the activation.
     */
-    function upgrade(
+    function initialize(
         address _oracles,
         uint256 _activationDuration,
         uint256 _beaconActivatingAmount,

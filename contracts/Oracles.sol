@@ -57,20 +57,8 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     /**
      * @dev See {IOracles-initialize}.
      */
-    function initialize(address _admin, address _rewardEthToken, uint256 _syncPeriod) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        __ReentrancyGuard_init_unchained();
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
-
-        syncPeriod = _syncPeriod;
-        emit SyncPeriodUpdated(_syncPeriod, msg.sender);
-    }
-
-    /**
-     * @dev See {IOracles-upgrade}.
-     */
-    function upgrade(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
-        require(address(pool) == address(0), "Oracles: already upgraded");
+    function initialize(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
+        require(address(pool) == address(0), "Oracles: already initialized");
         pool = IPool(_pool);
         depositsActivationEnabled = _depositsActivationEnabled;
         emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);
@@ -89,6 +77,13 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     {
         bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activationDuration, _beaconActivatingAmount));
         return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
+    }
+
+    /**
+     * @dev See {IOracles-currentNonce}.
+     */
+    function currentNonce() external override view returns (uint256) {
+        return nonce.current();
     }
 
     /**
@@ -142,8 +137,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _beaconActivatingAmount));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
-        // solhint-disable-next-line not-rely-on-time
-        require(rewardEthToken.lastUpdateTimestamp().add(syncPeriod) <= block.timestamp, "Oracles: vote submitted too early");
 
         // mark vote as submitted, update candidate votes number
         submittedVotes[voteId] = true;

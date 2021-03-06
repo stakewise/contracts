@@ -517,28 +517,28 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_admin",
+        "name": "_oracles",
         "type": "address"
       },
       {
-        "internalType": "address",
-        "name": "_stakedEthToken",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_activationDuration",
+        "type": "uint256"
       },
       {
-        "internalType": "address",
-        "name": "_validatorRegistration",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_beaconActivatingAmount",
+        "type": "uint256"
       },
       {
-        "internalType": "address",
-        "name": "_validators",
-        "type": "address"
+        "internalType": "uint256",
+        "name": "_minActivatingDeposit",
+        "type": "uint256"
       },
       {
-        "internalType": "bytes32",
-        "name": "_withdrawalCredentials",
-        "type": "bytes32"
+        "internalType": "uint256",
+        "name": "_minActivatingShare",
+        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -803,39 +803,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_activationDuration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_beaconActivatingAmount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minActivatingDeposit",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minActivatingShare",
-        "type": "uint256"
-      }
-    ],
-    "name": "upgrade",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

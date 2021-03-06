@@ -55,19 +55,11 @@ interface IOracles is IOwnablePausable {
     function depositsActivationEnabled() external view returns (bool);
 
     /**
-    * @dev Constructor for initializing the Oracles contract.
-    * @param _admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
-    * @param _syncPeriod - oracles' sync period.
-    */
-    function initialize(address _admin, address _rewardEthToken, uint256 _syncPeriod) external;
-
-    /**
-    * @dev Function for upgrading the Oracles contract.
+    * @dev Function for initializing activation functionality for the Oracles contract.
     * @param _pool - address of the Pool contract.
     * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
     */
-    function upgrade(address _pool, bool _depositsActivationEnabled) external;
+    function initialize(address _pool, bool _depositsActivationEnabled) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
@@ -88,6 +80,11 @@ interface IOracles is IOwnablePausable {
         uint256 _activationDuration,
         uint256 _beaconActivatingAmount
     ) external view returns (bool);
+
+    /**
+    * @dev Function for retrieving current nonce.
+    */
+    function currentNonce() external view returns (uint256);
 
     /**
     * @dev Function for adding an oracle role to the account.
