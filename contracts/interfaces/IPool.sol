@@ -4,12 +4,11 @@ pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "./IDepositContract.sol";
-import "./IOwnablePausable.sol";
 
 /**
  * @dev Interface of the Pool contract.
  */
-interface IPool is IOwnablePausable {
+interface IPool {
     /**
     * @dev Event for tracking new pool withdrawal credentials.
     * @param withdrawalCredentials - new withdrawal credentials for the pool validators.

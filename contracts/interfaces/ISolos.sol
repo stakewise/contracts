@@ -4,12 +4,11 @@ pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "./IDepositContract.sol";
-import "./IOwnablePausable.sol";
 
 /**
  * @dev Interface of the Solos contract.
  */
-interface ISolos is IOwnablePausable {
+interface ISolos {
     /**
     * @dev Structure for storing information about the solo deposits.
     * @param amount - amount deposited.

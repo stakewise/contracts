@@ -3,13 +3,11 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "./IOwnablePausable.sol";
-import "./IERC20PermitUpgradeable.sol";
 
 /**
  * @dev Interface of the StakedEthToken contract.
  */
-interface IStakedEthToken is IOwnablePausable, IERC20Upgradeable, IERC20PermitUpgradeable {
+interface IStakedEthToken is IERC20Upgradeable {
     /**
     * @dev Constructor for initializing the StakedEthToken contract.
     * @param _admin - address of the contract admin.
