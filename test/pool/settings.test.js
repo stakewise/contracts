@@ -100,12 +100,25 @@ contract('Pool (settings)', ([anyone]) => {
   });
 
   describe('activation duration', () => {
-    it('not oracles contract fails to set activation duration', async () => {
+    it('not oracles contract or admin fails to set activation duration', async () => {
       await expectRevert(
         pool.setActivationDuration(ether('10'), {
           from: anyone,
         }),
         'Pool: access denied'
+      );
+    });
+
+    it('admin override activation duration', async () => {
+      let activationDuration = new BN('2592000');
+      let receipt = await pool.setActivationDuration(activationDuration, {
+        from: admin,
+      });
+      expectEvent(receipt, 'ActivationDurationUpdated', {
+        activationDuration,
+      });
+      expect(await pool.activationDuration()).to.bignumber.equal(
+        activationDuration
       );
     });
 

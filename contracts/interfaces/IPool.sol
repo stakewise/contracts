@@ -81,14 +81,14 @@ interface IPool {
     }
 
     /**
-    * @dev Function for initializing activation functionality for the Pools contract.
+    * @dev Function for upgrading the Pools contract.
     * @param _oracles - address of the Oracles contract.
     * @param _activationDuration - initial activation duration.
     * @param _totalStakingAmount - total staking amount in beacon chain.
     * @param _minActivatingDeposit - minimal deposit in Wei to be considered for the activation period.
     * @param _minActivatingShare - minimal activating share required for considering deposit for the activation.
     */
-    function initialize(
+    function upgrade(
         address _oracles,
         uint256 _activationDuration,
         uint256 _totalStakingAmount,

@@ -55,9 +55,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     uint256 public override totalStakingAmount;
 
     /**
-     * @dev See {IPool-initialize}.
+     * @dev See {IPool-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/v1.0.0/contracts/collectors/Pool.sol#L42
      */
-    function initialize(
+    function upgrade(
         address _oracles,
         uint256 _activationDuration,
         uint256 _totalStakingAmount,
@@ -66,7 +68,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     )
         external override onlyAdmin whenPaused
     {
-        require(oracles == address(0), "Pool: already initialized");
+        require(oracles == address(0), "Pool: already upgraded");
         oracles = _oracles;
 
         activationDuration = _activationDuration;
@@ -112,7 +114,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-setActivationDuration}.
      */
     function setActivationDuration(uint256 _activationDuration) external override {
-        require(msg.sender == oracles, "Pool: access denied");
+        require(msg.sender == oracles || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
         activationDuration = _activationDuration;
         emit ActivationDurationUpdated(_activationDuration, msg.sender);
     }

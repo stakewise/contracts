@@ -8,7 +8,7 @@ async function prepareOraclesUpgradeData(
   depositsActivationEnabled
 ) {
   const Oracles = await hre.ethers.getContractFactory('Oracles');
-  return Oracles.interface.encodeFunctionData('initialize', [
+  return Oracles.interface.encodeFunctionData('upgrade', [
     poolContractAddress,
     depositsActivationEnabled,
   ]);

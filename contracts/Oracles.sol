@@ -55,10 +55,12 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-initialize}.
+     * @dev See {IOracles-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/v1.0.0/contracts/Oracles.sol#L54
      */
-    function initialize(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
-        require(address(pool) == address(0), "Oracles: already initialized");
+    function upgrade(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
+        require(address(pool) == address(0), "Oracles: already upgraded");
         pool = IPool(_pool);
         depositsActivationEnabled = _depositsActivationEnabled;
         emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);

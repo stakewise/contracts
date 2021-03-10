@@ -53,11 +53,11 @@ interface IOracles {
     function depositsActivationEnabled() external view returns (bool);
 
     /**
-    * @dev Function for initializing activation functionality for the Oracles contract.
+    * @dev Function for upgrading the Oracles contract.
     * @param _pool - address of the Pool contract.
     * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
     */
-    function initialize(address _pool, bool _depositsActivationEnabled) external;
+    function upgrade(address _pool, bool _depositsActivationEnabled) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.

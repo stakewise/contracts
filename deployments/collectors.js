@@ -11,7 +11,7 @@ async function preparePoolUpgradeData(
   minActivatingShare
 ) {
   const Pool = await hre.ethers.getContractFactory('Pool');
-  return Pool.interface.encodeFunctionData('initialize', [
+  return Pool.interface.encodeFunctionData('upgrade', [
     oraclesContractAddress,
     activationDuration,
     totalStakingAmount,

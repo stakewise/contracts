@@ -30,7 +30,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      oracles.initialize(
+      oracles.upgrade(
         pool.address,
         contractSettings.depositsActivationEnabled,
         {
@@ -43,7 +43,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      oracles.initialize(
+      oracles.upgrade(
         pool.address,
         contractSettings.depositsActivationEnabled,
         {
@@ -57,14 +57,14 @@ contract('Oracles (upgrading)', ([anyone]) => {
   it('fails to upgrade twice', async () => {
     await oracles.pause({ from: admin });
     await expectRevert(
-      oracles.initialize(
+      oracles.upgrade(
         pool.address,
         contractSettings.depositsActivationEnabled,
         {
           from: admin,
         }
       ),
-      'Oracles: already initialized'
+      'Oracles: already upgraded'
     );
   });
 });

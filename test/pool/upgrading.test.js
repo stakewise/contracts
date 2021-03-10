@@ -34,7 +34,7 @@ contract('Pool (upgrading)', ([sender]) => {
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      pool.initialize(
+      pool.upgrade(
         contracts.oracles,
         contractSettings.activationDuration,
         contractSettings.totalStakingAmount,
@@ -48,7 +48,7 @@ contract('Pool (upgrading)', ([sender]) => {
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      pool.initialize(
+      pool.upgrade(
         contracts.oracles,
         contractSettings.activationDuration,
         contractSettings.totalStakingAmount,
@@ -63,7 +63,7 @@ contract('Pool (upgrading)', ([sender]) => {
   it('fails to upgrade twice', async () => {
     await pool.pause({ from: admin });
     await expectRevert(
-      pool.initialize(
+      pool.upgrade(
         contracts.oracles,
         contractSettings.activationDuration,
         contractSettings.totalStakingAmount,
@@ -71,7 +71,7 @@ contract('Pool (upgrading)', ([sender]) => {
         contractSettings.minActivatingShare,
         { from: admin }
       ),
-      'Pool: already initialized'
+      'Pool: already upgraded'
     );
   });
 });
