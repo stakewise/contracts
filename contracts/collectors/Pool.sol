@@ -161,7 +161,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
 
         // calculate activating share
         // multiply by 10000 as minActivatingShare is stored  up to 10000 (5.25% -> 525)
-        uint256 activatingShare = totalActivatingAmount.mul(1e22).div(newTotalCollectedAmount);
+        uint256 activatingShare = totalActivatingAmount.mul(1e22).div(_totalStakingAmount);
 
         // mint tokens if current activating share does not exceed the minimum
         if (activatingShare <= minActivatingShare.mul(1e18)) {
