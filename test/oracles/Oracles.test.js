@@ -5,7 +5,7 @@ const {
   ether,
   BN,
   time,
-  balance,
+  send,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
@@ -21,13 +21,16 @@ const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
 contract('Oracles', ([_, ...accounts]) => {
+  let admin = contractSettings.admin;
   let oracles, rewardEthToken, pool;
   let [oracle, anotherOracle, anyone] = accounts;
 
-  after(async () => stopImpersonatingAccount(contractSettings.admin));
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    await impersonateAccount(contractSettings.admin);
+    await impersonateAccount(admin);
+    await send.ether(anyone, admin, ether('5'));
+
     await upgradeContracts();
 
     oracles = await Oracles.at(contracts.oracles);
@@ -40,15 +43,15 @@ contract('Oracles', ([_, ...accounts]) => {
   describe('assigning', () => {
     it('admin can assign oracle role to another account', async () => {
       const receipt = await oracles.addOracle(oracle, {
-        from: contractSettings.admin,
+        from: admin,
       });
       expectEvent(receipt, 'RoleGranted', {
         role: await oracles.ORACLE_ROLE(),
         account: oracle,
-        sender: contractSettings.admin,
+        sender: admin,
       });
       expect(await oracles.isOracle(oracle)).equal(true);
-      expect(await oracles.isOracle(contractSettings.admin)).equal(false);
+      expect(await oracles.isOracle(admin)).equal(false);
       expect(await oracles.isOracle(anyone)).equal(false);
     });
 
@@ -62,7 +65,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('oracles cannot assign oracle role to others', async () => {
-      await oracles.addOracle(oracle, { from: contractSettings.admin });
+      await oracles.addOracle(oracle, { from: admin });
       await expectRevert(
         oracles.addOracle(anotherOracle, { from: oracle }),
         'AccessControl: sender must be an admin to grant'
@@ -74,8 +77,8 @@ contract('Oracles', ([_, ...accounts]) => {
 
   describe('removing', () => {
     beforeEach(async () => {
-      await oracles.addOracle(oracle, { from: contractSettings.admin });
-      await oracles.addOracle(anotherOracle, { from: contractSettings.admin });
+      await oracles.addOracle(oracle, { from: admin });
+      await oracles.addOracle(anotherOracle, { from: admin });
     });
 
     it('anyone cannot remove oracles', async () => {
@@ -98,12 +101,12 @@ contract('Oracles', ([_, ...accounts]) => {
 
     it('admins can remove oracles', async () => {
       const receipt = await oracles.removeOracle(oracle, {
-        from: contractSettings.admin,
+        from: admin,
       });
       expectEvent(receipt, 'RoleRevoked', {
         role: await oracles.ORACLE_ROLE(),
         account: oracle,
-        sender: contractSettings.admin,
+        sender: admin,
       });
       expect(await oracles.isOracle(oracle)).equal(false);
       expect(await oracles.isOracle(anotherOracle)).equal(true);
@@ -114,11 +117,11 @@ contract('Oracles', ([_, ...accounts]) => {
     it('admin user can update sync period', async () => {
       let newSyncPeriod = new BN('172800');
       const receipt = await oracles.setSyncPeriod(newSyncPeriod, {
-        from: contractSettings.admin,
+        from: admin,
       });
       expectEvent(receipt, 'SyncPeriodUpdated', {
         syncPeriod: newSyncPeriod,
-        sender: contractSettings.admin,
+        sender: admin,
       });
       expect(await oracles.syncPeriod()).bignumber.equal(newSyncPeriod);
     });
@@ -140,11 +143,11 @@ contract('Oracles', ([_, ...accounts]) => {
   describe('deposits activation toggling', () => {
     it('admin user can toggle deposits activation', async () => {
       const receipt = await oracles.toggleDepositsActivation(false, {
-        from: contractSettings.admin,
+        from: admin,
       });
       expectEvent(receipt, 'DepositsActivationToggled', {
         enabled: false,
-        sender: contractSettings.admin,
+        sender: admin,
       });
       expect(await oracles.depositsActivationEnabled()).equal(false);
     });
@@ -162,44 +165,33 @@ contract('Oracles', ([_, ...accounts]) => {
   describe('oracles voting', () => {
     let oracleAccounts = [];
     let activationDuration = time.duration.days(7);
-    let beaconActivatingAmount = ether('500');
-    let poolDeposit, prevTotalRewards, newTotalRewards, currentNonce;
+    let totalStakingAmount = ether('500');
+    let prevTotalRewards, newTotalRewards, currentNonce;
 
     beforeEach(async () => {
       oracleAccounts = await getOracleAccounts({ oracles });
       prevTotalRewards = await rewardEthToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
-      poolDeposit = await balance.current(pool.address);
       currentNonce = await oracles.currentNonce();
     });
 
     it('fails to vote when contract is paused', async () => {
-      await oracles.pause({ from: contractSettings.admin });
+      await oracles.pause({ from: admin });
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.vote(
-          newTotalRewards,
-          activationDuration,
-          beaconActivatingAmount,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+          from: oracleAccounts[0],
+        }),
         'Pausable: paused'
       );
     });
 
     it('only oracle can submit vote', async () => {
       await expectRevert(
-        oracles.vote(
-          newTotalRewards,
-          activationDuration,
-          beaconActivatingAmount,
-          {
-            from: anyone,
-          }
-        ),
+        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+          from: anyone,
+        }),
         'Oracles: access denied'
       );
     });
@@ -208,7 +200,7 @@ contract('Oracles', ([_, ...accounts]) => {
       await oracles.vote(
         newTotalRewards,
         activationDuration,
-        beaconActivatingAmount,
+        totalStakingAmount,
         {
           from: oracleAccounts[0],
         }
@@ -218,19 +210,14 @@ contract('Oracles', ([_, ...accounts]) => {
           oracleAccounts[0],
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount
+          totalStakingAmount
         )
       ).to.equal(true);
 
       await expectRevert(
-        oracles.vote(
-          newTotalRewards,
-          activationDuration,
-          beaconActivatingAmount,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+          from: oracleAccounts[0],
+        }),
         'Oracles: already voted'
       );
     });
@@ -239,7 +226,7 @@ contract('Oracles', ([_, ...accounts]) => {
       const receipt = await oracles.vote(
         newTotalRewards,
         activationDuration,
-        beaconActivatingAmount,
+        totalStakingAmount,
         {
           from: oracleAccounts[0],
         }
@@ -248,7 +235,7 @@ contract('Oracles', ([_, ...accounts]) => {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
         activationDuration,
-        beaconActivatingAmount,
+        totalStakingAmount,
         nonce: currentNonce,
       });
       expect(
@@ -256,7 +243,7 @@ contract('Oracles', ([_, ...accounts]) => {
           oracleAccounts[0],
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount
+          totalStakingAmount
         )
       ).to.equal(true);
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
@@ -265,8 +252,8 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.activationDuration()).to.bignumber.equal(
         new BN(contractSettings.activationDuration)
       );
-      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
-        new BN(contractSettings.beaconActivatingAmount).add(poolDeposit)
+      expect(await pool.totalStakingAmount()).to.bignumber.equal(
+        new BN(contractSettings.totalStakingAmount)
       );
     });
 
@@ -275,7 +262,7 @@ contract('Oracles', ([_, ...accounts]) => {
         let receipt = await oracles.vote(
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount,
+          totalStakingAmount,
           {
             from: oracleAccounts[i],
           }
@@ -289,14 +276,14 @@ contract('Oracles', ([_, ...accounts]) => {
             oracleAccounts[i],
             newTotalRewards,
             activationDuration,
-            beaconActivatingAmount
+            totalStakingAmount
           )
         ).to.equal(true);
         expectEvent(receipt, 'VoteSubmitted', {
           oracle: oracleAccounts[i],
           totalRewards: newTotalRewards,
           activationDuration,
-          beaconActivatingAmount,
+          totalStakingAmount,
           nonce: currentNonce,
         });
       }
@@ -308,15 +295,15 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.activationDuration()).to.bignumber.equal(
         activationDuration
       );
-      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
-        beaconActivatingAmount.add(poolDeposit)
+      expect(await pool.totalStakingAmount()).to.bignumber.equal(
+        totalStakingAmount
       );
 
       // new vote comes with different nonce
       let receipt = await oracles.vote(
         newTotalRewards,
         activationDuration,
-        beaconActivatingAmount,
+        totalStakingAmount,
         {
           from: oracleAccounts[0],
         }
@@ -326,27 +313,27 @@ contract('Oracles', ([_, ...accounts]) => {
           oracleAccounts[0],
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount
+          totalStakingAmount
         )
       ).to.equal(true);
       expectEvent(receipt, 'VoteSubmitted', {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
         activationDuration,
-        beaconActivatingAmount,
+        totalStakingAmount,
         nonce: currentNonce.add(new BN(1)),
       });
     });
 
     it('does not update activation data when did not change', async () => {
       activationDuration = new BN(contractSettings.activationDuration);
-      beaconActivatingAmount = new BN(contractSettings.beaconActivatingAmount);
+      totalStakingAmount = new BN(contractSettings.totalStakingAmount);
 
       for (let i = 0; i < oracleAccounts.length; i++) {
         await oracles.vote(
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount,
+          totalStakingAmount,
           {
             from: oracleAccounts[i],
           }
@@ -364,21 +351,21 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.activationDuration()).to.bignumber.equal(
         activationDuration
       );
-      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
-        beaconActivatingAmount.add(poolDeposit)
+      expect(await pool.totalStakingAmount()).to.bignumber.equal(
+        totalStakingAmount
       );
     });
 
     it('does not update activation data when activation disabled', async () => {
       await oracles.toggleDepositsActivation(false, {
-        from: contractSettings.admin,
+        from: admin,
       });
 
       for (let i = 0; i < oracleAccounts.length; i++) {
         await oracles.vote(
           newTotalRewards,
           activationDuration,
-          beaconActivatingAmount,
+          totalStakingAmount,
           {
             from: oracleAccounts[i],
           }
@@ -396,8 +383,8 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.activationDuration()).to.bignumber.equal(
         new BN(contractSettings.activationDuration)
       );
-      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
-        new BN(contractSettings.beaconActivatingAmount).add(poolDeposit)
+      expect(await pool.totalStakingAmount()).to.bignumber.equal(
+        new BN(contractSettings.totalStakingAmount)
       );
     });
   });

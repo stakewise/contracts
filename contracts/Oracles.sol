@@ -71,11 +71,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         address _oracle,
         uint256 _totalRewards,
         uint256 _activationDuration,
-        uint256 _beaconActivatingAmount
+        uint256 _totalStakingAmount
     )
         external override view returns (bool)
     {
-        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activationDuration, _beaconActivatingAmount));
+        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activationDuration, _totalStakingAmount));
         return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
     }
 
@@ -129,12 +129,12 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     function vote(
         uint256 _totalRewards,
         uint256 _activationDuration,
-        uint256 _beaconActivatingAmount
+        uint256 _totalStakingAmount
     )
         external override onlyOracle whenNotPaused nonReentrant
     {
         uint256 _nonce = nonce.current();
-        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _beaconActivatingAmount));
+        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _totalStakingAmount));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
 
@@ -142,7 +142,7 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activationDuration, _beaconActivatingAmount);
+        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activationDuration, _totalStakingAmount);
 
         // update only if enough votes accumulated
         if (candidateNewVotes.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2)) {
@@ -159,10 +159,9 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
                 pool.setActivationDuration(_activationDuration);
             }
 
-            // update total activating amount
-            uint256 totalActivatingAmount = _beaconActivatingAmount.add(address(pool).balance);
-            if (totalActivatingAmount != pool.totalActivatingAmount()) {
-                pool.setTotalActivatingAmount(totalActivatingAmount);
+            // update total staking amount
+            if (_totalStakingAmount != pool.totalStakingAmount()) {
+                pool.setTotalStakingAmount(_totalStakingAmount);
             }
         }
     }

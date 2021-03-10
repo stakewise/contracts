@@ -206,7 +206,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "totalActivatingAmount",
+        "name": "totalStakingAmount",
         "type": "uint256"
       },
       {
@@ -216,7 +216,7 @@
         "type": "address"
       }
     ],
-    "name": "TotalActivatingAmountUpdated",
+    "name": "TotalStakingAmountUpdated",
     "type": "event"
   },
   {
@@ -527,7 +527,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_beaconActivatingAmount",
+        "name": "_totalStakingAmount",
         "type": "uint256"
       },
       {
@@ -765,11 +765,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_totalActivatingAmount",
+        "name": "_totalStakingAmount",
         "type": "uint256"
       }
     ],
-    "name": "setTotalActivatingAmount",
+    "name": "setTotalStakingAmount",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -789,7 +789,20 @@
   },
   {
     "inputs": [],
-    "name": "totalActivatingAmount",
+    "name": "totalCollectedAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalStakingAmount",
     "outputs": [
       {
         "internalType": "uint256",

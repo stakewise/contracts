@@ -1,16 +1,9 @@
 const hre = require('hardhat');
 const { white, green } = require('chalk');
 const { contractSettings, contracts } = require('./settings');
-const {
-  prepareOraclesUpgrade,
-  prepareOraclesUpgradeData,
-  upgradeOracles,
-} = require('./validators');
-const {
-  preparePoolUpgrade,
-  preparePoolUpgradeData,
-  upgradePool,
-} = require('./collectors');
+const { prepareOraclesUpgradeData, upgradeOracles } = require('./validators');
+const { preparePoolUpgradeData, upgradePool } = require('./collectors');
+const { prepareUpgrade } = require('./utils');
 
 function log(message) {
   if (hre.config != null && hre.config.suppressLogs !== true) {
@@ -19,7 +12,8 @@ function log(message) {
 }
 
 async function prepareContractsUpgrades() {
-  const poolImplementation = await preparePoolUpgrade(contracts.pool);
+  const Pool = await hre.ethers.getContractFactory('Pool');
+  const poolImplementation = await prepareUpgrade(Pool, contracts.pool);
   log(
     white(`Deployed Pool implementation contract: ${green(poolImplementation)}`)
   );
@@ -27,13 +21,17 @@ async function prepareContractsUpgrades() {
   const poolUpgradeData = await preparePoolUpgradeData(
     contracts.oracles,
     contractSettings.activationDuration,
-    contractSettings.beaconActivatingAmount,
+    contractSettings.totalStakingAmount,
     contractSettings.minActivatingDeposit,
     contractSettings.minActivatingShare
   );
   log(white(`Pool upgrade data: ${green(poolUpgradeData)}`));
 
-  const oraclesImplementation = await prepareOraclesUpgrade(contracts.oracles);
+  const Oracles = await hre.ethers.getContractFactory('Oracles');
+  const oraclesImplementation = await prepareUpgrade(
+    Oracles,
+    contracts.oracles
+  );
   log(
     white(
       `Deployed Oracles implementation contract: ${green(

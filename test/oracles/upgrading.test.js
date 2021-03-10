@@ -1,4 +1,4 @@
-const { expectRevert } = require('@openzeppelin/test-helpers');
+const { expectRevert, send, ether } = require('@openzeppelin/test-helpers');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
@@ -11,12 +11,15 @@ const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
 contract('Oracles (upgrading)', ([anyone]) => {
+  let admin = contractSettings.admin;
   let oracles, pool;
 
-  after(async () => stopImpersonatingAccount(contractSettings.admin));
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    await impersonateAccount(contractSettings.admin);
+    await impersonateAccount(admin);
+    await send.ether(anyone, admin, ether('5'));
+
     await upgradeContracts();
 
     oracles = await Oracles.at(contracts.oracles);
@@ -44,7 +47,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
         pool.address,
         contractSettings.depositsActivationEnabled,
         {
-          from: contractSettings.admin,
+          from: admin,
         }
       ),
       'Pausable: not paused'
@@ -52,13 +55,13 @@ contract('Oracles (upgrading)', ([anyone]) => {
   });
 
   it('fails to upgrade twice', async () => {
-    await oracles.pause({ from: contractSettings.admin });
+    await oracles.pause({ from: admin });
     await expectRevert(
       oracles.initialize(
         pool.address,
         contractSettings.depositsActivationEnabled,
         {
-          from: contractSettings.admin,
+          from: admin,
         }
       ),
       'Oracles: already initialized'

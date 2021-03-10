@@ -4,13 +4,13 @@ const {
   expectEvent,
   ether,
   balance,
+  send,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { vrcAbi } = require('../../deployments/vrc');
 const {
   checkCollectorBalance,
-  checkPoolTotalActivatingAmount,
   checkValidatorRegistered,
   stopImpersonatingAccount,
   impersonateAccount,
@@ -38,6 +38,7 @@ contract('Pool (register validator)', ([operator, sender, other]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(other, admin, ether('5'));
     await upgradeContracts();
 
     pool = await Pool.at(contracts.pool);
@@ -100,12 +101,6 @@ contract('Pool (register validator)', ([operator, sender, other]) => {
       'Validators: invalid public key'
     );
     await checkCollectorBalance(pool, validatorDeposit);
-    await checkPoolTotalActivatingAmount(
-      pool,
-      new BN(contractSettings.beaconActivatingAmount).add(
-        validatorDeposit.mul(new BN(2))
-      )
-    );
   });
 
   it('fails to register validator when validator deposit amount is not collect', async () => {
@@ -125,10 +120,6 @@ contract('Pool (register validator)', ([operator, sender, other]) => {
     );
 
     await checkCollectorBalance(pool, new BN(0));
-    await checkPoolTotalActivatingAmount(
-      pool,
-      new BN(contractSettings.beaconActivatingAmount).add(validatorDeposit)
-    );
   });
 
   it('registers validator', async () => {
@@ -147,13 +138,8 @@ contract('Pool (register validator)', ([operator, sender, other]) => {
       totalAmount = totalAmount.add(validatorDeposit);
     }
 
-    let totalActivatingAmount = new BN(
-      contractSettings.beaconActivatingAmount
-    ).add(totalAmount);
-
     // check balance increased correctly
     await checkCollectorBalance(pool, totalAmount);
-    await checkPoolTotalActivatingAmount(pool, totalActivatingAmount);
 
     // register validators
     for (let i = 0; i < validatorParams.length; i++) {
@@ -177,6 +163,5 @@ contract('Pool (register validator)', ([operator, sender, other]) => {
 
     // check balance empty
     await checkCollectorBalance(pool);
-    await checkPoolTotalActivatingAmount(pool, totalActivatingAmount);
   });
 });

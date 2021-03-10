@@ -21,8 +21,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Validator deposit amount.
     uint256 public constant VALIDATOR_DEPOSIT = 32 ether;
 
-    // @dev Total amount activating.
-    uint256 public override totalActivatingAmount;
+    // @dev Total amount collected.
+    uint256 public override totalCollectedAmount;
 
     // @dev Pool validator withdrawal credentials.
     bytes32 public override withdrawalCredentials;
@@ -51,13 +51,16 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Minimal activating share that is required for considering deposits for the activation period.
     uint256 public override minActivatingShare;
 
+    // @dev Total staking amount of Pool validators in beacon chain.
+    uint256 public override totalStakingAmount;
+
     /**
      * @dev See {IPool-initialize}.
      */
     function initialize(
         address _oracles,
         uint256 _activationDuration,
-        uint256 _beaconActivatingAmount,
+        uint256 _totalStakingAmount,
         uint256 _minActivatingDeposit,
         uint256 _minActivatingShare
     )
@@ -69,9 +72,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         activationDuration = _activationDuration;
         emit ActivationDurationUpdated(_activationDuration, msg.sender);
 
-        uint256 _totalActivatingAmount = _beaconActivatingAmount.add(address(this).balance);
-        totalActivatingAmount = _totalActivatingAmount;
-        emit TotalActivatingAmountUpdated(_totalActivatingAmount, msg.sender);
+        totalCollectedAmount = stakedEthToken.totalSupply();
+        totalStakingAmount = _totalStakingAmount;
+        emit TotalStakingAmountUpdated(_totalStakingAmount, msg.sender);
 
         minActivatingDeposit = _minActivatingDeposit;
         emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
@@ -115,12 +118,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-setTotalActivatingAmount}.
+     * @dev See {IPool-setTotalStakingAmount}.
      */
-    function setTotalActivatingAmount(uint256 _totalActivatingAmount) external override {
+    function setTotalStakingAmount(uint256 _totalStakingAmount) external override {
         require(msg.sender == oracles, "Pool: access denied");
-        totalActivatingAmount = _totalActivatingAmount;
-        emit TotalActivatingAmountUpdated(_totalActivatingAmount, msg.sender);
+        totalStakingAmount = _totalStakingAmount;
+        emit TotalStakingAmountUpdated(_totalStakingAmount, msg.sender);
     }
 
     /**
@@ -129,10 +132,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function addDeposit() external payable override whenNotPaused {
         require(msg.value > 0, "Pool: invalid deposit amount");
 
-        uint256 newTotalActivatingAmount = totalActivatingAmount.add(msg.value);
-
-        // update pool total activating amount
-        totalActivatingAmount = newTotalActivatingAmount;
+        // update pool new total collected amount
+        uint256 newTotalCollectedAmount = totalCollectedAmount.add(msg.value);
+        totalCollectedAmount = newTotalCollectedAmount;
 
         // mint tokens for small deposits immediately
         if (msg.value <= minActivatingDeposit) {
@@ -148,20 +150,22 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             return;
         }
 
-        IStakedEthToken _stakedEthToken = stakedEthToken; // gas savings
-        uint256 totalSupply = _stakedEthToken.totalSupply();
-        if (totalSupply == 0) {
-            _stakedEthToken.mint(msg.sender, msg.value);
+        uint256 _totalStakingAmount = totalStakingAmount; // gas savings
+        if (_totalStakingAmount == 0) {
+            stakedEthToken.mint(msg.sender, msg.value);
             return;
         }
 
+        // calculate total activating amount
+        uint256 totalActivatingAmount = newTotalCollectedAmount.sub(_totalStakingAmount);
+
         // calculate activating share
         // multiply by 10000 as minActivatingShare is stored  up to 10000 (5.25% -> 525)
-        uint256 activatingShare = newTotalActivatingAmount.mul(1e22).div(totalSupply);
+        uint256 activatingShare = totalActivatingAmount.mul(1e22).div(newTotalCollectedAmount);
 
         // mint tokens if current activating share does not exceed the minimum
         if (activatingShare <= minActivatingShare.mul(1e18)) {
-            _stakedEthToken.mint(msg.sender, msg.value);
+            stakedEthToken.mint(msg.sender, msg.value);
         } else {
             // lock deposit amount until activation duration has passed
             // solhint-disable-next-line not-rely-on-time

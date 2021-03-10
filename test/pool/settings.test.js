@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const {
-  balance,
+  send,
   ether,
   expectRevert,
   expectEvent,
@@ -11,7 +11,7 @@ const {
   impersonateAccount,
   resetFork,
   setActivationDuration,
-  setTotalActivatingAmount,
+  setTotalStakingAmount,
   getOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
@@ -29,6 +29,7 @@ contract('Pool (settings)', ([anyone]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(anyone, admin, ether('5'));
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
 
@@ -132,38 +133,36 @@ contract('Pool (settings)', ([anyone]) => {
     });
   });
 
-  describe('total activating amount', () => {
-    it('not oracles contract fails to set total activating amount', async () => {
+  describe('total staking amount', () => {
+    it('not oracles contract fails to set total staking amount', async () => {
       await expectRevert(
-        pool.setTotalActivatingAmount(ether('100'), {
+        pool.setTotalStakingAmount(ether('100'), {
           from: anyone,
         }),
         'Pool: access denied'
       );
     });
 
-    it('oracles contract can set total activating amount', async () => {
-      let totalActivatingAmount = (await balance.current(pool.address)).add(
-        ether('10')
-      );
-      let receipt = await setTotalActivatingAmount({
+    it('oracles contract can set total staking amount', async () => {
+      let totalStakingAmount = await pool.totalCollectedAmount();
+      let receipt = await setTotalStakingAmount({
         pool,
         rewardEthToken,
-        totalActivatingAmount,
+        totalStakingAmount,
         oracleAccounts,
         oracles,
       });
       await expectEvent.inTransaction(
         receipt.tx,
         Pool,
-        'TotalActivatingAmountUpdated',
+        'TotalStakingAmountUpdated',
         {
-          totalActivatingAmount,
+          totalStakingAmount,
           sender: contracts.oracles,
         }
       );
-      expect(await pool.totalActivatingAmount()).to.bignumber.equal(
-        totalActivatingAmount
+      expect(await pool.totalStakingAmount()).to.bignumber.equal(
+        totalStakingAmount
       );
     });
   });

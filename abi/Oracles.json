@@ -168,7 +168,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "beaconActivatingAmount",
+        "name": "totalStakingAmount",
         "type": "uint256"
       }
     ],
@@ -421,7 +421,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_beaconActivatingAmount",
+        "name": "_totalStakingAmount",
         "type": "uint256"
       }
     ],
@@ -666,7 +666,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_beaconActivatingAmount",
+        "name": "_totalStakingAmount",
         "type": "uint256"
       }
     ],

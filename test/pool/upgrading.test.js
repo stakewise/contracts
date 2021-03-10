@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { expectRevert } = require('@openzeppelin/test-helpers');
+const { expectRevert, send, ether } = require('@openzeppelin/test-helpers');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
@@ -18,6 +18,7 @@ contract('Pool (upgrading)', ([sender]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(sender, admin, ether('5'));
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
 
@@ -36,7 +37,7 @@ contract('Pool (upgrading)', ([sender]) => {
       pool.initialize(
         contracts.oracles,
         contractSettings.activationDuration,
-        contractSettings.beaconActivatingAmount,
+        contractSettings.totalStakingAmount,
         contractSettings.minActivatingDeposit,
         contractSettings.minActivatingShare,
         { from: sender }
@@ -50,7 +51,7 @@ contract('Pool (upgrading)', ([sender]) => {
       pool.initialize(
         contracts.oracles,
         contractSettings.activationDuration,
-        contractSettings.beaconActivatingAmount,
+        contractSettings.totalStakingAmount,
         contractSettings.minActivatingDeposit,
         contractSettings.minActivatingShare,
         { from: admin }
@@ -65,7 +66,7 @@ contract('Pool (upgrading)', ([sender]) => {
       pool.initialize(
         contracts.oracles,
         contractSettings.activationDuration,
-        contractSettings.beaconActivatingAmount,
+        contractSettings.totalStakingAmount,
         contractSettings.minActivatingDeposit,
         contractSettings.minActivatingShare,
         { from: admin }

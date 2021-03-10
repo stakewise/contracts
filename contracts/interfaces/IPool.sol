@@ -54,11 +54,11 @@ interface IPool {
     event MinActivatingDepositUpdated(uint256 minActivatingDeposit, address sender);
 
     /**
-    * @dev Event for tracking updates to the total activating amount.
-    * @param totalActivatingAmount - new total activating amount.
+    * @dev Event for tracking updates to the total staking amount.
+    * @param totalStakingAmount - new total staking amount.
     * @param sender - address of the transaction sender.
     */
-    event TotalActivatingAmountUpdated(uint256 totalActivatingAmount, address sender);
+    event TotalStakingAmountUpdated(uint256 totalStakingAmount, address sender);
 
     /**
     * @dev Event for tracking minimum activating share.
@@ -84,22 +84,27 @@ interface IPool {
     * @dev Function for initializing activation functionality for the Pools contract.
     * @param _oracles - address of the Oracles contract.
     * @param _activationDuration - initial activation duration.
-    * @param _beaconActivatingAmount - total activating amount in beacon chain.
+    * @param _totalStakingAmount - total staking amount in beacon chain.
     * @param _minActivatingDeposit - minimal deposit in Wei to be considered for the activation period.
     * @param _minActivatingShare - minimal activating share required for considering deposit for the activation.
     */
     function initialize(
         address _oracles,
         uint256 _activationDuration,
-        uint256 _beaconActivatingAmount,
+        uint256 _totalStakingAmount,
         uint256 _minActivatingDeposit,
         uint256 _minActivatingShare
     ) external;
 
     /**
-    * @dev Function for retrieving the total activating amount.
+    * @dev Function for retrieving the total staking amount.
     */
-    function totalActivatingAmount() external view returns (uint256);
+    function totalStakingAmount() external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving the total collected amount.
+    */
+    function totalCollectedAmount() external view returns (uint256);
 
     /**
     * @dev Function for getting the withdrawal credentials used to
@@ -137,10 +142,10 @@ interface IPool {
     function setMinActivatingDeposit(uint256 _minActivatingDeposit) external;
 
     /**
-    * @dev Function for setting total activating amount excluding ETH deposited to Pool
-    * @param _totalActivatingAmount - total activating amount (beacon chain + ETH deposited to Pool contract).
+    * @dev Function for setting total staking amount
+    * @param _totalStakingAmount - total staking amount of Pool validators in beacon chain.
     */
-    function setTotalActivatingAmount(uint256 _totalActivatingAmount) external;
+    function setTotalStakingAmount(uint256 _totalStakingAmount) external;
 
     /**
     * @dev Function for changing withdrawal credentials.

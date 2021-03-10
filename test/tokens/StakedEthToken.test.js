@@ -5,6 +5,7 @@ const {
   BN,
   ether,
   constants,
+  send,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
@@ -24,6 +25,8 @@ contract('StakedEthToken', ([sender1, sender2]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(sender1, admin, ether('5'));
+
     await upgradeContracts();
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);

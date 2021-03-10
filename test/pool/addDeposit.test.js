@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const {
   ether,
   balance,
+  send,
   expectRevert,
   expectEvent,
   BN,
@@ -19,7 +20,8 @@ const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   getDepositAmount,
   checkCollectorBalance,
-  checkPoolTotalActivatingAmount,
+  checkPoolTotalCollectedAmount,
+  setTotalStakingAmount,
   checkStakedEthToken,
 } = require('../utils');
 
@@ -33,7 +35,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
   let pool,
     stakedEthToken,
     totalSupply,
-    totalActivating,
+    totalCollectedAmount,
     poolBalance,
     oracleAccounts,
     rewardEthToken,
@@ -43,6 +45,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(sender3, admin, ether('5'));
     await upgradeContracts();
 
     pool = await Pool.at(contracts.pool);
@@ -52,7 +55,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
     oracleAccounts = await getOracleAccounts({ oracles });
 
     totalSupply = await stakedEthToken.totalSupply();
-    totalActivating = await pool.totalActivatingAmount();
+    totalCollectedAmount = await pool.totalCollectedAmount();
     poolBalance = await balance.current(pool.address);
   });
 
@@ -85,7 +88,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         max: new BN(contractSettings.minActivatingDeposit),
       });
       totalSupply = totalSupply.add(depositAmount1);
-      totalActivating = totalActivating.add(depositAmount1);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount1);
       poolBalance = poolBalance.add(depositAmount1);
 
       await pool.addDeposit({
@@ -105,7 +108,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         max: new BN(contractSettings.minActivatingDeposit),
       });
       totalSupply = totalSupply.add(depositAmount2);
-      totalActivating = totalActivating.add(depositAmount2);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount2);
       poolBalance = poolBalance.add(depositAmount2);
 
       await pool.addDeposit({
@@ -122,7 +125,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
 
     it('mints tokens for users with activation duration disabled', async () => {
@@ -138,7 +141,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       // User 1 creates a deposit
       let depositAmount1 = getDepositAmount();
       totalSupply = totalSupply.add(depositAmount1);
-      totalActivating = totalActivating.add(depositAmount1);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount1);
       poolBalance = poolBalance.add(depositAmount1);
 
       await pool.addDeposit({
@@ -156,7 +159,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       // User 2 creates a deposit
       let depositAmount2 = getDepositAmount();
       totalSupply = totalSupply.add(depositAmount2);
-      totalActivating = totalActivating.add(depositAmount2);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount2);
       poolBalance = poolBalance.add(depositAmount2);
 
       await pool.addDeposit({
@@ -173,7 +176,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
 
     it('places deposit of user to the activation queue with exceeded max activating share', async () => {
@@ -182,7 +185,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // deposit more than 10 %
       let depositAmount = totalSupply.div(new BN(10));
-      totalActivating = totalActivating.add(depositAmount);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
       poolBalance = poolBalance.add(depositAmount);
 
       // check deposit amount placed in activation queue
@@ -204,16 +207,23 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         totalSupply
       );
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
 
     it('activates deposit of user immediately with not exceeded max activating share', async () => {
-      await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
+      await pool.setMinActivatingShare('100', { from: admin }); // 1 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
+      await setTotalStakingAmount({
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalStakingAmount: totalCollectedAmount,
+      });
 
       // deposit less than 10 %
       let depositAmount = ether('1');
-      totalActivating = totalActivating.add(depositAmount);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
       totalSupply = totalSupply.add(depositAmount);
       poolBalance = poolBalance.add(depositAmount);
 
@@ -232,7 +242,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 
@@ -247,7 +257,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       });
       activationTime = receipt.logs[0].args.activationTime;
 
-      totalActivating = totalActivating.add(depositAmount);
+      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
       poolBalance = poolBalance.add(depositAmount);
     });
 
@@ -317,7 +327,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 
@@ -340,7 +350,9 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       });
       activationTime2 = receipt.logs[0].args.activationTime;
 
-      totalActivating = totalActivating.add(depositAmount.mul(new BN(2)));
+      totalCollectedAmount = totalCollectedAmount.add(
+        depositAmount.mul(new BN(2))
+      );
       poolBalance = poolBalance.add(depositAmount.mul(new BN(2)));
     });
 
@@ -423,7 +435,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalActivatingAmount(pool, totalActivating);
+      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 });

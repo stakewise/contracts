@@ -4,6 +4,7 @@ const {
   ether,
   constants,
   expectRevert,
+  send,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -29,6 +30,8 @@ contract('Solos (add deposit)', ([sender1, sender2]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(sender1, admin, ether('5'));
+
     await upgradeContracts();
 
     solos = await Solos.at(contracts.solos);

@@ -6,6 +6,7 @@ const {
   time,
   constants,
   balance,
+  send,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -33,6 +34,8 @@ contract('Solos (cancel deposit)', ([operator, sender, anyone]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(sender, admin, ether('5'));
+
     await upgradeContracts();
 
     let validators = await Validators.at(contracts.validators);

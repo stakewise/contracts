@@ -3,6 +3,7 @@ const {
   expectEvent,
   ether,
   balance,
+  send,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../deployments');
 const { validatorParams } = require('./pool/validatorParams');
@@ -29,6 +30,8 @@ contract('Validators', ([operator, anotherOperator, anyone]) => {
 
   beforeEach(async () => {
     await impersonateAccount(admin);
+    await send.ether(anyone, admin, ether('5'));
+
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
     validators = await Validators.at(contracts.validators);

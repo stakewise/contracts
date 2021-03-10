@@ -12,14 +12,14 @@ interface IOracles {
     * @param nonce - update nonce.
     * @param totalRewards - submitted value of total rewards.
     * @param activationDuration - submitted value of activation duration.
-    * @param beaconActivatingAmount - submitted value of beacon activating amount.
+    * @param totalStakingAmount - submitted value of total staking amount.
     */
     event VoteSubmitted(
         address indexed oracle,
         uint256 nonce,
         uint256 totalRewards,
         uint256 activationDuration,
-        uint256 beaconActivatingAmount
+        uint256 totalStakingAmount
     );
 
     /**
@@ -70,13 +70,13 @@ interface IOracles {
     * @param _oracle - oracle address to check.
     * @param _totalRewards - voted total rewards.
     * @param _activationDuration - voted activation duration.
-    * @param _beaconActivatingAmount - voted beacon activating amount.
+    * @param _totalStakingAmount - voted total staking amount.
     */
     function hasVote(
         address _oracle,
         uint256 _totalRewards,
         uint256 _activationDuration,
-        uint256 _beaconActivatingAmount
+        uint256 _totalStakingAmount
     ) external view returns (bool);
 
     /**
@@ -117,7 +117,7 @@ interface IOracles {
     * Can only be called by an account with an oracle role.
     * @param _totalRewards - voted total rewards.
     * @param _activationDuration - voted activation duration.
-    * @param _beaconActivatingAmount - voted beacon activating amount.
+    * @param _totalStakingAmount - voted total staking amount.
     */
-    function vote(uint256 _totalRewards, uint256 _activationDuration, uint256 _beaconActivatingAmount) external;
+    function vote(uint256 _totalRewards, uint256 _activationDuration, uint256 _totalStakingAmount) external;
 }
