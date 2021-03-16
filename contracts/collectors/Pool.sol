@@ -21,8 +21,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Validator deposit amount.
     uint256 public constant VALIDATOR_DEPOSIT = 32 ether;
 
-    // @dev Total amount collected.
-    uint256 public override totalCollectedAmount;
+    // @dev Total activated validators.
+    uint256 public override activatedValidators;
 
     // @dev Pool validator withdrawal credentials.
     bytes32 public override withdrawalCredentials;
@@ -39,20 +39,17 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Address of the Oracles contract.
     address private oracles;
 
-    // @dev Maps senders to the activation time of their deposits.
+    // @dev Maps senders to the validator index that it will be activated in.
     mapping(address => mapping(uint256 => uint256)) public override activations;
 
-    // @dev Deposited ETH activation duration.
-    uint256 public override activationDuration;
+    // @dev Total pending validators.
+    uint256 public override pendingValidators;
 
     // @dev Amount of deposited ETH that is not considered for the activation period.
     uint256 public override minActivatingDeposit;
 
     // @dev Minimal activating share that is required for considering deposits for the activation period.
     uint256 public override minActivatingShare;
-
-    // @dev Total staking amount of Pool validators in beacon chain.
-    uint256 public override totalStakingAmount;
 
     /**
      * @dev See {IPool-upgrade}.
@@ -61,8 +58,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      */
     function upgrade(
         address _oracles,
-        uint256 _activationDuration,
-        uint256 _totalStakingAmount,
+        uint256 _activatedValidators,
+        uint256 _pendingValidators,
         uint256 _minActivatingDeposit,
         uint256 _minActivatingShare
     )
@@ -71,12 +68,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         require(oracles == address(0), "Pool: already upgraded");
         oracles = _oracles;
 
-        activationDuration = _activationDuration;
-        emit ActivationDurationUpdated(_activationDuration, msg.sender);
-
-        totalCollectedAmount = stakedEthToken.totalSupply();
-        totalStakingAmount = _totalStakingAmount;
-        emit TotalStakingAmountUpdated(_totalStakingAmount, msg.sender);
+        pendingValidators = _pendingValidators;
+        activatedValidators = _activatedValidators;
+        emit ActivatedValidatorsUpdated(_activatedValidators, msg.sender);
 
         minActivatingDeposit = _minActivatingDeposit;
         emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
@@ -111,21 +105,15 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-setActivationDuration}.
+     * @dev See {IPool-setActivatedValidators}.
      */
-    function setActivationDuration(uint256 _activationDuration) external override {
+    function setActivatedValidators(uint256 newActivatedValidators) external override {
         require(msg.sender == oracles || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
-        activationDuration = _activationDuration;
-        emit ActivationDurationUpdated(_activationDuration, msg.sender);
-    }
 
-    /**
-     * @dev See {IPool-setTotalStakingAmount}.
-     */
-    function setTotalStakingAmount(uint256 _totalStakingAmount) external override {
-        require(msg.sender == oracles, "Pool: access denied");
-        totalStakingAmount = _totalStakingAmount;
-        emit TotalStakingAmountUpdated(_totalStakingAmount, msg.sender);
+        // subtract activated validators from pending validators
+        pendingValidators = pendingValidators.sub(newActivatedValidators.sub(activatedValidators));
+        activatedValidators = newActivatedValidators;
+        emit ActivatedValidatorsUpdated(newActivatedValidators, msg.sender);
     }
 
     /**
@@ -134,81 +122,56 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function addDeposit() external payable override whenNotPaused {
         require(msg.value > 0, "Pool: invalid deposit amount");
 
-        // update pool new total collected amount
-        uint256 newTotalCollectedAmount = totalCollectedAmount.add(msg.value);
-        totalCollectedAmount = newTotalCollectedAmount;
-
         // mint tokens for small deposits immediately
         if (msg.value <= minActivatingDeposit) {
             stakedEthToken.mint(msg.sender, msg.value);
             return;
         }
 
-        uint256 _activationDuration = activationDuration; // gas savings
-
-        // mint tokens if there are no activation time
-        if (_activationDuration == 0) {
-            stakedEthToken.mint(msg.sender, msg.value);
-            return;
-        }
-
-        uint256 _totalStakingAmount = totalStakingAmount; // gas savings
-        if (_totalStakingAmount == 0) {
-            stakedEthToken.mint(msg.sender, msg.value);
-            return;
-        }
-
-        // calculate total activating amount
-        uint256 totalActivatingAmount = newTotalCollectedAmount.sub(_totalStakingAmount);
-
-        // calculate activating share
-        // multiply by 10000 as minActivatingShare is stored  up to 10000 (5.25% -> 525)
-        uint256 activatingShare = totalActivatingAmount.mul(1e22).div(_totalStakingAmount);
-
-        // mint tokens if current activating share does not exceed the minimum
-        if (activatingShare <= minActivatingShare.mul(1e18)) {
+        // mint tokens if current pending validators share does not exceed the minimum
+        uint256 _pendingValidators = pendingValidators.add((address(this).balance).div(VALIDATOR_DEPOSIT));
+        uint256 _activatedValidators = activatedValidators; // gas savings
+        if (_pendingValidators.mul(1e4) <= minActivatingShare.mul(_activatedValidators)) {
             stakedEthToken.mint(msg.sender, msg.value);
         } else {
-            // lock deposit amount until activation duration has passed
-            // solhint-disable-next-line not-rely-on-time
-            uint256 activationTime = block.timestamp.add(_activationDuration);
-            activations[msg.sender][activationTime] = activations[msg.sender][activationTime].add(msg.value);
-            emit ActivationScheduled(msg.sender, activationTime, msg.value);
+            // lock deposit amount until validator activated
+            uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
+            activations[msg.sender][validatorIndex] = activations[msg.sender][validatorIndex].add(msg.value);
+            emit ActivationScheduled(msg.sender, validatorIndex, msg.value);
         }
     }
 
     /**
      * @dev See {IPool-activate}.
      */
-    function activate(address _account, uint256 _activationTime) external override whenNotPaused {
-        // solhint-disable-next-line not-rely-on-time
-        require(block.timestamp >= _activationTime, "Pool: activation time is in future");
+    function activate(address _account, uint256 _validatorIndex) external override whenNotPaused {
+        require(activatedValidators >= _validatorIndex, "Pool: validator is not active yet");
 
-        uint256 amount = activations[_account][_activationTime];
-        require(amount > 0, "Pool: no activating deposit");
+        uint256 amount = activations[_account][_validatorIndex];
+        require(amount > 0, "Pool: invalid validator index");
 
-        delete activations[_account][_activationTime];
+        delete activations[_account][_validatorIndex];
         stakedEthToken.mint(_account, amount);
-        emit Activated(_account, _activationTime, amount, msg.sender);
+        emit Activated(_account, _validatorIndex, amount, msg.sender);
     }
 
     /**
      * @dev See {IPool-activateMultiple}.
      */
-    function activateMultiple(address _account, uint256[] calldata _activationTimes) external override whenNotPaused {
+    function activateMultiple(address _account, uint256[] calldata _validatorIndexes) external override whenNotPaused {
         uint256 toMint;
-        for (uint256 i = 0; i < _activationTimes.length; i++) {
-            uint256 activationTime = _activationTimes[i];
-            // solhint-disable-next-line not-rely-on-time
-            require(block.timestamp >= activationTime, "Pool: activation time is in future");
+        uint256 _activatedValidators = activatedValidators;
+        for (uint256 i = 0; i < _validatorIndexes.length; i++) {
+            uint256 validatorIndex = _validatorIndexes[i];
+            require(_activatedValidators >= validatorIndex, "Pool: validator is not active yet");
 
-            uint256 amount = activations[_account][activationTime];
+            uint256 amount = activations[_account][validatorIndex];
             toMint = toMint.add(amount);
-            delete activations[_account][activationTime];
+            delete activations[_account][validatorIndex];
 
-            emit Activated(_account, activationTime, amount, msg.sender);
+            emit Activated(_account, validatorIndex, amount, msg.sender);
         }
-        require(toMint > 0, "Pool: no activating deposits");
+        require(toMint > 0, "Pool: invalid validator index");
         stakedEthToken.mint(_account, toMint);
     }
 
@@ -221,6 +184,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         // register validator
         validators.register(keccak256(abi.encodePacked(_validator.publicKey)));
         emit ValidatorRegistered(_validator.publicKey, msg.sender);
+
+        // update number of pending validators
+        pendingValidators = pendingValidators.add(1);
 
         validatorRegistration.deposit{value : VALIDATOR_DEPOSIT}(
             _validator.publicKey,

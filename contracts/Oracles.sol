@@ -43,9 +43,6 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     // @dev Address of the Pool contract.
     IPool private pool;
 
-    // @dev Defines whether deposits activation is enabled.
-    bool public override depositsActivationEnabled;
-
     /**
     * @dev Modifier for checking whether the caller is an oracle.
     */
@@ -59,11 +56,9 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
      * The `initialize` must be called before upgrading in previous implementation contract:
      * https://github.com/stakewise/contracts/blob/v1.0.0/contracts/Oracles.sol#L54
      */
-    function upgrade(address _pool, bool _depositsActivationEnabled) external override onlyAdmin whenPaused {
+    function upgrade(address _pool) external override onlyAdmin whenPaused {
         require(address(pool) == address(0), "Oracles: already upgraded");
         pool = IPool(_pool);
-        depositsActivationEnabled = _depositsActivationEnabled;
-        emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);
     }
 
     /**
@@ -72,12 +67,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     function hasVote(
         address _oracle,
         uint256 _totalRewards,
-        uint256 _activationDuration,
-        uint256 _totalStakingAmount
+        uint256 _activatedValidators
     )
         external override view returns (bool)
     {
-        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activationDuration, _totalStakingAmount));
+        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activatedValidators));
         return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
     }
 
@@ -118,25 +112,16 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-toggleDepositsActivation}.
-     */
-    function toggleDepositsActivation(bool _depositsActivationEnabled) external override onlyAdmin {
-        depositsActivationEnabled = _depositsActivationEnabled;
-        emit DepositsActivationToggled(_depositsActivationEnabled, msg.sender);
-    }
-
-    /**
      * @dev See {IOracles-vote}.
      */
     function vote(
         uint256 _totalRewards,
-        uint256 _activationDuration,
-        uint256 _totalStakingAmount
+        uint256 _activatedValidators
     )
         external override onlyOracle whenNotPaused nonReentrant
     {
         uint256 _nonce = nonce.current();
-        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activationDuration, _totalStakingAmount));
+        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activatedValidators));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
 
@@ -144,7 +129,7 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activationDuration, _totalStakingAmount);
+        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activatedValidators);
 
         // update only if enough votes accumulated
         if (candidateNewVotes.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2)) {
@@ -154,16 +139,9 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
             // update total rewards
             rewardEthToken.updateTotalRewards(_totalRewards);
 
-            if (!depositsActivationEnabled) return;
-
-            // update activation duration
-            if (_activationDuration != pool.activationDuration()) {
-                pool.setActivationDuration(_activationDuration);
-            }
-
-            // update total staking amount
-            if (_totalStakingAmount != pool.totalStakingAmount()) {
-                pool.setTotalStakingAmount(_totalStakingAmount);
+            // update activated validators
+            if (_activatedValidators != pool.activatedValidators()) {
+                pool.setActivatedValidators(_activatedValidators);
             }
         }
     }
