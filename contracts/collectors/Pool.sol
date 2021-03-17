@@ -48,8 +48,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Amount of deposited ETH that is not considered for the activation period.
     uint256 public override minActivatingDeposit;
 
-    // @dev Minimal activating share that is required for considering deposits for the activation period.
-    uint256 public override minActivatingShare;
+    // @dev Pending validators percent limit. If it's not exceeded tokens can be minted immediately.
+    uint256 public override pendingValidatorsLimit;
 
     /**
      * @dev See {IPool-upgrade}.
@@ -61,7 +61,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         uint256 _activatedValidators,
         uint256 _pendingValidators,
         uint256 _minActivatingDeposit,
-        uint256 _minActivatingShare
+        uint256 _pendingValidatorsLimit
     )
         external override onlyAdmin whenPaused
     {
@@ -75,8 +75,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         minActivatingDeposit = _minActivatingDeposit;
         emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
 
-        minActivatingShare = _minActivatingShare;
-        emit MinActivatingShareUpdated(_minActivatingShare, msg.sender);
+        pendingValidatorsLimit = _pendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
     }
 
     /**
@@ -96,12 +96,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-setMinActivatingShare}.
+     * @dev See {IPool-setPendingValidatorsLimit}.
      */
-    function setMinActivatingShare(uint256 _minActivatingShare) external override onlyAdmin {
-        require(_minActivatingShare < 10000, "Pool: invalid share");
-        minActivatingShare = _minActivatingShare;
-        emit MinActivatingShareUpdated(_minActivatingShare, msg.sender);
+    function setPendingValidatorsLimit(uint256 _pendingValidatorsLimit) external override onlyAdmin {
+        require(_pendingValidatorsLimit < 10000, "Pool: invalid limit");
+        pendingValidatorsLimit = _pendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
     }
 
     /**
@@ -128,14 +128,14 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             return;
         }
 
-        // mint tokens if current pending validators share does not exceed the minimum
+        // mint tokens if current pending validators limit is not exceed
         uint256 _pendingValidators = pendingValidators.add((address(this).balance).div(VALIDATOR_DEPOSIT));
         uint256 _activatedValidators = activatedValidators; // gas savings
-        if (_pendingValidators.mul(1e4) <= minActivatingShare.mul(_activatedValidators)) {
+        uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
+        if (validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators))) {
             stakedEthToken.mint(msg.sender, msg.value);
         } else {
             // lock deposit amount until validator activated
-            uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
             activations[msg.sender][validatorIndex] = activations[msg.sender][validatorIndex].add(msg.value);
             emit ActivationScheduled(msg.sender, validatorIndex, msg.value);
         }
@@ -145,7 +145,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-activate}.
      */
     function activate(address _account, uint256 _validatorIndex) external override whenNotPaused {
-        require(activatedValidators >= _validatorIndex, "Pool: validator is not active yet");
+        uint256 _activatedValidators = activatedValidators; // gas savings
+        require(_validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators)), "Pool: validator is not active yet");
 
         uint256 amount = activations[_account][_validatorIndex];
         require(amount > 0, "Pool: invalid validator index");
@@ -163,7 +164,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         uint256 _activatedValidators = activatedValidators;
         for (uint256 i = 0; i < _validatorIndexes.length; i++) {
             uint256 validatorIndex = _validatorIndexes[i];
-            require(_activatedValidators >= validatorIndex, "Pool: validator is not active yet");
+            require(validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators)), "Pool: validator is not active yet");
 
             uint256 amount = activations[_account][validatorIndex];
             toMint = toMint.add(amount);
