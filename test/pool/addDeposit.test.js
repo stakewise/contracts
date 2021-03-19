@@ -12,7 +12,6 @@ const {
   impersonateAccount,
   resetFork,
   getDepositAmount,
-  getOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -21,7 +20,6 @@ const { validatorParams } = require('./validatorParams');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
 const Validators = artifacts.require('Validators');
 
@@ -34,8 +32,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
     stakedEthToken,
     totalSupply,
     poolBalance,
-    oracleAccounts,
-    rewardEthToken,
     oracles,
     activatedValidators,
     pendingValidators;
@@ -57,9 +53,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
 
     pool = await Pool.at(contracts.pool);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await getOracleAccounts({ oracles });
 
     totalSupply = await stakedEthToken.totalSupply();
     poolBalance = await balance.current(pool.address);
@@ -174,7 +168,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       totalSupply = totalSupply.add(depositAmount);
 
       // check deposit amount added immediately
-      let receipt = await pool.addDeposit({
+      await pool.addDeposit({
         from: sender1,
         value: depositAmount,
       });
