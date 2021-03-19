@@ -20,7 +20,6 @@ const { validatorParams } = require('./validatorParams');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
-const Oracles = artifacts.require('Oracles');
 const Validators = artifacts.require('Validators');
 
 const withdrawalCredentials =
@@ -32,7 +31,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
     stakedEthToken,
     totalSupply,
     poolBalance,
-    oracles,
     activatedValidators,
     pendingValidators;
 
@@ -53,7 +51,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
 
     pool = await Pool.at(contracts.pool);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    oracles = await Oracles.at(contracts.oracles);
 
     totalSupply = await stakedEthToken.totalSupply();
     poolBalance = await balance.current(pool.address);
