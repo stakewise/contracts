@@ -11,15 +11,13 @@ interface IOracles {
     * @param oracle - address of the account which submitted vote.
     * @param nonce - update nonce.
     * @param totalRewards - submitted value of total rewards.
-    * @param activationDuration - submitted value of activation duration.
-    * @param totalStakingAmount - submitted value of total staking amount.
+    * @param activatedValidators - voted amount of activated validators.
     */
     event VoteSubmitted(
         address indexed oracle,
         uint256 nonce,
         uint256 totalRewards,
-        uint256 activationDuration,
-        uint256 totalStakingAmount
+        uint256 activatedValidators
     );
 
     /**
@@ -28,13 +26,6 @@ interface IOracles {
     * @param sender - address of the transaction sender.
     */
     event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
-
-    /**
-    * @dev Event for tracking deposits activation toggles.
-    * @param enabled - defines whether deposits activation is enabled.
-    * @param sender - address of the transaction sender.
-    */
-    event DepositsActivationToggled(bool enabled, address indexed sender);
 
     /**
     * @dev Function for retrieving number of votes of the submission candidate.
@@ -48,16 +39,10 @@ interface IOracles {
     function syncPeriod() external view returns (uint256);
 
     /**
-    * @dev Function for retrieving whether deposits activation is enabled.
-    */
-    function depositsActivationEnabled() external view returns (bool);
-
-    /**
     * @dev Function for upgrading the Oracles contract.
     * @param _pool - address of the Pool contract.
-    * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
     */
-    function upgrade(address _pool, bool _depositsActivationEnabled) external;
+    function upgrade(address _pool) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
@@ -69,14 +54,12 @@ interface IOracles {
     * @dev Function for checking whether an oracle has voted.
     * @param _oracle - oracle address to check.
     * @param _totalRewards - voted total rewards.
-    * @param _activationDuration - voted activation duration.
-    * @param _totalStakingAmount - voted total staking amount.
+    * @param _activatedValidators - voted amount of activated validators.
     */
     function hasVote(
         address _oracle,
         uint256 _totalRewards,
-        uint256 _activationDuration,
-        uint256 _totalStakingAmount
+        uint256 _activatedValidators
     ) external view returns (bool);
 
     /**
@@ -106,18 +89,10 @@ interface IOracles {
     function setSyncPeriod(uint256 _syncPeriod) external;
 
     /**
-    * @dev Function for toggling pool deposits activation.
-    * Can only be called by an account with an admin role.
-    * @param _depositsActivationEnabled - defines whether pool deposits activation is enabled.
-    */
-    function toggleDepositsActivation(bool _depositsActivationEnabled) external;
-
-    /**
     * @dev Function for submitting oracle vote. The last vote required for quorum will update the values.
     * Can only be called by an account with an oracle role.
     * @param _totalRewards - voted total rewards.
-    * @param _activationDuration - voted activation duration.
-    * @param _totalStakingAmount - voted total staking amount.
+    * @param _activatedValidators - voted amount of activated validators.
     */
-    function vote(uint256 _totalRewards, uint256 _activationDuration, uint256 _totalStakingAmount) external;
+    function vote(uint256 _totalRewards, uint256 _activatedValidators) external;
 }

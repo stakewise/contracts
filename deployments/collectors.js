@@ -5,18 +5,18 @@ const {
 
 async function preparePoolUpgradeData(
   oraclesContractAddress,
-  activationDuration,
-  totalStakingAmount,
+  activatedValidators,
+  pendingValidators,
   minActivatingDeposit,
-  minActivatingShare
+  pendingValidatorsLimit
 ) {
   const Pool = await hre.ethers.getContractFactory('Pool');
   return Pool.interface.encodeFunctionData('upgrade', [
     oraclesContractAddress,
-    activationDuration,
-    totalStakingAmount,
+    activatedValidators,
+    pendingValidators,
     minActivatingDeposit,
-    minActivatingShare,
+    pendingValidatorsLimit,
   ]);
 }
 

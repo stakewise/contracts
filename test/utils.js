@@ -30,14 +30,6 @@ async function checkCollectorBalance(
   ).to.be.bignumber.equal(correctBalance);
 }
 
-async function checkPoolTotalCollectedAmount(
-  poolContract,
-  correctAmount = new BN(0)
-) {
-  let totalCollectedAmount = await poolContract.totalCollectedAmount();
-  expect(totalCollectedAmount).to.be.bignumber.equal(correctAmount);
-}
-
 async function checkSoloDepositAdded({
   receipt,
   solos,
@@ -145,61 +137,25 @@ async function getOracleAccounts({ oracles }) {
   return oracleAccounts;
 }
 
-async function setActivationDuration({
+async function setActivatedValidators({
   rewardEthToken,
   oracles,
   oracleAccounts,
   pool,
-  activationDuration,
+  activatedValidators,
 }) {
-  let prevActivationDuration = await pool.activationDuration();
-  if (prevActivationDuration.eq(activationDuration)) {
+  let prevActivatedValidators = await pool.activatedValidators();
+  if (prevActivatedValidators.eq(activatedValidators)) {
     return;
   }
 
   let totalRewards = await rewardEthToken.totalRewards();
-  let totalStakingAmount = await pool.totalStakingAmount();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.vote(
-      totalRewards,
-      activationDuration,
-      totalStakingAmount,
-      {
-        from: oracleAccounts[i],
-      }
-    );
-    if ((await pool.activationDuration()).eq(activationDuration)) {
-      return receipt;
-    }
-  }
-}
-
-async function setTotalStakingAmount({
-  rewardEthToken,
-  oracles,
-  oracleAccounts,
-  pool,
-  totalStakingAmount,
-}) {
-  let prevTotalStakingAmount = await pool.totalStakingAmount();
-  if (prevTotalStakingAmount.eq(totalStakingAmount)) {
-    return;
-  }
-
-  let totalRewards = await rewardEthToken.totalRewards();
-  let activationDuration = await pool.activationDuration();
-  let receipt;
-  for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.vote(
-      totalRewards,
-      activationDuration,
-      totalStakingAmount,
-      {
-        from: oracleAccounts[i],
-      }
-    );
-    if ((await pool.totalStakingAmount()).eq(totalStakingAmount)) {
+    receipt = await oracles.vote(totalRewards, activatedValidators, {
+      from: oracleAccounts[i],
+    });
+    if ((await pool.activatedValidators()).eq(activatedValidators)) {
       return receipt;
     }
   }
@@ -216,18 +172,12 @@ async function setTotalRewards({
     return;
   }
 
-  let activationDuration = await pool.activationDuration();
-  let totalStakingAmount = await pool.totalStakingAmount();
+  let activatedValidators = await pool.activatedValidators();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.vote(
-      totalRewards,
-      activationDuration,
-      totalStakingAmount,
-      {
-        from: oracleAccounts[i],
-      }
-    );
+    receipt = await oracles.vote(totalRewards, activatedValidators, {
+      from: oracleAccounts[i],
+    });
     if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
       return receipt;
     }
@@ -268,14 +218,12 @@ module.exports = {
   checkSoloDepositAdded,
   checkValidatorRegistered,
   getDepositAmount,
-  checkPoolTotalCollectedAmount,
   checkStakedEthToken,
   checkRewardEthToken,
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
-  setActivationDuration,
-  setTotalStakingAmount,
+  setActivatedValidators,
   setTotalRewards,
   getOracleAccounts,
 };

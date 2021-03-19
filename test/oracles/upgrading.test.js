@@ -30,26 +30,18 @@ contract('Oracles (upgrading)', ([anyone]) => {
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      oracles.upgrade(
-        pool.address,
-        contractSettings.depositsActivationEnabled,
-        {
-          from: anyone,
-        }
-      ),
+      oracles.upgrade(pool.address, {
+        from: anyone,
+      }),
       'OwnablePausable: access denied'
     );
   });
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      oracles.upgrade(
-        pool.address,
-        contractSettings.depositsActivationEnabled,
-        {
-          from: admin,
-        }
-      ),
+      oracles.upgrade(pool.address, {
+        from: admin,
+      }),
       'Pausable: not paused'
     );
   });
@@ -57,13 +49,9 @@ contract('Oracles (upgrading)', ([anyone]) => {
   it('fails to upgrade twice', async () => {
     await oracles.pause({ from: admin });
     await expectRevert(
-      oracles.upgrade(
-        pool.address,
-        contractSettings.depositsActivationEnabled,
-        {
-          from: admin,
-        }
-      ),
+      oracles.upgrade(pool.address, {
+        from: admin,
+      }),
       'Oracles: already upgraded'
     );
   });

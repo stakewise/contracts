@@ -25,26 +25,26 @@ interface IPool {
     /**
     * @dev Event for tracking scheduled deposit activation.
     * @param sender - address of the deposit sender.
-    * @param activationTime - the time when the deposit will be activated.
+    * @param validatorIndex - index of the activated validator.
     * @param value - deposit amount to be activated.
     */
-    event ActivationScheduled(address indexed sender, uint256 activationTime, uint256 value);
+    event ActivationScheduled(address indexed sender, uint256 validatorIndex, uint256 value);
 
     /**
     * @dev Event for tracking activated deposits.
     * @param account - account the deposit was activated for.
-    * @param activationTime - activation time of the deposit.
+    * @param validatorIndex - index of the activated validator.
     * @param value - amount activated.
     * @param sender - address of the transaction sender.
     */
-    event Activated(address indexed account, uint256 activationTime, uint256 value, address indexed sender);
+    event Activated(address indexed account, uint256 validatorIndex, uint256 value, address indexed sender);
 
     /**
-    * @dev Event for tracking activation duration updates.
-    * @param activationDuration - new activation duration for the pool deposits.
+    * @dev Event for tracking activated validators updates.
+    * @param activatedValidators - new total amount of activated validators.
     * @param sender - address of the transaction sender.
     */
-    event ActivationDurationUpdated(uint256 activationDuration, address sender);
+    event ActivatedValidatorsUpdated(uint256 activatedValidators, address sender);
 
     /**
     * @dev Event for tracking updates to the minimal deposit amount considered for the activation period.
@@ -54,19 +54,12 @@ interface IPool {
     event MinActivatingDepositUpdated(uint256 minActivatingDeposit, address sender);
 
     /**
-    * @dev Event for tracking updates to the total staking amount.
-    * @param totalStakingAmount - new total staking amount.
-    * @param sender - address of the transaction sender.
-    */
-    event TotalStakingAmountUpdated(uint256 totalStakingAmount, address sender);
-
-    /**
-    * @dev Event for tracking minimum activating share.
+    * @dev Event for tracking pending validators limit.
     * When it's exceeded, the deposits will be set for the activation.
-    * @param minActivatingShare - minimum activating share.
+    * @param pendingValidatorsLimit - pending validators percent limit.
     * @param sender - address of the transaction sender.
     */
-    event MinActivatingShareUpdated(uint256 minActivatingShare, address sender);
+    event PendingValidatorsLimitUpdated(uint256 pendingValidatorsLimit, address sender);
 
     /**
     * @dev Structure for passing information about new Validator.
@@ -83,28 +76,28 @@ interface IPool {
     /**
     * @dev Function for upgrading the Pools contract.
     * @param _oracles - address of the Oracles contract.
-    * @param _activationDuration - initial activation duration.
-    * @param _totalStakingAmount - total staking amount in beacon chain.
+    * @param _activatedValidators - initial amount of activated validators.
+    * @param _pendingValidators - initial amount of pending validators.
     * @param _minActivatingDeposit - minimal deposit in Wei to be considered for the activation period.
-    * @param _minActivatingShare - minimal activating share required for considering deposit for the activation.
+    * @param _pendingValidatorsLimit - pending validators percent limit. If it's not exceeded tokens can be minted immediately.
     */
     function upgrade(
         address _oracles,
-        uint256 _activationDuration,
-        uint256 _totalStakingAmount,
+        uint256 _activatedValidators,
+        uint256 _pendingValidators,
         uint256 _minActivatingDeposit,
-        uint256 _minActivatingShare
+        uint256 _pendingValidatorsLimit
     ) external;
 
     /**
-    * @dev Function for retrieving the total staking amount.
+    * @dev Function for getting the total amount of pending validators.
     */
-    function totalStakingAmount() external view returns (uint256);
+    function pendingValidators() external view returns (uint256);
 
     /**
-    * @dev Function for retrieving the total collected amount.
+    * @dev Function for retrieving the total amount of activated validators.
     */
-    function totalCollectedAmount() external view returns (uint256);
+    function activatedValidators() external view returns (uint256);
 
     /**
     * @dev Function for getting the withdrawal credentials used to
@@ -113,27 +106,22 @@ interface IPool {
     function withdrawalCredentials() external view returns (bytes32);
 
     /**
-    * @dev Function for getting the deposit activation duration.
-    */
-    function activationDuration() external view returns (uint256);
-
-    /**
     * @dev Function for getting the minimal deposit amount considered for the activation.
     */
     function minActivatingDeposit() external view returns (uint256);
 
     /**
-    * @dev Function for getting the minimal activating share.
+    * @dev Function for getting the pending validators percent limit.
     * When it's exceeded, the deposits will be set for the activation.
     */
-    function minActivatingShare() external view returns (uint256);
+    function pendingValidatorsLimit() external view returns (uint256);
 
     /**
     * @dev Function for getting the amount of activating deposits.
     * @param account - address of the account to get the amount for.
-    * @param activationTime - timestamp of the activated amount.
+    * @param validatorIndex - index of the activated validator.
     */
-    function activations(address account, uint256 activationTime) external view returns (uint256);
+    function activations(address account, uint256 validatorIndex) external view returns (uint256);
 
     /**
     * @dev Function for setting minimal deposit amount considered for the activation period.
@@ -142,28 +130,22 @@ interface IPool {
     function setMinActivatingDeposit(uint256 _minActivatingDeposit) external;
 
     /**
-    * @dev Function for setting total staking amount
-    * @param _totalStakingAmount - total staking amount of Pool validators in beacon chain.
-    */
-    function setTotalStakingAmount(uint256 _totalStakingAmount) external;
-
-    /**
     * @dev Function for changing withdrawal credentials.
     * @param _withdrawalCredentials - new withdrawal credentials for the pool validators.
     */
     function setWithdrawalCredentials(bytes32 _withdrawalCredentials) external;
 
     /**
-    * @dev Function for changing the activation duration.
-    * @param _activationDuration - new estimated activation duration for new validators.
+    * @dev Function for changing the total amount of activated validators.
+    * @param _activatedValidators - new total amount of activated validators.
     */
-    function setActivationDuration(uint256 _activationDuration) external;
+    function setActivatedValidators(uint256 _activatedValidators) external;
 
     /**
-    * @dev Function for changing the minimal activating share.
-    * @param _minActivatingShare - new minimal activating share. When it's exceeded, the deposits will be set for the activation.
+    * @dev Function for changing pending validators limit.
+    * @param _pendingValidatorsLimit - new pending validators limit. When it's exceeded, the deposits will be set for the activation.
     */
-    function setMinActivatingShare(uint256 _minActivatingShare) external;
+    function setPendingValidatorsLimit(uint256 _pendingValidatorsLimit) external;
 
     /**
     * @dev Function for retrieving the validator registration contract address.
@@ -176,18 +158,18 @@ interface IPool {
     function addDeposit() external payable;
 
     /**
-    * @dev Function for minting account's tokens at specific activation time.
+    * @dev Function for minting account's tokens for the specific validator index.
     * @param _account - account address to activate the tokens for.
-    * @param _activationTime - activation time of the tokens.
+    * @param _validatorIndex - index of the activated validator.
     */
-    function activate(address _account, uint256 _activationTime) external;
+    function activate(address _account, uint256 _validatorIndex) external;
 
     /**
-    * @dev Function for minting account's tokens at multiple activation times.
+    * @dev Function for minting account's tokens for the specific validator indexes.
     * @param _account - account address to activate the tokens for.
-    * @param _activationTimes - list of activation times of the tokens.
+    * @param _validatorIndexes - list of activated validator indexes.
     */
-    function activateMultiple(address _account, uint256[] calldata _activationTimes) external;
+    function activateMultiple(address _account, uint256[] calldata _validatorIndexes) external;
 
     /**
     * @dev Function for registering new pool validator.

@@ -20,10 +20,10 @@ async function prepareContractsUpgrades() {
 
   const poolUpgradeData = await preparePoolUpgradeData(
     contracts.oracles,
-    contractSettings.activationDuration,
-    contractSettings.totalStakingAmount,
+    contractSettings.activatedValidators,
+    contractSettings.pendingValidators,
     contractSettings.minActivatingDeposit,
-    contractSettings.minActivatingShare
+    contractSettings.pendingValidatorsLimit
   );
   log(white(`Pool upgrade data: ${green(poolUpgradeData)}`));
 
@@ -40,10 +40,7 @@ async function prepareContractsUpgrades() {
     )
   );
 
-  const oraclesUpgradeData = await prepareOraclesUpgradeData(
-    contracts.pool,
-    contractSettings.depositsActivationEnabled
-  );
+  const oraclesUpgradeData = await prepareOraclesUpgradeData(contracts.pool);
   log(white(`Oracles upgrade data: ${green(oraclesUpgradeData)}`));
 
   return {

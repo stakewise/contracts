@@ -4,25 +4,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "bool",
-        "name": "enabled",
-        "type": "bool"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "DepositsActivationToggled",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address",
         "name": "account",
         "type": "address"
@@ -162,13 +143,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "activationDuration",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalStakingAmount",
+        "name": "activatedValidators",
         "type": "uint256"
       }
     ],
@@ -280,19 +255,6 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "depositsActivationEnabled",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -416,12 +378,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_activationDuration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_totalStakingAmount",
+        "name": "_activatedValidators",
         "type": "uint256"
       }
     ],
@@ -615,19 +572,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "_depositsActivationEnabled",
-        "type": "bool"
-      }
-    ],
-    "name": "toggleDepositsActivation",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "unpause",
     "outputs": [],
@@ -640,11 +584,6 @@
         "internalType": "address",
         "name": "_pool",
         "type": "address"
-      },
-      {
-        "internalType": "bool",
-        "name": "_depositsActivationEnabled",
-        "type": "bool"
       }
     ],
     "name": "upgrade",
@@ -661,12 +600,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_activationDuration",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_totalStakingAmount",
+        "name": "_activatedValidators",
         "type": "uint256"
       }
     ],

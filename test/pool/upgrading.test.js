@@ -22,11 +22,11 @@ contract('Pool (upgrading)', ([sender]) => {
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
 
-    expect(await pool.activationDuration()).to.bignumber.equal(
-      contractSettings.activationDuration
+    expect(await pool.activatedValidators()).to.bignumber.equal(
+      contractSettings.activatedValidators
     );
-    expect(await pool.minActivatingDeposit()).to.bignumber.equal(
-      contractSettings.minActivatingDeposit
+    expect(await pool.pendingValidatorsLimit()).to.bignumber.equal(
+      contractSettings.pendingValidatorsLimit
     );
   });
 
@@ -36,10 +36,10 @@ contract('Pool (upgrading)', ([sender]) => {
     await expectRevert(
       pool.upgrade(
         contracts.oracles,
-        contractSettings.activationDuration,
-        contractSettings.totalStakingAmount,
+        contractSettings.activatedValidators,
+        contractSettings.pendingValidators,
         contractSettings.minActivatingDeposit,
-        contractSettings.minActivatingShare,
+        contractSettings.pendingValidatorsLimit,
         { from: sender }
       ),
       'OwnablePausable: access denied'
@@ -50,10 +50,10 @@ contract('Pool (upgrading)', ([sender]) => {
     await expectRevert(
       pool.upgrade(
         contracts.oracles,
-        contractSettings.activationDuration,
-        contractSettings.totalStakingAmount,
+        contractSettings.activatedValidators,
+        contractSettings.pendingValidators,
         contractSettings.minActivatingDeposit,
-        contractSettings.minActivatingShare,
+        contractSettings.pendingValidatorsLimit,
         { from: admin }
       ),
       'Pausable: not paused'
@@ -65,10 +65,10 @@ contract('Pool (upgrading)', ([sender]) => {
     await expectRevert(
       pool.upgrade(
         contracts.oracles,
-        contractSettings.activationDuration,
-        contractSettings.totalStakingAmount,
+        contractSettings.activatedValidators,
+        contractSettings.pendingValidators,
         contractSettings.minActivatingDeposit,
-        contractSettings.minActivatingShare,
+        contractSettings.pendingValidatorsLimit,
         { from: admin }
       ),
       'Pool: already upgraded'

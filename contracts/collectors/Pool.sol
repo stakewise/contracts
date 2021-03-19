@@ -132,7 +132,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         uint256 _pendingValidators = pendingValidators.add((address(this).balance).div(VALIDATOR_DEPOSIT));
         uint256 _activatedValidators = activatedValidators; // gas savings
         uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
-        if (validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators))) {
+        if (validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4))) {
             stakedEthToken.mint(msg.sender, msg.value);
         } else {
             // lock deposit amount until validator activated
@@ -145,8 +145,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-activate}.
      */
     function activate(address _account, uint256 _validatorIndex) external override whenNotPaused {
-        uint256 _activatedValidators = activatedValidators; // gas savings
-        require(_validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators)), "Pool: validator is not active yet");
+        require(_validatorIndex.mul(1e4) <= activatedValidators.mul(pendingValidatorsLimit.add(1e4)), "Pool: validator is not active yet");
 
         uint256 amount = activations[_account][_validatorIndex];
         require(amount > 0, "Pool: invalid validator index");
@@ -164,7 +163,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         uint256 _activatedValidators = activatedValidators;
         for (uint256 i = 0; i < _validatorIndexes.length; i++) {
             uint256 validatorIndex = _validatorIndexes[i];
-            require(validatorIndex.mul(1e4) <= (_activatedValidators.mul(1e4)).add(pendingValidatorsLimit.mul(_activatedValidators)), "Pool: validator is not active yet");
+            require(validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4)), "Pool: validator is not active yet");
 
             uint256 amount = activations[_account][validatorIndex];
             toMint = toMint.add(amount);

@@ -4,7 +4,6 @@ const {
   expectRevert,
   ether,
   BN,
-  time,
   send,
 } = require('@openzeppelin/test-helpers');
 const {
@@ -28,6 +27,10 @@ contract('Oracles', ([_, ...accounts]) => {
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
+    // update contract settings before upgrade
+    contractSettings.activatedValidators = '10';
+    contractSettings.pendingValidators = '2';
+
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
@@ -140,39 +143,22 @@ contract('Oracles', ([_, ...accounts]) => {
     });
   });
 
-  describe('deposits activation toggling', () => {
-    it('admin user can toggle deposits activation', async () => {
-      const receipt = await oracles.toggleDepositsActivation(false, {
-        from: admin,
-      });
-      expectEvent(receipt, 'DepositsActivationToggled', {
-        enabled: false,
-        sender: admin,
-      });
-      expect(await oracles.depositsActivationEnabled()).equal(false);
-    });
-
-    it('anyone cannot toggle deposits activation', async () => {
-      await expectRevert(
-        oracles.toggleDepositsActivation(false, {
-          from: anyone,
-        }),
-        'OwnablePausable: access denied'
-      );
-    });
-  });
-
   describe('oracles voting', () => {
     let oracleAccounts = [];
-    let activationDuration = time.duration.days(7);
-    let totalStakingAmount = ether('500');
-    let prevTotalRewards, newTotalRewards, currentNonce;
+    let prevTotalRewards,
+      newTotalRewards,
+      currentNonce,
+      pendingValidators,
+      activatedValidators;
 
     beforeEach(async () => {
       oracleAccounts = await getOracleAccounts({ oracles });
       prevTotalRewards = await rewardEthToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
       currentNonce = await oracles.currentNonce();
+
+      activatedValidators = new BN(contractSettings.activatedValidators);
+      pendingValidators = new BN(contractSettings.pendingValidators);
     });
 
     it('fails to vote when contract is paused', async () => {
@@ -180,7 +166,7 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+        oracles.vote(newTotalRewards, activatedValidators, {
           from: oracleAccounts[0],
         }),
         'Pausable: paused'
@@ -189,7 +175,7 @@ contract('Oracles', ([_, ...accounts]) => {
 
     it('only oracle can submit vote', async () => {
       await expectRevert(
-        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+        oracles.vote(newTotalRewards, activatedValidators, {
           from: anyone,
         }),
         'Oracles: access denied'
@@ -197,25 +183,19 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('cannot vote twice', async () => {
-      await oracles.vote(
-        newTotalRewards,
-        activationDuration,
-        totalStakingAmount,
-        {
-          from: oracleAccounts[0],
-        }
-      );
+      await oracles.vote(newTotalRewards, activatedValidators, {
+        from: oracleAccounts[0],
+      });
       expect(
         await oracles.hasVote(
           oracleAccounts[0],
           newTotalRewards,
-          activationDuration,
-          totalStakingAmount
+          activatedValidators
         )
       ).to.equal(true);
 
       await expectRevert(
-        oracles.vote(newTotalRewards, activationDuration, totalStakingAmount, {
+        oracles.vote(newTotalRewards, activatedValidators, {
           from: oracleAccounts[0],
         }),
         'Oracles: already voted'
@@ -223,46 +203,39 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('does not submit new data when not enough votes', async () => {
-      const receipt = await oracles.vote(
-        newTotalRewards,
-        activationDuration,
-        totalStakingAmount,
-        {
-          from: oracleAccounts[0],
-        }
-      );
+      const receipt = await oracles.vote(newTotalRewards, activatedValidators, {
+        from: oracleAccounts[0],
+      });
       expectEvent(receipt, 'VoteSubmitted', {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
-        activationDuration,
-        totalStakingAmount,
+        activatedValidators,
         nonce: currentNonce,
       });
       expect(
         await oracles.hasVote(
           oracleAccounts[0],
           newTotalRewards,
-          activationDuration,
-          totalStakingAmount
+          activatedValidators
         )
       ).to.equal(true);
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
         prevTotalRewards
       );
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        new BN(contractSettings.activationDuration)
+      expect(await pool.activatedValidators()).to.bignumber.equal(
+        new BN(activatedValidators)
       );
-      expect(await pool.totalStakingAmount()).to.bignumber.equal(
-        new BN(contractSettings.totalStakingAmount)
+      expect(await pool.pendingValidators()).to.bignumber.equal(
+        pendingValidators
       );
     });
 
     it('submits data when enough votes collected', async () => {
+      let newActivatedValidators = activatedValidators.add(pendingValidators);
       for (let i = 0; i < oracleAccounts.length; i++) {
         let receipt = await oracles.vote(
           newTotalRewards,
-          activationDuration,
-          totalStakingAmount,
+          newActivatedValidators,
           {
             from: oracleAccounts[i],
           }
@@ -275,15 +248,13 @@ contract('Oracles', ([_, ...accounts]) => {
           await oracles.hasVote(
             oracleAccounts[i],
             newTotalRewards,
-            activationDuration,
-            totalStakingAmount
+            newActivatedValidators
           )
         ).to.equal(true);
         expectEvent(receipt, 'VoteSubmitted', {
           oracle: oracleAccounts[i],
           totalRewards: newTotalRewards,
-          activationDuration,
-          totalStakingAmount,
+          activatedValidators: newActivatedValidators,
           nonce: currentNonce,
         });
       }
@@ -292,18 +263,15 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
         newTotalRewards
       );
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        activationDuration
+      expect(await pool.activatedValidators()).to.bignumber.equal(
+        newActivatedValidators
       );
-      expect(await pool.totalStakingAmount()).to.bignumber.equal(
-        totalStakingAmount
-      );
+      expect(await pool.pendingValidators()).to.bignumber.equal(new BN(0));
 
       // new vote comes with different nonce
       let receipt = await oracles.vote(
         newTotalRewards,
-        activationDuration,
-        totalStakingAmount,
+        newActivatedValidators,
         {
           from: oracleAccounts[0],
         }
@@ -312,32 +280,25 @@ contract('Oracles', ([_, ...accounts]) => {
         await oracles.hasVote(
           oracleAccounts[0],
           newTotalRewards,
-          activationDuration,
-          totalStakingAmount
+          newActivatedValidators
         )
       ).to.equal(true);
       expectEvent(receipt, 'VoteSubmitted', {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
-        activationDuration,
-        totalStakingAmount,
+        activatedValidators: newActivatedValidators,
         nonce: currentNonce.add(new BN(1)),
       });
     });
 
     it('does not update activation data when did not change', async () => {
-      activationDuration = new BN(contractSettings.activationDuration);
-      totalStakingAmount = new BN(contractSettings.totalStakingAmount);
+      activatedValidators = new BN(contractSettings.activatedValidators);
+      pendingValidators = await pool.pendingValidators();
 
       for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.vote(
-          newTotalRewards,
-          activationDuration,
-          totalStakingAmount,
-          {
-            from: oracleAccounts[i],
-          }
-        );
+        await oracles.vote(newTotalRewards, activatedValidators, {
+          from: oracleAccounts[i],
+        });
         if (!prevTotalRewards.eq(await rewardEthToken.totalRewards())) {
           // data submitted
           break;
@@ -348,43 +309,11 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
         newTotalRewards
       );
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        activationDuration
+      expect(await pool.activatedValidators()).to.bignumber.equal(
+        activatedValidators
       );
-      expect(await pool.totalStakingAmount()).to.bignumber.equal(
-        totalStakingAmount
-      );
-    });
-
-    it('does not update activation data when activation disabled', async () => {
-      await oracles.toggleDepositsActivation(false, {
-        from: admin,
-      });
-
-      for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.vote(
-          newTotalRewards,
-          activationDuration,
-          totalStakingAmount,
-          {
-            from: oracleAccounts[i],
-          }
-        );
-        if (!prevTotalRewards.eq(await rewardEthToken.totalRewards())) {
-          // data submitted
-          break;
-        }
-      }
-
-      // update submitted
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
-        newTotalRewards
-      );
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        new BN(contractSettings.activationDuration)
-      );
-      expect(await pool.totalStakingAmount()).to.bignumber.equal(
-        new BN(contractSettings.totalStakingAmount)
+      expect(await pool.pendingValidators()).to.bignumber.equal(
+        pendingValidators
       );
     });
   });

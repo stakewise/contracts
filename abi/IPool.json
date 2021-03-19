@@ -11,7 +11,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "activationTime",
+        "name": "validatorIndex",
         "type": "uint256"
       },
       {
@@ -36,7 +36,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "activationDuration",
+        "name": "activatedValidators",
         "type": "uint256"
       },
       {
@@ -46,7 +46,7 @@
         "type": "address"
       }
     ],
-    "name": "ActivationDurationUpdated",
+    "name": "ActivatedValidatorsUpdated",
     "type": "event"
   },
   {
@@ -61,7 +61,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "activationTime",
+        "name": "validatorIndex",
         "type": "uint256"
       },
       {
@@ -99,7 +99,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "minActivatingShare",
+        "name": "pendingValidatorsLimit",
         "type": "uint256"
       },
       {
@@ -109,26 +109,7 @@
         "type": "address"
       }
     ],
-    "name": "MinActivatingShareUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalStakingAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "TotalStakingAmountUpdated",
+    "name": "PendingValidatorsLimitUpdated",
     "type": "event"
   },
   {
@@ -172,7 +153,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_activationTime",
+        "name": "_validatorIndex",
         "type": "uint256"
       }
     ],
@@ -190,7 +171,7 @@
       },
       {
         "internalType": "uint256[]",
-        "name": "_activationTimes",
+        "name": "_validatorIndexes",
         "type": "uint256[]"
       }
     ],
@@ -201,7 +182,7 @@
   },
   {
     "inputs": [],
-    "name": "activationDuration",
+    "name": "activatedValidators",
     "outputs": [
       {
         "internalType": "uint256",
@@ -221,7 +202,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "activationTime",
+        "name": "validatorIndex",
         "type": "uint256"
       }
     ],
@@ -258,7 +239,20 @@
   },
   {
     "inputs": [],
-    "name": "minActivatingShare",
+    "name": "pendingValidators",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pendingValidatorsLimit",
     "outputs": [
       {
         "internalType": "uint256",
@@ -303,11 +297,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_activationDuration",
+        "name": "_activatedValidators",
         "type": "uint256"
       }
     ],
-    "name": "setActivationDuration",
+    "name": "setActivatedValidators",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -329,24 +323,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_minActivatingShare",
+        "name": "_pendingValidatorsLimit",
         "type": "uint256"
       }
     ],
-    "name": "setMinActivatingShare",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_totalStakingAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTotalStakingAmount",
+    "name": "setPendingValidatorsLimit",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -365,32 +346,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "totalCollectedAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalStakingAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -399,12 +354,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "_activationDuration",
+        "name": "_activatedValidators",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_totalStakingAmount",
+        "name": "_pendingValidators",
         "type": "uint256"
       },
       {
@@ -414,7 +369,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "_minActivatingShare",
+        "name": "_pendingValidatorsLimit",
         "type": "uint256"
       }
     ],

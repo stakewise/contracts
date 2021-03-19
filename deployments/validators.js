@@ -3,15 +3,9 @@ const {
   getProxyAdminFactory,
 } = require('@openzeppelin/hardhat-upgrades/dist/proxy-factory');
 
-async function prepareOraclesUpgradeData(
-  poolContractAddress,
-  depositsActivationEnabled
-) {
+async function prepareOraclesUpgradeData(poolContractAddress) {
   const Oracles = await hre.ethers.getContractFactory('Oracles');
-  return Oracles.interface.encodeFunctionData('upgrade', [
-    poolContractAddress,
-    depositsActivationEnabled,
-  ]);
+  return Oracles.interface.encodeFunctionData('upgrade', [poolContractAddress]);
 }
 
 async function upgradeOracles(

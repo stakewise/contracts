@@ -6,44 +6,51 @@ const {
   expectRevert,
   expectEvent,
   BN,
-  time,
 } = require('@openzeppelin/test-helpers');
 const {
-  setActivationDuration,
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
+  getDepositAmount,
   getOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
-const {
-  getDepositAmount,
-  checkCollectorBalance,
-  checkPoolTotalCollectedAmount,
-  setTotalStakingAmount,
-  checkStakedEthToken,
-} = require('../utils');
+const { checkCollectorBalance, checkStakedEthToken } = require('../utils');
+const { validatorParams } = require('./validatorParams');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
+const Validators = artifacts.require('Validators');
 
-contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
+const withdrawalCredentials =
+  '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
+
+contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
   const admin = contractSettings.admin;
   let pool,
     stakedEthToken,
     totalSupply,
-    totalCollectedAmount,
     poolBalance,
     oracleAccounts,
     rewardEthToken,
-    oracles;
+    oracles,
+    activatedValidators,
+    pendingValidators;
 
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
+    // update contract settings before upgrade
+    contractSettings.activatedValidators = '10';
+    contractSettings.pendingValidators = '0';
+
+    // reset contract settings
+    activatedValidators = new BN(contractSettings.activatedValidators);
+    pendingValidators = new BN(contractSettings.pendingValidators);
+
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
     await upgradeContracts();
@@ -55,7 +62,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
     oracleAccounts = await getOracleAccounts({ oracles });
 
     totalSupply = await stakedEthToken.totalSupply();
-    totalCollectedAmount = await pool.totalCollectedAmount();
     poolBalance = await balance.current(pool.address);
   });
 
@@ -88,7 +94,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         max: new BN(contractSettings.minActivatingDeposit),
       });
       totalSupply = totalSupply.add(depositAmount1);
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount1);
       poolBalance = poolBalance.add(depositAmount1);
 
       await pool.addDeposit({
@@ -108,7 +113,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         max: new BN(contractSettings.minActivatingDeposit),
       });
       totalSupply = totalSupply.add(depositAmount2);
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount2);
       poolBalance = poolBalance.add(depositAmount2);
 
       await pool.addDeposit({
@@ -125,68 +129,16 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
 
-    it('mints tokens for users with activation duration disabled', async () => {
-      // disable activation duration
-      await setActivationDuration({
-        rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
-        activationDuration: new BN(0),
-      });
-
-      // User 1 creates a deposit
-      let depositAmount1 = getDepositAmount();
-      totalSupply = totalSupply.add(depositAmount1);
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount1);
-      poolBalance = poolBalance.add(depositAmount1);
-
-      await pool.addDeposit({
-        from: sender1,
-        value: depositAmount1,
-      });
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply,
-        account: sender1,
-        balance: depositAmount1,
-        deposit: depositAmount1,
-      });
-
-      // User 2 creates a deposit
-      let depositAmount2 = getDepositAmount();
-      totalSupply = totalSupply.add(depositAmount2);
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount2);
-      poolBalance = poolBalance.add(depositAmount2);
-
-      await pool.addDeposit({
-        from: sender2,
-        value: depositAmount2,
-      });
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply,
-        account: sender2,
-        balance: depositAmount2,
-        deposit: depositAmount2,
-      });
-
-      // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
-    });
-
-    it('places deposit of user to the activation queue with exceeded max activating share', async () => {
-      await pool.setMinActivatingShare('1000', { from: admin }); // 10 %
+    it('places deposit of user to the activation queue with exceeded pending validators limit', async () => {
+      await pool.setPendingValidatorsLimit('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       // deposit more than 10 %
-      let depositAmount = totalSupply.div(new BN(10));
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
+      let depositAmount = ether('32').mul(new BN(2));
       poolBalance = poolBalance.add(depositAmount);
+      let validatorIndex = activatedValidators.add(new BN(2));
 
       // check deposit amount placed in activation queue
       let receipt = await pool.addDeposit({
@@ -195,10 +147,11 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       });
       await expectEvent(receipt, 'ActivationScheduled', {
         sender: sender1,
+        validatorIndex,
         value: depositAmount,
       });
       expect(
-        await pool.activations(sender1, receipt.logs[0].args.activationTime)
+        await pool.activations(sender1, validatorIndex)
       ).to.bignumber.equal(depositAmount);
 
       // check contract balance
@@ -206,29 +159,22 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       expect(await stakedEthToken.totalSupply()).to.bignumber.equal(
         totalSupply
       );
-      await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
 
-    it('activates deposit of user immediately with not exceeded max activating share', async () => {
-      await pool.setMinActivatingShare('100', { from: admin }); // 1 %
+    it('activates deposit of user immediately with not exceeded pending validators limit', async () => {
+      await pool.setPendingValidatorsLimit('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
-      await setTotalStakingAmount({
-        rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
-        totalStakingAmount: totalCollectedAmount,
-      });
 
       // deposit less than 10 %
-      let depositAmount = ether('1');
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
-      totalSupply = totalSupply.add(depositAmount);
+      let depositAmount = ether('32');
       poolBalance = poolBalance.add(depositAmount);
+      let validatorIndex = activatedValidators
+        .add(pendingValidators)
+        .add(new BN(1));
+      totalSupply = totalSupply.add(depositAmount);
 
       // check deposit amount added immediately
-      await pool.addDeposit({
+      let receipt = await pool.addDeposit({
         from: sender1,
         value: depositAmount,
       });
@@ -239,32 +185,45 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
         balance: depositAmount,
         deposit: depositAmount,
       });
+      expect(
+        await pool.activations(sender1, validatorIndex)
+      ).to.bignumber.equal(new BN(0));
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 
   describe('activating', () => {
-    let activationTime, depositAmount;
+    let validatorIndex, depositAmount;
 
     beforeEach(async () => {
-      depositAmount = totalSupply.div(new BN(10));
-      let receipt = await pool.addDeposit({
+      await pool.setPendingValidatorsLimit('1', { from: admin }); // 0.01 %
+      await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
+
+      depositAmount = ether('32');
+      await pool.addDeposit({
         from: sender1,
         value: depositAmount,
       });
-      activationTime = receipt.logs[0].args.activationTime;
+      validatorIndex = activatedValidators.add(new BN(1));
 
-      totalCollectedAmount = totalCollectedAmount.add(depositAmount);
-      poolBalance = poolBalance.add(depositAmount);
+      let validators = await Validators.at(contracts.validators);
+      await validators.addOperator(operator, { from: admin });
+      await pool.setWithdrawalCredentials(withdrawalCredentials, {
+        from: admin,
+      });
+      await pool.registerValidator(validatorParams[0], {
+        from: operator,
+      });
     });
 
-    it('fails to activate with invalid activation time', async () => {
+    it('fails to activate with invalid validator index', async () => {
       await expectRevert(
-        pool.activate(sender1, activationTime, { from: sender1 }),
-        'Pool: activation time is in future'
+        pool.activate(sender1, validatorIndex, {
+          from: sender1,
+        }),
+        'Pool: validator is not active yet'
       );
     });
 
@@ -273,7 +232,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       expect(await pool.paused()).equal(true);
 
       await expectRevert(
-        pool.activate(sender1, activationTime, {
+        pool.activate(sender1, validatorIndex, {
           from: sender1,
         }),
         'Pausable: paused'
@@ -281,37 +240,43 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
     });
 
     it('fails to activate not existing deposit', async () => {
-      await time.increaseTo(activationTime);
+      await pool.setActivatedValidators(validatorIndex, {
+        from: admin,
+      });
       await expectRevert(
-        pool.activate(sender2, activationTime, {
+        pool.activate(sender2, validatorIndex, {
           from: sender1,
         }),
-        'Pool: no activating deposit'
+        'Pool: invalid validator index'
       );
     });
 
     it('fails to activate deposit amount twice', async () => {
-      await time.increaseTo(activationTime);
-      await pool.activate(sender1, activationTime, {
+      await pool.setActivatedValidators(validatorIndex, {
+        from: admin,
+      });
+      await pool.activate(sender1, validatorIndex, {
         from: sender1,
       });
 
       await expectRevert(
-        pool.activate(sender1, activationTime, {
+        pool.activate(sender1, validatorIndex, {
           from: sender1,
         }),
-        'Pool: no activating deposit'
+        'Pool: invalid validator index'
       );
     });
 
     it('activates deposit amount', async () => {
-      await time.increaseTo(activationTime);
-      let receipt = await pool.activate(sender1, activationTime, {
+      await pool.setActivatedValidators(validatorIndex, {
+        from: admin,
+      });
+      let receipt = await pool.activate(sender1, validatorIndex, {
         from: sender1,
       });
       await expectEvent(receipt, 'Activated', {
         account: sender1,
-        activationTime,
+        validatorIndex,
         value: depositAmount,
         sender: sender1,
       });
@@ -327,41 +292,52 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 
   describe('activating multiple', () => {
-    let activationTime1, activationTime2, depositAmount;
+    let validatorIndex1, validatorIndex2, depositAmount;
 
     beforeEach(async () => {
-      depositAmount = totalSupply.div(new BN(10));
+      await pool.setPendingValidatorsLimit('1', { from: admin }); // 0.01 %
+      await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
-      let receipt = await pool.addDeposit({
+      depositAmount = ether('32');
+      await pool.addDeposit({
         from: sender3,
         value: depositAmount,
       });
-      activationTime1 = receipt.logs[0].args.activationTime;
-      await time.increase(time.duration.days(1));
+      validatorIndex1 = activatedValidators.add(new BN(1));
 
-      receipt = await pool.addDeposit({
+      await pool.addDeposit({
         from: sender3,
         value: depositAmount,
       });
-      activationTime2 = receipt.logs[0].args.activationTime;
+      validatorIndex2 = activatedValidators.add(new BN(2));
 
-      totalCollectedAmount = totalCollectedAmount.add(
-        depositAmount.mul(new BN(2))
-      );
-      poolBalance = poolBalance.add(depositAmount.mul(new BN(2)));
+      let validators = await Validators.at(contracts.validators);
+      await validators.addOperator(operator, { from: admin });
+      await pool.setWithdrawalCredentials(withdrawalCredentials, {
+        from: admin,
+      });
+      await pool.registerValidator(validatorParams[0], {
+        from: operator,
+      });
+      await pool.registerValidator(validatorParams[1], {
+        from: operator,
+      });
     });
 
-    it('fails to activate with invalid activation time', async () => {
+    it('fails to activate with invalid validator indexes', async () => {
       await expectRevert(
-        pool.activateMultiple(sender3, [activationTime1, activationTime2], {
-          from: sender3,
-        }),
-        'Pool: activation time is in future'
+        pool.activateMultiple(
+          sender3,
+          [validatorIndex1.add(new BN(2)), validatorIndex2.add(new BN(3))],
+          {
+            from: sender3,
+          }
+        ),
+        'Pool: validator is not active yet'
       );
     });
 
@@ -370,7 +346,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
       expect(await pool.paused()).equal(true);
 
       await expectRevert(
-        pool.activateMultiple(sender3, [activationTime1, activationTime2], {
+        pool.activateMultiple(sender3, [validatorIndex1, validatorIndex2], {
           from: sender3,
         }),
         'Pausable: paused'
@@ -378,34 +354,40 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
     });
 
     it('fails to activate not existing deposit', async () => {
-      await time.increaseTo(activationTime2);
+      await pool.setActivatedValidators(validatorIndex2, {
+        from: admin,
+      });
       await expectRevert(
-        pool.activateMultiple(sender2, [activationTime1, activationTime2], {
+        pool.activateMultiple(sender2, [validatorIndex1, validatorIndex2], {
           from: sender3,
         }),
-        'Pool: no activating deposits'
+        'Pool: invalid validator index'
       );
     });
 
-    it('fails activate multiple deposit amounts twice', async () => {
-      await time.increaseTo(activationTime2);
-      await pool.activateMultiple(sender3, [activationTime1, activationTime2], {
+    it('fails to activate multiple deposit amounts twice', async () => {
+      await pool.setActivatedValidators(validatorIndex2, {
+        from: admin,
+      });
+      await pool.activateMultiple(sender3, [validatorIndex1, validatorIndex2], {
         from: sender3,
       });
 
       await expectRevert(
-        pool.activateMultiple(sender3, [activationTime1, activationTime2], {
+        pool.activateMultiple(sender3, [validatorIndex1, validatorIndex2], {
           from: sender3,
         }),
-        'Pool: no activating deposit'
+        'Pool: invalid validator index'
       );
     });
 
     it('activates multiple deposit amounts', async () => {
-      await time.increaseTo(activationTime2);
+      await pool.setActivatedValidators(validatorIndex2, {
+        from: admin,
+      });
       let receipt = await pool.activateMultiple(
         sender3,
-        [activationTime1, activationTime2],
+        [validatorIndex1, validatorIndex2],
         {
           from: sender3,
         }
@@ -422,20 +404,19 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3]) => {
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
-        activationTime: activationTime1,
+        validatorIndex: validatorIndex1,
         value: depositAmount,
         sender: sender3,
       });
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {
         account: sender3,
-        activationTime: activationTime2,
+        validatorIndex: validatorIndex2,
         value: depositAmount,
         sender: sender3,
       });
 
       // check contract balance
       await checkCollectorBalance(pool, poolBalance);
-      await checkPoolTotalCollectedAmount(pool, totalCollectedAmount);
     });
   });
 });

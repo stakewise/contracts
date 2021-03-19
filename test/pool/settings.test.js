@@ -10,8 +10,7 @@ const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
-  setActivationDuration,
-  setTotalStakingAmount,
+  setActivatedValidators,
   getOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
@@ -28,6 +27,10 @@ contract('Pool (settings)', ([anyone]) => {
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
+    // update contract settings before upgrade
+    contractSettings.activatedValidators = '10';
+    contractSettings.pendingValidators = '2';
+
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
     await upgradeContracts();
@@ -65,117 +68,90 @@ contract('Pool (settings)', ([anyone]) => {
     });
   });
 
-  describe('min activating share', () => {
-    it('not admin fails to set min activating share', async () => {
+  describe('pending validators limit', () => {
+    it('not admin fails to set pending validators limit', async () => {
       await expectRevert(
-        pool.setMinActivatingShare('1000', {
+        pool.setPendingValidatorsLimit('1000', {
           from: anyone,
         }),
         'OwnablePausable: access denied'
       );
     });
 
-    it('admin can set min activating share', async () => {
-      let minActivatingShare = '1000';
-      let receipt = await pool.setMinActivatingShare(minActivatingShare, {
-        from: admin,
-      });
-      await expectEvent(receipt, 'MinActivatingShareUpdated', {
-        minActivatingShare,
+    it('admin can set pending validators limit', async () => {
+      let pendingValidatorsLimit = '1000';
+      let receipt = await pool.setPendingValidatorsLimit(
+        pendingValidatorsLimit,
+        {
+          from: admin,
+        }
+      );
+      await expectEvent(receipt, 'PendingValidatorsLimitUpdated', {
+        pendingValidatorsLimit,
         sender: admin,
       });
-      expect(await pool.minActivatingShare()).to.bignumber.equal(
-        minActivatingShare
+      expect(await pool.pendingValidatorsLimit()).to.bignumber.equal(
+        pendingValidatorsLimit
       );
     });
 
-    it('fails to set invalid min activating share', async () => {
+    it('fails to set invalid pending validators limit', async () => {
       await expectRevert(
-        pool.setMinActivatingShare(10000, {
+        pool.setPendingValidatorsLimit(10000, {
           from: admin,
         }),
-        'Pool: invalid share'
+        'Pool: invalid limit'
       );
     });
   });
 
-  describe('activation duration', () => {
-    it('not oracles contract or admin fails to set activation duration', async () => {
+  describe('activated validators', () => {
+    it('not oracles contract or admin fails to set activated validators', async () => {
       await expectRevert(
-        pool.setActivationDuration(ether('10'), {
+        pool.setActivatedValidators('10', {
           from: anyone,
         }),
         'Pool: access denied'
       );
     });
 
-    it('admin override activation duration', async () => {
-      let activationDuration = new BN('2592000');
-      let receipt = await pool.setActivationDuration(activationDuration, {
+    it('admin can override activated validators', async () => {
+      let activatedValidators = new BN(
+        contractSettings.activatedValidators
+      ).add(new BN(contractSettings.pendingValidators));
+      let receipt = await pool.setActivatedValidators(activatedValidators, {
         from: admin,
       });
-      expectEvent(receipt, 'ActivationDurationUpdated', {
-        activationDuration,
+      expectEvent(receipt, 'ActivatedValidatorsUpdated', {
+        activatedValidators,
       });
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        activationDuration
+      expect(await pool.activatedValidators()).to.bignumber.equal(
+        activatedValidators
       );
     });
 
-    it('oracles contract can set activation duration', async () => {
-      let activationDuration = new BN('2592000');
-      let receipt = await setActivationDuration({
+    it('oracles contract can set activated validators', async () => {
+      let activatedValidators = new BN(
+        contractSettings.activatedValidators
+      ).add(new BN(contractSettings.pendingValidators));
+      let receipt = await setActivatedValidators({
         pool,
         rewardEthToken,
-        activationDuration,
+        activatedValidators,
         oracleAccounts,
         oracles,
       });
       await expectEvent.inTransaction(
         receipt.tx,
         Pool,
-        'ActivationDurationUpdated',
+        'ActivatedValidatorsUpdated',
         {
-          activationDuration,
+          activatedValidators,
           sender: contracts.oracles,
         }
       );
-      expect(await pool.activationDuration()).to.bignumber.equal(
-        activationDuration
-      );
-    });
-  });
-
-  describe('total staking amount', () => {
-    it('not oracles contract fails to set total staking amount', async () => {
-      await expectRevert(
-        pool.setTotalStakingAmount(ether('100'), {
-          from: anyone,
-        }),
-        'Pool: access denied'
-      );
-    });
-
-    it('oracles contract can set total staking amount', async () => {
-      let totalStakingAmount = await pool.totalCollectedAmount();
-      let receipt = await setTotalStakingAmount({
-        pool,
-        rewardEthToken,
-        totalStakingAmount,
-        oracleAccounts,
-        oracles,
-      });
-      await expectEvent.inTransaction(
-        receipt.tx,
-        Pool,
-        'TotalStakingAmountUpdated',
-        {
-          totalStakingAmount,
-          sender: contracts.oracles,
-        }
-      );
-      expect(await pool.totalStakingAmount()).to.bignumber.equal(
-        totalStakingAmount
+      expect(await pool.activatedValidators()).to.bignumber.equal(
+        activatedValidators
       );
     });
   });
