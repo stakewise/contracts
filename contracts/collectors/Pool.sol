@@ -142,6 +142,13 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
+     * @dev See {IPool-canActivate}.
+     */
+    function canActivate(uint256 _validatorIndex) external view override returns (bool) {
+        return _validatorIndex.mul(1e4) <= activatedValidators.mul(pendingValidatorsLimit.add(1e4));
+    }
+
+    /**
      * @dev See {IPool-activate}.
      */
     function activate(address _account, uint256 _validatorIndex) external override whenNotPaused {

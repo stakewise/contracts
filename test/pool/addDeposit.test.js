@@ -262,6 +262,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       await pool.setActivatedValidators(validatorIndex, {
         from: admin,
       });
+      expect(await pool.canActivate(validatorIndex)).to.equal(true);
       let receipt = await pool.activate(sender1, validatorIndex, {
         from: sender1,
       });
@@ -376,6 +377,8 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       await pool.setActivatedValidators(validatorIndex2, {
         from: admin,
       });
+      expect(await pool.canActivate(validatorIndex1)).to.equal(true);
+      expect(await pool.canActivate(validatorIndex2)).to.equal(true);
       let receipt = await pool.activateMultiple(
         sender3,
         [validatorIndex1, validatorIndex2],

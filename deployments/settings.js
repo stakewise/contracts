@@ -3,13 +3,13 @@ const hre = require('hardhat');
 let contracts, contractSettings;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contracts = {
-    validators: '0xd44F2fB4278A9d7dc87f8a3e23551201F1880980',
-    oracles: '0x198F275E5fB485AB77B5680fbCD271d5c6B06bdE',
-    pool: '0x6B6C66BEd8dbF7fAD433F07ed956389d228d8Dd8',
-    solos: '0x95f9CaF170e7D6b2294d417d41CbB1eD7870f873',
-    stakedEthToken: '0x74588F7a385f0A64473FC609d2d78357F8694F8C',
-    rewardEthToken: '0xE3b2145f6a1e62cDe0451B0Db3f64705Bd8E3317',
-    proxyAdmin: '0x8Dfc8A188dCbf1bd7A1226340510593F3Ae11a78',
+    validators: '0xE2F13059454b626e42e04845815E9Ed2E9774bF3',
+    oracles: '0xE54486fa4eB45716c5725d7A46FDDe810B8E8914',
+    pool: '0x8c1EfEcFb5c4F1099AB0460b5659342943764Df7',
+    solos: '0xcf809A020EE599034C010b387F2116237a5B22Bc',
+    stakedEthToken: '0x221D9812823DBAb0F1fB40b0D294D9875980Ac19',
+    rewardEthToken: '0x826f88d423440c305D9096cC1581Ae751eFCAfB0',
+    proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
   };
   contractSettings = {
     cancelLockDuration: '86400', // 1 day
@@ -21,8 +21,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     VRC: '0x8c5fecdC472E27Bc447696F431E425D02dd46a8c',
     withdrawalCredentials:
       '0x003e294ffc37978496f1b9298d5984ad4d55d4e2d1e6a06ee6904810c7b9e0d5',
-    activatedValidators: '10',
-    pendingValidators: '5',
+    activatedValidators: '0',
+    pendingValidators: '1',
     minActivatingDeposit: '5000000000000000000', // 5 ETH
     pendingValidatorsLimit: '500', // 5 %
   };

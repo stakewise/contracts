@@ -148,6 +148,12 @@ interface IPool {
     function setPendingValidatorsLimit(uint256 _pendingValidatorsLimit) external;
 
     /**
+    * @dev Function for checking whether validator index can be activated.
+    * @param _validatorIndex - index of the validator to check.
+    */
+    function canActivate(uint256 _validatorIndex) external view returns (bool);
+
+    /**
     * @dev Function for retrieving the validator registration contract address.
     */
     function validatorRegistration() external view returns (IDepositContract);
