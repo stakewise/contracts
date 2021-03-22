@@ -5,9 +5,9 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
+import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 
 /**
@@ -22,13 +22,13 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
 
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
-    // @dev Defines the period for total rewards update.
-    uint256 public override totalRewardsUpdatePeriod;
+    // @dev Defines how often oracles submit data.
+    uint256 public override syncPeriod;
 
     // @dev Maps candidate ID to the number of votes it has.
     mapping(bytes32 => uint256) public override candidates;
 
-    // @dev List of supported rETH2 Uniswap pairs.
+    // @dev [Deprecated] List of supported rETH2 Uniswap pairs.
     address[] private rewardEthUniswapPairs;
 
     // @dev Maps vote ID to whether it was submitted or not.
@@ -37,8 +37,11 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
 
-    // @dev Nonce for RewardEthToken total rewards.
-    CountersUpgradeable.Counter private totalRewardsNonce;
+    // @dev Nonce is used to protect from submitting the same vote several times.
+    CountersUpgradeable.Counter private nonce;
+
+    // @dev Address of the Pool contract.
+    IPool private pool;
 
     /**
     * @dev Modifier for checking whether the caller is an oracle.
@@ -49,30 +52,34 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-initialize}.
+     * @dev See {IOracles-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/v1.0.0/contracts/Oracles.sol#L54
      */
-    function initialize(address _admin, address _rewardEthToken, uint256 _totalRewardsUpdatePeriod) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        __ReentrancyGuard_init_unchained();
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
-
-        totalRewardsUpdatePeriod = _totalRewardsUpdatePeriod;
-        emit TotalRewardsUpdatePeriodUpdated(_totalRewardsUpdatePeriod);
+    function upgrade(address _pool) external override onlyAdmin whenPaused {
+        require(address(pool) == address(0), "Oracles: already upgraded");
+        pool = IPool(_pool);
     }
 
     /**
-     * @dev See {IOracles-getRewardEthUniswapPairs}.
+     * @dev See {IOracles-hasVote}.
      */
-    function getRewardEthUniswapPairs() public override view returns (address[] memory) {
-        return rewardEthUniswapPairs;
-    }
-
-    /**
-     * @dev See {IOracles-hasTotalRewardsVote}.
-     */
-    function hasTotalRewardsVote(address _oracle, uint256 _totalRewards) external override view returns (bool) {
-        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), totalRewardsNonce.current(), _totalRewards));
+    function hasVote(
+        address _oracle,
+        uint256 _totalRewards,
+        uint256 _activatedValidators
+    )
+        external override view returns (bool)
+    {
+        bytes32 candidateId = keccak256(abi.encodePacked(nonce.current(), _totalRewards, _activatedValidators));
         return submittedVotes[keccak256(abi.encodePacked(_oracle, candidateId))];
+    }
+
+    /**
+     * @dev See {IOracles-currentNonce}.
+     */
+    function currentNonce() external override view returns (uint256) {
+        return nonce.current();
     }
 
     /**
@@ -97,27 +104,24 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     }
 
     /**
-     * @dev See {IOracles-setRewardEthUniswapPairs}.
+     * @dev See {IOracles-setSyncPeriod}.
      */
-    function setRewardEthUniswapPairs(address[] calldata _rewardEthUniswapPairs) external override onlyAdmin {
-        rewardEthUniswapPairs = _rewardEthUniswapPairs;
-        emit RewardEthUniswapPairsUpdated(_rewardEthUniswapPairs);
+    function setSyncPeriod(uint256 _syncPeriod) external override onlyAdmin {
+        syncPeriod = _syncPeriod;
+        emit SyncPeriodUpdated(_syncPeriod, msg.sender);
     }
 
     /**
-     * @dev See {IOracles-setTotalRewardsUpdatePeriod}.
+     * @dev See {IOracles-vote}.
      */
-    function setTotalRewardsUpdatePeriod(uint256 _newTotalRewardsUpdatePeriod) external override onlyAdmin {
-        totalRewardsUpdatePeriod = _newTotalRewardsUpdatePeriod;
-        emit TotalRewardsUpdatePeriodUpdated(_newTotalRewardsUpdatePeriod);
-    }
-
-    /**
-     * @dev See {IOracles-voteForTotalRewards}.
-     */
-    function voteForTotalRewards(uint256 _newTotalRewards) external override onlyOracle whenNotPaused nonReentrant {
-        uint256 nonce = totalRewardsNonce.current();
-        bytes32 candidateId = keccak256(abi.encodePacked(address(rewardEthToken), nonce, _newTotalRewards));
+    function vote(
+        uint256 _totalRewards,
+        uint256 _activatedValidators
+    )
+        external override onlyOracle whenNotPaused nonReentrant
+    {
+        uint256 _nonce = nonce.current();
+        bytes32 candidateId = keccak256(abi.encodePacked(_nonce, _totalRewards, _activatedValidators));
         bytes32 voteId = keccak256(abi.encodePacked(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
 
@@ -125,17 +129,19 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit TotalRewardsVoteSubmitted(msg.sender, nonce, _newTotalRewards);
+        emit VoteSubmitted(msg.sender, _nonce, _totalRewards, _activatedValidators);
 
-        // update rewards only if enough votes accumulated
+        // update only if enough votes accumulated
         if (candidateNewVotes.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2)) {
-            totalRewardsNonce.increment();
+            nonce.increment();
             delete candidates[candidateId];
-            rewardEthToken.updateTotalRewards(_newTotalRewards);
 
-            // force reserves to match balances
-            for (uint256 i = 0; i < rewardEthUniswapPairs.length; i++) {
-                IUniswapV2Pair(rewardEthUniswapPairs[i]).sync();
+            // update total rewards
+            rewardEthToken.updateTotalRewards(_totalRewards);
+
+            // update activated validators
+            if (_activatedValidators != pool.activatedValidators()) {
+                pool.setActivatedValidators(_activatedValidators);
             }
         }
     }

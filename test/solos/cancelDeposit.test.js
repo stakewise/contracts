@@ -6,10 +6,17 @@ const {
   time,
   constants,
   balance,
+  send,
 } = require('@openzeppelin/test-helpers');
-const { deployAllContracts } = require('../../deployments');
-const { deployAndInitializeVRC, vrcAbi } = require('../../deployments/vrc');
-const { checkCollectorBalance, checkSolo } = require('../utils');
+const { upgradeContracts } = require('../../deployments');
+const { contractSettings, contracts } = require('../../deployments/settings');
+const {
+  checkCollectorBalance,
+  checkSolo,
+  stopImpersonatingAccount,
+  impersonateAccount,
+  resetFork,
+} = require('../utils');
 const { validatorParams } = require('./validatorParams');
 
 const Solos = artifacts.require('Solos');
@@ -19,26 +26,22 @@ const validatorDeposit = ether('32');
 const cancelLockDuration = 86400; // 1 day
 const { withdrawalCredentials } = validatorParams[0];
 
-contract('Solos (cancel deposit)', ([_, ...accounts]) => {
-  let solos, soloId, vrc;
-  let [admin, operator, sender, anyone] = accounts;
+contract('Solos (cancel deposit)', ([operator, sender, anyone]) => {
+  const admin = contractSettings.admin;
+  let solos, soloId;
 
-  before(async () => {
-    vrc = new web3.eth.Contract(vrcAbi, await deployAndInitializeVRC());
-  });
+  after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    let {
-      solos: solosContractAddress,
-      validators: validatorsContractAddress,
-    } = await deployAllContracts({
-      initialAdmin: admin,
-      vrcContractAddress: vrc.options.address,
-    });
-    solos = await Solos.at(solosContractAddress);
+    await impersonateAccount(admin);
+    await send.ether(sender, admin, ether('5'));
 
-    let validators = await Validators.at(validatorsContractAddress);
+    await upgradeContracts();
+
+    let validators = await Validators.at(contracts.validators);
     await validators.addOperator(operator, { from: admin });
+
+    solos = await Solos.at(contracts.solos);
     await solos.setCancelLockDuration(cancelLockDuration, {
       from: admin,
     });
@@ -54,6 +57,8 @@ contract('Solos (cancel deposit)', ([_, ...accounts]) => {
       withdrawalCredentials
     );
   });
+
+  afterEach(async () => resetFork());
 
   it('fails to cancel a deposit with invalid withdrawal credentials', async () => {
     await expectRevert(

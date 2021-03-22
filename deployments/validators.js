@@ -1,72 +1,31 @@
-const { ethers, upgrades, network } = require('hardhat');
-const { calculateGasMargin } = require('./utils');
+const hre = require('hardhat');
+const {
+  getProxyAdminFactory,
+} = require('@openzeppelin/hardhat-upgrades/dist/proxy-factory');
 
-let provider = new ethers.providers.Web3Provider(network.provider);
-
-async function deployValidators() {
-  const Validators = await ethers.getContractFactory('Validators');
-  const proxy = await upgrades.deployProxy(Validators, [], {
-    initializer: false,
-    unsafeAllowCustomTypes: true,
-  });
-  await proxy.deployed();
-  return proxy.address;
+async function prepareOraclesUpgradeData(poolContractAddress) {
+  const Oracles = await hre.ethers.getContractFactory('Oracles');
+  return Oracles.interface.encodeFunctionData('upgrade', [poolContractAddress]);
 }
 
-async function initializeValidators(
-  validatorsContractAddress,
+async function upgradeOracles(
   adminAddress,
-  poolContractAddress,
-  solosContractAddress
-) {
-  let Validators = await ethers.getContractFactory('Validators');
-  Validators = Validators.attach(validatorsContractAddress);
-
-  const { hash } = await Validators.estimateGas
-    .initialize(adminAddress, poolContractAddress, solosContractAddress)
-    .then((estimatedGas) =>
-      Validators.initialize(
-        adminAddress,
-        poolContractAddress,
-        solosContractAddress,
-        {
-          gasLimit: calculateGasMargin(estimatedGas),
-        }
-      )
-    );
-  return provider.waitForTransaction(hash);
-}
-
-async function deployOracles() {
-  const Oracles = await ethers.getContractFactory('Oracles');
-  const proxy = await upgrades.deployProxy(Oracles, [], {
-    unsafeAllowCustomTypes: true,
-    initializer: false,
-  });
-  await proxy.deployed();
-  return proxy.address;
-}
-
-async function initializeOracles(
+  proxyAdminContractAddress,
   oraclesContractAddress,
-  adminAddress,
-  rewardEthTokenContractAddress,
-  totalRewardsUpdatePeriod
+  nextImplementation,
+  data
 ) {
-  let Oracles = await ethers.getContractFactory('Oracles');
-  Oracles = Oracles.attach(oraclesContractAddress);
+  const signer = await hre.ethers.provider.getSigner(adminAddress);
+  const AdminFactory = await getProxyAdminFactory(hre);
+  const proxyAdmin = AdminFactory.attach(proxyAdminContractAddress);
 
-  const { hash } = await Oracles.initialize(
-    adminAddress,
-    rewardEthTokenContractAddress,
-    totalRewardsUpdatePeriod
-  );
-  return provider.waitForTransaction(hash);
+  const proxy = await proxyAdmin
+    .connect(signer)
+    .upgradeAndCall(oraclesContractAddress, nextImplementation, data);
+  return proxy.address;
 }
 
 module.exports = {
-  deployValidators,
-  initializeValidators,
-  deployOracles,
-  initializeOracles,
+  prepareOraclesUpgradeData,
+  upgradeOracles,
 };

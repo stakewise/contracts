@@ -1,15 +1,7 @@
+const hre = require('hardhat');
 const { expectEvent, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
-const {
-  deployStakedEthToken,
-  deployRewardEthToken,
-  initializeStakedEthToken,
-  initializeRewardEthToken,
-} = require('../deployments/tokens');
-
-const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -36,14 +28,6 @@ async function checkCollectorBalance(
   expect(
     await balance.current(collectorContract.address)
   ).to.be.bignumber.equal(correctBalance);
-}
-
-async function checkPoolCollectedAmount(
-  poolContract,
-  correctAmount = new BN(0)
-) {
-  let collectedAmount = await poolContract.collectedAmount();
-  expect(collectedAmount).to.be.bignumber.equal(correctAmount);
 }
 
 async function checkSoloDepositAdded({
@@ -127,18 +111,11 @@ async function checkRewardEthToken({
   rewardEthToken,
   totalSupply,
   account,
-  reward,
   balance,
 }) {
   if (totalSupply != null) {
     expect(await rewardEthToken.totalSupply()).to.be.bignumber.equal(
       totalSupply
-    );
-  }
-
-  if (account != null && reward != null) {
-    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
-      reward
     );
   }
 
@@ -149,30 +126,90 @@ async function checkRewardEthToken({
   }
 }
 
-async function deployTokens({
-  adminAddress,
-  oraclesContractAddress,
-  poolContractAddress,
-}) {
-  const stakedEthTokenContractAddress = await deployStakedEthToken();
-  const rewardEthTokenContractAddress = await deployRewardEthToken();
-  await initializeStakedEthToken(
-    stakedEthTokenContractAddress,
-    adminAddress,
-    rewardEthTokenContractAddress,
-    poolContractAddress
-  );
-  await initializeRewardEthToken(
-    rewardEthTokenContractAddress,
-    adminAddress,
-    stakedEthTokenContractAddress,
-    oraclesContractAddress
-  );
+async function getOracleAccounts({ oracles }) {
+  let oracleAccounts = [];
+  let oracleRole = await oracles.ORACLE_ROLE();
+  for (let i = 0; i < (await oracles.getRoleMemberCount(oracleRole)); i++) {
+    let oracle = await oracles.getRoleMember(oracleRole, i);
+    await impersonateAccount(oracle);
+    oracleAccounts.push(oracle);
+  }
+  return oracleAccounts;
+}
 
-  return [
-    await RewardEthToken.at(rewardEthTokenContractAddress),
-    await StakedEthToken.at(stakedEthTokenContractAddress),
-  ];
+async function setActivatedValidators({
+  rewardEthToken,
+  oracles,
+  oracleAccounts,
+  pool,
+  activatedValidators,
+}) {
+  let prevActivatedValidators = await pool.activatedValidators();
+  if (prevActivatedValidators.eq(activatedValidators)) {
+    return;
+  }
+
+  let totalRewards = await rewardEthToken.totalRewards();
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.vote(totalRewards, activatedValidators, {
+      from: oracleAccounts[i],
+    });
+    if ((await pool.activatedValidators()).eq(activatedValidators)) {
+      return receipt;
+    }
+  }
+}
+
+async function setTotalRewards({
+  rewardEthToken,
+  oracles,
+  oracleAccounts,
+  pool,
+  totalRewards,
+}) {
+  if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+    return;
+  }
+
+  let activatedValidators = await pool.activatedValidators();
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.vote(totalRewards, activatedValidators, {
+      from: oracleAccounts[i],
+    });
+    if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+      return receipt;
+    }
+  }
+}
+
+async function impersonateAccount(account) {
+  return hre.network.provider.request({
+    method: 'hardhat_impersonateAccount',
+    params: [account],
+  });
+}
+
+async function stopImpersonatingAccount(account) {
+  return hre.network.provider.request({
+    method: 'hardhat_stopImpersonatingAccount',
+    params: [account],
+  });
+}
+
+async function resetFork() {
+  await hre.network.provider.request({
+    method: 'hardhat_reset',
+    params: [
+      {
+        forking: {
+          jsonRpcUrl: hre.config.networks.hardhat.forking.url,
+          blockNumber: hre.config.networks.hardhat.forking.blockNumber,
+        },
+      },
+    ],
+  });
 }
 
 module.exports = {
@@ -181,8 +218,12 @@ module.exports = {
   checkSoloDepositAdded,
   checkValidatorRegistered,
   getDepositAmount,
-  checkPoolCollectedAmount,
   checkStakedEthToken,
   checkRewardEthToken,
-  deployTokens,
+  impersonateAccount,
+  stopImpersonatingAccount,
+  resetFork,
+  setActivatedValidators,
+  setTotalRewards,
+  getOracleAccounts,
 };
