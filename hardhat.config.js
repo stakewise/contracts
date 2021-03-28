@@ -138,6 +138,8 @@ module.exports = {
       'StakedEthToken',
       'StakeWiseToken',
       'Validators',
+      'VestingEscrow',
+      'VestingEscrowFactory',
     ],
     clear: true,
     flat: true,
