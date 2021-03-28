@@ -37,10 +37,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    // update contract settings before upgrade
-    contractSettings.activatedValidators = '10';
-    contractSettings.pendingValidators = '0';
-
     // reset contract settings
     activatedValidators = new BN(contractSettings.activatedValidators);
     pendingValidators = new BN(contractSettings.pendingValidators);
@@ -123,13 +119,15 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
     });
 
     it('places deposit of user to the activation queue with exceeded pending validators limit', async () => {
-      await pool.setPendingValidatorsLimit('1000', { from: admin }); // 10 %
+      await pool.setPendingValidatorsLimit('1', { from: admin }); // 0.01 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
-      // deposit more than 10 %
+      // deposit more than 0.01 %
       let depositAmount = ether('32').mul(new BN(2));
       poolBalance = poolBalance.add(depositAmount);
-      let validatorIndex = activatedValidators.add(new BN(2));
+      let validatorIndex = activatedValidators
+        .add(pendingValidators)
+        .add(new BN(2));
 
       // check deposit amount placed in activation queue
       let receipt = await pool.addDeposit({
@@ -197,7 +195,9 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         from: sender1,
         value: depositAmount,
       });
-      validatorIndex = activatedValidators.add(new BN(1));
+      validatorIndex = activatedValidators
+        .add(pendingValidators)
+        .add(new BN(1));
 
       let validators = await Validators.at(contracts.validators);
       await validators.addOperator(operator, { from: admin });
@@ -299,13 +299,17 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         from: sender3,
         value: depositAmount,
       });
-      validatorIndex1 = activatedValidators.add(new BN(1));
+      validatorIndex1 = activatedValidators
+        .add(pendingValidators)
+        .add(new BN(1));
 
       await pool.addDeposit({
         from: sender3,
         value: depositAmount,
       });
-      validatorIndex2 = activatedValidators.add(new BN(2));
+      validatorIndex2 = activatedValidators
+        .add(pendingValidators)
+        .add(new BN(2));
 
       let validators = await Validators.at(contracts.validators);
       await validators.addOperator(operator, { from: admin });
