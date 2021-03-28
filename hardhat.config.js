@@ -136,6 +136,7 @@ module.exports = {
       'RewardEthToken',
       'Solos',
       'StakedEthToken',
+      'StakeWiseToken',
       'Validators',
     ],
     clear: true,
