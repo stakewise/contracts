@@ -67,6 +67,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, OwnablePausableUpgradeab
         IERC20Upgradeable(token).safeApprove(escrow, amount);
         escrows[recipient].push(escrow);
 
+        // solhint-disable-next-line not-rely-on-time
         if (vestingStart == 0) vestingStart = block.timestamp;
         uint256 vestingEnd = vestingStart.add(vestingDuration);
         IVestingEscrow(escrow).initialize(

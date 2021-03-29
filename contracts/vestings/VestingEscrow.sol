@@ -70,9 +70,11 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
     function vestedAmount() public view override returns (uint256) {
         uint256 _startTime = startTime;
         uint256 _endTime = endTime;
+        /* solhint-disable not-rely-on-time */
         if (block.timestamp < _startTime.add(cliffLength)) return 0;
         else if (_endTime <= block.timestamp || _endTime <= _startTime) return totalAmount;
         return totalAmount.mul(block.timestamp.sub(_startTime)).div(_endTime.sub(_startTime));
+        /* solhint-disable not-rely-on-time */
     }
 
     /**
@@ -90,6 +92,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         uint256 pulledAmount = _totalAmount.sub(claimedAmount);
         require(pulledAmount > 0, "VestingEscrow: nothing to pull");
 
+        // solhint-disable-next-line not-rely-on-time
         endTime = block.timestamp;
         claimedAmount = _totalAmount;
 
