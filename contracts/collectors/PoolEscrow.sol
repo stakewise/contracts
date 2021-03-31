@@ -10,7 +10,7 @@ import "../interfaces/IPoolEscrow.sol";
  *
  * @dev PoolEscrow contract is used to receive transfers from ETH2 system contract for the pool validators.
  * The withdrawal credentials of the Pool must be set to
- * https://github.com/ethereum/eth2.0-specs/blob/v1.1.0/specs/phase0/validator.md#eth1_address_withdrawal_prefix
+ * https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.2/specs/phase0/validator.md#eth1_address_withdrawal_prefix
  * using the address of this contract as a destination.
  */
 contract PoolEscrow is IPoolEscrow {
