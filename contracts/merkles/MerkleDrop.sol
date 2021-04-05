@@ -13,6 +13,7 @@ import "../interfaces/IMerkleDrop.sol";
  * @title MerkleDrop
  *
  * @dev MerkleDrop contract allows users to claim their tokens by proving that they're part of the merkle tree.
+ * Adopted from https://github.com/Uniswap/merkle-distributor/blob/0d478d722da2e5d95b7292fd8cbdb363d98e9a93/contracts/MerkleDistributor.sol
  */
 contract MerkleDrop is IMerkleDrop, Ownable {
     using SafeERC20 for IERC20;
