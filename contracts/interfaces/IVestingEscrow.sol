@@ -2,7 +2,7 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
  * @dev Interface of the VestingEscrow contract.
@@ -57,7 +57,7 @@ interface IVestingEscrow {
     /**
     * @dev Function for fetching the token contract address.
     */
-    function token() external view returns (IERC20Upgradeable);
+    function token() external view returns (IERC20);
 
     /**
     * @dev Function for fetching the recipient address.

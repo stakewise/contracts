@@ -15,18 +15,11 @@ interface IPoolEscrow {
     event Withdrawn(address indexed sender, address indexed payee, uint256 amount);
 
     /**
-    * @dev Event for tracking ownership transfer commits.
-    * @param currentOwner - the address of the current owner.
-    * @param futureOwner - the address the ownership is planned to be transferred to.
-    */
-    event OwnershipTransferCommitted(address indexed currentOwner, address indexed futureOwner);
-
-    /**
     * @dev Event for tracking ownership transfers.
-    * @param previousOwner - the address the ownership was transferred from.
-    * @param newOwner - the address the ownership was transferred to.
+    * @param previousOwner - the address of the previous owner.
+    * @param newOwner - the address of the new owner.
     */
-    event OwnershipTransferApplied(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     /**
     * @dev Function for retrieving the address of the current owner.
@@ -34,21 +27,10 @@ interface IPoolEscrow {
     function owner() external view returns (address);
 
     /**
-    * @dev Function for retrieving the address of the future owner.
-    */
-    function futureOwner() external view returns (address);
-
-    /**
-     * @dev Commit contract ownership transfer to a new account (`newOwner`).
+     * @dev Transfers ownership of the contract to a new account (`newOwner`).
      * Can only be called by the current owner.
      */
-    function commitOwnershipTransfer(address newOwner) external;
-
-    /**
-     * @dev Apply contract ownership transfer to a new account (`futureOwner`).
-     * Can only be called by the current owner.
-     */
-    function applyOwnershipTransfer() external;
+    function transferOwnership(address newOwner) external;
 
     /**
      * @dev Withdraw balance for a payee, forwarding all gas to the

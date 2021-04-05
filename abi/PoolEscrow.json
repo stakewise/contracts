@@ -26,26 +26,7 @@
         "type": "address"
       }
     ],
-    "name": "OwnershipTransferApplied",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "currentOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "futureOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferCommitted",
+    "name": "OwnershipTransferred",
     "type": "event"
   },
   {
@@ -75,9 +56,15 @@
   },
   {
     "inputs": [],
-    "name": "applyOwnershipTransfer",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -88,35 +75,9 @@
         "type": "address"
       }
     ],
-    "name": "commitOwnershipTransfer",
+    "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "futureOwner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

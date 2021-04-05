@@ -19,16 +19,13 @@ contract PoolEscrow is IPoolEscrow {
     // @dev The address of the current contract owner.
     address public override owner;
 
-    // @dev The address the ownership is planned to be transferred to.
-    address public override futureOwner;
-
     /**
     * @dev Constructor for initializing the PoolEscrow contract.
     * @param _owner - address of the contract owner.
     */
     constructor(address _owner) {
         owner = _owner;
-        emit OwnershipTransferApplied(address(0), _owner);
+        emit OwnershipTransferred(address(0), _owner);
     }
 
     /**
@@ -40,30 +37,20 @@ contract PoolEscrow is IPoolEscrow {
     }
 
     /**
-     * @dev See {IPoolEscrow-commitOwnershipTransfer}.
+     * @dev See {IPoolEscrow-transferOwnership}.
      */
-    function commitOwnershipTransfer(address newOwner) external override onlyOwner {
+    function transferOwnership(address newOwner) external override onlyOwner {
         require(newOwner != address(0), "PoolEscrow: new owner is the zero address");
-        futureOwner = newOwner;
-        emit OwnershipTransferCommitted(msg.sender, newOwner);
-    }
-
-    /**
-     * @dev See {IPoolEscrow-applyOwnershipTransfer}.
-     */
-    function applyOwnershipTransfer() external override onlyOwner {
-        address newOwner = futureOwner;
-        require(newOwner != address(0), "PoolEscrow: new owner is the zero address");
-        (owner, futureOwner) = (newOwner, address(0));
-        emit OwnershipTransferApplied(msg.sender, newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
     }
 
     /**
      * @dev See {IPoolEscrow-withdraw}.
      */
     function withdraw(address payable payee, uint256 amount) external override onlyOwner {
-        payee.sendValue(amount);
         emit Withdrawn(msg.sender, payee, amount);
+        payee.sendValue(amount);
     }
 
     /**

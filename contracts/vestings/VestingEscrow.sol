@@ -2,9 +2,9 @@
 
 pragma solidity 0.7.5;
 
-import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IVestingEscrow.sol";
 
@@ -16,11 +16,11 @@ import "../interfaces/IVestingEscrow.sol";
  * Admin user can stop the vesting and withdraw locked tokens.
  */
 contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
-    using SafeMathUpgradeable for uint256;
+    using SafeERC20 for IERC20;
+    using SafeMath for uint256;
 
     // @dev Address of the token contract.
-    IERC20Upgradeable public override token;
+    IERC20 public override token;
 
     // @dev Address of the recipient.
     address public override recipient;
@@ -55,7 +55,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         external override initializer
     {
         __OwnablePausableUpgradeable_init(_admin);
-        token = IERC20Upgradeable(_token);
+        token = IERC20(_token);
         recipient = _recipient;
         totalAmount = _totalAmount;
         startTime = _startTime;

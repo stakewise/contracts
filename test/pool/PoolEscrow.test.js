@@ -45,79 +45,30 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     );
   });
 
-  describe('commit ownership transfer', () => {
-    it('owner can commit ownership transfer', async () => {
-      let receipt = await poolEscrow.commitOwnershipTransfer(newOwner, {
+  describe('transfer ownership', () => {
+    it('owner can transfer ownership', async () => {
+      let receipt = await poolEscrow.transferOwnership(newOwner, {
         from: owner,
       });
-      expectEvent(receipt, 'OwnershipTransferCommitted', {
-        currentOwner: owner,
-        futureOwner: newOwner,
-      });
-      expect(await poolEscrow.futureOwner()).to.equal(newOwner);
-      expect(await poolEscrow.owner()).to.equal(owner);
-
-      // future owner cannot yet perform any actions
-      await expectRevert(
-        poolEscrow.withdraw(newOwner, ether('1'), {
-          from: newOwner,
-        }),
-        'PoolEscrow: caller is not the owner'
-      );
-    });
-
-    it('fails to commit ownership transfer if not an owner', async () => {
-      await expectRevert(
-        poolEscrow.commitOwnershipTransfer(newOwner, {
-          from: newOwner,
-        }),
-        'PoolEscrow: caller is not the owner'
-      );
-    });
-
-    it('fails to commit ownership transfer to zero address', async () => {
-      await expectRevert(
-        poolEscrow.commitOwnershipTransfer(constants.ZERO_ADDRESS, {
-          from: owner,
-        }),
-        'PoolEscrow: new owner is the zero address'
-      );
-    });
-  });
-
-  describe('apply ownership transfer', () => {
-    it('owner can apply ownership transfer', async () => {
-      await poolEscrow.commitOwnershipTransfer(newOwner, {
-        from: owner,
-      });
-
-      let receipt = await poolEscrow.applyOwnershipTransfer({
-        from: owner,
-      });
-      expectEvent(receipt, 'OwnershipTransferApplied', {
+      expectEvent(receipt, 'OwnershipTransferred', {
         previousOwner: owner,
         newOwner: newOwner,
       });
-      expect(await poolEscrow.futureOwner()).to.equal(constants.ZERO_ADDRESS);
       expect(await poolEscrow.owner()).to.equal(newOwner);
     });
 
-    it('fails to apply ownership transfer if not an owner', async () => {
-      await poolEscrow.commitOwnershipTransfer(newOwner, {
-        from: owner,
-      });
-
+    it('fails to transfer ownership if not an owner', async () => {
       await expectRevert(
-        poolEscrow.applyOwnershipTransfer({
+        poolEscrow.transferOwnership(newOwner, {
           from: newOwner,
         }),
         'PoolEscrow: caller is not the owner'
       );
     });
 
-    it('fails to apply ownership transfer to zero address', async () => {
+    it('fails to transfer ownership to zero address', async () => {
       await expectRevert(
-        poolEscrow.applyOwnershipTransfer({
+        poolEscrow.transferOwnership(constants.ZERO_ADDRESS, {
           from: owner,
         }),
         'PoolEscrow: new owner is the zero address'

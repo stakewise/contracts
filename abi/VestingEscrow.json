@@ -570,7 +570,7 @@
     "name": "token",
     "outputs": [
       {
-        "internalType": "contract IERC20Upgradeable",
+        "internalType": "contract IERC20",
         "name": "",
         "type": "address"
       }
