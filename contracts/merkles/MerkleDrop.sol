@@ -82,6 +82,7 @@ contract MerkleDrop is IMerkleDrop, Ownable {
      * @dev See {IMerkleDrop-stop}.
      */
     function stop(address beneficiary) external override onlyOwner {
+        // solhint-disable-next-line not-rely-on-time
         require(block.timestamp >= expireTimestamp, "MerkleDrop: not expired");
         uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(beneficiary, amount);
