@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IVestingEscrowFactory.sol";
 import "../interfaces/IVestingEscrow.sol";
-import "hardhat/console.sol";
 
 
 /**
