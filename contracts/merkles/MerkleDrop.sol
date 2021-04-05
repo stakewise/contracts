@@ -32,14 +32,17 @@ contract MerkleDrop is IMerkleDrop, Ownable {
 
     /**
     * @dev Constructor for initializing the MerkleDrop contract.
+    * @param _owner - address of the contract owner.
     * @param _token - address of the token contract.
     * @param _merkleRoot - address of the merkle root.
     * @param _duration - duration of the merkle drop in seconds.
     */
-    constructor(address _token, bytes32 _merkleRoot, uint256 _duration) {
+    constructor(address _owner, address _token, bytes32 _merkleRoot, uint256 _duration) {
         token = IERC20(_token);
         merkleRoot = _merkleRoot;
+        // solhint-disable-next-line not-rely-on-time
         expireTimestamp = block.timestamp + _duration;
+        transferOwnership(_owner);
     }
 
     /**
@@ -63,11 +66,11 @@ contract MerkleDrop is IMerkleDrop, Ownable {
      * @dev See {IMerkleDrop-claim}.
      */
     function claim(uint256 index, address account, uint256 amount, bytes32[] calldata merkleProof) external override {
-        require(!isClaimed(index), 'MerkleDrop: drop already claimed');
+        require(!isClaimed(index), "MerkleDrop: drop already claimed");
 
         // Verify the merkle proof.
         bytes32 node = keccak256(abi.encodePacked(index, account, amount));
-        require(MerkleProof.verify(merkleProof, merkleRoot, node), 'MerkleDrop: invalid proof');
+        require(MerkleProof.verify(merkleProof, merkleRoot, node), "MerkleDrop: invalid proof");
 
         // Mark it claimed and send the token.
         _setClaimed(index);
