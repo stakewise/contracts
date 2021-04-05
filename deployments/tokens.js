@@ -1,4 +1,4 @@
-const { ethers } = require('hardhat');
+const { ethers, upgrades } = require('hardhat');
 
 async function deployAndInitializeERC20Mock(
   ownerAddress,
@@ -12,6 +12,14 @@ async function deployAndInitializeERC20Mock(
   return erc20Mock.address;
 }
 
+async function deployAndInitializeStakeWiseToken(adminAddress) {
+  const StakeWiseToken = await ethers.getContractFactory('StakeWiseToken');
+  const proxy = await upgrades.deployProxy(StakeWiseToken, [adminAddress]);
+  await proxy.deployed();
+  return proxy.address;
+}
+
 module.exports = {
   deployAndInitializeERC20Mock,
+  deployAndInitializeStakeWiseToken,
 };
