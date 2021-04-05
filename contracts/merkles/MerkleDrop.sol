@@ -29,6 +29,12 @@ contract MerkleDrop is IMerkleDrop, Ownable {
     // This is a packed array of booleans.
     mapping(uint256 => uint256) public override claimedBitMap;
 
+    /**
+    * @dev Constructor for initializing the MerkleDrop contract.
+    * @param _token - address of the token contract.
+    * @param _merkleRoot - address of the merkle root.
+    * @param _duration - duration of the merkle drop in seconds.
+    */
     constructor(address _token, bytes32 _merkleRoot, uint256 _duration) {
         token = IERC20(_token);
         merkleRoot = _merkleRoot;
