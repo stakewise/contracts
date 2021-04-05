@@ -140,6 +140,7 @@ module.exports = {
       'Validators',
       'VestingEscrow',
       'VestingEscrowFactory',
+      'PoolEscrow',
     ],
     clear: true,
     flat: true,
