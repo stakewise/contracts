@@ -40,7 +40,8 @@ contract VestingEscrowFactory is IVestingEscrowFactory, OwnablePausableUpgradeab
      * @dev See {IVestingEscrowFactory-balanceOf}.
      */
     function balanceOf(address account) external view override returns (uint256 total) {
-        for (uint256 i = 0; i < escrows[account].length; i++) {
+        uint256 escrowsCount = escrows[account].length;
+        for (uint256 i = 0; i < escrowsCount; i++) {
             total = total.add(IVestingEscrow(escrows[account][i]).unclaimedAmount());
         }
     }
