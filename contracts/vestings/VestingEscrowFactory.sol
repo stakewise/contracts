@@ -5,6 +5,7 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/proxy/ClonesUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IVestingEscrowFactory.sol";
@@ -17,7 +18,7 @@ import "../interfaces/IVestingEscrow.sol";
  * @dev VestingEscrowFactory contract creates new vesting escrows and keeps track of total unclaimed balances of the users.
  * Only admin can create new vesting escrows.
  */
-contract VestingEscrowFactory is IVestingEscrowFactory, OwnablePausableUpgradeable {
+contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeable, OwnablePausableUpgradeable {
     using ClonesUpgradeable for address;
     using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
@@ -57,7 +58,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, OwnablePausableUpgradeab
         uint256 vestingDuration,
         uint256 cliffLength
     )
-        external override onlyAdmin whenNotPaused returns (address escrow)
+        external override onlyAdmin whenNotPaused nonReentrant returns (address escrow)
     {
         require(cliffLength <= vestingDuration, "VestingEscrowFactory: invalid cliff");
         require(recipient != address(0), "PoolEscrow: recipient is the zero address");
