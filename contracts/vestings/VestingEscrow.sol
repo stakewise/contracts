@@ -88,6 +88,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
     * @dev See {IVestingEscrow-stop}.
     */
     function stop(address beneficiary) external override onlyAdmin {
+        require(beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
         uint256 _totalAmount = totalAmount;
         uint256 pulledAmount = _totalAmount.sub(claimedAmount);
         require(pulledAmount > 0, "VestingEscrow: nothing to pull");
@@ -104,6 +105,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
     * @dev See {IVestingEscrow-claim}.
     */
     function claim(address beneficiary, uint256 amount) external override whenNotPaused {
+        require(beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
         require(msg.sender == recipient, "VestingEscrow: access denied");
         require(amount > 0, "VestingEscrow: amount is zero");
 

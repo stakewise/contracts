@@ -59,6 +59,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, OwnablePausableUpgradeab
         external override onlyAdmin whenNotPaused returns (address escrow)
     {
         require(cliffLength <= vestingDuration, "VestingEscrowFactory: invalid cliff");
+        require(recipient != address(0), "PoolEscrow: recipient is the zero address");
 
         IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
 
