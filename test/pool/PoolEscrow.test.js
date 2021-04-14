@@ -109,6 +109,17 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
       );
     });
 
+    it('fails to withdraw ether with invalid payee address', async () => {
+      let amount = ether('5');
+      await send.ether(anyone, poolEscrow.address, amount);
+      await expectRevert(
+        poolEscrow.withdraw(constants.ZERO_ADDRESS, amount, {
+          from: owner,
+        }),
+        'PoolEscrow: payee is the zero address'
+      );
+    });
+
     it('fails to withdraw ether when not enough balance', async () => {
       let amount = ether('5');
       await expectRevert(

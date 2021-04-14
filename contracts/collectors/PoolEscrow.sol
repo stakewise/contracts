@@ -49,6 +49,7 @@ contract PoolEscrow is IPoolEscrow {
      * @dev See {IPoolEscrow-withdraw}.
      */
     function withdraw(address payable payee, uint256 amount) external override onlyOwner {
+        require(payee != address(0), "PoolEscrow: payee is the zero address");
         emit Withdrawn(msg.sender, payee, amount);
         payee.sendValue(amount);
     }
