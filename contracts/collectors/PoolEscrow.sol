@@ -19,13 +19,16 @@ contract PoolEscrow is IPoolEscrow {
     // @dev The address of the current contract owner.
     address public override owner;
 
+    // @dev The address the ownership is planned to be transferred to.
+    address public override futureOwner;
+
     /**
     * @dev Constructor for initializing the PoolEscrow contract.
     * @param _owner - address of the contract owner.
     */
     constructor(address _owner) {
         owner = _owner;
-        emit OwnershipTransferred(address(0), _owner);
+        emit OwnershipTransferApplied(address(0), _owner);
     }
 
     /**
@@ -37,12 +40,23 @@ contract PoolEscrow is IPoolEscrow {
     }
 
     /**
-     * @dev See {IPoolEscrow-transferOwnership}.
+     * @dev See {IPoolEscrow-commitOwnershipTransfer}.
      */
-    function transferOwnership(address newOwner) external override onlyOwner {
-        require(newOwner != address(0), "PoolEscrow: new owner is the zero address");
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+    function commitOwnershipTransfer(address newOwner) external override onlyOwner {
+        // can be zero address to reset incorrect future owner
+        futureOwner = newOwner;
+        emit OwnershipTransferCommitted(msg.sender, newOwner);
+    }
+
+    /**
+     * @dev See {IPoolEscrow-applyOwnershipTransfer}.
+     */
+    function applyOwnershipTransfer() external override {
+        address newOwner = futureOwner;
+        require(newOwner == msg.sender, "PoolEscrow: caller is not the future owner");
+
+        emit OwnershipTransferApplied(owner, newOwner);
+        (owner, futureOwner) = (newOwner, address(0));
     }
 
     /**
