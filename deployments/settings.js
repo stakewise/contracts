@@ -10,6 +10,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     solos: '0xcf809A020EE599034C010b387F2116237a5B22Bc',
     stakedEthToken: '0x221D9812823DBAb0F1fB40b0D294D9875980Ac19',
     rewardEthToken: '0x826f88d423440c305D9096cC1581Ae751eFCAfB0',
+    stakeWiseToken: '0x0e2497aACec2755d831E4AFDEA25B4ef1B823855',
+    vestingEscrowFactory: '0xbA91cdD484893c1f8F75DB55733ccaDcd0fE5f59',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
   };
 
@@ -37,6 +39,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     solos: '0xEadCBA8BF9ACA93F627F31fB05470F5A0686CEca',
     stakedEthToken: '0xFe2e637202056d30016725477c5da089Ab0A043A',
     rewardEthToken: '0x20BC832ca081b91433ff6c17f85701B6e92486c5',
+    stakeWiseToken: '0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2',
+    vestingEscrowFactory: '0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
   };
 
@@ -49,9 +53,9 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     maintainer: '0xf91AA4a655B6F43243ed4C2853F3508314DaA2aB',
     VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
     withdrawalCredentials:
-      '0x003e294ffc37978496f1b9298d5984ad4d55d4e2d1e6a06ee6904810c7b9e0d5',
+      '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
     activatedValidators: '614',
-    pendingValidators: '0',
+    pendingValidators: '1',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
   };

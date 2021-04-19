@@ -35,6 +35,11 @@
 - Contract: [0x20BC832ca081b91433ff6c17f85701B6e92486c5](https://etherscan.io/address/0x20BC832ca081b91433ff6c17f85701B6e92486c5)
 - Transaction: [0x7862156d832b88c96ebaad89570422b4dfb6ef10dd4f6f45798c583eec9f7db9](https://etherscan.io/tx/0x7862156d832b88c96ebaad89570422b4dfb6ef10dd4f6f45798c583eec9f7db9)
 
+## StakeWiseToken
+
+- Contract: [0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2](https://etherscan.io/address/0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2)
+- Transaction: [0x2ea1150808638522d935c7d66b6d67782389b5123682ca466c9b97ac0eb0c050](https://etherscan.io/tx/0x2ea1150808638522d935c7d66b6d67782389b5123682ca466c9b97ac0eb0c050)
+
 ## Oracles
 
 - Contract: [0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514](https://etherscan.io/address/0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514)
@@ -44,6 +49,16 @@
 
 - Implementation: [0x749dCCE12E8337dfb44635082519E656d44A2672](https://etherscan.io/address/0x749dCCE12E8337dfb44635082519E656d44A2672)
 - Transaction: [0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f](https://etherscan.io/tx/0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f)
+
+## Vesting Escrow
+
+- Contract: [0xaE678D2A911400a55e06f4A1F0C0B363F3eE2e42](https://etherscan.io/address/0xaE678D2A911400a55e06f4A1F0C0B363F3eE2e42)
+- Transaction: [0xa315c073a738f7794a2642dfa0b4db6ced117044df52d2a8ed2c48d33e144599](https://etherscan.io/tx/0xa315c073a738f7794a2642dfa0b4db6ced117044df52d2a8ed2c48d33e144599)
+
+## Vesting Escrow Factory
+
+- Contract: [0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5](https://etherscan.io/address/0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5)
+- Transaction: [0x0dfc545843dc9b5853a5b727e9a8e955f8d193bb2f6415591bdd3e2c245449f5](https://etherscan.io/tx/0x0dfc545843dc9b5853a5b727e9a8e955f8d193bb2f6415591bdd3e2c245449f5)
 
 ## Proxy Admin
 
