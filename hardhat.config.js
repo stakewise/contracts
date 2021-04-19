@@ -11,7 +11,7 @@ require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
 const GAS_PRICE = 20e9; // 20 Gwei
-const BLOCK_NUMBER = 12122895;
+const BLOCK_NUMBER = 12270620;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 

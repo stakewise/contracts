@@ -15,6 +15,11 @@
 - Implementation: [0xc8970E7C07c251625F9F93cE510b1D9c1a08d299](https://etherscan.io/address/0xc8970E7C07c251625F9F93cE510b1D9c1a08d299)
 - Transaction: [0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2](https://etherscan.io/tx/0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2)
 
+## Pool Escrow
+
+- Contract: [0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079](https://etherscan.io/address/0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079)
+- Transaction: [0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155](https://etherscan.io/tx/0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155)
+
 ## Solos
 
 - Contract: [0xEadCBA8BF9ACA93F627F31fB05470F5A0686CEca](https://etherscan.io/address/0xEadCBA8BF9ACA93F627F31fB05470F5A0686CEca)

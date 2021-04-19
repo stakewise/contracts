@@ -15,6 +15,11 @@
 - Implementation: [0xAB10021EA5d14156f52414C492bf81859d0b21F6](https://goerli.etherscan.io/address/0xAB10021EA5d14156f52414C492bf81859d0b21F6)
 - Transaction: [0xe71758c8df2927dac4f8c3854cbefd5fa73d95dcde38d68a91718d7a702b0dc5](https://goerli.etherscan.io/tx/0xe71758c8df2927dac4f8c3854cbefd5fa73d95dcde38d68a91718d7a702b0dc5)
 
+## Pool Escrow
+
+- Contract: [0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218](https://goerli.etherscan.io/address/0x040f15c6b5bfc5f324ecab5864c38d4e1eef4218)
+- Transaction: [0x7d0aa2f273c715ee913ffc45a1f830faac52fb84bf384b6fa3ac58308f375602](https://goerli.etherscan.io/tx/0x7d0aa2f273c715ee913ffc45a1f830faac52fb84bf384b6fa3ac58308f375602)
+
 ## Solos
 
 - Contract: [0xcf809A020EE599034C010b387F2116237a5B22Bc](https://goerli.etherscan.io/address/0xcf809A020EE599034C010b387F2116237a5B22Bc)

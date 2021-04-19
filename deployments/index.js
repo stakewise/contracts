@@ -1,5 +1,4 @@
 const hre = require('hardhat');
-const { deployPoolEscrow } = require('./collectors');
 const { white, green } = require('chalk');
 const { contractSettings, contracts } = require('./settings');
 const { deployAndInitializeStakeWiseToken } = require('./tokens');
@@ -49,18 +48,10 @@ async function upgradeContracts() {
     )
   );
 
-  let poolEscrowContractAddress = await deployPoolEscrow(
-    contractSettings.admin
-  );
-  log(
-    white(`Deployed PoolEscrow contract: ${green(poolEscrowContractAddress)}`)
-  );
-
   return {
     ...contracts,
     vestingEscrowFactory: vestingEscrowFactoryContractAddress,
     vestingEscrow: vestingEscrowContractAddress,
-    poolEscrow: poolEscrowContractAddress,
     stakeWiseToken: stakeWiseTokenContractAddress,
   };
 }
