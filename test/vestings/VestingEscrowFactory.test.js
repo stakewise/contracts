@@ -6,6 +6,7 @@ const {
   send,
   time,
   BN,
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
@@ -105,6 +106,40 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
         }
       ),
       'SafeMath: subtraction overflow'
+    );
+  });
+
+  it('fails to deploy escrow with invalid recipient', async () => {
+    await expectRevert(
+      vestingEscrowFactory.deployEscrow(
+        stakeWiseToken.address,
+        constants.ZERO_ADDRESS,
+        vestedAmount,
+        0,
+        time.duration.years(4),
+        time.duration.days(180),
+        {
+          from: admin,
+        }
+      ),
+      'PoolEscrow: recipient is the zero address'
+    );
+  });
+
+  it('fails to deploy escrow with invalid token', async () => {
+    await expectRevert(
+      vestingEscrowFactory.deployEscrow(
+        constants.ZERO_ADDRESS,
+        recipient,
+        vestedAmount,
+        0,
+        time.duration.years(4),
+        time.duration.days(180),
+        {
+          from: admin,
+        }
+      ),
+      'Address: call to non-contract'
     );
   });
 

@@ -6,6 +6,7 @@ const {
   send,
   time,
   BN,
+  constants,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
@@ -171,6 +172,15 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
         'OwnablePausable: access denied'
       );
     });
+
+    it('fails to stop vesting escrow with invalid beneficiary address', async () => {
+      await expectRevert(
+        escrow.stop(constants.ZERO_ADDRESS, {
+          from: admin,
+        }),
+        'PoolEscrow: beneficiary is the zero address'
+      );
+    });
   });
 
   describe('claim', () => {
@@ -204,6 +214,15 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
           from: admin,
         }),
         'VestingEscrow: access denied'
+      );
+    });
+
+    it('fails to claim unlocked tokens with invalid beneficiary address', async () => {
+      await expectRevert(
+        escrow.claim(constants.ZERO_ADDRESS, vestedAmount, {
+          from: recipient,
+        }),
+        'PoolEscrow: beneficiary is the zero address'
       );
     });
 
