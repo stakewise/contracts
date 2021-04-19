@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/a4e82ad71d24cf5ab1778f1947441f24903da86a/contracts/drafts/ERC20PermitUpgradeable.sol
+// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.4.0/contracts/drafts/ERC20PermitUpgradeable.sol
 
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "../interfaces/IERC20PermitUpgradeable.sol";
-import "../libraries/ECDSA.sol";
-import "./EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/drafts/IERC20PermitUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/drafts/EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import "./ERC20Upgradeable.sol";
 
 /**
@@ -17,6 +17,8 @@ import "./ERC20Upgradeable.sol";
  * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
  * presenting a message signed by the account. By not relying on `{IERC20-approve}`, the token holder account doesn't
  * need to send a transaction, and thus is not required to hold Ether at all.
+ *
+ * _Available since v3.4._
  */
 abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IERC20PermitUpgradeable, EIP712Upgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -45,7 +47,7 @@ abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IER
     /**
      * @dev See {IERC20Permit-permit}.
      */
-    function permit(address owner, address spender, uint256 amount, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual override {
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s) public virtual override {
         // solhint-disable-next-line not-rely-on-time
         require(block.timestamp <= deadline, "ERC20Permit: expired deadline");
 
@@ -54,7 +56,7 @@ abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IER
                 _PERMIT_TYPEHASH,
                 owner,
                 spender,
-                amount,
+                value,
                 _nonces[owner].current(),
                 deadline
             )
@@ -62,11 +64,11 @@ abstract contract ERC20PermitUpgradeable is Initializable, ERC20Upgradeable, IER
 
         bytes32 hash = _hashTypedDataV4(structHash);
 
-        address signer = ECDSA.recover(hash, v, r, s);
+        address signer = ECDSAUpgradeable.recover(hash, v, r, s);
         require(signer == owner, "ERC20Permit: invalid signature");
 
         _nonces[owner].increment();
-        _approve(owner, spender, amount);
+        _approve(owner, spender, value);
     }
 
     /**

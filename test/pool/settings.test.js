@@ -27,10 +27,6 @@ contract('Pool (settings)', ([anyone]) => {
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    // update contract settings before upgrade
-    contractSettings.activatedValidators = '10';
-    contractSettings.pendingValidators = '2';
-
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
     await upgradeContracts();

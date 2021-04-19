@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.3.0/contracts/token/ERC20/ERC20Upgradeable.sol
+// Adopted from https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable/blob/v3.4.0/contracts/token/ERC20/ERC20Upgradeable.sol
 
 pragma solidity 0.7.5;
 
@@ -65,7 +65,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
     /**
      * @dev Returns the name of the token.
      */
-    function name() public view returns (string memory) {
+    function name() public view virtual returns (string memory) {
         return _name;
     }
 
@@ -73,7 +73,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * @dev Returns the symbol of the token, usually a shorter version of the
      * name.
      */
-    function symbol() public view returns (string memory) {
+    function symbol() public view virtual returns (string memory) {
         return _symbol;
     }
 
@@ -90,7 +90,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * no way affects any of the arithmetic of the contract, including
      * {IERC20-balanceOf} and {IERC20-transfer}.
      */
-    function decimals() public view returns (uint8) {
+    function decimals() public view virtual returns (uint8) {
         return _decimals;
     }
 
@@ -141,8 +141,10 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      */
     function transferFrom(address sender, address recipient, uint256 amount) public virtual override returns (bool) {
         _transfer(sender, recipient, amount);
-        if (sender != msg.sender && _allowances[sender][msg.sender] != uint256(-1)) {
-            _approve(sender, msg.sender, _allowances[sender][msg.sender].sub(amount, "ERC20: invalid amount"));
+
+        uint256 currentAllowance = _allowances[sender][msg.sender];
+        if (sender != msg.sender && currentAllowance != uint256(-1)) {
+            _approve(sender, msg.sender, currentAllowance.sub(amount));
         }
         return true;
     }
@@ -179,7 +181,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * `subtractedValue`.
      */
     function decreaseAllowance(address spender, uint256 subtractedValue) public virtual returns (bool) {
-        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue, "ERC20: invalid amount"));
+        _approve(msg.sender, spender, _allowances[msg.sender][spender].sub(subtractedValue));
         return true;
     }
 
@@ -213,8 +215,8 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * - `spender` cannot be the zero address.
      */
     function _approve(address owner, address spender, uint256 amount) internal virtual {
-        require(owner != address(0), "ERC20: invalid owner");
-        require(spender != address(0), "ERC20: invalid spender");
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);

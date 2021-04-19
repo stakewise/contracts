@@ -37,8 +37,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
     withdrawalCredentials:
       '0x003e294ffc37978496f1b9298d5984ad4d55d4e2d1e6a06ee6904810c7b9e0d5',
-    activatedValidators: '530',
-    pendingValidators: '2',
+    activatedValidators: '569',
+    pendingValidators: '1',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
   };

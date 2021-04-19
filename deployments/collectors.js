@@ -1,43 +1,12 @@
-const hre = require('hardhat');
-const {
-  getProxyAdminFactory,
-} = require('@openzeppelin/hardhat-upgrades/dist/proxy-factory');
+const { ethers } = require('hardhat');
 
-async function preparePoolUpgradeData(
-  oraclesContractAddress,
-  activatedValidators,
-  pendingValidators,
-  minActivatingDeposit,
-  pendingValidatorsLimit
-) {
-  const Pool = await hre.ethers.getContractFactory('Pool');
-  return Pool.interface.encodeFunctionData('upgrade', [
-    oraclesContractAddress,
-    activatedValidators,
-    pendingValidators,
-    minActivatingDeposit,
-    pendingValidatorsLimit,
-  ]);
-}
-
-async function upgradePool(
-  adminAddress,
-  proxyAdminContractAddress,
-  poolContractAddress,
-  nextImplementation,
-  data
-) {
-  const signer = await hre.ethers.provider.getSigner(adminAddress);
-  const AdminFactory = await getProxyAdminFactory(hre);
-  const proxyAdmin = AdminFactory.attach(proxyAdminContractAddress);
-
-  const proxy = await proxyAdmin
-    .connect(signer)
-    .upgradeAndCall(poolContractAddress, nextImplementation, data);
-  return proxy.address;
+async function deployPoolEscrow(adminAddress) {
+  const PoolEscrow = await ethers.getContractFactory('PoolEscrow');
+  const poolEscrow = await PoolEscrow.deploy(adminAddress);
+  await poolEscrow.deployed();
+  return poolEscrow.address;
 }
 
 module.exports = {
-  upgradePool,
-  preparePoolUpgradeData,
+  deployPoolEscrow,
 };
