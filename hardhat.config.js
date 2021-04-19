@@ -141,6 +141,7 @@ module.exports = {
       'VestingEscrow',
       'VestingEscrowFactory',
       'PoolEscrow',
+      'MerkleDrop',
     ],
     clear: true,
     flat: true,
