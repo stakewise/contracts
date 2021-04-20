@@ -25,6 +25,9 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
     // @dev Address of the recipient.
     address public override recipient;
 
+    // @dev Address of the beneficiary.
+    address public override beneficiary;
+
     // @dev Total amount vested.
     uint256 public override totalAmount;
 
@@ -47,6 +50,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         address _admin,
         address _token,
         address _recipient,
+        address _beneficiary,
         uint256 _totalAmount,
         uint256 _startTime,
         uint256 _endTime,
@@ -57,6 +61,7 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         __OwnablePausableUpgradeable_init(_admin);
         token = IERC20(_token);
         recipient = _recipient;
+        beneficiary = _beneficiary;
         totalAmount = _totalAmount;
         startTime = _startTime;
         endTime = _endTime;
@@ -87,8 +92,8 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
     /**
     * @dev See {IVestingEscrow-stop}.
     */
-    function stop(address beneficiary) external override onlyAdmin {
-        require(beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
+    function stop(address _beneficiary) external override onlyAdmin {
+        require(_beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
         uint256 _totalAmount = totalAmount;
         uint256 pulledAmount = _totalAmount.sub(claimedAmount);
         require(pulledAmount > 0, "VestingEscrow: nothing to pull");
@@ -97,15 +102,14 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         endTime = block.timestamp;
         claimedAmount = _totalAmount;
 
-        emit Stopped(msg.sender, beneficiary, pulledAmount);
-        token.safeTransfer(beneficiary, pulledAmount);
+        emit Stopped(msg.sender, _beneficiary, pulledAmount);
+        token.safeTransfer(_beneficiary, pulledAmount);
     }
 
     /**
     * @dev See {IVestingEscrow-claim}.
     */
-    function claim(address beneficiary, uint256 amount) external override whenNotPaused {
-        require(beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
+    function claim(uint256 amount) external override whenNotPaused {
         require(msg.sender == recipient, "VestingEscrow: access denied");
         require(amount > 0, "VestingEscrow: amount is zero");
 
@@ -113,8 +117,9 @@ contract VestingEscrow is IVestingEscrow, OwnablePausableUpgradeable {
         uint256 claimable = vestedAmount().sub(_claimedAmount);
         require(claimable >= amount, "VestingEscrow: invalid amount");
 
+        address _beneficiary = beneficiary;
         claimedAmount = _claimedAmount.add(amount);
-        emit Claimed(msg.sender, beneficiary, amount);
-        token.safeTransfer(beneficiary, amount);
+        emit Claimed(msg.sender, _beneficiary, amount);
+        token.safeTransfer(_beneficiary, amount);
     }
 }

@@ -30,10 +30,12 @@ contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeab
     mapping(address => address[]) private escrows;
 
     /**
-    * @dev See {IVestingEscrowFactory-initialize}.
-    */
-    function initialize(address _admin, address _escrowImplementation) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
+     * @dev See {IVestingEscrowFactory-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/f865adf3b90818e6d8b9d8af01080842fb24aa16/contracts/vestings/VestingEscrowFactory.sol#L35
+     */
+    function upgrade(address _escrowImplementation) external override onlyAdmin whenPaused {
+        require(_escrowImplementation != escrowImplementation, "VestingEscrowFactory: already upgraded");
         escrowImplementation = _escrowImplementation;
     }
 
@@ -53,6 +55,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeab
     function deployEscrow(
         address token,
         address recipient,
+        address beneficiary,
         uint256 amount,
         uint256 vestingStart,
         uint256 vestingDuration,
@@ -62,6 +65,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeab
     {
         require(cliffLength <= vestingDuration, "VestingEscrowFactory: invalid cliff");
         require(recipient != address(0), "PoolEscrow: recipient is the zero address");
+        require(beneficiary != address(0), "PoolEscrow: beneficiary is the zero address");
 
         IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
 
@@ -76,6 +80,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeab
             msg.sender,
             token,
             recipient,
+            beneficiary,
             amount,
             vestingStart,
             vestingEnd,
@@ -85,6 +90,7 @@ contract VestingEscrowFactory is IVestingEscrowFactory, ReentrancyGuardUpgradeab
             msg.sender,
             token,
             recipient,
+            beneficiary,
             escrow,
             amount,
             vestingStart,

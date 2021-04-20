@@ -19,7 +19,7 @@ const {
 const VestingEscrowFactory = artifacts.require('VestingEscrowFactory');
 const StakeWiseToken = artifacts.require('StakeWiseToken');
 
-contract('VestingEscrowFactory', ([recipient, anyone]) => {
+contract('VestingEscrowFactory', ([recipient, beneficiary, anyone]) => {
   const admin = contractSettings.admin;
   const vestedAmount = ether('10000');
 
@@ -46,6 +46,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       vestingEscrowFactory.deployEscrow(
         stakeWiseToken.address,
         recipient,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -63,6 +64,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       vestingEscrowFactory.deployEscrow(
         stakeWiseToken.address,
         recipient,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -80,6 +82,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       vestingEscrowFactory.deployEscrow(
         stakeWiseToken.address,
         recipient,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -97,6 +100,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       vestingEscrowFactory.deployEscrow(
         stakeWiseToken.address,
         recipient,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -114,6 +118,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       vestingEscrowFactory.deployEscrow(
         stakeWiseToken.address,
         constants.ZERO_ADDRESS,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -126,11 +131,30 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
     );
   });
 
+  it('fails to deploy escrow with invalid beneficiary', async () => {
+    await expectRevert(
+      vestingEscrowFactory.deployEscrow(
+        stakeWiseToken.address,
+        recipient,
+        constants.ZERO_ADDRESS,
+        vestedAmount,
+        0,
+        time.duration.years(4),
+        time.duration.days(180),
+        {
+          from: admin,
+        }
+      ),
+      'PoolEscrow: beneficiary is the zero address'
+    );
+  });
+
   it('fails to deploy escrow with invalid token', async () => {
     await expectRevert(
       vestingEscrowFactory.deployEscrow(
         constants.ZERO_ADDRESS,
         recipient,
+        beneficiary,
         vestedAmount,
         0,
         time.duration.years(4),
@@ -151,6 +175,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
     let receipt = await vestingEscrowFactory.deployEscrow(
       stakeWiseToken.address,
       recipient,
+      beneficiary,
       vestedAmount,
       startTime,
       time.duration.years(4),
@@ -166,6 +191,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       admin,
       token: stakeWiseToken.address,
       recipient,
+      beneficiary,
       totalAmount: vestedAmount,
       startTime,
       endTime: startTime.add(time.duration.years(4)),
@@ -182,6 +208,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
     let receipt = await vestingEscrowFactory.deployEscrow(
       stakeWiseToken.address,
       recipient,
+      beneficiary,
       vestedAmount,
       startTime,
       time.duration.years(4),
@@ -197,6 +224,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       admin,
       token: stakeWiseToken.address,
       recipient,
+      beneficiary,
       totalAmount: vestedAmount,
       startTime,
       endTime: startTime.add(time.duration.years(4)),
@@ -210,6 +238,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
     receipt = await vestingEscrowFactory.deployEscrow(
       stakeWiseToken.address,
       recipient,
+      beneficiary,
       vestedAmount,
       startTime,
       time.duration.years(4),
@@ -225,6 +254,7 @@ contract('VestingEscrowFactory', ([recipient, anyone]) => {
       admin,
       token: stakeWiseToken.address,
       recipient,
+      beneficiary,
       totalAmount: vestedAmount,
       startTime,
       endTime: startTime.add(time.duration.years(4)),
