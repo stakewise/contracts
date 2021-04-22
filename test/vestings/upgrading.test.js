@@ -44,9 +44,10 @@ contract('VestingEscrowFactory (upgrading)', ([vestingEscrow, anyone]) => {
 
   it('fails to upgrade twice', async () => {
     await vestingEscrowFactory.pause({ from: admin });
-    await vestingEscrowFactory.upgrade(vestingEscrow, { from: admin });
     await expectRevert(
-      vestingEscrowFactory.upgrade(vestingEscrow, { from: admin }),
+      vestingEscrowFactory.upgrade(contractSettings.vestingEscrow, {
+        from: admin,
+      }),
       'VestingEscrowFactory: already upgraded'
     );
   });

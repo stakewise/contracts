@@ -55,10 +55,26 @@
 - Contract: [0xaE678D2A911400a55e06f4A1F0C0B363F3eE2e42](https://etherscan.io/address/0xaE678D2A911400a55e06f4A1F0C0B363F3eE2e42)
 - Transaction: [0xa315c073a738f7794a2642dfa0b4db6ced117044df52d2a8ed2c48d33e144599](https://etherscan.io/tx/0xa315c073a738f7794a2642dfa0b4db6ced117044df52d2a8ed2c48d33e144599)
 
+### Upgrade to v1.2.0
+
+- Implementation: [0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3](https://etherscan.io/address/0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3)
+- Transaction: [0x0a02dba7fcf0865cbe5fe6ea79682a7c1b164b1c1f28260406d363dc2420e44c](https://etherscan.io/tx/0x0a02dba7fcf0865cbe5fe6ea79682a7c1b164b1c1f28260406d363dc2420e44c)
+
 ## Vesting Escrow Factory
 
 - Contract: [0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5](https://etherscan.io/address/0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5)
 - Transaction: [0x0dfc545843dc9b5853a5b727e9a8e955f8d193bb2f6415591bdd3e2c245449f5](https://etherscan.io/tx/0x0dfc545843dc9b5853a5b727e9a8e955f8d193bb2f6415591bdd3e2c245449f5)
+
+### Upgrade to v1.2.0
+
+- Implementation: [0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf](https://etherscan.io/address/0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf)
+- Transaction: [0xd5427b4f7c399cece60601812e6513d064e64f51b6cd21597996a895ba5ea798](https://etherscan.io/tx/0xd5427b4f7c399cece60601812e6513d064e64f51b6cd21597996a895ba5ea798)
+
+## Dao Module
+
+- Repository: [DAO Module](https://github.com/gnosis/dao-module/tree/a04437988d26d49b6308bf49d229e275a10802ee)
+- Contract: [0x1df2Ce448b082272dAc9B6842A54f342cF4e614e](https://etherscan.io/address/0x1df2Ce448b082272dAc9B6842A54f342cF4e614e)
+- Transaction: [0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201](https://etherscan.io/tx/0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201)
 
 ## Proxy Admin
 
