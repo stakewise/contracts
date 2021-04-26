@@ -76,6 +76,11 @@
 - Contract: [0x1df2Ce448b082272dAc9B6842A54f342cF4e614e](https://etherscan.io/address/0x1df2Ce448b082272dAc9B6842A54f342cF4e614e)
 - Transaction: [0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201](https://etherscan.io/tx/0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201)
 
+## Early Adopters Campaign (Merkle Drop)
+
+- Contract: [0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5](https://etherscan.io/address/0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5)
+- Transaction: [0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87](https://etherscan.io/tx/0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87)
+
 ## Proxy Admin
 
 - Contract: [0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22](https://etherscan.io/address/0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22)

@@ -70,6 +70,11 @@
 - Implementation: [0x1BBf89F4Dc9913FCC14EF5A336A1d8C23Ccb74E3](https://goerli.etherscan.io/address/0x1BBf89F4Dc9913FCC14EF5A336A1d8C23Ccb74E3)
 - Transaction: [0x9a025ca1b53cb6bb3f0ab8c5ebf361c44d6ca526f24c5b433d77b4f81ccd5044](https://goerli.etherscan.io/tx/0x9a025ca1b53cb6bb3f0ab8c5ebf361c44d6ca526f24c5b433d77b4f81ccd5044)
 
+## Early Adopters Campaign (Merkle Drop)
+
+- Contract: [0xFc3513E92799F0169e5f14F354d0097E4b790498](https://goerli.etherscan.io/address/0xFc3513E92799F0169e5f14F354d0097E4b790498)
+- Transaction: [0x0a2c0ec55c6527367f420cbf2dc9434eb05263d2f982a10c48f59d9bfaaadab0](https://goerli.etherscan.io/tx/0x0a2c0ec55c6527367f420cbf2dc9434eb05263d2f982a10c48f59d9bfaaadab0)
+
 ## Proxy Admin
 
 - Implementation: [0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8](https://goerli.etherscan.io/address/0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8)
