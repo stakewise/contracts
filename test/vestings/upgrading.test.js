@@ -1,11 +1,10 @@
-const { expect } = require('chai');
 const { expectRevert, send, ether } = require('@openzeppelin/test-helpers');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
 } = require('../utils');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 
 const VestingEscrowFactory = artifacts.require('VestingEscrowFactory');
