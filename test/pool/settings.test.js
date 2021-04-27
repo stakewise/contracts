@@ -13,14 +13,19 @@ const {
   setActivatedValidators,
   getOracleAccounts,
 } = require('../utils');
+const { validatorParams } = require('./validatorParams');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
+const Validators = artifacts.require('Validators');
 const RewardEthToken = artifacts.require('RewardEthToken');
 
-contract('Pool (settings)', ([anyone]) => {
+const withdrawalCredentials =
+  '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
+
+contract('Pool (settings)', ([operator, anyone]) => {
   const admin = contractSettings.admin;
   let pool, oracles, oracleAccounts, rewardEthToken;
 
@@ -31,6 +36,9 @@ contract('Pool (settings)', ([anyone]) => {
     await send.ether(anyone, admin, ether('5'));
     await upgradeContracts();
     pool = await Pool.at(contracts.pool);
+
+    let validators = await Validators.at(contracts.validators);
+    await validators.addOperator(operator, { from: admin });
 
     oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await getOracleAccounts({ oracles });
@@ -127,9 +135,20 @@ contract('Pool (settings)', ([anyone]) => {
     });
 
     it('oracles contract can set activated validators', async () => {
-      let activatedValidators = new BN(
-        contractSettings.activatedValidators
-      ).add(new BN(contractSettings.pendingValidators));
+      await pool.setWithdrawalCredentials(withdrawalCredentials, {
+        from: admin,
+      });
+      await pool.addDeposit({
+        from: anyone,
+        value: ether('32'),
+      });
+      await pool.registerValidator(validatorParams[0], {
+        from: operator,
+      });
+
+      let activatedValidators = new BN(contractSettings.activatedValidators)
+        .add(new BN(contractSettings.pendingValidators))
+        .add(new BN(1));
       let receipt = await setActivatedValidators({
         pool,
         rewardEthToken,

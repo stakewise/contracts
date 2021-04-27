@@ -29,6 +29,7 @@ interface IVestingEscrow {
     * @param _admin - address of the contract admin.
     * @param _token - address of the token.
     * @param _recipient - address of the recipient of the tokens.
+    * @param _beneficiary - address of the tokens beneficiary.
     * @param _totalAmount - amount of tokens to vest.
     * @param _startTime - start timestamp of the vesting in seconds.
     * @param _endTime - end timestamp of the vesting in seconds.
@@ -38,6 +39,7 @@ interface IVestingEscrow {
         address _admin,
         address _token,
         address _recipient,
+        address _beneficiary,
         uint256 _totalAmount,
         uint256 _startTime,
         uint256 _endTime,
@@ -63,6 +65,11 @@ interface IVestingEscrow {
     * @dev Function for fetching the recipient address.
     */
     function recipient() external view returns (address);
+
+    /**
+    * @dev Function for fetching the beneficiary address.
+    */
+    function beneficiary() external view returns (address);
 
     /**
     * @dev Function for fetching the total vested amount.
@@ -91,16 +98,15 @@ interface IVestingEscrow {
 
     /**
     * @dev Function for stopping the vesting contract.
-    * Can be called only by admin. The unvested tokens will be transferred to the beneficiary address.
-    * @param beneficiary - address of the unvested tokens recipient.
+    * Can be called only by admin. The unvested tokens will be transferred to the `_beneficiary` address.
+    * @param _beneficiary - address of the unvested tokens recipient.
     */
-    function stop(address beneficiary) external;
+    function stop(address _beneficiary) external;
 
     /**
     * @dev Function for claiming the vested tokens.
     * Can be called only by the tokens recipient. The amount claimed must be vested by the time of calling.
-    * @param beneficiary - address of the tokens recipient.
     * @param amount - amount of tokens to claim.
     */
-    function claim(address beneficiary, uint256 amount) external;
+    function claim(uint256 amount) external;
 }

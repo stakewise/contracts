@@ -46,6 +46,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
     let receipt = await vestingEscrowFactory.deployEscrow(
       stakeWiseToken.address,
       recipient,
+      beneficiary,
       totalAmount,
       startTime,
       vestingDuration,
@@ -66,6 +67,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
     ).to.bignumber.equal(new BN(1));
     expect(await escrow.token()).to.equal(stakeWiseToken.address);
     expect(await escrow.recipient()).to.equal(recipient);
+    expect(await escrow.beneficiary()).to.equal(beneficiary);
     expect(await escrow.totalAmount()).to.bignumber.equal(totalAmount);
     expect(await escrow.claimedAmount()).to.bignumber.equal(new BN(0));
     expect(await escrow.startTime()).to.bignumber.equal(startTime);
@@ -124,42 +126,42 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
     it('admin can stop vesting escrow when some amount was already claimed', async () => {
       await time.increase(cliffLength);
       let vestedAmount = await escrow.vestedAmount();
-      await escrow.claim(recipient, vestedAmount, {
+      await escrow.claim(vestedAmount, {
         from: recipient,
       });
-      expect(await stakeWiseToken.balanceOf(recipient)).to.bignumber.equal(
+      expect(await stakeWiseToken.balanceOf(beneficiary)).to.bignumber.equal(
         vestedAmount
       );
 
-      let receipt = await escrow.stop(beneficiary, {
+      let receipt = await escrow.stop(anyone, {
         from: admin,
       });
       expectEvent(receipt, 'Stopped', {
         sender: admin,
-        beneficiary,
+        beneficiary: anyone,
         amount: totalAmount.sub(vestedAmount),
       });
-      expect(await stakeWiseToken.balanceOf(beneficiary)).to.bignumber.equal(
+      expect(await stakeWiseToken.balanceOf(anyone)).to.bignumber.equal(
         totalAmount.sub(vestedAmount)
       );
     });
 
     it('fails to stop vesting escrow when full amount was already claimed', async () => {
       await time.increaseTo(endTime);
-      await escrow.claim(recipient, totalAmount, {
+      await escrow.claim(totalAmount, {
         from: recipient,
       });
-      expect(await stakeWiseToken.balanceOf(recipient)).to.bignumber.equal(
+      expect(await stakeWiseToken.balanceOf(beneficiary)).to.bignumber.equal(
         totalAmount
       );
 
       await expectRevert(
-        escrow.stop(beneficiary, {
+        escrow.stop(anyone, {
           from: admin,
         }),
         'VestingEscrow: nothing to pull'
       );
-      expect(await stakeWiseToken.balanceOf(beneficiary)).to.bignumber.equal(
+      expect(await stakeWiseToken.balanceOf(anyone)).to.bignumber.equal(
         new BN(0)
       );
     });
@@ -191,7 +193,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
     });
 
     it('recipient can claim unlocked tokens', async () => {
-      let receipt = await escrow.claim(beneficiary, vestedAmount, {
+      let receipt = await escrow.claim(vestedAmount, {
         from: recipient,
       });
       expectEvent(receipt, 'Claimed', {
@@ -210,26 +212,17 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
 
     it('fails to claim unlocked tokens from not recipient address', async () => {
       await expectRevert(
-        escrow.claim(beneficiary, vestedAmount, {
+        escrow.claim(vestedAmount, {
           from: admin,
         }),
         'VestingEscrow: access denied'
       );
     });
 
-    it('fails to claim unlocked tokens with invalid beneficiary address', async () => {
-      await expectRevert(
-        escrow.claim(constants.ZERO_ADDRESS, vestedAmount, {
-          from: recipient,
-        }),
-        'PoolEscrow: beneficiary is the zero address'
-      );
-    });
-
     it('fails to claim unlocked tokens when paused', async () => {
       await escrow.pause({ from: admin });
       await expectRevert(
-        escrow.claim(beneficiary, vestedAmount, {
+        escrow.claim(vestedAmount, {
           from: recipient,
         }),
         'Pausable: paused'
@@ -238,7 +231,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
 
     it('fails to claim with zero amount', async () => {
       await expectRevert(
-        escrow.claim(beneficiary, new BN(0), {
+        escrow.claim(new BN(0), {
           from: recipient,
         }),
         'VestingEscrow: amount is zero'
@@ -247,7 +240,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
 
     it('fails to claim with invalid amount', async () => {
       await expectRevert(
-        escrow.claim(beneficiary, vestedAmount.mul(new BN(2)), {
+        escrow.claim(vestedAmount.mul(new BN(2)), {
           from: recipient,
         }),
         'VestingEscrow: invalid amount'
@@ -257,7 +250,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
     it('fails to claim multiple times', async () => {
       await time.increaseTo(endTime);
 
-      let receipt = await escrow.claim(beneficiary, totalAmount, {
+      let receipt = await escrow.claim(totalAmount, {
         from: recipient,
       });
       expectEvent(receipt, 'Claimed', {
@@ -274,7 +267,7 @@ contract('VestingEscrow', ([recipient, beneficiary, anyone]) => {
       );
 
       await expectRevert(
-        escrow.claim(beneficiary, vestedAmount, {
+        escrow.claim(vestedAmount, {
           from: recipient,
         }),
         'VestingEscrow: invalid amount'

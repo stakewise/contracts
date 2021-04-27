@@ -11,6 +11,7 @@ interface IVestingEscrowFactory {
     * @param admin - address of the contract admin.
     * @param token - address of the token.
     * @param recipient - address of the recipient of the tokens.
+    * @param beneficiary - address of the tokens beneficiary.
     * @param escrow - address of the escrow contract.
     * @param totalAmount - amount of tokens to vest.
     * @param startTime - start timestamp of the vesting in seconds.
@@ -21,6 +22,7 @@ interface IVestingEscrowFactory {
         address indexed admin,
         address indexed token,
         address indexed recipient,
+        address beneficiary,
         address escrow,
         uint256 totalAmount,
         uint256 startTime,
@@ -29,11 +31,10 @@ interface IVestingEscrowFactory {
     );
 
     /**
-    * @dev Constructor for initializing the VestingEscrowFactory contract.
-    * @param _admin - address of the contract admin.
+    * @dev Function for upgrading the VestingEscrowFactory contract.
     * @param _escrowImplementation - address of the VestingEscrow implementation contract.
     */
-    function initialize(address _admin, address _escrowImplementation) external;
+    function upgrade(address _escrowImplementation) external;
 
     /**
     * @dev Function for fetching escrow implementation contract.
@@ -50,6 +51,7 @@ interface IVestingEscrowFactory {
     * @dev Function for deploying new escrow contract.
     * @param token - address of the token contract.
     * @param recipient - address of the recipient of the tokens.
+    * @param beneficiary - address where the tokens will be sent.
     * @param amount - amount of tokens to vest.
     * @param vestingStart - start timestamp of the vesting in seconds.
     * @param vestingDuration - vesting duration in seconds.
@@ -58,6 +60,7 @@ interface IVestingEscrowFactory {
     function deployEscrow(
         address token,
         address recipient,
+        address beneficiary,
         uint256 amount,
         uint256 vestingStart,
         uint256 vestingDuration,

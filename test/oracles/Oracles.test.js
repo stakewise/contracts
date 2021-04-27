@@ -140,15 +140,19 @@ contract('Oracles', ([_, ...accounts]) => {
   });
 
   describe('oracles voting', () => {
-    let oracleAccounts = [];
     let prevTotalRewards,
       newTotalRewards,
       currentNonce,
       pendingValidators,
-      activatedValidators;
+      activatedValidators,
+      oracleAccounts;
 
     beforeEach(async () => {
       oracleAccounts = await getOracleAccounts({ oracles });
+      for (const oracleAccount of oracleAccounts) {
+        await send.ether(anyone, oracleAccount, ether('2'));
+      }
+
       prevTotalRewards = await rewardEthToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
       currentNonce = await oracles.currentNonce();

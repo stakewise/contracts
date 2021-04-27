@@ -203,12 +203,20 @@
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "beneficiary",
+    "outputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "",
         "type": "address"
-      },
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "uint256",
         "name": "amount",
@@ -378,6 +386,11 @@
       {
         "internalType": "address",
         "name": "_recipient",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_beneficiary",
         "type": "address"
       },
       {
@@ -556,7 +569,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "_beneficiary",
         "type": "address"
       }
     ],
