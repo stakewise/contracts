@@ -59,10 +59,11 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
         require(sender != address(0), "StakedEthToken: invalid sender");
         require(recipient != address(0), "StakedEthToken: invalid receiver");
+        require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
 
         // start calculating sender and recipient rewards with updated deposit amounts
         rewardEthToken.updateRewardCheckpoints(sender, recipient);
-        deposits[sender] = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
+        deposits[sender] = deposits[sender].sub(amount);
         deposits[recipient] = deposits[recipient].add(amount);
 
         emit Transfer(sender, recipient, amount);

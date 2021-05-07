@@ -150,6 +150,7 @@ contract('Pool (settings)', ([operator, anyone]) => {
         .add(new BN(contractSettings.pendingValidators))
         .add(new BN(1));
       let receipt = await setActivatedValidators({
+        admin,
         pool,
         rewardEthToken,
         activatedValidators,

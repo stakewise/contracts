@@ -6,6 +6,7 @@ const {
   ether,
   constants,
   send,
+  time,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -22,6 +23,7 @@ const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
+const OracleMock = artifacts.require('OracleMock');
 const maintainerFee = new BN(1000);
 
 contract('RewardEthToken', ([sender, ...accounts]) => {
@@ -124,6 +126,7 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
+        admin,
         totalRewards: newTotalRewards,
         rewardEthToken,
         oracles,
@@ -163,6 +166,7 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
 
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
+        admin,
         totalRewards: totalSupply,
         rewardEthToken,
         pool,
@@ -256,7 +260,7 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
         rewardEthToken.transfer(sender2, stakedAmount1.add(ether('1')), {
           from: sender1,
         }),
-        'RewardEthToken: invalid amount'
+        'SafeMath: subtraction overflow'
       );
 
       await checkRewardEthToken({
@@ -290,6 +294,105 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
         totalSupply,
         account: sender2,
         balance: rewardAmount1.add(rewardAmount2),
+      });
+    });
+
+    it('cannot transfer rewards after total rewards update in the same block', async () => {
+      // clean up oracles
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        await oracles.removeOracle(oracleAccounts[i], {
+          from: admin,
+        });
+      }
+
+      // deploy mocked oracle
+      let mockedOracle = await OracleMock.new(
+        contracts.oracles,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken
+      );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
+
+      await rewardEthToken.approve(mockedOracle.address, rewardAmount1, {
+        from: sender1,
+      });
+
+      // wait for rewards voting time
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let activatedValidators = await pool.activatedValidators();
+
+      await expectRevert(
+        mockedOracle.updateTotalRewardsAndTransferRewards(
+          totalRewards,
+          activatedValidators,
+          sender2,
+          {
+            from: sender1,
+          }
+        ),
+        'RewardEthToken: cannot transfer during rewards update'
+      );
+    });
+
+    it('can transfer rewards before total rewards update in the same block', async () => {
+      // clean up oracles
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        await oracles.removeOracle(oracleAccounts[i], {
+          from: admin,
+        });
+      }
+
+      // deploy mocked oracle
+      let mockedOracle = await OracleMock.new(
+        contracts.oracles,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken
+      );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
+
+      await rewardEthToken.approve(mockedOracle.address, rewardAmount1, {
+        from: sender1,
+      });
+
+      // wait for rewards voting time
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let activatedValidators = await pool.activatedValidators();
+
+      let receipt = await mockedOracle.transferRewardsAndUpdateTotalRewards(
+        totalRewards,
+        activatedValidators,
+        sender2,
+        {
+          from: sender1,
+        }
+      );
+
+      await expectEvent.inTransaction(receipt.tx, RewardEthToken, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value: rewardAmount1,
       });
     });
   });

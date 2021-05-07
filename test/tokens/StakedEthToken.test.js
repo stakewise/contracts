@@ -6,22 +6,32 @@ const {
   ether,
   constants,
   send,
+  time,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
   checkStakedEthToken,
+  getOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
+const RewardEthToken = artifacts.require('RewardEthToken');
 const Pool = artifacts.require('Pool');
+const Oracles = artifacts.require('Oracles');
+const OracleMock = artifacts.require('OracleMock');
 
 contract('StakedEthToken', ([sender1, sender2]) => {
   const admin = contractSettings.admin;
-  let stakedEthToken, pool, totalSupply;
+  let stakedEthToken,
+    rewardEthToken,
+    pool,
+    totalSupply,
+    oracles,
+    oracleAccounts;
 
   beforeEach(async () => {
     await impersonateAccount(admin);
@@ -31,6 +41,9 @@ contract('StakedEthToken', ([sender1, sender2]) => {
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     pool = await Pool.at(contracts.pool);
+    oracles = await Oracles.at(contracts.oracles);
+    oracleAccounts = await getOracleAccounts({ oracles });
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
 
     totalSupply = await stakedEthToken.totalSupply();
   });
@@ -52,7 +65,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: new BN(0),
-        deposit: new BN(0),
       });
     });
   });
@@ -84,7 +96,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: value,
-        deposit: value,
       });
     });
 
@@ -101,7 +112,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: value,
-        deposit: value,
       });
     });
 
@@ -121,7 +131,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: value,
-        deposit: value,
       });
     });
 
@@ -141,7 +150,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: value,
-        deposit: value,
       });
       await stakedEthToken.unpause({ from: admin });
     });
@@ -151,7 +159,7 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         stakedEthToken.transfer(sender2, value.add(ether('1')), {
           from: sender1,
         }),
-        'StakedEthToken: invalid amount'
+        'SafeMath: subtraction overflow'
       );
 
       await checkStakedEthToken({
@@ -159,7 +167,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: value,
-        deposit: value,
       });
     });
 
@@ -179,7 +186,6 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender1,
         balance: new BN(0),
-        deposit: new BN(0),
       });
 
       await checkStakedEthToken({
@@ -187,7 +193,105 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         totalSupply,
         account: sender2,
         balance: value,
-        deposit: value,
+      });
+    });
+
+    it('cannot transfer staked amount after total rewards update in the same block', async () => {
+      // clean up oracles
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        await oracles.removeOracle(oracleAccounts[i], {
+          from: admin,
+        });
+      }
+
+      // deploy mocked oracle
+      let mockedOracle = await OracleMock.new(
+        contracts.oracles,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken
+      );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
+
+      await stakedEthToken.approve(mockedOracle.address, value, {
+        from: sender1,
+      });
+
+      // wait for rewards voting time
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let activatedValidators = await pool.activatedValidators();
+
+      await expectRevert(
+        mockedOracle.updateTotalRewardsAndTransferStakedEth(
+          totalRewards,
+          activatedValidators,
+          sender2,
+          {
+            from: sender1,
+          }
+        ),
+        'StakedEthToken: cannot transfer during rewards update'
+      );
+    });
+
+    it('can transfer staked amount before total rewards update in the same block', async () => {
+      // clean up oracles
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        await oracles.removeOracle(oracleAccounts[i], {
+          from: admin,
+        });
+      }
+
+      // deploy mocked oracle
+      let mockedOracle = await OracleMock.new(
+        contracts.oracles,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken
+      );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
+
+      await stakedEthToken.approve(mockedOracle.address, value, {
+        from: sender1,
+      });
+
+      // wait for rewards voting time
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let activatedValidators = await pool.activatedValidators();
+
+      let receipt = await mockedOracle.transferStakedEthAndUpdateTotalRewards(
+        totalRewards,
+        activatedValidators,
+        sender2,
+        {
+          from: sender1,
+        }
+      );
+
+      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value,
       });
     });
   });

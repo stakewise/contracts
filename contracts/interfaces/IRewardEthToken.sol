@@ -21,6 +21,14 @@ interface IRewardEthToken is IERC20Upgradeable {
     event MaintainerFeeUpdated(uint256 maintainerFee);
 
     /**
+    * @dev Event for tracking whether rewards distribution through merkle distributor is enabled/disabled.
+    * @param account - address of the account.
+    * @param rewardPerToken - the reward per token at the time of toggle.
+    * @param isDisabled - whether rewards distribution is disabled.
+    */
+    event RewardsToggled(address indexed account, uint256 indexed rewardPerToken, bool isDisabled);
+
+    /**
     * @dev Structure for storing information about user reward checkpoint.
     * @param rewardPerToken - user reward per token.
     * @param reward - user reward checkpoint.
@@ -35,30 +43,26 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardPerToken - calculated reward per token for account reward calculation.
-    * @param lastUpdateTimestamp - last rewards update timestamp by oracles.
     */
     event RewardsUpdated(
         uint256 periodRewards,
         uint256 totalRewards,
-        uint256 rewardPerToken,
-        uint256 lastUpdateTimestamp
+        uint256 rewardPerToken
     );
 
     /**
-    * @dev Constructor for initializing the RewardEthToken contract.
-    * @param _admin - address of the contract admin.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _oracles - address of the Oracles contract.
-    * @param _maintainer - maintainer's address.
-    * @param _maintainerFee - maintainer's fee. Must be less than 10000 (100.00%).
+    * @dev Function for upgrading the RewardEthToken contract.
+    * If deploying contract for the first time, the upgrade function should be replaced with `initialize` and
+    * contain initializations from the previous versions.
+    * @param _merkleDistributor - address of the MerkleDistributor contract.
+    * @param _lastUpdateBlockNumber - block number of the last rewards update.
     */
-    function initialize(
-        address _admin,
-        address _stakedEthToken,
-        address _oracles,
-        address _maintainer,
-        uint256 _maintainerFee
-    ) external;
+    function upgrade(address _merkleDistributor, uint256 _lastUpdateBlockNumber) external;
+
+    /**
+    * @dev Function for getting the address of the merkle distributor.
+    */
+    function merkleDistributor() external view returns (address);
 
     /**
     * @dev Function for getting the address of the maintainer, where the fee will be paid.
@@ -88,9 +92,9 @@ interface IRewardEthToken is IERC20Upgradeable {
     function totalRewards() external view returns (uint128);
 
     /**
-    * @dev Function for retrieving the last total rewards update timestamp.
+    * @dev Function for retrieving the last total rewards update block number.
     */
-    function lastUpdateTimestamp() external view returns (uint256);
+    function lastUpdateBlockNumber() external view returns (uint256);
 
     /**
     * @dev Function for retrieving current reward per token used for account reward calculation.
@@ -104,10 +108,23 @@ interface IRewardEthToken is IERC20Upgradeable {
     function checkpoints(address account) external view returns (uint128, uint128);
 
     /**
+    * @dev Function for checking whether account's reward will be distributed through the merkle distributor.
+    * @param account - address of the account.
+    */
+    function rewardsDisabled(address account) external view returns (bool);
+
+    /**
     * @dev Function for updating account's reward checkpoint.
     * @param account - address of the account to update the reward checkpoint for.
     */
     function updateRewardCheckpoint(address account) external;
+
+    /**
+    * @dev Function for toggling rewards for the account.
+    * @param account - address of the account.
+    * @param isDisabled - whether to disable account's rewards distribution.
+    */
+    function toggleRewards(address account, bool isDisabled) external;
 
     /**
     * @dev Function for updating reward checkpoints for two accounts simultaneously (for gas savings).
@@ -122,4 +139,12 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param newTotalRewards - new total rewards.
     */
     function updateTotalRewards(uint256 newTotalRewards) external;
+
+    /**
+    * @dev Function for claiming rETH2 from the merkle distribution.
+    * Can only be called by MerkleDistributor contract.
+    * @param account - address of the account the tokens will be assigned to.
+    * @param amount - amount of tokens to assign to the account.
+    */
+    function claim(address account, uint256 amount) external;
 }
