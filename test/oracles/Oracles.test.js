@@ -1,3 +1,4 @@
+const { keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { expect } = require('chai');
 const {
   expectEvent,
@@ -5,12 +6,15 @@ const {
   ether,
   BN,
   send,
+  time,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
   getOracleAccounts,
+  setMerkleRoot,
+  setTotalRewards,
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
@@ -18,10 +22,12 @@ const { upgradeContracts } = require('../../deployments');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
+const MerkleDistributor = artifacts.require('MerkleDistributor');
+const OracleMock = artifacts.require('OracleMock');
 
 contract('Oracles', ([_, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles, rewardEthToken, pool;
+  let oracles, rewardEthToken, pool, merkleDistributor;
   let [oracle, anotherOracle, anyone] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -30,11 +36,14 @@ contract('Oracles', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    await upgradeContracts();
+    let upgradedContracts = await upgradeContracts();
 
     oracles = await Oracles.at(contracts.oracles);
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    merkleDistributor = await MerkleDistributor.at(
+      upgradedContracts.merkleDistributor
+    );
   });
 
   afterEach(async () => resetFork());
@@ -114,7 +123,7 @@ contract('Oracles', ([_, ...accounts]) => {
 
   describe('oracles sync period', () => {
     it('admin user can update sync period', async () => {
-      let newSyncPeriod = new BN('172800');
+      let newSyncPeriod = new BN('700');
       const receipt = await oracles.setSyncPeriod(newSyncPeriod, {
         from: admin,
       });
@@ -126,7 +135,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('anyone cannot update oracles sync period', async () => {
-      let newSyncPeriod = new BN('172800');
+      let newSyncPeriod = new BN('700');
       await expectRevert(
         oracles.setSyncPeriod(newSyncPeriod, {
           from: anyone,
@@ -134,18 +143,36 @@ contract('Oracles', ([_, ...accounts]) => {
         'OwnablePausable: access denied'
       );
       expect(await oracles.syncPeriod()).bignumber.equal(
-        new BN(contractSettings.oraclesSyncPeriod)
+        new BN(contractSettings.syncPeriod)
       );
+    });
+
+    it('cannot update oracles sync period when voting for rewards', async () => {
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(lastUpdateBlockNumber.add(newSyncPeriod));
+
+      await expectRevert(
+        oracles.setSyncPeriod(new BN('900'), {
+          from: admin,
+        }),
+        'Oracles: cannot update during voting'
+      );
+      expect(await oracles.syncPeriod()).bignumber.equal(newSyncPeriod);
     });
   });
 
-  describe('oracles voting', () => {
+  describe('rewards voting', () => {
     let prevTotalRewards,
       newTotalRewards,
       currentNonce,
       pendingValidators,
       activatedValidators,
-      oracleAccounts;
+      oracleAccounts,
+      candidateId;
 
     beforeEach(async () => {
       oracleAccounts = await getOracleAccounts({ oracles });
@@ -159,6 +186,16 @@ contract('Oracles', ([_, ...accounts]) => {
 
       activatedValidators = new BN(contractSettings.activatedValidators);
       pendingValidators = new BN(contractSettings.pendingValidators);
+
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'uint256'],
+        [
+          currentNonce.toString(),
+          newTotalRewards.toString(),
+          activatedValidators.toString(),
+        ]
+      );
+      candidateId = keccak256(encoded);
     });
 
     it('fails to vote when contract is paused', async () => {
@@ -166,7 +203,7 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.vote(newTotalRewards, activatedValidators, {
+        oracles.voteForRewards(newTotalRewards, activatedValidators, {
           from: oracleAccounts[0],
         }),
         'Pausable: paused'
@@ -175,7 +212,7 @@ contract('Oracles', ([_, ...accounts]) => {
 
     it('only oracle can submit vote', async () => {
       await expectRevert(
-        oracles.vote(newTotalRewards, activatedValidators, {
+        oracles.voteForRewards(newTotalRewards, activatedValidators, {
           from: anyone,
         }),
         'Oracles: access denied'
@@ -183,42 +220,66 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('cannot vote twice', async () => {
-      await oracles.vote(newTotalRewards, activatedValidators, {
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      await oracles.voteForRewards(newTotalRewards, activatedValidators, {
         from: oracleAccounts[0],
       });
-      expect(
-        await oracles.hasVote(
-          oracleAccounts[0],
-          newTotalRewards,
-          activatedValidators
-        )
-      ).to.equal(true);
+
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        true
+      );
 
       await expectRevert(
-        oracles.vote(newTotalRewards, activatedValidators, {
+        oracles.voteForRewards(newTotalRewards, activatedValidators, {
           from: oracleAccounts[0],
         }),
         'Oracles: already voted'
       );
     });
 
+    it('cannot vote too early', async () => {
+      await expectRevert(
+        oracles.voteForRewards(newTotalRewards, activatedValidators, {
+          from: oracleAccounts[0],
+        }),
+        'Oracles: too early vote'
+      );
+    });
+
     it('does not submit new data when not enough votes', async () => {
-      const receipt = await oracles.vote(newTotalRewards, activatedValidators, {
-        from: oracleAccounts[0],
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
       });
-      expectEvent(receipt, 'VoteSubmitted', {
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      const receipt = await oracles.voteForRewards(
+        newTotalRewards,
+        activatedValidators,
+        {
+          from: oracleAccounts[0],
+        }
+      );
+      expectEvent(receipt, 'RewardsVoteSubmitted', {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
         activatedValidators,
         nonce: currentNonce,
       });
-      expect(
-        await oracles.hasVote(
-          oracleAccounts[0],
-          newTotalRewards,
-          activatedValidators
-        )
-      ).to.equal(true);
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        true
+      );
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
         prevTotalRewards
       );
@@ -231,9 +292,28 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('submits data when enough votes collected', async () => {
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
       let newActivatedValidators = activatedValidators.add(pendingValidators);
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'uint256'],
+        [
+          currentNonce.toString(),
+          newTotalRewards.toString(),
+          newActivatedValidators.toString(),
+        ]
+      );
+      let candidateId = keccak256(encoded);
+
       for (let i = 0; i < oracleAccounts.length; i++) {
-        let receipt = await oracles.vote(
+        let receipt = await oracles.voteForRewards(
           newTotalRewards,
           newActivatedValidators,
           {
@@ -244,14 +324,10 @@ contract('Oracles', ([_, ...accounts]) => {
           // data submitted
           break;
         }
-        expect(
-          await oracles.hasVote(
-            oracleAccounts[i],
-            newTotalRewards,
-            newActivatedValidators
-          )
-        ).to.equal(true);
-        expectEvent(receipt, 'VoteSubmitted', {
+        expect(await oracles.hasVote(oracleAccounts[i], candidateId)).to.equal(
+          true
+        );
+        expectEvent(receipt, 'RewardsVoteSubmitted', {
           oracle: oracleAccounts[i],
           totalRewards: newTotalRewards,
           activatedValidators: newActivatedValidators,
@@ -268,22 +344,37 @@ contract('Oracles', ([_, ...accounts]) => {
       );
       expect(await pool.pendingValidators()).to.bignumber.equal(new BN(0));
 
+      lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(lastUpdateBlockNumber.add(newSyncPeriod));
+
       // new vote comes with different nonce
-      let receipt = await oracles.vote(
+      let receipt = await oracles.voteForRewards(
         newTotalRewards,
         newActivatedValidators,
         {
           from: oracleAccounts[0],
         }
       );
-      expect(
-        await oracles.hasVote(
-          oracleAccounts[0],
-          newTotalRewards,
-          newActivatedValidators
-        )
-      ).to.equal(true);
-      expectEvent(receipt, 'VoteSubmitted', {
+
+      // previous vote cleaned up
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        false
+      );
+      encoded = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'uint256'],
+        [
+          currentNonce.add(new BN(1)).toString(),
+          newTotalRewards.toString(),
+          newActivatedValidators.toString(),
+        ]
+      );
+      let candidateId2 = keccak256(encoded);
+
+      // new vote comes with an increased vote ID
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId2)).to.equal(
+        true
+      );
+      expectEvent(receipt, 'RewardsVoteSubmitted', {
         oracle: oracleAccounts[0],
         totalRewards: newTotalRewards,
         activatedValidators: newActivatedValidators,
@@ -292,11 +383,19 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('does not update activation data when did not change', async () => {
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
       activatedValidators = new BN(contractSettings.activatedValidators);
       pendingValidators = await pool.pendingValidators();
 
       for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.vote(newTotalRewards, activatedValidators, {
+        await oracles.voteForRewards(newTotalRewards, activatedValidators, {
           from: oracleAccounts[i],
         });
         if (!prevTotalRewards.eq(await rewardEthToken.totalRewards())) {
@@ -315,6 +414,222 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await pool.pendingValidators()).to.bignumber.equal(
         pendingValidators
       );
+    });
+  });
+
+  describe('merkle root voting', () => {
+    const merkleRoot =
+      '0xa3e724fce28a564a7908e40994bd8f48ed4470ffcab4c135fe661bcf5b15afe6';
+    const merkleProofs =
+      'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
+    let currentNonce, oracleAccounts, candidateId;
+
+    beforeEach(async () => {
+      oracleAccounts = await getOracleAccounts({ oracles });
+      for (const oracleAccount of oracleAccounts) {
+        await send.ether(anyone, oracleAccount, ether('2'));
+      }
+      currentNonce = await oracles.currentNonce();
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'bytes32', 'string'],
+        [currentNonce.toString(), merkleRoot, merkleProofs]
+      );
+      candidateId = keccak256(encoded);
+    });
+
+    it('fails to vote when contract is paused', async () => {
+      await oracles.pause({ from: admin });
+      expect(await oracles.paused()).equal(true);
+
+      await expectRevert(
+        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+          from: oracleAccounts[0],
+        }),
+        'Pausable: paused'
+      );
+    });
+
+    it('only oracle can submit vote', async () => {
+      await expectRevert(
+        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+          from: anyone,
+        }),
+        'Oracles: access denied'
+      );
+    });
+
+    it('cannot vote twice', async () => {
+      await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+        from: oracleAccounts[0],
+      });
+
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'bytes32', 'string'],
+        [currentNonce.toString(), merkleRoot, merkleProofs]
+      );
+      let candidateId = keccak256(encoded);
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        true
+      );
+
+      await expectRevert(
+        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+          from: oracleAccounts[0],
+        }),
+        'Oracles: already voted'
+      );
+    });
+
+    it('fails to vote for total rewards and merkle root in same block', async () => {
+      // clean up oracles
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        await oracles.removeOracle(oracleAccounts[i], {
+          from: admin,
+        });
+      }
+
+      // deploy mocked oracle
+      let mockedOracle = await OracleMock.new(
+        contracts.oracles,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken
+      );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
+
+      // wait for rewards voting time
+      let newSyncPeriod = new BN('700');
+      await oracles.setSyncPeriod(newSyncPeriod, {
+        from: admin,
+      });
+      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+      await time.advanceBlockTo(
+        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+      );
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let activatedValidators = await pool.activatedValidators();
+
+      await expectRevert(
+        mockedOracle.updateTotalRewardsWithMerkleRoot(
+          totalRewards,
+          activatedValidators,
+          merkleRoot,
+          merkleProofs,
+          {
+            from: anyone,
+          }
+        ),
+        'Oracles: too early vote'
+      );
+    });
+
+    it('cannot vote too early', async () => {
+      await setMerkleRoot({
+        merkleDistributor,
+        merkleRoot,
+        merkleProofs,
+        oracles,
+        oracleAccounts,
+      });
+
+      await expectRevert(
+        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+          from: oracleAccounts[0],
+        }),
+        'Oracles: too early vote'
+      );
+    });
+
+    it('does not submit new data when not enough votes', async () => {
+      const receipt = await oracles.voteForMerkleRoot(
+        merkleRoot,
+        merkleProofs,
+        {
+          from: oracleAccounts[0],
+        }
+      );
+
+      expectEvent(receipt, 'MerkleRootVoteSubmitted', {
+        oracle: oracleAccounts[0],
+        merkleRoot,
+        merkleProofs,
+        nonce: currentNonce,
+      });
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'bytes32', 'string'],
+        [currentNonce.toString(), merkleRoot, merkleProofs]
+      );
+      let candidateId = keccak256(encoded);
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        true
+      );
+      expect(await merkleDistributor.merkleRoot()).to.not.equal(merkleRoot);
+    });
+
+    it('submits data when enough votes collected', async () => {
+      for (let i = 0; i < oracleAccounts.length; i++) {
+        let receipt = await oracles.voteForMerkleRoot(
+          merkleRoot,
+          merkleProofs,
+          {
+            from: oracleAccounts[i],
+          }
+        );
+        if ((await merkleDistributor.merkleRoot()) === merkleRoot) {
+          break;
+        }
+
+        expect(await oracles.hasVote(oracleAccounts[i], candidateId)).to.equal(
+          true
+        );
+        expectEvent(receipt, 'MerkleRootVoteSubmitted', {
+          oracle: oracleAccounts[i],
+          merkleRoot,
+          merkleProofs,
+          nonce: currentNonce,
+        });
+      }
+
+      // update submitted
+      expect(await merkleDistributor.merkleRoot()).to.equal(merkleRoot);
+
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      await setTotalRewards({
+        admin,
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards,
+      });
+
+      // new vote comes with different nonce
+      let receipt = await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+        from: oracleAccounts[0],
+      });
+
+      // previous vote cleaned up
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
+        false
+      );
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'bytes32', 'string'],
+        [currentNonce.add(new BN(2)).toString(), merkleRoot, merkleProofs]
+      );
+      let candidateId2 = keccak256(encoded);
+
+      // new vote comes with an increased vote ID
+      expect(await oracles.hasVote(oracleAccounts[0], candidateId2)).to.equal(
+        true
+      );
+      expectEvent(receipt, 'MerkleRootVoteSubmitted', {
+        oracle: oracleAccounts[0],
+        merkleRoot,
+        merkleProofs,
+        nonce: currentNonce.add(new BN(2)),
+      });
     });
   });
 });
