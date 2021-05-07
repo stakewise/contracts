@@ -100,7 +100,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         uint256 claimedBitIndex = index % 256;
         uint256 claimedWord = _claimedBitMap[_merkleRoot][claimedWordIndex];
         uint256 mask = (1 << claimedBitIndex);
-        require(claimedWord & mask != mask, 'MerkleDistributor: already claimed');
+        require(claimedWord & mask != mask, "MerkleDistributor: already claimed");
         _claimedBitMap[_merkleRoot][claimedWordIndex] = claimedWord | mask;
     }
 
@@ -125,7 +125,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         // verify the merkle proof
         bytes32 _merkleRoot = merkleRoot; // gas savings
         bytes32 node = keccak256(abi.encode(index, tokens, account, amounts));
-        require(MerkleProofUpgradeable.verify(merkleProof, _merkleRoot, node), 'MerkleDistributor: invalid proof');
+        require(MerkleProofUpgradeable.verify(merkleProof, _merkleRoot, node), "MerkleDistributor: invalid proof");
 
         // mark index claimed
         _setClaimed(index, _merkleRoot);

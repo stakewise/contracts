@@ -18,17 +18,15 @@ const { upgradeContracts } = require('../../deployments');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
-const MerkleDistributor = artifacts.require('MerkleDistributor');
 const StakedEthToken = artifacts.require('StakedEthToken');
 
-contract('RewardEthToken (toggleRewards)', ([_, ...accounts]) => {
+contract('RewardEthToken (toggle rewards)', ([_, ...accounts]) => {
   let admin = contractSettings.admin;
   let oracles,
     rewardEthToken,
     rewardPerToken,
     stakedEthToken,
     pool,
-    merkleDistributor,
     oracleAccounts;
   let [account, anyone] = accounts;
 
@@ -38,15 +36,12 @@ contract('RewardEthToken (toggleRewards)', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    await upgradeContracts();
 
     oracles = await Oracles.at(contracts.oracles);
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    merkleDistributor = await MerkleDistributor.at(
-      upgradedContracts.merkleDistributor
-    );
     oracleAccounts = await getOracleAccounts({ oracles });
     rewardPerToken = await rewardEthToken.rewardPerToken();
   });

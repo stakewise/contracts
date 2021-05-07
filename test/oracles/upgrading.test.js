@@ -8,7 +8,6 @@ const {
 } = require('../utils');
 
 const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 
 contract('Oracles (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
