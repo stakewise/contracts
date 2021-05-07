@@ -1,5 +1,5 @@
 const hre = require('hardhat');
-const { expectEvent, constants } = require('@openzeppelin/test-helpers');
+const { expectEvent, constants, time } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 const { BN, ether, balance } = require('@openzeppelin/test-helpers');
 
@@ -85,18 +85,11 @@ async function checkStakedEthToken({
   stakedEthToken,
   totalSupply,
   account,
-  deposit,
   balance,
 }) {
   if (totalSupply != null) {
     expect(await stakedEthToken.totalSupply()).to.be.bignumber.equal(
       totalSupply
-    );
-  }
-
-  if (account != null && deposit != null) {
-    expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
-      deposit
     );
   }
 
@@ -138,6 +131,7 @@ async function getOracleAccounts({ oracles }) {
 }
 
 async function setActivatedValidators({
+  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -149,10 +143,17 @@ async function setActivatedValidators({
     return;
   }
 
+  let newSyncPeriod = new BN('700');
+  await oracles.setSyncPeriod(newSyncPeriod, {
+    from: admin,
+  });
+  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
+
   let totalRewards = await rewardEthToken.totalRewards();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.vote(totalRewards, activatedValidators, {
+    receipt = await oracles.voteForRewards(totalRewards, activatedValidators, {
       from: oracleAccounts[i],
     });
     if ((await pool.activatedValidators()).eq(activatedValidators)) {
@@ -162,6 +163,7 @@ async function setActivatedValidators({
 }
 
 async function setTotalRewards({
+  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -172,13 +174,42 @@ async function setTotalRewards({
     return;
   }
 
+  let newSyncPeriod = new BN('700');
+  await oracles.setSyncPeriod(newSyncPeriod, {
+    from: admin,
+  });
+  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
+
   let activatedValidators = await pool.activatedValidators();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.vote(totalRewards, activatedValidators, {
+    receipt = await oracles.voteForRewards(totalRewards, activatedValidators, {
       from: oracleAccounts[i],
     });
     if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+      return receipt;
+    }
+  }
+}
+
+async function setMerkleRoot({
+  merkleDistributor,
+  merkleRoot,
+  merkleProofs,
+  oracles,
+  oracleAccounts,
+}) {
+  if ((await merkleDistributor.merkleRoot()) === merkleRoot) {
+    return;
+  }
+
+  let receipt;
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    receipt = await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+      from: oracleAccounts[i],
+    });
+    if ((await merkleDistributor.merkleRoot()) === merkleRoot) {
       return receipt;
     }
   }
@@ -225,5 +256,6 @@ module.exports = {
   resetFork,
   setActivatedValidators,
   setTotalRewards,
+  setMerkleRoot,
   getOracleAccounts,
 };

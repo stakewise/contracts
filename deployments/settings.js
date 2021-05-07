@@ -18,7 +18,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
 
   contractSettings = {
     cancelLockDuration: '86400', // 1 day
-    oraclesSyncPeriod: '86400', // 1 day
+    syncPeriod: '6646', // 1 day in blocks
+    totalRewardsLastUpdateBlockNumber: '12365797', // total rewards last update block number
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
@@ -49,7 +50,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
 
   contractSettings = {
     cancelLockDuration: '86400', // 1 day
-    oraclesSyncPeriod: '86400', // 1 day
+    syncPeriod: '6646', // 1 day in blocks
+    totalRewardsLastUpdateBlockNumber: '12365797', // total rewards last update block number
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x144a98cb1CdBb23610501fE6108858D9B7D24934',
@@ -58,8 +60,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     vestingEscrow: '0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3',
     withdrawalCredentials:
       '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
-    activatedValidators: '619',
-    pendingValidators: '4',
+    activatedValidators: '671',
+    pendingValidators: '1',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
   };
