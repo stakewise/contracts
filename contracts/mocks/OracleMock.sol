@@ -24,27 +24,27 @@ contract OracleMock {
     )
         external
     {
-        oracles.voteForRewards(totalRewards, activatedValidators);
-        oracles.voteForMerkleRoot(merkleRoot, merkleProofs);
+        oracles.voteForRewards(oracles.currentNonce(), totalRewards, activatedValidators);
+        oracles.voteForMerkleRoot(oracles.currentNonce(), merkleRoot, merkleProofs);
     }
 
     function updateTotalRewardsAndTransferRewards(uint256 totalRewards, uint256 activatedValidators, address payee) external {
-        oracles.voteForRewards(totalRewards, activatedValidators);
+        oracles.voteForRewards(oracles.currentNonce(), totalRewards, activatedValidators);
         rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
     }
 
     function transferRewardsAndUpdateTotalRewards(uint256 totalRewards, uint256 activatedValidators, address payee) external {
         rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
-        oracles.voteForRewards(totalRewards, activatedValidators);
+        oracles.voteForRewards(oracles.currentNonce(), totalRewards, activatedValidators);
     }
 
     function updateTotalRewardsAndTransferStakedEth(uint256 totalRewards, uint256 activatedValidators, address payee) external {
-        oracles.voteForRewards(totalRewards, activatedValidators);
+        oracles.voteForRewards(oracles.currentNonce(), totalRewards, activatedValidators);
         stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
     }
 
     function transferStakedEthAndUpdateTotalRewards(uint256 totalRewards, uint256 activatedValidators, address payee) external {
         stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
-        oracles.voteForRewards(totalRewards, activatedValidators);
+        oracles.voteForRewards(oracles.currentNonce(), totalRewards, activatedValidators);
     }
 }

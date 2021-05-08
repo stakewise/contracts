@@ -203,18 +203,28 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.voteForRewards(newTotalRewards, activatedValidators, {
-          from: oracleAccounts[0],
-        }),
+        oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Pausable: paused'
       );
     });
 
     it('only oracle can submit vote', async () => {
       await expectRevert(
-        oracles.voteForRewards(newTotalRewards, activatedValidators, {
-          from: anyone,
-        }),
+        oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: anyone,
+          }
+        ),
         'Oracles: access denied'
       );
     });
@@ -229,27 +239,42 @@ contract('Oracles', ([_, ...accounts]) => {
         lastUpdateBlockNumber.add(new BN(newSyncPeriod))
       );
 
-      await oracles.voteForRewards(newTotalRewards, activatedValidators, {
-        from: oracleAccounts[0],
-      });
+      await oracles.voteForRewards(
+        currentNonce,
+        newTotalRewards,
+        activatedValidators,
+        {
+          from: oracleAccounts[0],
+        }
+      );
 
       expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(
         true
       );
 
       await expectRevert(
-        oracles.voteForRewards(newTotalRewards, activatedValidators, {
-          from: oracleAccounts[0],
-        }),
+        oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Oracles: already voted'
       );
     });
 
     it('cannot vote too early', async () => {
       await expectRevert(
-        oracles.voteForRewards(newTotalRewards, activatedValidators, {
-          from: oracleAccounts[0],
-        }),
+        oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Oracles: too early vote'
       );
     });
@@ -265,6 +290,7 @@ contract('Oracles', ([_, ...accounts]) => {
       );
 
       const receipt = await oracles.voteForRewards(
+        currentNonce,
         newTotalRewards,
         activatedValidators,
         {
@@ -314,6 +340,7 @@ contract('Oracles', ([_, ...accounts]) => {
 
       for (let i = 0; i < oracleAccounts.length; i++) {
         let receipt = await oracles.voteForRewards(
+          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           {
@@ -347,8 +374,22 @@ contract('Oracles', ([_, ...accounts]) => {
       lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
       await time.advanceBlockTo(lastUpdateBlockNumber.add(newSyncPeriod));
 
+      // nonce has incremented
+      await expectRevert(
+        oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
+        'Oracles: invalid nonce'
+      );
+
       // new vote comes with different nonce
       let receipt = await oracles.voteForRewards(
+        currentNonce.add(new BN(1)),
         newTotalRewards,
         newActivatedValidators,
         {
@@ -395,9 +436,14 @@ contract('Oracles', ([_, ...accounts]) => {
       pendingValidators = await pool.pendingValidators();
 
       for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.voteForRewards(newTotalRewards, activatedValidators, {
-          from: oracleAccounts[i],
-        });
+        await oracles.voteForRewards(
+          currentNonce,
+          newTotalRewards,
+          activatedValidators,
+          {
+            from: oracleAccounts[i],
+          }
+        );
         if (!prevTotalRewards.eq(await rewardEthToken.totalRewards())) {
           // data submitted
           break;
@@ -442,7 +488,7 @@ contract('Oracles', ([_, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+        oracles.voteForMerkleRoot(currentNonce, merkleRoot, merkleProofs, {
           from: oracleAccounts[0],
         }),
         'Pausable: paused'
@@ -451,7 +497,7 @@ contract('Oracles', ([_, ...accounts]) => {
 
     it('only oracle can submit vote', async () => {
       await expectRevert(
-        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+        oracles.voteForMerkleRoot(currentNonce, merkleRoot, merkleProofs, {
           from: anyone,
         }),
         'Oracles: access denied'
@@ -459,7 +505,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('cannot vote twice', async () => {
-      await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+      await oracles.voteForMerkleRoot(currentNonce, merkleRoot, merkleProofs, {
         from: oracleAccounts[0],
       });
 
@@ -473,7 +519,7 @@ contract('Oracles', ([_, ...accounts]) => {
       );
 
       await expectRevert(
-        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+        oracles.voteForMerkleRoot(currentNonce, merkleRoot, merkleProofs, {
           from: oracleAccounts[0],
         }),
         'Oracles: already voted'
@@ -535,15 +581,21 @@ contract('Oracles', ([_, ...accounts]) => {
       });
 
       await expectRevert(
-        oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
-          from: oracleAccounts[0],
-        }),
+        oracles.voteForMerkleRoot(
+          currentNonce.add(new BN(1)),
+          merkleRoot,
+          merkleProofs,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Oracles: too early vote'
       );
     });
 
     it('does not submit new data when not enough votes', async () => {
       const receipt = await oracles.voteForMerkleRoot(
+        currentNonce,
         merkleRoot,
         merkleProofs,
         {
@@ -571,6 +623,7 @@ contract('Oracles', ([_, ...accounts]) => {
     it('submits data when enough votes collected', async () => {
       for (let i = 0; i < oracleAccounts.length; i++) {
         let receipt = await oracles.voteForMerkleRoot(
+          currentNonce,
           merkleRoot,
           merkleProofs,
           {
@@ -595,6 +648,14 @@ contract('Oracles', ([_, ...accounts]) => {
       // update submitted
       expect(await merkleDistributor.merkleRoot()).to.equal(merkleRoot);
 
+      // nonce has incremented
+      await expectRevert(
+        oracles.voteForMerkleRoot(currentNonce, merkleRoot, merkleProofs, {
+          from: oracleAccounts[0],
+        }),
+        'Oracles: invalid nonce'
+      );
+
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
         admin,
@@ -606,9 +667,14 @@ contract('Oracles', ([_, ...accounts]) => {
       });
 
       // new vote comes with different nonce
-      let receipt = await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
-        from: oracleAccounts[0],
-      });
+      let receipt = await oracles.voteForMerkleRoot(
+        currentNonce.add(new BN(2)),
+        merkleRoot,
+        merkleProofs,
+        {
+          from: oracleAccounts[0],
+        }
+      );
 
       // previous vote cleaned up
       expect(await oracles.hasVote(oracleAccounts[0], candidateId)).to.equal(

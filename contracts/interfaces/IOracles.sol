@@ -113,16 +113,18 @@ interface IOracles {
     /**
     * @dev Function for submitting oracle vote for total rewards. The last vote required for quorum will update the values.
     * Can only be called by an account with an oracle role.
-    * @param totalRewards - voted total rewards.
-    * @param activatedValidators - voted amount of activated validators.
+    * @param _nonce - current nonce.
+    * @param _totalRewards - voted total rewards.
+    * @param _activatedValidators - voted amount of activated validators.
     */
-    function voteForRewards(uint256 totalRewards, uint256 activatedValidators) external;
+    function voteForRewards(uint256 _nonce, uint256 _totalRewards, uint256 _activatedValidators) external;
 
     /**
     * @dev Function for submitting oracle vote for merkle root. The last vote required for quorum will update the values.
     * Can only be called by an account with an oracle role.
-    * @param merkleRoot - hash of the new merkle root.
-    * @param merkleProofs - link to the merkle proofs.
+    * @param _nonce - current nonce.
+    * @param _merkleRoot - hash of the new merkle root.
+    * @param _merkleProofs - link to the merkle proofs.
     */
-    function voteForMerkleRoot(bytes32 merkleRoot, string calldata merkleProofs) external;
+    function voteForMerkleRoot(uint256 _nonce, bytes32 _merkleRoot, string calldata _merkleProofs) external;
 }

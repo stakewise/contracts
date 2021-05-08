@@ -126,9 +126,15 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     /**
      * @dev See {IOracles-voteForRewards}.
      */
-    function voteForRewards(uint256 totalRewards, uint256 activatedValidators) external override onlyOracle whenNotPaused {
-        uint256 _nonce = nonce.current();
-        bytes32 candidateId = keccak256(abi.encode(_nonce, totalRewards, activatedValidators));
+    function voteForRewards(
+        uint256 _nonce,
+        uint256 _totalRewards,
+        uint256 _activatedValidators
+    )
+        external override onlyOracle whenNotPaused
+    {
+        require(_nonce == nonce.current(), "Oracles: invalid nonce");
+        bytes32 candidateId = keccak256(abi.encode(_nonce, _totalRewards, _activatedValidators));
         bytes32 voteId = keccak256(abi.encode(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
         require(isRewardsVoting(), "Oracles: too early vote");
@@ -137,17 +143,17 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit RewardsVoteSubmitted(msg.sender, _nonce, totalRewards, activatedValidators);
+        emit RewardsVoteSubmitted(msg.sender, _nonce, _totalRewards, _activatedValidators);
 
         // update only if enough votes accumulated
         uint256 oraclesCount = getRoleMemberCount(ORACLE_ROLE);
         if (candidateNewVotes.mul(3) > oraclesCount.mul(2)) {
             // update total rewards
-            rewardEthToken.updateTotalRewards(totalRewards);
+            rewardEthToken.updateTotalRewards(_totalRewards);
 
             // update activated validators
-            if (activatedValidators != pool.activatedValidators()) {
-                pool.setActivatedValidators(activatedValidators);
+            if (_activatedValidators != pool.activatedValidators()) {
+                pool.setActivatedValidators(_activatedValidators);
             }
 
             // clean up votes
@@ -167,9 +173,15 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
     /**
      * @dev See {IOracles-voteForMerkleRoot}.
      */
-    function voteForMerkleRoot(bytes32 merkleRoot, string calldata merkleProofs) external override onlyOracle whenNotPaused {
-        uint256 _nonce = nonce.current();
-        bytes32 candidateId = keccak256(abi.encode(_nonce, merkleRoot, merkleProofs));
+    function voteForMerkleRoot(
+        uint256 _nonce,
+        bytes32 _merkleRoot,
+        string calldata _merkleProofs
+    )
+        external override onlyOracle whenNotPaused
+    {
+        require(_nonce == nonce.current(), "Oracles: invalid nonce");
+        bytes32 candidateId = keccak256(abi.encode(_nonce, _merkleRoot, _merkleProofs));
         bytes32 voteId = keccak256(abi.encode(msg.sender, candidateId));
         require(!submittedVotes[voteId], "Oracles: already voted");
         require(isMerkleRootVoting(), "Oracles: too early vote");
@@ -178,13 +190,13 @@ contract Oracles is IOracles, ReentrancyGuardUpgradeable, OwnablePausableUpgrade
         submittedVotes[voteId] = true;
         uint256 candidateNewVotes = candidates[candidateId].add(1);
         candidates[candidateId] = candidateNewVotes;
-        emit MerkleRootVoteSubmitted(msg.sender, _nonce, merkleRoot, merkleProofs);
+        emit MerkleRootVoteSubmitted(msg.sender, _nonce, _merkleRoot, _merkleProofs);
 
         // update only if enough votes accumulated
         uint256 oraclesCount = getRoleMemberCount(ORACLE_ROLE);
         if (candidateNewVotes.mul(3) > oraclesCount.mul(2)) {
             // update merkle root
-            merkleDistributor.setMerkleRoot(merkleRoot, merkleProofs);
+            merkleDistributor.setMerkleRoot(_merkleRoot, _merkleProofs);
 
             // clean up votes
             delete submittedVotes[voteId];

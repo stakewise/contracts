@@ -651,13 +651,18 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
         "internalType": "bytes32",
-        "name": "merkleRoot",
+        "name": "_merkleRoot",
         "type": "bytes32"
       },
       {
         "internalType": "string",
-        "name": "merkleProofs",
+        "name": "_merkleProofs",
         "type": "string"
       }
     ],
@@ -670,12 +675,17 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "totalRewards",
+        "name": "_nonce",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "activatedValidators",
+        "name": "_totalRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_activatedValidators",
         "type": "uint256"
       }
     ],

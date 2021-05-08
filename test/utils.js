@@ -151,11 +151,17 @@ async function setActivatedValidators({
   await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
 
   let totalRewards = await rewardEthToken.totalRewards();
+  let nonce = await oracles.currentNonce();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForRewards(totalRewards, activatedValidators, {
-      from: oracleAccounts[i],
-    });
+    receipt = await oracles.voteForRewards(
+      nonce,
+      totalRewards,
+      activatedValidators,
+      {
+        from: oracleAccounts[i],
+      }
+    );
     if ((await pool.activatedValidators()).eq(activatedValidators)) {
       return receipt;
     }
@@ -182,11 +188,17 @@ async function setTotalRewards({
   await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
 
   let activatedValidators = await pool.activatedValidators();
+  let nonce = await oracles.currentNonce();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForRewards(totalRewards, activatedValidators, {
-      from: oracleAccounts[i],
-    });
+    receipt = await oracles.voteForRewards(
+      nonce,
+      totalRewards,
+      activatedValidators,
+      {
+        from: oracleAccounts[i],
+      }
+    );
     if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
       return receipt;
     }
@@ -204,9 +216,10 @@ async function setMerkleRoot({
     return;
   }
 
+  let nonce = await oracles.currentNonce();
   let receipt;
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForMerkleRoot(merkleRoot, merkleProofs, {
+    receipt = await oracles.voteForMerkleRoot(nonce, merkleRoot, merkleProofs, {
       from: oracleAccounts[i],
     });
     if ((await merkleDistributor.merkleRoot()) === merkleRoot) {
