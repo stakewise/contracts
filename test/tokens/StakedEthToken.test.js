@@ -24,7 +24,7 @@ const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const OracleMock = artifacts.require('OracleMock');
 
-contract('StakedEthToken', ([sender1, sender2]) => {
+contract('StakedEthToken', ([merkleDistributor, sender1, sender2]) => {
   const admin = contractSettings.admin;
   let stakedEthToken,
     rewardEthToken,
@@ -66,6 +66,24 @@ contract('StakedEthToken', ([sender1, sender2]) => {
         account: sender1,
         balance: new BN(0),
       });
+    });
+
+    it('updates distributor principal when deposited by account with disabled rewards', async () => {
+      // disable rewards
+      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
+      let amount = ether('10');
+      let receipt = await pool.addDeposit({
+        from: sender1,
+        value: amount,
+      });
+      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+        from: constants.ZERO_ADDRESS,
+        to: sender1,
+        value: amount,
+      });
+      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+        amount
+      );
     });
   });
 
@@ -196,6 +214,97 @@ contract('StakedEthToken', ([sender1, sender2]) => {
       });
     });
 
+    it('updates distributor principal when transferring to account with disabled rewards', async () => {
+      await stakedEthToken.toggleRewards(sender2, true, { from: admin });
+      let receipt = await stakedEthToken.transfer(sender2, value, {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value,
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
+        balance: value,
+      });
+      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+        value
+      );
+    });
+
+    it('updates distributor principal when transferring from account with disabled rewards', async () => {
+      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
+      let receipt = await stakedEthToken.transfer(sender2, value, {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value,
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
+        balance: value,
+      });
+      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+        new BN(0)
+      );
+    });
+
+    it('does not update distributor principal when transferring between accounts with disabled rewards', async () => {
+      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
+      await stakedEthToken.toggleRewards(sender2, true, { from: admin });
+      let receipt = await stakedEthToken.transfer(sender2, value, {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value,
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
+        balance: value,
+      });
+      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+        value
+      );
+    });
+
     it('cannot transfer staked amount after total rewards update in the same block', async () => {
       // clean up oracles
       for (let i = 0; i < oracleAccounts.length; i++) {
@@ -208,7 +317,8 @@ contract('StakedEthToken', ([sender1, sender2]) => {
       let mockedOracle = await OracleMock.new(
         contracts.oracles,
         contracts.stakedEthToken,
-        contracts.rewardEthToken
+        contracts.rewardEthToken,
+        merkleDistributor
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,
@@ -256,7 +366,8 @@ contract('StakedEthToken', ([sender1, sender2]) => {
       let mockedOracle = await OracleMock.new(
         contracts.oracles,
         contracts.stakedEthToken,
-        contracts.rewardEthToken
+        contracts.rewardEthToken,
+        merkleDistributor
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,

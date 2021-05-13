@@ -73,12 +73,6 @@
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "rewardPerToken",
-        "type": "uint256"
-      },
-      {
         "indexed": false,
         "internalType": "bool",
         "name": "isDisabled",
@@ -871,19 +865,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "symbol",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -896,9 +877,22 @@
         "type": "bool"
       }
     ],
-    "name": "toggleRewards",
+    "name": "setRewardsDisabled",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "symbol",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -996,7 +990,13 @@
       }
     ],
     "name": "updateRewardCheckpoint",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "accRewardsDisabled",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -1014,7 +1014,18 @@
       }
     ],
     "name": "updateRewardCheckpoints",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "rewardsDisabled1",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "rewardsDisabled2",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },

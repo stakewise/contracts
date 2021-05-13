@@ -26,7 +26,7 @@ const Oracles = artifacts.require('Oracles');
 const OracleMock = artifacts.require('OracleMock');
 const maintainerFee = new BN(1000);
 
-contract('RewardEthToken', ([sender, ...accounts]) => {
+contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   const admin = contractSettings.admin;
   let stakedEthToken,
     rewardEthToken,
@@ -57,7 +57,7 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
 
   afterEach(async () => resetFork());
 
-  describe('admin actions', () => {
+  describe('restricted actions', () => {
     it('not admin fails to update maintainer address', async () => {
       await expectRevert(
         rewardEthToken.setMaintainer(sender, {
@@ -102,6 +102,15 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
           from: admin,
         }),
         'RewardEthToken: invalid fee'
+      );
+    });
+
+    it('only StakedEthToken contract can disable rewards', async () => {
+      await expectRevert(
+        rewardEthToken.setRewardsDisabled(sender, true, {
+          from: admin,
+        }),
+        'RewardEthToken: access denied'
       );
     });
   });
@@ -309,7 +318,8 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
       let mockedOracle = await OracleMock.new(
         contracts.oracles,
         contracts.stakedEthToken,
-        contracts.rewardEthToken
+        contracts.rewardEthToken,
+        merkleDistributor
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,
@@ -357,7 +367,8 @@ contract('RewardEthToken', ([sender, ...accounts]) => {
       let mockedOracle = await OracleMock.new(
         contracts.oracles,
         contracts.stakedEthToken,
-        contracts.rewardEthToken
+        contracts.rewardEthToken,
+        merkleDistributor
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,

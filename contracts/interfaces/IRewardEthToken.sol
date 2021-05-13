@@ -23,10 +23,9 @@ interface IRewardEthToken is IERC20Upgradeable {
     /**
     * @dev Event for tracking whether rewards distribution through merkle distributor is enabled/disabled.
     * @param account - address of the account.
-    * @param rewardPerToken - the reward per token at the time of toggle.
     * @param isDisabled - whether rewards distribution is disabled.
     */
-    event RewardsToggled(address indexed account, uint256 indexed rewardPerToken, bool isDisabled);
+    event RewardsToggled(address indexed account, bool isDisabled);
 
     /**
     * @dev Structure for storing information about user reward checkpoint.
@@ -102,6 +101,14 @@ interface IRewardEthToken is IERC20Upgradeable {
     function rewardPerToken() external view returns (uint128);
 
     /**
+    * @dev Function for setting whether rewards are disabled for the account.
+    * Can only be called by the `StakedEthToken` contract.
+    * @param account - address of the account to disable rewards for.
+    * @param isDisabled - whether the rewards will be disabled.
+    */
+    function setRewardsDisabled(address account, bool isDisabled) external;
+
+    /**
     * @dev Function for retrieving account's current checkpoint.
     * @param account - address of the account to retrieve the checkpoint for.
     */
@@ -117,21 +124,14 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @dev Function for updating account's reward checkpoint.
     * @param account - address of the account to update the reward checkpoint for.
     */
-    function updateRewardCheckpoint(address account) external;
-
-    /**
-    * @dev Function for toggling rewards for the account.
-    * @param account - address of the account.
-    * @param isDisabled - whether to disable account's rewards distribution.
-    */
-    function toggleRewards(address account, bool isDisabled) external;
+    function updateRewardCheckpoint(address account) external returns (bool);
 
     /**
     * @dev Function for updating reward checkpoints for two accounts simultaneously (for gas savings).
     * @param account1 - address of the first account to update the reward checkpoint for.
     * @param account2 - address of the second account to update the reward checkpoint for.
     */
-    function updateRewardCheckpoints(address account1, address account2) external;
+    function updateRewardCheckpoints(address account1, address account2) external returns (bool, bool);
 
     /**
     * @dev Function for updating validators total rewards.

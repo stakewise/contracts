@@ -538,7 +538,8 @@ contract('Oracles', ([_, ...accounts]) => {
       let mockedOracle = await OracleMock.new(
         contracts.oracles,
         contracts.stakedEthToken,
-        contracts.rewardEthToken
+        contracts.rewardEthToken,
+        merkleDistributor.address
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,
@@ -558,7 +559,7 @@ contract('Oracles', ([_, ...accounts]) => {
       let activatedValidators = await pool.activatedValidators();
 
       await expectRevert(
-        mockedOracle.updateTotalRewardsWithMerkleRoot(
+        mockedOracle.updateTotalRewardsAndMerkleRoot(
           totalRewards,
           activatedValidators,
           merkleRoot,
