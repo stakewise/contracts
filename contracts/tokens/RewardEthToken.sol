@@ -66,6 +66,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function setRewardsDisabled(address account, bool isDisabled) external override {
         require(msg.sender == address(stakedEthToken), "RewardEthToken: access denied");
         require(rewardsDisabled[account] != isDisabled, "RewardEthToken: value did not change");
+        require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot disable during rewards update");
 
         uint128 _rewardPerToken = rewardPerToken;
         checkpoints[account] = Checkpoint({
