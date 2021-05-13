@@ -210,9 +210,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
@@ -225,9 +228,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       // check account's balance and reward arrived as usual
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
@@ -250,9 +256,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       // check account's balance and reward didn't change
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
@@ -282,9 +291,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       // check user's balance and reward didn't change
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
@@ -308,9 +320,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       // check user's balance and reward didn't change
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
@@ -340,9 +355,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
 
       // manual checkpoints update
-      await rewardEthToken.updateCheckpoint(account);
-      await rewardEthToken.updateCheckpoint(constants.ZERO_ADDRESS);
-      await rewardEthToken.updateCheckpoints(account, constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoint(account);
+      await rewardEthToken.updateRewardCheckpoint(constants.ZERO_ADDRESS);
+      await rewardEthToken.updateRewardCheckpoints(
+        account,
+        constants.ZERO_ADDRESS
+      );
 
       // check user's balance didn't change, reward updated
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
