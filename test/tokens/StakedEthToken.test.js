@@ -14,7 +14,7 @@ const {
   resetFork,
   checkStakedEthToken,
   getOracleAccounts,
-  setTotalRewards
+  setTotalRewards,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
