@@ -14,6 +14,7 @@ const {
   resetFork,
   checkStakedEthToken,
   getOracleAccounts,
+  setTotalRewards
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -212,6 +213,47 @@ contract('StakedEthToken', ([merkleDistributor, sender1, sender2]) => {
         account: sender2,
         balance: value,
       });
+    });
+
+    it('preserves rewards during sETH2 transfer', async () => {
+      let totalRewards = (await rewardEthToken.totalSupply()).add(ether('10'));
+      await setTotalRewards({
+        admin,
+        totalRewards,
+        rewardEthToken,
+        pool,
+        oracles,
+        oracleAccounts,
+      });
+
+      let rewardAmount = await rewardEthToken.balanceOf(sender1);
+      let receipt = await stakedEthToken.transfer(sender2, value, {
+        from: sender1,
+      });
+
+      expectEvent(receipt, 'Transfer', {
+        from: sender1,
+        to: sender2,
+        value,
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
+        balance: value,
+      });
+
+      expect(await rewardEthToken.balanceOf(sender1)).bignumber.equal(
+        rewardAmount
+      );
     });
 
     it('updates distributor principal when transferring to account with disabled rewards', async () => {

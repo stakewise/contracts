@@ -32,17 +32,6 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     uint256 public override distributorPrincipal;
 
     /**
-     * @dev See {IStakedEthToken-initialize}.
-     */
-    function initialize(address _admin, address _rewardEthToken, address _pool) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init("StakeWise Staked ETH2", "sETH2");
-        __ERC20Permit_init("StakeWise Staked ETH2");
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
-        pool = _pool;
-    }
-
-    /**
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view override returns (uint256) {

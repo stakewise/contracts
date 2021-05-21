@@ -198,7 +198,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateRewardCheckpoints(address account1, address account2) public override returns (bool rewardsDisabled1, bool rewardsDisabled2) {
         rewardsDisabled1 = rewardsDisabled[account1];
         rewardsDisabled2 = rewardsDisabled[account2];
-        if ((rewardsDisabled1 || rewardsDisabled2) && !(rewardsDisabled1 && rewardsDisabled2)) {
+        if (!rewardsDisabled1 || !rewardsDisabled2) {
             uint128 newRewardPerToken = rewardPerToken;
             if (!rewardsDisabled1) _updateRewardCheckpoint(account1, newRewardPerToken);
             if (!rewardsDisabled2) _updateRewardCheckpoint(account2, newRewardPerToken);

@@ -80,37 +80,52 @@ async function upgradeContracts() {
   await proxyAdmin
     .connect(signer)
     .upgrade(contracts.rewardEthToken, rewardEthTokenImpl);
+  log(
+    white(
+      `Upgraded RewardEthToken contract implementation to ${rewardEthTokenImpl}`
+    )
+  );
 
   // upgrade StakedEthToken to new implementation
   await proxyAdmin
     .connect(signer)
     .upgrade(contracts.stakedEthToken, stakedEthTokenImpl);
+  log(
+    white(
+      `Upgraded StakedEthToken contract implementation to ${stakedEthTokenImpl}`
+    )
+  );
 
   // upgrade Oracles to new implementation
   await proxyAdmin.connect(signer).upgrade(contracts.oracles, oraclesImpl);
+  log(white(`Upgraded Oracles contract implementation to ${oraclesImpl}`));
 
   // call upgrade function of RewardEthToken
   const RewardEthToken = await hre.ethers.getContractFactory('RewardEthToken');
   const rewardEthToken = await RewardEthToken.attach(contracts.rewardEthToken);
   await rewardEthToken.connect(signer).pause();
+  log(white('Paused RewardEthToken contract'));
   await rewardEthToken
     .connect(signer)
     .upgrade(
       merkleDistributor,
       contractSettings.totalRewardsLastUpdateBlockNumber
     );
+  log(white('Initialized RewardEthToken contract'));
   await rewardEthToken.connect(signer).unpause();
-  log(white('Upgraded RewardEthToken contract'));
+  log(white('Unpaused RewardEthToken contract'));
 
   // call upgrade function of Oracles
   const Oracles = await hre.ethers.getContractFactory('Oracles');
   const oracles = await Oracles.attach(contracts.oracles);
   await oracles.connect(signer).pause();
+  log(white('Paused Oracles contract'));
   await oracles
     .connect(signer)
     .upgrade(merkleDistributor, contractSettings.syncPeriod);
+  log(white('Initialized Oracles contract'));
   await oracles.connect(signer).unpause();
-  log(white('Upgraded Oracles contract'));
+  log(white('Unpaused Oracles contract'));
 
   return {
     merkleDistributor,
