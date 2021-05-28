@@ -54,7 +54,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-upgrade}.
      */
     function upgrade(address _merkleDistributor, uint256 _lastUpdateBlockNumber) external override onlyAdmin whenPaused {
-        require(address(merkleDistributor) == address(0), "RewardEthToken: already upgraded");
+        require(merkleDistributor == address(0), "RewardEthToken: already upgraded");
         merkleDistributor = _merkleDistributor;
         lastUpdateBlockNumber = _lastUpdateBlockNumber;
         updateRewardCheckpoint(address(0));
