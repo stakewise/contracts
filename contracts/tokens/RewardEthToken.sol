@@ -82,6 +82,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-setMaintainer}.
      */
     function setMaintainer(address _newMaintainer) external override onlyAdmin {
+        require(_newMaintainer != address(0), "RewardEthToken: invalid address");
         maintainer = _newMaintainer;
         emit MaintainerUpdated(_newMaintainer);
     }

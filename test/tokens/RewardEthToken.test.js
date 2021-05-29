@@ -67,6 +67,15 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       );
     });
 
+    it('fails to set zero address for the maintainer', async () => {
+      await expectRevert(
+        rewardEthToken.setMaintainer(constants.ZERO_ADDRESS, {
+          from: admin,
+        }),
+        'RewardEthToken: invalid address'
+      );
+    });
+
     it('admin can update maintainer address', async () => {
       let receipt = await rewardEthToken.setMaintainer(sender, {
         from: admin,
