@@ -8,11 +8,10 @@ const {
 } = require('../utils');
 
 const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 
 contract('Oracles (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
-  let oracles, pool;
+  let oracles, merkleDistributor;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -20,17 +19,15 @@ contract('Oracles (upgrading)', ([anyone]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    await upgradeContracts();
-
     oracles = await Oracles.at(contracts.oracles);
-    pool = await Pool.at(contracts.pool);
+    ({ merkleDistributor } = await upgradeContracts());
   });
 
   afterEach(async () => resetFork());
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, {
+      oracles.upgrade(merkleDistributor, contractSettings.syncPeriod, {
         from: anyone,
       }),
       'OwnablePausable: access denied'
@@ -39,7 +36,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      oracles.upgrade(pool.address, {
+      oracles.upgrade(merkleDistributor, contractSettings.syncPeriod, {
         from: admin,
       }),
       'Pausable: not paused'
@@ -49,7 +46,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
   it('fails to upgrade twice', async () => {
     await oracles.pause({ from: admin });
     await expectRevert(
-      oracles.upgrade(pool.address, {
+      oracles.upgrade(merkleDistributor, contractSettings.syncPeriod, {
         from: admin,
       }),
       'Oracles: already upgraded'

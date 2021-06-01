@@ -28,16 +28,8 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
 
-    /**
-     * @dev See {StakedEthToken-initialize}.
-     */
-    function initialize(address _admin, address _rewardEthToken, address _pool) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        __ERC20_init("StakeWise Staked ETH2", "sETH2");
-        __ERC20Permit_init("StakeWise Staked ETH2");
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
-        pool = _pool;
-    }
+    // @dev The principal amount of the distributor.
+    uint256 public override distributorPrincipal;
 
     /**
      * @dev See {IERC20-totalSupply}.
@@ -54,15 +46,45 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
+     * @dev See {IStakedEthToken-toggleRewards}.
+     */
+    function toggleRewards(address account, bool isDisabled) external override onlyAdmin {
+        require(account != address(0), "StakedEthToken: invalid account");
+
+        // toggle rewards
+        rewardEthToken.setRewardsDisabled(account, isDisabled);
+
+        // update distributor principal
+        uint256 accountBalance = deposits[account];
+        if (isDisabled) {
+            distributorPrincipal = distributorPrincipal.add(accountBalance);
+        } else {
+            distributorPrincipal = distributorPrincipal.sub(accountBalance);
+        }
+    }
+
+    /**
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
         require(sender != address(0), "StakedEthToken: invalid sender");
         require(recipient != address(0), "StakedEthToken: invalid receiver");
+        require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
 
         // start calculating sender and recipient rewards with updated deposit amounts
-        rewardEthToken.updateRewardCheckpoints(sender, recipient);
-        deposits[sender] = deposits[sender].sub(amount, "StakedEthToken: invalid amount");
+        (bool senderRewardsDisabled, bool recipientRewardsDisabled) = rewardEthToken.updateRewardCheckpoints(sender, recipient);
+        if ((senderRewardsDisabled || recipientRewardsDisabled) && !(senderRewardsDisabled && recipientRewardsDisabled)) {
+            // update merkle distributor principal if any of the addresses has disabled rewards
+            uint256 _distributorPrincipal = distributorPrincipal; // gas savings
+            if (senderRewardsDisabled) {
+                _distributorPrincipal = _distributorPrincipal.sub(amount);
+            } else {
+                _distributorPrincipal = _distributorPrincipal.add(amount);
+            }
+            distributorPrincipal = _distributorPrincipal;
+        }
+
+        deposits[sender] = deposits[sender].sub(amount);
         deposits[recipient] = deposits[recipient].add(amount);
 
         emit Transfer(sender, recipient, amount);
@@ -75,7 +97,12 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
         require(msg.sender == pool, "StakedEthToken: access denied");
 
         // start calculating account rewards with updated deposit amount
-        rewardEthToken.updateRewardCheckpoint(account);
+        bool rewardsDisabled = rewardEthToken.updateRewardCheckpoint(account);
+        if (rewardsDisabled) {
+            // update merkle distributor principal if account has disabled rewards
+            distributorPrincipal = distributorPrincipal.add(amount);
+        }
+
         totalDeposits = totalDeposits.add(amount);
         deposits[account] = deposits[account].add(amount);
 

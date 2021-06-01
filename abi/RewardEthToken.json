@@ -67,6 +67,25 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "isDisabled",
+        "type": "bool"
+      }
+    ],
+    "name": "RewardsToggled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "periodRewards",
@@ -82,12 +101,6 @@
         "indexed": false,
         "internalType": "uint256",
         "name": "rewardPerToken",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "lastUpdateTimestamp",
         "type": "uint256"
       }
     ],
@@ -364,6 +377,24 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "claim",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "decimals",
     "outputs": [
@@ -532,39 +563,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakedEthToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_maintainer",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maintainerFee",
-        "type": "uint256"
-      }
-    ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -601,7 +599,7 @@
   },
   {
     "inputs": [],
-    "name": "lastUpdateTimestamp",
+    "name": "lastUpdateBlockNumber",
     "outputs": [
       {
         "internalType": "uint256",
@@ -633,6 +631,19 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "merkleDistributor",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -704,7 +715,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "value",
         "type": "uint256"
       },
       {
@@ -812,6 +823,25 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "rewardsDisabled",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_newMaintainer",
         "type": "address"
       }
@@ -830,6 +860,24 @@
       }
     ],
     "name": "setMaintainerFee",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "internalType": "bool",
+        "name": "isDisabled",
+        "type": "bool"
+      }
+    ],
+    "name": "setRewardsDisabled",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -942,7 +990,13 @@
       }
     ],
     "name": "updateRewardCheckpoint",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "accRewardsDisabled",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -960,7 +1014,18 @@
       }
     ],
     "name": "updateRewardCheckpoints",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "rewardsDisabled1",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "rewardsDisabled2",
+        "type": "bool"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -973,6 +1038,24 @@
       }
     ],
     "name": "updateTotalRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_merkleDistributor",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_lastUpdateBlockNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "upgrade",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

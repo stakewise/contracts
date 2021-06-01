@@ -92,7 +92,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         totalSupply,
         account: sender1,
         balance: depositAmount1,
-        deposit: depositAmount1,
       });
 
       // User 2 creates a deposit
@@ -111,7 +110,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         totalSupply,
         account: sender2,
         balance: depositAmount2,
-        deposit: depositAmount2,
       });
 
       // check contract balance
@@ -172,7 +170,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         totalSupply,
         account: sender1,
         balance: depositAmount,
-        deposit: depositAmount,
       });
       expect(
         await pool.activations(sender1, validatorIndex)
@@ -279,7 +276,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         totalSupply,
         account: sender1,
         balance: depositAmount,
-        deposit: depositAmount,
       });
 
       // check contract balance
@@ -397,7 +393,6 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         totalSupply,
         account: sender3,
         balance: depositAmount.mul(new BN(2)),
-        deposit: depositAmount.mul(new BN(2)),
       });
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'Activated', {

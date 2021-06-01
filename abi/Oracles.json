@@ -3,6 +3,37 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "merkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "MerkleRootVoteSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -10,6 +41,37 @@
       }
     ],
     "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "totalRewards",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "activatedValidators",
+        "type": "uint256"
+      }
+    ],
+    "name": "RewardsVoteSubmitted",
     "type": "event"
   },
   {
@@ -117,37 +179,6 @@
       }
     ],
     "name": "Unpaused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "oracle",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "nonce",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalRewards",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "activatedValidators",
-        "type": "uint256"
-      }
-    ],
-    "name": "VoteSubmitted",
     "type": "event"
   },
   {
@@ -368,18 +399,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_oracle",
+        "name": "oracle",
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "_totalRewards",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_activatedValidators",
-        "type": "uint256"
+        "internalType": "bytes32",
+        "name": "candidateId",
+        "type": "bytes32"
       }
     ],
     "name": "hasVote",
@@ -402,6 +428,19 @@
       }
     ],
     "name": "isAdmin",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isMerkleRootVoting",
     "outputs": [
       {
         "internalType": "bool",
@@ -440,6 +479,19 @@
       }
     ],
     "name": "isPauser",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "isRewardsVoting",
     "outputs": [
       {
         "internalType": "bool",
@@ -582,8 +634,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_pool",
+        "name": "_merkleDistributor",
         "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_syncPeriod",
+        "type": "uint256"
       }
     ],
     "name": "upgrade",
@@ -595,6 +652,34 @@
     "inputs": [
       {
         "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_merkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "voteForMerkleRoot",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
         "name": "_totalRewards",
         "type": "uint256"
       },
@@ -604,7 +689,7 @@
         "type": "uint256"
       }
     ],
-    "name": "vote",
+    "name": "voteForRewards",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

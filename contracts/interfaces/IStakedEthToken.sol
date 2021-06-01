@@ -9,17 +9,21 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  */
 interface IStakedEthToken is IERC20Upgradeable {
     /**
-    * @dev Constructor for initializing the StakedEthToken contract.
-    * @param _admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
-    * @param _pool - address of the Pool contract.
-    */
-    function initialize(address _admin, address _rewardEthToken, address _pool) external;
-
-    /**
     * @dev Function for retrieving the total deposits amount.
     */
     function totalDeposits() external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving the principal amount of the distributor.
+    */
+    function distributorPrincipal() external view returns (uint256);
+
+    /**
+    * @dev Function for toggling rewards for the account.
+    * @param account - address of the account.
+    * @param isDisabled - whether to disable account's rewards distribution.
+    */
+    function toggleRewards(address account, bool isDisabled) external;
 
     /**
     * @dev Function for creating `amount` tokens and assigning them to `account`.
