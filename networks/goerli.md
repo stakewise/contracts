@@ -75,6 +75,11 @@
 - Contract: [0xFc3513E92799F0169e5f14F354d0097E4b790498](https://goerli.etherscan.io/address/0xFc3513E92799F0169e5f14F354d0097E4b790498)
 - Transaction: [0x0a2c0ec55c6527367f420cbf2dc9434eb05263d2f982a10c48f59d9bfaaadab0](https://goerli.etherscan.io/tx/0x0a2c0ec55c6527367f420cbf2dc9434eb05263d2f982a10c48f59d9bfaaadab0)
 
+## Merkle Distributor
+
+- Contract: [0x6Ef0172b79131C66c7012Db3545D637B116feb12](https://goerli.etherscan.io/address/0x6Ef0172b79131C66c7012Db3545D637B116feb12)
+- Transaction: [0x6f4a9d39776a4eb4cfd41738e0e8718aa240da00d2ceda44b1527b771a978535](https://goerli.etherscan.io/tx/0x6f4a9d39776a4eb4cfd41738e0e8718aa240da00d2ceda44b1527b771a978535)
+
 ## Proxy Admin
 
 - Implementation: [0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8](https://goerli.etherscan.io/address/0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8)
