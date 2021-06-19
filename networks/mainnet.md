@@ -30,10 +30,20 @@
 - Contract: [0xFe2e637202056d30016725477c5da089Ab0A043A](https://etherscan.io/address/0xFe2e637202056d30016725477c5da089Ab0A043A)
 - Transaction: [0x36713d91ebe27af027d9e6c39b487cbd06b8f676348f44730363e459eac62a15](https://etherscan.io/tx/0x36713d91ebe27af027d9e6c39b487cbd06b8f676348f44730363e459eac62a15)
 
+### Upgrade to v1.3.0
+
+- Implementation: [0x41bcac23e4db058d8D7aAbE2Fccdae5F01FE647A](https://etherscan.io/address/0x41bcac23e4db058d8D7aAbE2Fccdae5F01FE647A)
+- Transaction: [0x71b7c78f4526efbef1e31d2af8ee1f942e8cceaa384cd0cf2ad2c008fe14a9c3](https://etherscan.io/tx/0x71b7c78f4526efbef1e31d2af8ee1f942e8cceaa384cd0cf2ad2c008fe14a9c3)
+
 ## RewardEthToken
 
 - Contract: [0x20BC832ca081b91433ff6c17f85701B6e92486c5](https://etherscan.io/address/0x20BC832ca081b91433ff6c17f85701B6e92486c5)
 - Transaction: [0x7862156d832b88c96ebaad89570422b4dfb6ef10dd4f6f45798c583eec9f7db9](https://etherscan.io/tx/0x7862156d832b88c96ebaad89570422b4dfb6ef10dd4f6f45798c583eec9f7db9)
+
+### Upgrade to v1.3.0
+
+- Implementation: [0x610B58583642610967727fe4fadd125a92D6F678](https://etherscan.io/address/0x610B58583642610967727fe4fadd125a92D6F678)
+- Transaction: [0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399](https://etherscan.io/tx/0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399)
 
 ## StakeWiseToken
 
@@ -49,6 +59,11 @@
 
 - Implementation: [0x749dCCE12E8337dfb44635082519E656d44A2672](https://etherscan.io/address/0x749dCCE12E8337dfb44635082519E656d44A2672)
 - Transaction: [0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f](https://etherscan.io/tx/0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f)
+
+### Upgrade to v1.3.0
+
+- Implementation: [0xd3ea5BF3bB42542B5b64358C12F06233704e9b99](https://etherscan.io/address/0xd3ea5BF3bB42542B5b64358C12F06233704e9b99)
+- Transaction: [0xd03b2316cb5cde5f52272deaf96640fd7f6d50556d798fd7818887a1f7ac2b73](https://etherscan.io/tx/0xd03b2316cb5cde5f52272deaf96640fd7f6d50556d798fd7818887a1f7ac2b73)
 
 ## Vesting Escrow
 
@@ -75,6 +90,11 @@
 - Repository: [DAO Module](https://github.com/gnosis/dao-module/tree/a04437988d26d49b6308bf49d229e275a10802ee)
 - Contract: [0x1df2Ce448b082272dAc9B6842A54f342cF4e614e](https://etherscan.io/address/0x1df2Ce448b082272dAc9B6842A54f342cF4e614e)
 - Transaction: [0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201](https://etherscan.io/tx/0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201)
+
+## Merkle Distributor
+
+- Contract: [0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20](https://etherscan.io/address/0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20)
+- Transaction: [0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a](https://etherscan.io/tx/0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a)
 
 ## Early Adopters Campaign (Merkle Drop)
 

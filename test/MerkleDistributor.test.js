@@ -296,6 +296,9 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     });
 
     it('cannot claim twice', async () => {
+      await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
+        from: admin,
+      });
       await pool.addDeposit({
         from: anyone,
         value: ether('1000'),
@@ -304,12 +307,14 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
         from: admin,
       });
       let totalDeposits = await stakedEthToken.totalDeposits();
-      let maintainerFee = await rewardEthToken.maintainerFee();
-      let totalRewards = distributorEthReward
+      let totalRewards = await rewardEthToken.totalSupply();
+      let periodReward = distributorEthReward
         .mul(totalDeposits)
         .div(ether('1000'));
+      let maintainerFee = await rewardEthToken.maintainerFee();
+      totalRewards = totalRewards.add(periodReward);
       totalRewards = totalRewards.add(
-        totalRewards.add(maintainerFee.div(new BN(10000)))
+        periodReward.mul(maintainerFee).div(new BN(10000))
       );
 
       await setTotalRewards({
@@ -345,7 +350,10 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       );
     });
 
-    it('can claim rewards token', async () => {
+    it('can claim reward tokens', async () => {
+      await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
+        from: admin,
+      });
       await pool.addDeposit({
         from: anyone,
         value: ether('1000'),

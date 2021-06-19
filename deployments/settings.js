@@ -13,13 +13,14 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     stakeWiseToken: '0x0e2497aACec2755d831E4AFDEA25B4ef1B823855',
     vestingEscrowFactory: '0xbA91cdD484893c1f8F75DB55733ccaDcd0fE5f59',
     merkleDrop: '0xFc3513E92799F0169e5f14F354d0097E4b790498',
+    merkleDistributor: '0x6Ef0172b79131C66c7012Db3545D637B116feb12',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
   };
 
   contractSettings = {
     cancelLockDuration: '86400', // 1 day
     syncPeriod: '6646', // 1 day in blocks
-    totalRewardsLastUpdateBlockNumber: '12365797', // total rewards last update block number
+    totalRewardsLastUpdateBlockNumber: '4821781', // total rewards last update block number
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
@@ -45,13 +46,14 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     stakeWiseToken: '0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2',
     vestingEscrowFactory: '0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5',
     merkleDrop: '0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5',
+    merkleDistributor: '0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
   };
 
   contractSettings = {
     cancelLockDuration: '86400', // 1 day
     syncPeriod: '6646', // 1 day in blocks
-    totalRewardsLastUpdateBlockNumber: '12365797', // total rewards last update block number
+    totalRewardsLastUpdateBlockNumber: '12653584', // total rewards last update block number
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x144a98cb1CdBb23610501fE6108858D9B7D24934',
@@ -60,8 +62,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     vestingEscrow: '0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3',
     withdrawalCredentials:
       '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
-    activatedValidators: '671',
-    pendingValidators: '1',
+    activatedValidators: '770',
+    pendingValidators: '21',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
   };
