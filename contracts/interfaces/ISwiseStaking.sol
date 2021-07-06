@@ -28,28 +28,24 @@ interface ISwiseStaking {
     * @dev Event for tracking new positions.
     * @param owner - address of the position owner.
     * @param multiplier - position multiplier.
-    * @param duration - lock duration.
     * @param amount - amount deposited.
     */
     event PositionCreated(
         address indexed owner,
         uint32 indexed multiplier,
-        uint256 indexed duration,
         uint256 amount
     );
 
     /**
     * @dev Event for tracking position updates.
     * @param owner - address of the position owner.
-    * @param addedAmount - added amount.
-    * @param multiplier - position multiplier.
-    * @param compoundSwiseReward - whether to compound SWISE reward.
+    * @param multiplier - new position multiplier.
+    * @param newAmount - new position amount.
     */
     event PositionUpdated(
         address indexed owner,
-        uint256 addedAmount,
         uint32 indexed multiplier,
-        bool compoundSwiseReward
+        uint256 newAmount
     );
 
     /**

@@ -9,7 +9,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/drafts/IERC20PermitUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/ISwiseStaking.sol";
-import "hardhat/console.sol";
 
 /**
  * @title SwiseStaking
@@ -210,7 +209,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         totalPoints = prevTotalPoints.add(_calculatePositionPoints(positionAmount, multiplier));
 
         // emit event
-        emit PositionCreated(msg.sender, multiplier, duration, positionAmount);
+        emit PositionCreated(msg.sender, multiplier, positionAmount);
 
         // lock account's tokens
         swiseToken.safeTransferFrom(msg.sender, address(this), positionAmount);
@@ -284,7 +283,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         }
 
         // emit event
-        emit PositionUpdated(msg.sender, addedAmount, proposedMultiplier, compoundSwiseReward);
+        emit PositionUpdated(msg.sender, position.multiplier, newAmount);
     }
 
     function _updateAmount(
@@ -389,7 +388,13 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         // update SWISE reward token checkpoint
         uint256 newTotalPoints = prevTotalPoints.sub(positionPoints);
         if (swisePenalty > 0 && newTotalPoints > 0) {
-            swiseRewardPerPoint = prevSwiseRewardPerPoint.add(swisePenalty.mul(1e18).div(newTotalPoints)).toUint128();
+            uint256 periodSwiseRewardPerPoint = swisePenalty.mul(1e18).div(newTotalPoints);
+            if (periodSwiseRewardPerPoint > 0) {
+                swiseRewardPerPoint = prevSwiseRewardPerPoint.add(periodSwiseRewardPerPoint).toUint128();
+            } else {
+                // skip penalty if it's smaller than the minimal to distribute
+                swisePenalty = 0;
+            }
         } else if (newTotalPoints == 0) {
             // the last withdrawn position does not receive penalty
             swisePenalty = 0;
@@ -444,7 +449,6 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         uint256 startMultiplier = startMultipliers[msg.sender];
         (uint256 startTimestamp, uint256 endTimestamp) = (position.startTimestamp, position.endTimestamp);
         uint256 currMultiplier = _getCurrentMultiplier(startTimestamp, endTimestamp, startMultiplier);
-        console.log(currMultiplier);
 
         // calculate new multiplier
         if (proposedMultiplier == 0) {
