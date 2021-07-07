@@ -6,7 +6,6 @@ const {
   ether,
   constants,
   send,
-  time,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
