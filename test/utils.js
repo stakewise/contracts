@@ -176,13 +176,7 @@ async function setActivatedValidators({
     return;
   }
 
-  let newSyncPeriod = new BN('700');
-  await oracles.setSyncPeriod(newSyncPeriod, {
-    from: admin,
-  });
-  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
-
+  await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
   let totalRewards = await rewardEthToken.totalRewards();
   let nonce = await oracles.currentNonce();
   let receipt;
@@ -212,14 +206,7 @@ async function setTotalRewards({
   if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
     return;
   }
-
-  let newSyncPeriod = new BN('700');
-  await oracles.setSyncPeriod(newSyncPeriod, {
-    from: admin,
-  });
-  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
-
+  await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
   let activatedValidators = await pool.activatedValidators();
   let nonce = await oracles.currentNonce();
   let receipt;
@@ -289,6 +276,21 @@ async function resetFork() {
   });
 }
 
+async function setRewardsVotingPeriod(rewardEthToken, oracles, admin) {
+  let newSyncPeriod = new BN('700');
+  await oracles.setSyncPeriod(newSyncPeriod, {
+    from: admin,
+  });
+  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+  const currentBlock = await time.latestBlock();
+  const nextSyncBlock = lastUpdateBlockNumber.add(new BN(newSyncPeriod));
+  if (currentBlock.lt(nextSyncBlock)) {
+    return time.advanceBlockTo(
+      lastUpdateBlockNumber.add(new BN(newSyncPeriod))
+    );
+  }
+}
+
 module.exports = {
   checkCollectorBalance,
   checkSolo,
@@ -305,4 +307,5 @@ module.exports = {
   setMerkleRoot,
   getOracleAccounts,
   checkSwiseStakingPosition,
+  setRewardsVotingPeriod,
 };

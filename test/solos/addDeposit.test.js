@@ -23,7 +23,7 @@ const withdrawalCredentials =
   '0x00fd1759df8cf0dfa07a7d0b9083c7527af46d8b87c33305cee15165c49d5061';
 
 contract('Solos (add deposit)', ([sender1, sender2]) => {
-  const admin = contractSettings.admin;
+  const admin = contractSettings.solosAdmin;
   let solos;
 
   after(async () => stopImpersonatingAccount(admin));

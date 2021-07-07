@@ -27,7 +27,7 @@ const validatorDeposit = ether('32');
 const validator = validatorParams[0];
 
 contract('Solos (register validator)', ([operator, sender, other]) => {
-  const admin = contractSettings.admin;
+  const admin = contractSettings.solosAdmin;
   let vrc, solos, soloId;
 
   before(async () => {
@@ -44,7 +44,12 @@ contract('Solos (register validator)', ([operator, sender, other]) => {
 
     solos = await Solos.at(contracts.solos);
     let validators = await Validators.at(contracts.validators);
-    await validators.addOperator(operator, { from: admin });
+
+    // assign operator
+    await impersonateAccount(contractSettings.admin);
+    await send.ether(sender, contractSettings.admin, ether('5'));
+    await validators.addOperator(operator, { from: contractSettings.admin });
+    await impersonateAccount(admin);
 
     await solos.setValidatorPrice(validatorPrice, {
       from: admin,

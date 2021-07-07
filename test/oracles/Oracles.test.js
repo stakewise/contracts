@@ -15,6 +15,7 @@ const {
   getOracleAccounts,
   setMerkleRoot,
   setTotalRewards,
+  setRewardsVotingPeriod,
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
@@ -148,20 +149,13 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('cannot update oracles sync period when voting for rewards', async () => {
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(lastUpdateBlockNumber.add(newSyncPeriod));
-
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
       await expectRevert(
         oracles.setSyncPeriod(new BN('900'), {
           from: admin,
         }),
         'Oracles: cannot update during voting'
       );
-      expect(await oracles.syncPeriod()).bignumber.equal(newSyncPeriod);
     });
   });
 
@@ -230,15 +224,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('cannot vote twice', async () => {
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
       await oracles.voteForRewards(
         currentNonce,
         newTotalRewards,
@@ -280,14 +266,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('does not submit new data when not enough votes', async () => {
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
 
       const receipt = await oracles.voteForRewards(
         currentNonce,
@@ -318,15 +297,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('submits data when enough votes collected', async () => {
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
       let newActivatedValidators = activatedValidators.add(pendingValidators);
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
@@ -371,8 +342,7 @@ contract('Oracles', ([_, ...accounts]) => {
       );
       expect(await pool.pendingValidators()).to.bignumber.equal(new BN(0));
 
-      lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(lastUpdateBlockNumber.add(newSyncPeriod));
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
 
       // nonce has incremented
       await expectRevert(
@@ -424,14 +394,7 @@ contract('Oracles', ([_, ...accounts]) => {
     });
 
     it('does not update activation data when did not change', async () => {
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
       activatedValidators = new BN(contractSettings.activatedValidators);
       pendingValidators = await pool.pendingValidators();
 
@@ -475,6 +438,15 @@ contract('Oracles', ([_, ...accounts]) => {
       for (const oracleAccount of oracleAccounts) {
         await send.ether(anyone, oracleAccount, ether('2'));
       }
+      await setTotalRewards({
+        admin,
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards: ether('1000'),
+      });
+
       currentNonce = await oracles.currentNonce();
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'bytes32', 'string'],
@@ -546,14 +518,7 @@ contract('Oracles', ([_, ...accounts]) => {
       });
 
       // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
+      await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
 
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();

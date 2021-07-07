@@ -27,7 +27,7 @@ const cancelLockDuration = 86400; // 1 day
 const { withdrawalCredentials } = validatorParams[0];
 
 contract('Solos (cancel deposit)', ([operator, sender, anyone]) => {
-  const admin = contractSettings.admin;
+  const admin = contractSettings.solosAdmin;
   let solos, soloId;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -39,7 +39,12 @@ contract('Solos (cancel deposit)', ([operator, sender, anyone]) => {
     await upgradeContracts();
 
     let validators = await Validators.at(contracts.validators);
-    await validators.addOperator(operator, { from: admin });
+
+    // assign operator
+    await impersonateAccount(contractSettings.admin);
+    await send.ether(sender, contractSettings.admin, ether('5'));
+    await validators.addOperator(operator, { from: contractSettings.admin });
+    await impersonateAccount(admin);
 
     solos = await Solos.at(contracts.solos);
     await solos.setCancelLockDuration(cancelLockDuration, {

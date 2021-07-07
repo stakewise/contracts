@@ -72,6 +72,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     });
 
     it('admin can toggle rewards', async () => {
+      const currentPrincipal = await stakedEthToken.distributorPrincipal();
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
@@ -93,7 +94,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
         }
       );
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        deposit
+        currentPrincipal.add(deposit)
       );
 
       receipt = await stakedEthToken.toggleRewards(account, false, {
@@ -109,11 +110,15 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
         }
       );
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        new BN(0)
+        currentPrincipal
       );
     });
 
     it('balance is not updated for disabled rewards account', async () => {
+      const currentPrincipal = await stakedEthToken.distributorPrincipal();
+      const currentDistributorRewards = await rewardEthToken.balanceOf(
+        constants.ZERO_ADDRESS
+      );
       await stakedEthToken.toggleRewards(account, true, {
         from: admin,
       });
@@ -133,11 +138,11 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // distributor principal updated
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        deposit
+        currentPrincipal.add(deposit)
       );
       expect(
         await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(new BN(0));
+      ).to.be.bignumber.equal(currentDistributorRewards);
 
       // mint sETH2 for normal account
       await pool.addDeposit({
@@ -176,11 +181,13 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        deposit
+        currentPrincipal.add(deposit)
       );
       expect(
-        await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(balance);
+        (await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)).gt(
+          currentDistributorRewards
+        )
+      ).to.be.equal(true);
 
       // check normal account balance
       expect(await stakedEthToken.balanceOf(anyone)).to.be.bignumber.equal(
@@ -189,19 +196,20 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check transfer for disabled account
       await expectRevert(
-        rewardEthToken.transfer(anyone, balance, {
+        rewardEthToken.transfer(anyone, new BN(1), {
           from: account,
         }),
         'SafeMath: subtraction overflow'
       );
 
       // check transfer for normal account
-      await rewardEthToken.transfer(account, balance, {
+      await rewardEthToken.transfer(account, new BN(1), {
         from: anyone,
       });
     });
 
     it('toggling rewards does not affect current rewards balance', async () => {
+      const currentPrincipal = await stakedEthToken.distributorPrincipal();
       // mint sETH2 for disabled account
       let deposit = ether('5');
       await pool.addDeposit({
@@ -242,13 +250,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let periodReward = await rewardEthToken.balanceOf(account);
       expect(periodReward).to.be.bignumber.greaterThan(new BN(0));
 
-      // check distributor has no balance and reward
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        new BN(0)
+      let currentDistributorRewards = await rewardEthToken.balanceOf(
+        constants.ZERO_ADDRESS
       );
-      expect(
-        await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(new BN(0));
+      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+        currentPrincipal
+      );
 
       // disable rewards
       await stakedEthToken.toggleRewards(account, true, {
@@ -273,11 +280,11 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance updated, reward didn't change
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        deposit
+        currentPrincipal.add(deposit)
       );
       expect(
         await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(new BN(0));
+      ).to.be.bignumber.equal(currentDistributorRewards);
 
       // next rewards arrive
       totalRewards = totalRewards.add(ether('10'));
@@ -306,13 +313,13 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
         periodReward
       );
 
+      currentDistributorRewards = await rewardEthToken.balanceOf(
+        constants.ZERO_ADDRESS
+      );
       // check distributor balance didn't change, reward updated
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        deposit
+        currentPrincipal.add(deposit)
       );
-      expect(
-        await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(periodReward);
 
       // re-enable rewards
       await stakedEthToken.toggleRewards(account, false, {
@@ -337,11 +344,11 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance updated, reward didnt' change
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        new BN(0)
+        currentPrincipal
       );
       expect(
         await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.be.bignumber.equal(periodReward);
+      ).to.be.bignumber.equal(currentDistributorRewards);
 
       // next rewards arrive
       totalRewards = totalRewards.add(ether('10'));
@@ -353,6 +360,9 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
         pool,
         totalRewards,
       });
+      currentDistributorRewards = await rewardEthToken.balanceOf(
+        constants.ZERO_ADDRESS
+      );
 
       // manual checkpoints update
       await rewardEthToken.updateRewardCheckpoint(account);
@@ -372,11 +382,8 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance and reward didn't change
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        new BN(0)
+        currentPrincipal
       );
-      expect(
-        await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
-      ).to.bignumber.equal(periodReward);
     });
   });
 

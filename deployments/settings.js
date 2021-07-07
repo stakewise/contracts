@@ -24,6 +24,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
+    solosAdmin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
     maintainer: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
     VRC: '0x8c5fecdC472E27Bc447696F431E425D02dd46a8c',
     vestingEscrow: '0x4CDAe3f1Eaa84b88fFc97627Ef1c77F762794287',
@@ -66,13 +67,14 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     validatorPrice: '10000000000000000000', // 10 DAI / month
     maintainerFee: '1000', // 10%,
     admin: '0x144a98cb1CdBb23610501fE6108858D9B7D24934',
+    solosAdmin: '0xf91AA4a655B6F43243ed4C2853F3508314DaA2aB',
     maintainer: '0xf91AA4a655B6F43243ed4C2853F3508314DaA2aB',
     VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
     vestingEscrow: '0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3',
     withdrawalCredentials:
       '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
-    activatedValidators: '770',
-    pendingValidators: '21',
+    activatedValidators: '798',
+    pendingValidators: '5',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
 

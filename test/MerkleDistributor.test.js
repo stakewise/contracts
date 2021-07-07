@@ -16,6 +16,7 @@ const {
   getOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
+  setRewardsVotingPeriod,
 } = require('./utils');
 
 const MerkleDistributor = artifacts.require('MerkleDistributor');
@@ -190,6 +191,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       await token.approve(merkleDistributor.address, amount, {
         from: admin,
       });
+      let prevAmount = await token.balanceOf(merkleDistributor.address);
 
       let receipt = await merkleDistributor.distribute(
         token.address,
@@ -212,7 +214,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       });
       expect(
         await token.balanceOf(merkleDistributor.address)
-      ).to.bignumber.equal(amount);
+      ).to.bignumber.equal(prevAmount.add(amount));
     });
   });
 
@@ -251,6 +253,14 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     });
 
     it('cannot claim with invalid merkle proof', async () => {
+      await setTotalRewards({
+        admin,
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards: ether('100000'),
+      });
       await setMerkleRoot({
         merkleDistributor,
         merkleRoot,
@@ -271,27 +281,6 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           }
         ),
         'MerkleDistributor: invalid proof'
-      );
-    });
-
-    it('cannot claim more eth rewards than allocated to the distributor', async () => {
-      await token.transfer(merkleDistributor.address, distributorTokenReward, {
-        from: admin,
-      });
-      await setMerkleRoot({
-        merkleDistributor,
-        merkleRoot,
-        merkleProofs,
-        oracles,
-        oracleAccounts,
-      });
-
-      const { index, amounts, tokens, proof } = merkleProofs[account1];
-      await expectRevert(
-        merkleDistributor.claim(index, account1, tokens, amounts, proof, {
-          from: anyone,
-        }),
-        'SafeMath: subtraction overflow'
       );
     });
 
@@ -438,6 +427,15 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     describe('claiming within the same block', () => {
       let mockedOracle, totalRewards, activatedValidators;
       beforeEach(async () => {
+        await setTotalRewards({
+          admin,
+          rewardEthToken,
+          oracles,
+          oracleAccounts,
+          pool,
+          totalRewards: (await rewardEthToken.totalRewards()).add(new BN(1)),
+        });
+
         await setMerkleRoot({
           merkleDistributor,
           merkleRoot,
@@ -465,12 +463,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
         });
 
         // wait for rewards voting time
-        let newSyncPeriod = new BN('700');
-        await oracles.setSyncPeriod(newSyncPeriod, {
-          from: admin,
-        });
-        let lastUpdateBlock = await rewardEthToken.lastUpdateBlockNumber();
-        await time.advanceBlockTo(lastUpdateBlock.add(new BN(newSyncPeriod)));
+        await setRewardsVotingPeriod(rewardEthToken, oracles, admin);
 
         await pool.addDeposit({
           from: anyone,
@@ -557,20 +550,17 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           activatedValidators
         );
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await expectRevert(
-          mockedOracle.updateMerkleRootAndClaim(
-            merkleRoot,
-            merkleProofs,
-            index,
-            account1,
-            tokens,
-            amounts,
-            proof,
-            {
-              from: anyone,
-            }
-          ),
-          'SafeMath: subtraction overflow'
+        await mockedOracle.updateMerkleRootAndClaim(
+          merkleRoot,
+          merkleProofs,
+          index,
+          account1,
+          tokens,
+          amounts,
+          proof,
+          {
+            from: anyone,
+          }
         );
       });
     });
