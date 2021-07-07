@@ -143,6 +143,7 @@ module.exports = {
       'PoolEscrow',
       'MerkleDrop',
       'MerkleDistributor',
+      'SwiseStaking',
     ],
     clear: true,
     flat: true,

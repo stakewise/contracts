@@ -33,6 +33,15 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     pendingValidators: '1',
     minActivatingDeposit: '5000000000000000000', // 5 ETH
     pendingValidatorsLimit: '500', // 5 %
+
+    // SWISE staking
+    multipliers: {
+      103: 2592000,
+      110: 7776000,
+      130: 15552000,
+      200: 31104000,
+      500: 93312000,
+    },
   };
 } else {
   contracts = {
@@ -66,6 +75,15 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     pendingValidators: '21',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
+
+    // SWISE staking
+    multipliers: {
+      103: 2592000,
+      110: 7776000,
+      130: 15552000,
+      200: 31104000,
+      500: 93312000,
+    },
   };
 }
 

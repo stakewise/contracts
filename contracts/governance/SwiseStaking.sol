@@ -193,6 +193,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         uint256 newEthRewardPerPoint = updateEthRewardCheckpoint(totalEthClaimed, prevTotalPoints);
 
         // create new position
+        // solhint-disable-next-line not-rely-on-time
         uint256 timestamp = block.timestamp;
         startMultipliers[msg.sender] = multiplier;
         _positions[msg.sender] = Position({
@@ -371,6 +372,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         uint256 swisePenalty = _calculatePenalty(
             position.startTimestamp,
             position.endTimestamp,
+            // solhint-disable-next-line not-rely-on-time
             block.timestamp,
             positionAmount
         );
@@ -452,6 +454,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
 
         // calculate new multiplier
         if (proposedMultiplier == 0) {
+            // solhint-disable-next-line not-rely-on-time
             require(block.timestamp < endTimestamp, "SwiseStaking: new multiplier must be added");
             // current multiplier should be used
             position.multiplier = currMultiplier.toUint32();
@@ -459,6 +462,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         } else {
             // new multiplier has been proposed
             uint256 duration = durations[proposedMultiplier];
+            // solhint-disable-next-line not-rely-on-time
             uint256 newEndTimestamp = block.timestamp.add(duration);
             require(duration > 0 && newEndTimestamp > endTimestamp, "SwiseStaking: invalid new multiplier");
 
@@ -469,6 +473,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
                 position.endTimestamp
             ) = (
                 proposedMultiplier,
+                // solhint-disable-next-line not-rely-on-time
                 block.timestamp.toUint64(),
                 newEndTimestamp.toUint64()
             );
@@ -483,8 +488,10 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
     )
         internal view returns (uint256 currMultiplier)
     {
+        // solhint-disable-next-line not-rely-on-time
         if (block.timestamp < endTimestamp && startMultiplier > 100) {
             // lock time has not passed yet
+            // solhint-disable-next-line not-rely-on-time
             uint256 passedDuration = block.timestamp.sub(startTimestamp);
             uint256 totalDuration = endTimestamp.sub(startTimestamp);
             currMultiplier = startMultiplier.sub(startMultiplier.sub(100).mul(passedDuration).div(totalDuration));

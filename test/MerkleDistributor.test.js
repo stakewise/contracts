@@ -469,10 +469,8 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
         await oracles.setSyncPeriod(newSyncPeriod, {
           from: admin,
         });
-        let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-        await time.advanceBlockTo(
-          lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-        );
+        let lastUpdateBlock = await rewardEthToken.lastUpdateBlockNumber();
+        await time.advanceBlockTo(lastUpdateBlock.add(new BN(newSyncPeriod)));
 
         await pool.addDeposit({
           from: anyone,
