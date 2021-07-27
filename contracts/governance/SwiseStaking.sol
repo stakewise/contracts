@@ -152,6 +152,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
      */
     function setMultiplier(uint32 multiplier, uint256 duration) external override onlyAdmin {
         require(multiplier > 100, "SwiseStaking: invalid multiplier");
+        require(durations[multiplier] < duration, "SwiseStaking: invalid duration");
         durations[multiplier] = duration;
         emit MultiplierUpdated(msg.sender, multiplier, duration);
     }
