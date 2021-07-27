@@ -97,7 +97,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
             uint256 swiseReward
         )
     {
-        Position memory position = _positions[account];
+        Position storage position = _positions[account];
 
         // SLOAD for gas optimization
         (
@@ -151,6 +151,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
      * @dev See {ISwiseStaking-setMultiplier}.
      */
     function setMultiplier(uint32 multiplier, uint256 duration) external override onlyAdmin {
+        require(multiplier > 100, "SwiseStaking: invalid multiplier");
         durations[multiplier] = duration;
         emit MultiplierUpdated(msg.sender, multiplier, duration);
     }
@@ -301,7 +302,7 @@ contract SwiseStaking is ISwiseStaking, OwnablePausableUpgradeable {
         if (compoundSwiseReward && swiseReward > 0) newAmount = newAmount.add(swiseReward);
 
         if (newAmount != prevAmount) {
-            require(newAmount < 2**96, "SwiseStaking: invalid added amount");
+            require(newAmount < type(uint96).max, "SwiseStaking: invalid added amount");
             position.amount = uint96(newAmount);
         }
     }
