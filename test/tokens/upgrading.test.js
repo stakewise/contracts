@@ -17,7 +17,11 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 
 contract('RewardEthToken (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
-  let rewardEthToken, merkleDistributor;
+  let rewardEthToken,
+    merkleDistributor,
+    oracles,
+    partnersRevenueSharing,
+    operatorsRevenueSharing;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -26,7 +30,12 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
     await send.ether(anyone, admin, ether('5'));
 
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    ({ merkleDistributor } = await upgradeContracts());
+    ({
+      merkleDistributor,
+      oracles,
+      partnersRevenueSharing,
+      operatorsRevenueSharing,
+    } = await upgradeContracts());
   });
 
   afterEach(async () => resetFork());
@@ -34,8 +43,9 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
       rewardEthToken.upgrade(
-        merkleDistributor,
-        contractSettings.totalRewardsLastUpdateBlockNumber,
+        oracles,
+        operatorsRevenueSharing,
+        partnersRevenueSharing,
         {
           from: anyone,
         }
@@ -47,8 +57,9 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
       rewardEthToken.upgrade(
-        merkleDistributor,
-        contractSettings.totalRewardsLastUpdateBlockNumber,
+        oracles,
+        operatorsRevenueSharing,
+        partnersRevenueSharing,
         {
           from: admin,
         }
@@ -61,8 +72,9 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
     await rewardEthToken.pause({ from: admin });
     await expectRevert(
       rewardEthToken.upgrade(
-        merkleDistributor,
-        contractSettings.totalRewardsLastUpdateBlockNumber,
+        oracles,
+        operatorsRevenueSharing,
+        partnersRevenueSharing,
         {
           from: admin,
         }

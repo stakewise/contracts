@@ -1,3 +1,4 @@
+const { defaultAbiCoder, hexlify, keccak256 } = require('ethers/lib/utils');
 const {
   expectRevert,
   expectEvent,
@@ -13,7 +14,7 @@ const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
-  getOracleAccounts,
+  setupOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
 } = require('./utils');
@@ -22,7 +23,7 @@ const MerkleDistributor = artifacts.require('MerkleDistributor');
 const StakeWiseToken = artifacts.require('StakeWiseToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const StakedEthToken = artifacts.require('StakedEthToken');
-const OracleMock = artifacts.require('OracleMock');
+const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
@@ -63,7 +64,7 @@ const merkleProofs = {
   },
 };
 
-contract('Merkle Distributor', ([beneficiary, anyone]) => {
+contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
   let merkleDistributor,
     amount,
@@ -91,11 +92,13 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    merkleDistributor = await MerkleDistributor.at(
-      upgradedContracts.merkleDistributor
-    );
-    oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await getOracleAccounts({ oracles });
+    merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    oracles = await Oracles.at(upgradedContracts.oracles);
+    oracleAccounts = await setupOracleAccounts({
+      admin,
+      oracles,
+      accounts: otherAccounts,
+    });
     pool = await Pool.at(contracts.pool);
   });
 
@@ -299,7 +302,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.addDeposit({
+      await pool.stake(anyone, {
         from: anyone,
         value: ether('1000'),
       });
@@ -311,10 +314,10 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       let periodReward = distributorEthReward
         .mul(totalDeposits)
         .div(ether('1000'));
-      let maintainerFee = await rewardEthToken.maintainerFee();
+      let protocolFee = await rewardEthToken.protocolFee();
       totalRewards = totalRewards.add(periodReward);
       totalRewards = totalRewards.add(
-        periodReward.mul(maintainerFee).div(new BN(10000))
+        periodReward.mul(protocolFee).div(new BN(10000))
       );
 
       await setTotalRewards({
@@ -354,7 +357,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.addDeposit({
+      await pool.stake(anyone, {
         from: anyone,
         value: ether('1000'),
       });
@@ -436,7 +439,12 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     });
 
     describe('claiming within the same block', () => {
-      let mockedOracle, totalRewards, activatedValidators;
+      let multicallMock,
+        totalRewards,
+        activatedValidators,
+        rewardsSignatures,
+        merkleRootSignatures;
+
       beforeEach(async () => {
         await setMerkleRoot({
           merkleDistributor,
@@ -447,34 +455,32 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
         });
 
         // clean up oracles
-        for (let i = 0; i < oracleAccounts.length; i++) {
+        for (let i = 1; i < oracleAccounts.length; i++) {
           await oracles.removeOracle(oracleAccounts[i], {
             from: admin,
           });
         }
 
         // deploy mocked oracle
-        mockedOracle = await OracleMock.new(
-          contracts.oracles,
-          contracts.stakedEthToken,
-          contracts.rewardEthToken,
+        multicallMock = await MulticallMock.new(
+          oracles.address,
+          stakedEthToken.address,
+          rewardEthToken.address,
           merkleDistributor.address
         );
-        await oracles.addOracle(mockedOracle.address, {
-          from: admin,
-        });
 
         // wait for rewards voting time
         let newSyncPeriod = new BN('700');
         await oracles.setSyncPeriod(newSyncPeriod, {
           from: admin,
         });
-        let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
+        let lastUpdateBlockNumber =
+          await rewardEthToken.lastUpdateBlockNumber();
         await time.advanceBlockTo(
           lastUpdateBlockNumber.add(new BN(newSyncPeriod))
         );
 
-        await pool.addDeposit({
+        await pool.stake(anyone, {
           from: anyone,
           value: ether('1000'),
         });
@@ -482,22 +488,50 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           from: admin,
         });
         let totalDeposits = await stakedEthToken.totalDeposits();
-        let maintainerFee = await rewardEthToken.maintainerFee();
+        let protocolFee = await rewardEthToken.protocolFee();
         totalRewards = distributorEthReward
           .mul(totalDeposits)
           .div(ether('1000'));
         totalRewards = totalRewards.add(
-          totalRewards.add(maintainerFee.div(new BN(10000)))
+          totalRewards.add(protocolFee.div(new BN(10000)))
         );
         activatedValidators = await pool.activatedValidators();
+
+        // create rewards signature
+        let currentNonce = await oracles.currentNonce();
+        let encoded = defaultAbiCoder.encode(
+          ['uint256', 'uint256', 'uint256'],
+          [
+            currentNonce.toString(),
+            totalRewards.toString(),
+            activatedValidators.toString(),
+          ]
+        );
+        let candidateId = hexlify(keccak256(encoded));
+        rewardsSignatures = [
+          await web3.eth.sign(candidateId, oracleAccounts[0]),
+        ];
+
+        // create merkle root signature
+        encoded = defaultAbiCoder.encode(
+          ['uint256', 'bytes32', 'string'],
+          [currentNonce.add(new BN(1)).toString(), merkleRoot, merkleProofs]
+        );
+        candidateId = hexlify(keccak256(encoded));
+        merkleRootSignatures = [
+          await web3.eth.sign(candidateId, oracleAccounts[0]),
+        ];
       });
 
       it('cannot claim after total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await expectRevert(
-          mockedOracle.updateTotalRewardsAndClaim(
-            totalRewards,
-            activatedValidators,
+          multicallMock.updateTotalRewardsAndClaim(
+            {
+              totalRewards: totalRewards.toString(),
+              activatedValidators: activatedValidators.toString(),
+              signatures: rewardsSignatures,
+            },
             index,
             account1,
             tokens,
@@ -514,9 +548,12 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       it('can claim before total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await expectRevert(
-          mockedOracle.claimAndUpdateTotalRewards(
-            totalRewards,
-            activatedValidators,
+          multicallMock.claimAndUpdateTotalRewards(
+            {
+              totalRewards: totalRewards.toString(),
+              activatedValidators: activatedValidators.toString(),
+              signatures: rewardsSignatures,
+            },
             index,
             account1,
             tokens,
@@ -532,14 +569,15 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
       it('cannot claim before merkle root update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await mockedOracle.updateTotalRewards(
+        await oracles.submitRewards(
+          await oracles.currentNonce(),
           totalRewards,
-          activatedValidators
+          activatedValidators,
+          rewardsSignatures
         );
         await expectRevert(
-          mockedOracle.claimAndUpdateMerkleRoot(
-            merkleRoot,
-            merkleProofs,
+          multicallMock.claimAndUpdateMerkleRoot(
+            { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
             index,
             account1,
             tokens,
@@ -554,15 +592,16 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       });
 
       it('can claim after merkle root update in the same block', async () => {
-        await mockedOracle.updateTotalRewards(
+        await oracles.submitRewards(
+          await oracles.currentNonce(),
           totalRewards,
-          activatedValidators
+          activatedValidators,
+          rewardsSignatures
         );
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await expectRevert(
-          mockedOracle.updateMerkleRootAndClaim(
-            merkleRoot,
-            merkleProofs,
+          multicallMock.updateMerkleRootAndClaim(
+            { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
             index,
             account1,
             tokens,
@@ -575,6 +614,36 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           'SafeMath: subtraction overflow'
         );
       });
+    });
+  });
+
+  describe('upgrading', () => {
+    it('fails to upgrade with not admin privilege', async () => {
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: anyone,
+        }),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('fails to upgrade when not paused', async () => {
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: admin,
+        }),
+        'Pausable: not paused'
+      );
+    });
+
+    it('fails to upgrade twice', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: admin,
+        }),
+        'MerkleDistributor: already upgraded'
+      );
     });
   });
 });

@@ -36,11 +36,12 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     mapping (bytes32 => mapping (uint256 => uint256)) private _claimedBitMap;
 
     /**
-     * @dev See {IMerkleDistributor-initialize}.
+     * @dev See {IMerkleDistributor-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/v1.3.0/contracts/collectors/Pool.sol#L55
      */
-    function initialize(address _admin, address _rewardEthToken, address _oracles) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        rewardEthToken = _rewardEthToken;
+    function upgrade(address _oracles) external override onlyAdmin whenPaused {
+        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "MerkleDistributor: already upgraded");
         oracles = IOracles(_oracles);
     }
 

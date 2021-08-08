@@ -519,7 +519,7 @@ contract('RevenueSharing', ([claimer, beneficiary, ...otherAccounts]) => {
         new BN(0)
       );
 
-      // check reward of the beneficiary1
+      // check reward of the beneficiary2
       const reward2 = receipt.logs[1].args.reward;
       expect(reward2).to.bignumber.greaterThan(new BN(0));
       expect(await revenueSharing.rewardOf(beneficiary2)).to.bignumber.equal(

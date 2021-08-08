@@ -70,12 +70,10 @@ interface IMerkleDistributor {
     function lastUpdateBlockNumber() external view returns (uint256);
 
     /**
-    * @dev Constructor for initializing the MerkleDistributor contract.
-    * @param _admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @dev Function for upgrading the MerkleDistributor contract.
     * @param _oracles - address of the Oracles contract.
     */
-    function initialize(address _admin, address _rewardEthToken, address _oracles) external;
+    function upgrade(address _oracles) external;
 
     /**
     * @dev Function for checking the claimed bit map.

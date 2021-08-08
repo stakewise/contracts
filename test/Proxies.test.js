@@ -46,7 +46,7 @@ contract('Proxies', () => {
     }
   });
 
-  it('proxy admin admin owner is DAO', async () => {
+  it('proxy admin owner is DAO', async () => {
     expect(await proxyAdmin.owner()).to.equal(contractSettings.admin);
   });
 });

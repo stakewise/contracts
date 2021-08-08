@@ -10,7 +10,7 @@ const {
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
-  getOracleAccounts,
+  setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -32,13 +32,12 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    await upgradeContracts();
-
-    oracles = await Oracles.at(contracts.oracles);
+    let upgradedContracts = await upgradeContracts();
+    oracles = await Oracles.at(upgradedContracts.oracles);
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    oracleAccounts = await getOracleAccounts({ oracles });
+    oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
   });
 
   afterEach(async () => resetFork());
@@ -75,7 +74,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.addDeposit({
+      await pool.stake(account, {
         from: account,
         value: deposit,
       });
@@ -120,7 +119,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.addDeposit({
+      await pool.stake(account, {
         from: account,
         value: deposit,
       });
@@ -140,7 +139,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       ).to.be.bignumber.equal(new BN(0));
 
       // mint sETH2 for normal account
-      await pool.addDeposit({
+      await pool.stake(anyone, {
         from: anyone,
         value: ether('5'),
       });
@@ -204,7 +203,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     it('toggling rewards does not affect current rewards balance', async () => {
       // mint sETH2 for disabled account
       let deposit = ether('5');
-      await pool.addDeposit({
+      await pool.stake(account, {
         from: account,
         value: deposit,
       });
