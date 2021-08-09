@@ -19,12 +19,6 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
     using SafeCastUpgradeable for uint256;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
-    // @dev Total number of points (sum of contributed amount * revenue share %).
-    uint128 public override totalPoints;
-
-    // @dev Current rETH2 reward amount per point.
-    uint128 public override rewardPerPoint;
-
     // @dev Maps beneficiary address to the reward checkpoint.
     mapping(address => Checkpoint) public override checkpoints;
 
@@ -36,6 +30,12 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
 
     // @dev Address of the RewardEthToken contract.
     IERC20Upgradeable private rewardEthToken;
+
+    // @dev Total number of points (sum of contributed amount * revenue share %).
+    uint128 public override totalPoints;
+
+    // @dev Current rETH2 reward amount per point.
+    uint128 public override rewardPerPoint;
 
     /**
      * @dev See {IRevenueSharing-initialize}.
@@ -255,7 +255,7 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
         uint256 periodReward = totalReward.mul(_totalPoints).div(totalStaked.mul(1e4));
 
         // update reward per point
-        rewardPerPoint = prevRewardPerPoint.add(periodReward.mul(1e18).div(_totalPoints)).toUint128();
+        rewardPerPoint = prevRewardPerPoint.add(periodReward.mul(1e31).div(_totalPoints)).toUint128();
 
         emit RewardsUpdated(msg.sender, periodReward);
         return periodReward;
@@ -270,7 +270,7 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
         internal pure returns (uint256 reward)
     {
         if (newRewardPerPoint > prevRewardPerPoint) {
-            reward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e18);
+            reward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e31);
         }
 
         if (unclaimedReward > 0) {

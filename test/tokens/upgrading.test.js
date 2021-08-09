@@ -1,10 +1,4 @@
-const {
-  expectRevert,
-  send,
-  ether,
-  constants,
-  BN,
-} = require('@openzeppelin/test-helpers');
+const { expectRevert, send, ether } = require('@openzeppelin/test-helpers');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
@@ -17,11 +11,7 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 
 contract('RewardEthToken (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
-  let rewardEthToken,
-    merkleDistributor,
-    oracles,
-    partnersRevenueSharing,
-    operatorsRevenueSharing;
+  let rewardEthToken, oracles, partnersRevenueSharing, operatorsRevenueSharing;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -30,12 +20,8 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
     await send.ether(anyone, admin, ether('5'));
 
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    ({
-      merkleDistributor,
-      oracles,
-      partnersRevenueSharing,
-      operatorsRevenueSharing,
-    } = await upgradeContracts());
+    ({ oracles, partnersRevenueSharing, operatorsRevenueSharing } =
+      await upgradeContracts());
   });
 
   afterEach(async () => resetFork());
@@ -81,16 +67,5 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
       ),
       'RewardEthToken: already upgraded'
     );
-  });
-
-  it('updates distributor checkpoint', async () => {
-    const rewardPerToken = await rewardEthToken.rewardPerToken();
-    const distributorCheckpoint = await rewardEthToken.checkpoints(
-      constants.ZERO_ADDRESS
-    );
-    await expect(distributorCheckpoint.rewardPerToken).to.bignumber.equal(
-      rewardPerToken
-    );
-    await expect(distributorCheckpoint.reward).to.bignumber.equal(new BN(0));
   });
 });

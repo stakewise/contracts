@@ -7,7 +7,6 @@ const {
   ether,
   constants,
   send,
-  time,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
@@ -18,6 +17,7 @@ const {
   checkRewardEthToken,
   setTotalRewards,
   setupOracleAccounts,
+  enableRewardsVoting,
 } = require('../utils');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
@@ -281,9 +281,9 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         periodReward
       );
 
-      for (const revenueSharing of [
-        operatorsRevenueSharing,
-        partnersRevenueSharing,
+      for (const [revenueSharing, revenueCut] of [
+        [operatorsRevenueSharing, operatorsRevenueCut],
+        [partnersRevenueSharing, partnersRevenueCut],
       ]) {
         let receipt = await revenueSharing.collectRewards(
           [beneficiary1, beneficiary2],
@@ -313,7 +313,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         expect(await revenueSharing.rewardOf(beneficiary2)).to.bignumber.equal(
           new BN(0)
         );
-        expect(reward1.add(reward2)).to.bignumber.lessThan(operatorsRevenueCut);
+        expect(reward1.add(reward2)).to.bignumber.lessThan(revenueCut);
         expect(reward2).to.bignumber.greaterThan(reward1);
       }
 
@@ -504,15 +504,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
 
       // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
 
@@ -563,15 +555,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
 
       // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
 

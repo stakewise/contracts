@@ -74,6 +74,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     stakedEthToken,
     oracles,
     oracleAccounts,
+    prevDistributorBalance,
     pool;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -100,6 +101,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       accounts: otherAccounts,
     });
     pool = await Pool.at(contracts.pool);
+    prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
   });
 
   afterEach(async () => resetFork());
@@ -215,11 +217,24 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       });
       expect(
         await token.balanceOf(merkleDistributor.address)
-      ).to.bignumber.equal(amount);
+      ).to.bignumber.equal(prevDistributorBalance.add(amount));
     });
   });
 
   describe('claim', () => {
+    beforeEach(async () => {
+      // new rewards arrive
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      await setTotalRewards({
+        admin,
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards,
+      });
+    });
+
     it('cannot claim when contract paused', async () => {
       const { index, proof, amounts, tokens } = merkleProofs[account1];
       await merkleDistributor.pause({ from: admin });
@@ -232,17 +247,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     });
 
     it('cannot claim when merkle root updating', async () => {
-      // new rewards arrive
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-      await setTotalRewards({
-        admin,
-        rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
-        totalRewards,
-      });
-
       // try to claim before merkle root update
       const { index, proof, amounts, tokens } = merkleProofs[account1];
       await expectRevert(
@@ -599,19 +603,16 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           rewardsSignatures
         );
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await expectRevert(
-          multicallMock.updateMerkleRootAndClaim(
-            { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
-            index,
-            account1,
-            tokens,
-            amounts,
-            proof,
-            {
-              from: anyone,
-            }
-          ),
-          'SafeMath: subtraction overflow'
+        await multicallMock.updateMerkleRootAndClaim(
+          { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
+          index,
+          account1,
+          tokens,
+          amounts,
+          proof,
+          {
+            from: anyone,
+          }
         );
       });
     });

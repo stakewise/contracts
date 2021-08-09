@@ -459,7 +459,7 @@ contract('RevenueSharing', ([claimer, beneficiary, ...otherAccounts]) => {
       });
       const reward = receipt.logs[0].args.reward;
       expect(reward).to.bignumber.greaterThan(new BN(0));
-      expect(reward).to.bignumber.lessThan(revenueCut);
+      expect(reward).to.bignumber.equal(revenueCut);
       expect(await revenueSharing.rewardOf(beneficiary)).to.bignumber.equal(
         new BN(0)
       );

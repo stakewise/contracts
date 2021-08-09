@@ -2,6 +2,9 @@
 
 pragma solidity 0.7.5;
 
+import "./IPoolValidators.sol";
+pragma abicoder v2;
+
 /**
  * @dev Interface of the Oracles contract.
  */
@@ -42,10 +45,32 @@ interface IOracles {
     event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
 
     /**
-    * @dev Function for retrieving number of votes of the submission candidate.
-    * @param _candidateId - ID of the candidate to retrieve number of votes for.
+    * @dev Event for tracking validator initialization votes.
+    * @param signer - address of the signed oracle.
+    * @param merkleRoot - validator initialization merkle root.
+    * @param index - validator initialization index.
+    * @param nonce - validator initialization nonce.
     */
-    function candidates(bytes32 _candidateId) external view returns (uint256);
+    event InitializeValidatorVoteSubmitted(
+        address indexed signer,
+        bytes32 indexed merkleRoot,
+        uint256 index,
+        uint256 nonce
+    );
+
+    /**
+    * @dev Event for tracking validator finalization votes.
+    * @param signer - address of the signed oracle.
+    * @param merkleRoot - validator finalization merkle root.
+    * @param index - validator finalization index.
+    * @param nonce - validator finalization nonce.
+    */
+    event FinalizeValidatorVoteSubmitted(
+        address indexed signer,
+        bytes32 indexed merkleRoot,
+        uint256 index,
+        uint256 nonce
+    );
 
     /**
     * @dev Function for retrieving oracles sync period (in blocks).
@@ -53,26 +78,28 @@ interface IOracles {
     function syncPeriod() external view returns (uint256);
 
     /**
-    * @dev Function for upgrading the Oracles contract.
-    * If deploying contract for the first time, the upgrade function should be replaced with `initialize`
-    * and contain initializations from all the previous versions.
+    * @dev Constructor for initializing the Oracles contract.
+    * @param _admin - address of the contract admin.
+    * @param _prevOracles - address of the previous Oracles contract.
+    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _pool - address of the Pool contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
-    * @param _syncPeriod - number of blocks to wait before the next sync.
+    * @param _syncPeriod - oracles sync period (in blocks).
     */
-    function upgrade(address _merkleDistributor, uint256 _syncPeriod) external;
+    function initialize(
+        address _admin,
+        address _prevOracles,
+        address _rewardEthToken,
+        address _pool,
+        address _merkleDistributor,
+        uint256 _syncPeriod
+    ) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
     * @param _account - account to check.
     */
     function isOracle(address _account) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether an oracle has voted.
-    * @param oracle - oracle address to check.
-    * @param candidateId - hash of nonce and vote parameters.
-    */
-    function hasVote(address oracle, bytes32 candidateId) external view returns (bool);
 
     /**
     * @dev Function for checking whether the oracles are currently voting for new total rewards.
@@ -111,20 +138,58 @@ interface IOracles {
     function setSyncPeriod(uint256 _syncPeriod) external;
 
     /**
-    * @dev Function for submitting oracle vote for total rewards. The last vote required for quorum will update the values.
-    * Can only be called by an account with an oracle role.
+    * @dev Function for submitting oracle vote for total rewards.
+    * The quorum of signatures over the same data is required to submit the new value.
     * @param _nonce - current nonce.
-    * @param _totalRewards - voted total rewards.
-    * @param _activatedValidators - voted amount of activated validators.
+    * @param totalRewards - voted total rewards.
+    * @param activatedValidators - voted amount of activated validators.
+    * @param signatures - oracles' signatures.
     */
-    function voteForRewards(uint256 _nonce, uint256 _totalRewards, uint256 _activatedValidators) external;
+    function submitRewards(
+        uint256 _nonce,
+        uint256 totalRewards,
+        uint256 activatedValidators,
+        bytes[] calldata signatures
+    ) external;
 
     /**
-    * @dev Function for submitting oracle vote for merkle root. The last vote required for quorum will update the values.
-    * Can only be called by an account with an oracle role.
+    * @dev Function for submitting new merkle root.
+    * The quorum of signatures over the same data is required to submit the new value.
     * @param _nonce - current nonce.
-    * @param _merkleRoot - hash of the new merkle root.
-    * @param _merkleProofs - link to the merkle proofs.
+    * @param merkleRoot - hash of the new merkle root.
+    * @param merkleProofs - link to the merkle proofs.
+    * @param signatures - oracles' signatures.
     */
-    function voteForMerkleRoot(uint256 _nonce, bytes32 _merkleRoot, string calldata _merkleProofs) external;
+    function submitMerkleRoot(
+        uint256 _nonce,
+        bytes32 merkleRoot,
+        string memory merkleProofs,
+        bytes[] memory signatures
+    ) external;
+
+    /**
+    * @dev Function for submitting initializing new validator.
+    * The quorum of signatures over the same data is required to initialize.
+    * @param _nonce - current nonce.
+    * @param validator - new validator.
+    * @param signatures - oracles' signatures.
+    */
+    function initializeValidator(
+        uint256 _nonce,
+        IPoolValidators.Validator memory validator,
+        bytes[] memory signatures
+    ) external;
+
+    /**
+    * @dev Function for submitting finalizing new validator.
+    * The quorum of signatures over the same data is required to finalize.
+    * @param _nonce - current nonce.
+    * @param validator - new validator.
+    * @param signatures - oracles' signatures.
+    */
+    function finalizeValidator(
+        uint256 _nonce,
+        IPoolValidators.Validator memory validator,
+        bytes[] memory signatures
+    ) external;
 }

@@ -5,6 +5,68 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      }
+    ],
+    "name": "FinalizeValidatorVoteSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "nonce",
+        "type": "uint256"
+      }
+    ],
+    "name": "InitializeValidatorVoteSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "oracle",
         "type": "address"
       },
@@ -260,14 +322,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "candidates",
+    "inputs": [],
+    "name": "currentNonce",
     "outputs": [
       {
         "internalType": "uint256",
@@ -279,16 +335,58 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "currentNonce",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "_nonce",
         "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "merkleRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "merkleProof",
+            "type": "bytes32[]"
+          }
+        ],
+        "internalType": "struct IPoolValidators.Validator",
+        "name": "validator",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "signatures",
+        "type": "bytes[]"
       }
     ],
-    "stateMutability": "view",
+    "name": "finalizeValidator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -399,24 +497,93 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "oracle",
+        "name": "_admin",
         "type": "address"
       },
       {
-        "internalType": "bytes32",
-        "name": "candidateId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "hasVote",
-    "outputs": [
+        "internalType": "address",
+        "name": "_prevOracles",
+        "type": "address"
+      },
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "internalType": "address",
+        "name": "_rewardEthToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_merkleDistributor",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_syncPeriod",
+        "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "index",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "merkleRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32[]",
+            "name": "merkleProof",
+            "type": "bytes32[]"
+          }
+        ],
+        "internalType": "struct IPoolValidators.Validator",
+        "name": "validator",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "signatures",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "initializeValidator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -611,6 +778,62 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "merkleProofs",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "signatures",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "submitMerkleRoot",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_nonce",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalRewards",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "activatedValidators",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "signatures",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "submitRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "syncPeriod",
     "outputs": [
@@ -626,70 +849,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_merkleDistributor",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_syncPeriod",
-        "type": "uint256"
-      }
-    ],
-    "name": "upgrade",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "_merkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "string",
-        "name": "_merkleProofs",
-        "type": "string"
-      }
-    ],
-    "name": "voteForMerkleRoot",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_totalRewards",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_activatedValidators",
-        "type": "uint256"
-      }
-    ],
-    "name": "voteForRewards",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

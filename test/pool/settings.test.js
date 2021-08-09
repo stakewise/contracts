@@ -11,7 +11,7 @@ const {
   impersonateAccount,
   resetFork,
   setActivatedValidators,
-  getOracleAccounts,
+  setupOracleAccounts,
 } = require('../utils');
 const { validatorParams } = require('./validatorParams');
 const { upgradeContracts } = require('../../deployments');
@@ -25,7 +25,7 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 const withdrawalCredentials =
   '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
 
-contract('Pool (settings)', ([operator, anyone]) => {
+contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
   let pool, oracles, oracleAccounts, rewardEthToken;
 
@@ -34,14 +34,18 @@ contract('Pool (settings)', ([operator, anyone]) => {
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
-    await upgradeContracts();
+    let upgradedContracts = await upgradeContracts();
     pool = await Pool.at(contracts.pool);
 
     let validators = await Validators.at(contracts.validators);
     await validators.addOperator(operator, { from: admin });
 
-    oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await getOracleAccounts({ oracles });
+    oracles = await Oracles.at(upgradedContracts.oracles);
+    oracleAccounts = await setupOracleAccounts({
+      oracles,
+      admin,
+      accounts: otherAccounts,
+    });
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
   });
 

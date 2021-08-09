@@ -7,7 +7,6 @@ const {
   ether,
   constants,
   send,
-  time,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
@@ -16,6 +15,7 @@ const {
   checkStakedEthToken,
   setupOracleAccounts,
   setTotalRewards,
+  enableRewardsVoting,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -94,6 +94,7 @@ contract('StakedEthToken', (accounts) => {
 
     it('updates distributor principal when deposited by account with disabled rewards', async () => {
       // disable rewards
+      let prevPrincipal = await stakedEthToken.distributorPrincipal();
       await stakedEthToken.toggleRewards(sender1, true, { from: admin });
       let amount = ether('10');
       let receipt = await pool.stake(sender1, {
@@ -106,13 +107,14 @@ contract('StakedEthToken', (accounts) => {
         value: amount,
       });
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        amount
+        prevPrincipal.add(amount)
       );
     });
   });
 
   describe('transfer', () => {
     let value = ether('10');
+    let distributorPrincipal;
 
     beforeEach(async () => {
       await pool.setMinActivatingDeposit(value.add(ether('1')), {
@@ -123,6 +125,7 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
       totalSupply = totalSupply.add(value);
+      distributorPrincipal = await stakedEthToken.distributorPrincipal();
     });
 
     it('cannot transfer to zero address', async () => {
@@ -305,7 +308,7 @@ contract('StakedEthToken', (accounts) => {
         balance: value,
       });
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        value
+        distributorPrincipal.add(value)
       );
     });
 
@@ -335,7 +338,7 @@ contract('StakedEthToken', (accounts) => {
         balance: value,
       });
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        new BN(0)
+        distributorPrincipal
       );
     });
 
@@ -366,7 +369,7 @@ contract('StakedEthToken', (accounts) => {
         balance: value,
       });
       expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        value
+        distributorPrincipal.add(value)
       );
     });
 
@@ -391,15 +394,7 @@ contract('StakedEthToken', (accounts) => {
       });
 
       // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       await expectRevert(
         multicallMock.updateTotalRewardsAndTransferStakedEth(
           totalRewards,
@@ -435,15 +430,7 @@ contract('StakedEthToken', (accounts) => {
       });
 
       // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let receipt = await multicallMock.transferStakedEthAndUpdateTotalRewards(
         totalRewards,
         activatedValidators,
