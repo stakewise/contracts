@@ -87,11 +87,13 @@ interface IPool {
     /**
     * @dev Function for getting the total validator deposit.
     */
+    // solhint-disable-next-line func-name-mixedcase
     function VALIDATOR_TOTAL_DEPOSIT() external view returns (uint256);
 
     /**
     * @dev Function for getting the initial validator deposit.
     */
+    // solhint-disable-next-line func-name-mixedcase
     function VALIDATOR_INIT_DEPOSIT() external view returns (uint256);
 
     /**
