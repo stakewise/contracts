@@ -47,6 +47,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     // @dev Address of the Pool contract.
     IPool private pool;
 
+    // @dev Address of the Pool contract.
+    IPoolValidators private poolValidators;
+
     // @dev Address of the MerkleDistributor contract.
     IMerkleDistributor private merkleDistributor;
 
@@ -61,6 +64,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         address _prevOracles,
         address _rewardEthToken,
         address _pool,
+        address _poolValidators,
         address _merkleDistributor,
         uint256 _syncPeriod
     )
@@ -78,6 +82,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         pool = IPool(_pool);
+        poolValidators = IPoolValidators(_poolValidators);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
         syncPeriod = _syncPeriod;
     }
@@ -138,14 +143,12 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-submitRewards}.
      */
     function submitRewards(
-        uint256 _nonce,
         uint256 totalRewards,
         uint256 activatedValidators,
         bytes[] memory signatures
     )
         external override whenNotPaused
     {
-        require(_nonce == nonce.current(), "Oracles: invalid nonce");
         require(isRewardsVoting(), "Oracles: too early");
         require(
             signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
@@ -153,6 +156,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         );
 
         // calculate candidate ID hash
+        uint256 _nonce = nonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
             keccak256(abi.encode(_nonce, totalRewards, activatedValidators))
         );
@@ -187,14 +191,12 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-submitMerkleRoot}.
      */
     function submitMerkleRoot(
-        uint256 _nonce,
         bytes32 merkleRoot,
         string memory merkleProofs,
         bytes[] memory signatures
     )
         external override whenNotPaused
     {
-        require(_nonce == nonce.current(), "Oracles: invalid nonce");
         require(isMerkleRootVoting(), "Oracles: too early");
         require(
             signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
@@ -202,6 +204,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         );
 
         // calculate candidate ID hash
+        uint256 _nonce = nonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
             keccak256(abi.encode(_nonce, merkleRoot, merkleProofs))
         );
@@ -231,21 +234,21 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-initializeValidator}.
      */
     function initializeValidator(
-        uint256 _nonce,
-        IPoolValidators.Validator memory validator,
+        IPoolValidators.DepositData memory depositData,
+        bytes32[] memory merkleProof,
         bytes[] memory signatures
     )
         external override whenNotPaused
     {
-        require(_nonce == nonce.current(), "Oracles: invalid nonce");
         require(
             signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
             "Oracles: invalid number of signatures"
         );
 
         // calculate candidate ID hash
+        uint256 _nonce = nonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, validator.merkleRoot, validator.index))
+            keccak256(abi.encode(_nonce, depositData.publicKey, depositData.operator))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -259,35 +262,35 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit InitializeValidatorVoteSubmitted(signer, validator.merkleRoot, validator.index, _nonce);
+            emit InitializeValidatorVoteSubmitted(signer, depositData.operator, depositData.publicKey, _nonce);
         }
 
         // increment nonce for future signatures
         nonce.increment();
 
         // initialize validator
-        pool.initializeValidator(validator);
+        poolValidators.initializeValidator(depositData, merkleProof);
     }
 
     /**
      * @dev See {IOracles-finalizeValidator}.
      */
     function finalizeValidator(
-        uint256 _nonce,
-        IPoolValidators.Validator memory validator,
+        IPoolValidators.DepositData memory depositData,
+        bytes32[] memory merkleProof,
         bytes[] memory signatures
     )
         external override whenNotPaused
     {
-        require(_nonce == nonce.current(), "Oracles: invalid nonce");
         require(
             signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
             "Oracles: invalid number of signatures"
         );
 
         // calculate candidate ID hash
+        uint256 _nonce = nonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, validator.merkleRoot, validator.index))
+            keccak256(abi.encode(_nonce, depositData.publicKey, depositData.operator))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -301,13 +304,13 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit FinalizeValidatorVoteSubmitted(signer, validator.merkleRoot, validator.index, _nonce);
+            emit FinalizeValidatorVoteSubmitted(signer, depositData.operator, depositData.publicKey, _nonce);
         }
 
         // increment nonce for future signatures
         nonce.increment();
 
         // finalize validator
-        pool.finalizeValidator(validator);
+        poolValidators.finalizeValidator(depositData, merkleProof);
     }
 }

@@ -11,7 +11,7 @@ require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
 const GAS_PRICE = 20e9; // 20 Gwei
-const BLOCK_NUMBER = 12660565;
+const BLOCK_NUMBER = 12985770;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
@@ -133,16 +133,16 @@ module.exports = {
       'IDepositContract',
       'IERC20Upgradeable',
       'Pool',
+      'PoolEscrow',
+      'PoolValidators',
       'RewardEthToken',
-      'Solos',
       'StakedEthToken',
       'StakeWiseToken',
-      'Validators',
       'VestingEscrow',
       'VestingEscrowFactory',
-      'PoolEscrow',
       'MerkleDrop',
       'MerkleDistributor',
+      'RevenueSharing',
     ],
     clear: true,
     flat: true,

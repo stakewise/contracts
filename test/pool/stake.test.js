@@ -5,6 +5,7 @@ const {
   send,
   expectRevert,
   expectEvent,
+  constants,
   BN,
 } = require('@openzeppelin/test-helpers');
 const {
@@ -12,23 +13,29 @@ const {
   impersonateAccount,
   resetFork,
   getDepositAmount,
+  registerValidator,
+  setupOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
-const { checkCollectorBalance, checkStakedEthToken } = require('../utils');
-const { validatorParams } = require('./validatorParams');
+const { checkStakedEthToken } = require('../utils');
+const { initializeData } = require('./initializeMerkleRoot');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
-const Validators = artifacts.require('Validators');
+const PoolValidators = artifacts.require('PoolValidators');
+const RevenueSharing = artifacts.require('RevenueSharing');
+const Oracles = artifacts.require('Oracles');
 
-const withdrawalCredentials =
-  '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
-
-contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
+contract('Pool (stake)', (accounts) => {
   const admin = contractSettings.admin;
+  let [sender1, sender2, sender3, operator, ...otherAccounts] = accounts;
   let pool,
     stakedEthToken,
+    validators,
+    partnersRevenueSharing,
+    oracles,
+    oracleAccounts,
     totalSupply,
     poolBalance,
     activatedValidators,
@@ -37,37 +44,55 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
-    // reset contract settings
-    activatedValidators = new BN(contractSettings.activatedValidators);
-    pendingValidators = new BN(contractSettings.pendingValidators);
-
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
-    await upgradeContracts();
+    let upgradedContracts = await upgradeContracts();
 
     pool = await Pool.at(contracts.pool);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    partnersRevenueSharing = await RevenueSharing.at(
+      upgradedContracts.partnersRevenueSharing
+    );
+    oracles = await Oracles.at(upgradedContracts.oracles);
+    oracleAccounts = await setupOracleAccounts({
+      admin,
+      oracles,
+      accounts: otherAccounts,
+    });
 
     totalSupply = await stakedEthToken.totalSupply();
     poolBalance = await balance.current(pool.address);
+    activatedValidators = await pool.activatedValidators();
+    pendingValidators = await pool.pendingValidators();
   });
 
   afterEach(async () => resetFork());
 
-  describe('adding deposit', () => {
-    it('fails to add a deposit with zero amount', async () => {
+  describe('stake', () => {
+    it('fails to stake with zero amount', async () => {
       await expectRevert(
-        pool.addDeposit({ from: sender1, value: ether('0') }),
+        pool.stake(sender1, { from: sender1, value: ether('0') }),
         'Pool: invalid deposit amount'
       );
     });
 
-    it('fails to add a deposit to paused pool', async () => {
+    it('fails to stake with zero address', async () => {
+      await expectRevert(
+        pool.stake(constants.ZERO_ADDRESS, {
+          from: sender1,
+          value: ether('0'),
+        }),
+        'Pool: invalid recipient'
+      );
+    });
+
+    it('fails to stake in paused pool', async () => {
       await pool.pause({ from: admin });
       expect(await pool.paused()).equal(true);
 
       await expectRevert(
-        pool.addDeposit({
+        pool.stake({
           from: sender1,
           value: ether('1'),
         }),
@@ -83,7 +108,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       totalSupply = totalSupply.add(depositAmount1);
       poolBalance = poolBalance.add(depositAmount1);
 
-      await pool.addDeposit({
+      await pool.stake({
         from: sender1,
         value: depositAmount1,
       });
@@ -101,7 +126,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       totalSupply = totalSupply.add(depositAmount2);
       poolBalance = poolBalance.add(depositAmount2);
 
-      await pool.addDeposit({
+      await pool.stake({
         from: sender2,
         value: depositAmount2,
       });
@@ -113,7 +138,9 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
+      expect(await balance.current(pool.address)).to.be.bignumber.equal(
+        poolBalance
+      );
     });
 
     it('places deposit of user to the activation queue with exceeded pending validators limit', async () => {
@@ -128,7 +155,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         .add(new BN(2));
 
       // check deposit amount placed in activation queue
-      let receipt = await pool.addDeposit({
+      let receipt = await pool.stake({
         from: sender1,
         value: depositAmount,
       });
@@ -142,7 +169,9 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       ).to.bignumber.equal(depositAmount);
 
       // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
+      expect(await balance.current(pool.address)).to.be.bignumber.equal(
+        poolBalance
+      );
       expect(await stakedEthToken.totalSupply()).to.bignumber.equal(
         totalSupply
       );
@@ -161,7 +190,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       totalSupply = totalSupply.add(depositAmount);
 
       // check deposit amount added immediately
-      await pool.addDeposit({
+      await pool.stake({
         from: sender1,
         value: depositAmount,
       });
@@ -176,7 +205,153 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       ).to.bignumber.equal(new BN(0));
 
       // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
+      expect(await balance.current(pool.address)).to.be.bignumber.equal(
+        poolBalance
+      );
+    });
+
+    it('can stake to different recipient address', async () => {
+      let amount = ether('1');
+      totalSupply = totalSupply.add(amount);
+
+      let receipt = await pool.stakeOnBehalf(sender2, {
+        from: sender1,
+        value: amount,
+      });
+      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+        from: constants.ZERO_ADDRESS,
+        to: sender2,
+        value: amount,
+      });
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
+        balance: amount,
+      });
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
+    });
+
+    it('can stake without recipient address', async () => {
+      let amount = ether('1');
+      totalSupply = totalSupply.add(amount);
+
+      let receipt = await pool.stake({
+        from: sender1,
+        value: amount,
+      });
+      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+        from: constants.ZERO_ADDRESS,
+        to: sender1,
+        value: amount,
+      });
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: amount,
+      });
+    });
+
+    describe('staking with partner', () => {
+      const partner = otherAccounts[0];
+      const revenueShare = new BN(1000);
+
+      beforeEach(async () => {
+        await partnersRevenueSharing.addAccount(partner, revenueShare, {
+          from: admin,
+        });
+      });
+
+      it('fails to stake with invalid partner', async () => {
+        await expectRevert(
+          pool.stakeWithPartner(sender1, {
+            from: sender1,
+            value: ether('1'),
+          }),
+          'RevenueSharing: account is not added'
+        );
+      });
+
+      it('can stake with partner', async () => {
+        let amount = ether('1');
+        totalSupply = totalSupply.add(amount);
+
+        let prevTotalPoints = await partnersRevenueSharing.totalPoints();
+        let receipt = await pool.stakeWithPartner(partner, {
+          from: sender1,
+          value: amount,
+        });
+        await expectEvent.inTransaction(
+          receipt.tx,
+          StakedEthToken,
+          'Transfer',
+          {
+            from: constants.ZERO_ADDRESS,
+            to: sender1,
+            value: amount,
+          }
+        );
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender1,
+          balance: amount,
+        });
+
+        await expectEvent.inTransaction(
+          receipt.tx,
+          RevenueSharing,
+          'AmountIncreased',
+          {
+            beneficiary: partner,
+            amount: amount,
+            reward: new BN(0),
+          }
+        );
+
+        let points = revenueShare.mul(amount);
+        expect(
+          (await partnersRevenueSharing.checkpoints(partner)).amount
+        ).to.bignumber.equal(amount);
+        expect(
+          await partnersRevenueSharing.pointsOf(partner)
+        ).to.bignumber.equal(points);
+        expect(await partnersRevenueSharing.totalPoints()).to.bignumber.equal(
+          prevTotalPoints.add(points)
+        );
+      });
+
+      it('can stake with partner and different recipient', async () => {
+        let amount = ether('1');
+        totalSupply = totalSupply.add(amount);
+
+        let receipt = await pool.stakeWithPartnerOnBehalf(partner, sender2, {
+          from: sender1,
+          value: amount,
+        });
+        await expectEvent.inTransaction(
+          receipt.tx,
+          StakedEthToken,
+          'Transfer',
+          {
+            from: constants.ZERO_ADDRESS,
+            to: sender2,
+            value: amount,
+          }
+        );
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender2,
+          balance: amount,
+        });
+      });
     });
   });
 
@@ -188,7 +363,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       depositAmount = ether('32');
-      await pool.addDeposit({
+      await pool.stake(sender1, {
         from: sender1,
         value: depositAmount,
       });
@@ -196,13 +371,12 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         .add(pendingValidators)
         .add(new BN(1));
 
-      let validators = await Validators.at(contracts.validators);
-      await validators.addOperator(operator, { from: admin });
-      await pool.setWithdrawalCredentials(withdrawalCredentials, {
-        from: admin,
-      });
-      await pool.registerValidator(validatorParams[0], {
-        from: operator,
+      await registerValidator({
+        admin,
+        validators,
+        oracles,
+        oracleAccounts,
+        operator,
       });
     });
 
@@ -279,7 +453,9 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
+      expect(await balance.current(pool.address)).to.be.bignumber.equal(
+        poolBalance
+      );
     });
   });
 
@@ -291,7 +467,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       depositAmount = ether('32');
-      await pool.addDeposit({
+      await pool.stake({
         from: sender3,
         value: depositAmount,
       });
@@ -299,7 +475,7 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         .add(pendingValidators)
         .add(new BN(1));
 
-      await pool.addDeposit({
+      await pool.stake({
         from: sender3,
         value: depositAmount,
       });
@@ -307,16 +483,21 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
         .add(pendingValidators)
         .add(new BN(2));
 
-      let validators = await Validators.at(contracts.validators);
-      await validators.addOperator(operator, { from: admin });
-      await pool.setWithdrawalCredentials(withdrawalCredentials, {
-        from: admin,
+      await registerValidator({
+        admin,
+        validators,
+        oracles,
+        oracleAccounts,
+        operator,
+        depositDataIndex: 0,
       });
-      await pool.registerValidator(validatorParams[0], {
-        from: operator,
-      });
-      await pool.registerValidator(validatorParams[1], {
-        from: operator,
+      await registerValidator({
+        admin,
+        validators,
+        oracles,
+        oracleAccounts,
+        operator,
+        depositDataIndex: 1,
       });
     });
 
@@ -409,7 +590,58 @@ contract('Pool (add deposit)', ([sender1, sender2, sender3, operator]) => {
       });
 
       // check contract balance
-      await checkCollectorBalance(pool, poolBalance);
+      expect(await balance.current(pool.address)).to.be.bignumber.equal(
+        poolBalance
+      );
     });
+  });
+
+  it('only PoolValidators contract can initialize new validators', async () => {
+    const { publicKey, signature, withdrawalCredentials, depositDataRoot } =
+      initializeData[0];
+    await expectRevert(
+      pool.initializeValidator(
+        {
+          operator,
+          withdrawalCredentials,
+          depositDataRoot,
+          publicKey,
+          signature,
+        },
+        {
+          from: sender1,
+        }
+      ),
+      'Pool: access denied'
+    );
+  });
+
+  it('only PoolValidators contract can finalize new validators', async () => {
+    const { publicKey, signature, withdrawalCredentials, depositDataRoot } =
+      initializeData[0];
+    await expectRevert(
+      pool.finalizeValidator(
+        {
+          operator,
+          withdrawalCredentials,
+          depositDataRoot,
+          publicKey,
+          signature,
+        },
+        {
+          from: sender1,
+        }
+      ),
+      'Pool: access denied'
+    );
+  });
+
+  it('only PoolValidators contract can refund', async () => {
+    await expectRevert(
+      pool.refund({
+        from: sender1,
+      }),
+      'Pool: access denied'
+    );
   });
 });

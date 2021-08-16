@@ -574,7 +574,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       it('cannot claim before merkle root update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await oracles.submitRewards(
-          await oracles.currentNonce(),
           totalRewards,
           activatedValidators,
           rewardsSignatures
@@ -597,7 +596,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
       it('can claim after merkle root update in the same block', async () => {
         await oracles.submitRewards(
-          await oracles.currentNonce(),
           totalRewards,
           activatedValidators,
           rewardsSignatures

@@ -4,7 +4,6 @@ const {
   ether,
   expectRevert,
   expectEvent,
-  BN,
 } = require('@openzeppelin/test-helpers');
 const {
   stopImpersonatingAccount,
@@ -12,41 +11,37 @@ const {
   resetFork,
   setActivatedValidators,
   setupOracleAccounts,
+  registerValidator,
 } = require('../utils');
-const { validatorParams } = require('./validatorParams');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
-const Validators = artifacts.require('Validators');
+const PoolValidators = artifacts.require('PoolValidators');
 const RewardEthToken = artifacts.require('RewardEthToken');
-
-const withdrawalCredentials =
-  '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
 
 contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
-  let pool, oracles, oracleAccounts, rewardEthToken;
+  let pool, oracles, oracleAccounts, rewardEthToken, validators;
 
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
+
     let upgradedContracts = await upgradeContracts();
+
     pool = await Pool.at(contracts.pool);
-
-    let validators = await Validators.at(contracts.validators);
-    await validators.addOperator(operator, { from: admin });
-
+    validators = await PoolValidators.at(upgradedContracts.poolValidators);
     oracles = await Oracles.at(upgradedContracts.oracles);
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({
-      oracles,
       admin,
+      oracles,
       accounts: otherAccounts,
     });
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
   });
 
   afterEach(async () => resetFork());
@@ -124,9 +119,11 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     });
 
     it('admin can override activated validators', async () => {
-      let activatedValidators = new BN(
-        contractSettings.activatedValidators
-      ).add(new BN(contractSettings.pendingValidators));
+      let activatedValidators = await pool.activatedValidators();
+      activatedValidators = activatedValidators.add(
+        await pool.pendingValidators()
+      );
+
       let receipt = await pool.setActivatedValidators(activatedValidators, {
         from: admin,
       });
@@ -139,20 +136,23 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     });
 
     it('oracles contract can set activated validators', async () => {
-      await pool.setWithdrawalCredentials(withdrawalCredentials, {
-        from: admin,
-      });
-      await pool.addDeposit({
+      await pool.stake(anyone, {
         from: anyone,
         value: ether('32'),
       });
-      await pool.registerValidator(validatorParams[0], {
-        from: operator,
+      await registerValidator({
+        admin,
+        validators,
+        operator,
+        oracles,
+        oracleAccounts,
       });
 
-      let activatedValidators = new BN(contractSettings.activatedValidators)
-        .add(new BN(contractSettings.pendingValidators))
-        .add(new BN(1));
+      let activatedValidators = await pool.activatedValidators();
+      activatedValidators = activatedValidators.add(
+        await pool.pendingValidators()
+      );
+
       let receipt = await setActivatedValidators({
         admin,
         pool,
@@ -167,38 +167,11 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
         'ActivatedValidatorsUpdated',
         {
           activatedValidators,
-          sender: contracts.oracles,
+          sender: oracles.address,
         }
       );
       expect(await pool.activatedValidators()).to.bignumber.equal(
         activatedValidators
-      );
-    });
-  });
-
-  describe('withdrawal credentials', () => {
-    const withdrawalCredentials =
-      '0x0072ea0cf49536e3c66c787f705186df9a4378083753ae9536d65b3ad7fcddc4';
-
-    it('not admin fails to update withdrawal credentials', async () => {
-      await expectRevert(
-        pool.setWithdrawalCredentials(withdrawalCredentials, {
-          from: anyone,
-        }),
-        'OwnablePausable: access denied'
-      );
-    });
-
-    it('admin can update withdrawal credentials', async () => {
-      let receipt = await pool.setWithdrawalCredentials(withdrawalCredentials, {
-        from: admin,
-      });
-
-      await expectEvent(receipt, 'WithdrawalCredentialsUpdated', {
-        withdrawalCredentials,
-      });
-      expect(await pool.withdrawalCredentials()).to.equal(
-        withdrawalCredentials
       );
     });
   });

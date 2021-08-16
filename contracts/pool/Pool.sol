@@ -1,0 +1,281 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+
+pragma solidity 0.7.5;
+pragma abicoder v2;
+
+import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
+import "../presets/OwnablePausableUpgradeable.sol";
+import "../interfaces/IStakedEthToken.sol";
+import "../interfaces/IDepositContract.sol";
+import "../interfaces/IPoolValidators.sol";
+import "../interfaces/IPool.sol";
+import "../interfaces/IRevenueSharing.sol";
+import "../interfaces/IPoolValidators.sol";
+
+/**
+ * @title Pool
+ *
+ * @dev Pool contract accumulates deposits from the users, mints tokens and registers validators.
+ */
+contract Pool is IPool, OwnablePausableUpgradeable {
+    using SafeMathUpgradeable for uint256;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
+
+    // @dev Validator deposit amount.
+    uint256 public constant override VALIDATOR_TOTAL_DEPOSIT = 32 ether;
+
+    // @dev Validator initialization deposit amount.
+    uint256 public constant override VALIDATOR_INIT_DEPOSIT = 1 ether;
+
+    // @dev Total activated validators.
+    uint256 public override activatedValidators;
+
+    // @dev Pool validator withdrawal credentials.
+    bytes32 public override withdrawalCredentials;
+
+    // @dev Address of the ETH2 Deposit Contract (deployed by Ethereum).
+    IDepositContract public override validatorRegistration;
+
+    // @dev Address of the StakedEthToken contract.
+    IStakedEthToken private stakedEthToken;
+
+    // @dev Address of the PoolValidators contract.
+    IPoolValidators private validators;
+
+    // @dev Address of the Oracles contract.
+    address private oracles;
+
+    // @dev Maps senders to the validator index that it will be activated in.
+    mapping(address => mapping(uint256 => uint256)) public override activations;
+
+    // @dev Total pending validators.
+    uint256 public override pendingValidators;
+
+    // @dev Amount of deposited ETH that is not considered for the activation period.
+    uint256 public override minActivatingDeposit;
+
+    // @dev Pending validators percent limit. If it's not exceeded tokens can be minted immediately.
+    uint256 public override pendingValidatorsLimit;
+
+    // @dev Address of the Partners Revenue Sharing contract.
+    IRevenueSharing private partnersRevenueSharing;
+
+    // @dev Address of the Operators Revenue Sharing contract.
+    IRevenueSharing private operatorsRevenueSharing;
+
+    /**
+     * @dev See {IPool-upgrade}.
+     * The `initialize` must be called before upgrading in previous implementation contract:
+     * https://github.com/stakewise/contracts/blob/v1.3.0/contracts/collectors/Pool.sol#L55
+     */
+    function upgrade(
+        address _poolValidators,
+        address _oracles,
+        address _partnersRevenueSharing,
+        address _operatorsRevenueSharing
+    )
+        external override onlyAdmin whenPaused
+    {
+        require(address(partnersRevenueSharing) == address(0), "Pool: already upgraded");
+
+        // set contract addresses
+        validators = IPoolValidators(_poolValidators);
+        oracles = _oracles;
+        partnersRevenueSharing = IRevenueSharing(_partnersRevenueSharing);
+        operatorsRevenueSharing = IRevenueSharing(_operatorsRevenueSharing);
+    }
+
+    /**
+     * @dev See {IPool-setMinActivatingDeposit}.
+     */
+    function setMinActivatingDeposit(uint256 newMinActivatingDeposit) external override onlyAdmin {
+        minActivatingDeposit = newMinActivatingDeposit;
+        emit MinActivatingDepositUpdated(newMinActivatingDeposit, msg.sender);
+    }
+
+    /**
+     * @dev See {IPool-setPendingValidatorsLimit}.
+     */
+    function setPendingValidatorsLimit(uint256 newPendingValidatorsLimit) external override onlyAdmin {
+        require(newPendingValidatorsLimit < 1e4, "Pool: invalid limit");
+        pendingValidatorsLimit = newPendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(newPendingValidatorsLimit, msg.sender);
+    }
+
+    /**
+     * @dev See {IPool-setActivatedValidators}.
+     */
+    function setActivatedValidators(uint256 newActivatedValidators) external override {
+        require(msg.sender == oracles || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
+
+        // subtract activated validators from pending validators
+        pendingValidators = pendingValidators.sub(newActivatedValidators.sub(activatedValidators));
+        activatedValidators = newActivatedValidators;
+        emit ActivatedValidatorsUpdated(newActivatedValidators, msg.sender);
+    }
+
+    /**
+     * @dev See {IPool-stake}.
+     */
+    function stake() external payable override {
+        _stake(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev See {IPool-stakeOnBehalf}.
+     */
+    function stakeOnBehalf(address recipient) external payable override {
+        _stake(recipient, msg.value);
+    }
+
+    /**
+    * @dev Function for staking ETH.
+    */
+    receive() external payable {
+        _stake(msg.sender, msg.value);
+    }
+
+    /**
+     * @dev See {IPool-stakeWithPartner}.
+     */
+    function stakeWithPartner(address partner) external payable override {
+        // stake amount
+        _stake(msg.sender, msg.value);
+
+        // increase revenue sharing amount for partner
+        partnersRevenueSharing.increaseAmount(partner, msg.value);
+    }
+
+    /**
+     * @dev See {IPool-stakeWithPartner}.
+     */
+    function stakeWithPartnerOnBehalf(address partner, address recipient) external payable override {
+        // stake amount
+        _stake(recipient, msg.value);
+
+        // increase revenue sharing amount for partner
+        partnersRevenueSharing.increaseAmount(partner, msg.value);
+    }
+
+    function _stake(address recipient, uint256 value) internal whenNotPaused {
+        require(recipient != address(0), "Pool: invalid recipient");
+        require(value > 0, "Pool: invalid deposit amount");
+
+        // mint tokens for small deposits immediately
+        if (value <= minActivatingDeposit) {
+            stakedEthToken.mint(recipient, value);
+            return;
+        }
+
+        // mint tokens if current pending validators limit is not exceed
+        uint256 _pendingValidators = pendingValidators.add((address(this).balance).div(VALIDATOR_TOTAL_DEPOSIT));
+        uint256 _activatedValidators = activatedValidators; // gas savings
+        uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
+        if (validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4))) {
+            stakedEthToken.mint(recipient, value);
+        } else {
+            // lock deposit amount until validator activated
+            activations[recipient][validatorIndex] = activations[recipient][validatorIndex].add(value);
+            emit ActivationScheduled(recipient, validatorIndex, value);
+        }
+    }
+
+    /**
+     * @dev See {IPool-canActivate}.
+     */
+    function canActivate(uint256 validatorIndex) external view override returns (bool) {
+        return validatorIndex.mul(1e4) <= activatedValidators.mul(pendingValidatorsLimit.add(1e4));
+    }
+
+    /**
+     * @dev See {IPool-activate}.
+     */
+    function activate(address account, uint256 validatorIndex) external override whenNotPaused {
+        require(
+            validatorIndex.mul(1e4) <= activatedValidators.mul(pendingValidatorsLimit.add(1e4)),
+            "Pool: validator is not active yet"
+        );
+
+        uint256 amount = activations[account][validatorIndex];
+        require(amount > 0, "Pool: invalid validator index");
+
+        delete activations[account][validatorIndex];
+        stakedEthToken.mint(account, amount);
+        emit Activated(account, validatorIndex, amount, msg.sender);
+    }
+
+    /**
+     * @dev See {IPool-activateMultiple}.
+     */
+    function activateMultiple(address account, uint256[] calldata validatorIndexes) external override whenNotPaused {
+        uint256 toMint;
+        uint256 _activatedValidators = activatedValidators;
+        for (uint256 i = 0; i < validatorIndexes.length; i++) {
+            uint256 validatorIndex = validatorIndexes[i];
+            require(
+                validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4)),
+                "Pool: validator is not active yet"
+            );
+
+            uint256 amount = activations[account][validatorIndex];
+            toMint = toMint.add(amount);
+            delete activations[account][validatorIndex];
+
+            emit Activated(account, validatorIndex, amount, msg.sender);
+        }
+        require(toMint > 0, "Pool: invalid validator index");
+        stakedEthToken.mint(account, toMint);
+    }
+
+    /**
+     * @dev See {IPool-initializeValidator}.
+     */
+    function initializeValidator(IPoolValidators.DepositData memory depositData) external override whenNotPaused {
+        require(msg.sender == address(validators), "Pool: access denied");
+        require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
+
+        // initiate validator registration
+        validatorRegistration.deposit{value : VALIDATOR_INIT_DEPOSIT}(
+            depositData.publicKey,
+            abi.encodePacked(depositData.withdrawalCredentials),
+            depositData.signature,
+            depositData.depositDataRoot
+        );
+        emit ValidatorInitialized(depositData.publicKey, depositData.operator);
+    }
+
+    /**
+     * @dev See {IPool-finalizeValidator}.
+     */
+    function finalizeValidator(IPoolValidators.DepositData memory depositData) external override whenNotPaused {
+        require(msg.sender == address(validators), "Pool: access denied");
+        require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
+
+        // update number of pending validators
+        pendingValidators = pendingValidators.add(1);
+
+        // update operator's revenue sharing
+        if (operatorsRevenueSharing.isAdded(depositData.operator)) {
+            operatorsRevenueSharing.increaseAmount(depositData.operator, VALIDATOR_TOTAL_DEPOSIT);
+        }
+
+        // finalize validator registration
+        validatorRegistration.deposit{value : VALIDATOR_TOTAL_DEPOSIT.sub(VALIDATOR_INIT_DEPOSIT)}(
+            depositData.publicKey,
+            abi.encodePacked(depositData.withdrawalCredentials),
+            depositData.signature,
+            depositData.depositDataRoot
+        );
+        emit ValidatorRegistered(depositData.publicKey, depositData.operator);
+    }
+
+    /**
+     * @dev See {IPool-refund}.
+     */
+    function refund() external override payable {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == address(validators), "Pool: access denied");
+        require(msg.value > 0, "Pool: invalid refund amount");
+        emit Refunded(msg.sender, msg.value);
+    }
+}

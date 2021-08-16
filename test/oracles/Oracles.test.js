@@ -195,7 +195,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
       await expectRevert(
         oracles.submitRewards(
-          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           signatures,
@@ -207,36 +206,9 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       );
     });
 
-    it('fails to submit twice', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
-      await oracles.submitRewards(
-        currentNonce,
-        newTotalRewards,
-        newActivatedValidators,
-        signatures,
-        {
-          from: oracleAccounts[0],
-        }
-      );
-
-      await expectRevert(
-        oracles.submitRewards(
-          currentNonce,
-          newTotalRewards,
-          newActivatedValidators,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid nonce'
-      );
-    });
-
     it('fails to submit too early', async () => {
       await expectRevert(
         oracles.submitRewards(
-          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           signatures,
@@ -252,7 +224,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       await enableRewardsVoting({ rewardEthToken, admin, oracles });
       await expectRevert(
         oracles.submitRewards(
-          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           signatures.slice(signatures.length - 1),
@@ -269,7 +240,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       signatures[0] = await web3.eth.sign(candidateId, anyone);
       await expectRevert(
         oracles.submitRewards(
-          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           signatures,
@@ -286,7 +256,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       signatures.push(signatures[0]);
       await expectRevert(
         oracles.submitRewards(
-          currentNonce,
           newTotalRewards,
           newActivatedValidators,
           signatures,
@@ -301,7 +270,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     it('submits data with enough signatures', async () => {
       await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let receipt = await oracles.submitRewards(
-        currentNonce,
         newTotalRewards,
         newActivatedValidators,
         signatures,
@@ -378,65 +346,22 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.submitMerkleRoot(
-          currentNonce,
-          merkleRoot,
-          merkleProofs,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+          from: oracleAccounts[0],
+        }),
         'Pausable: paused'
       );
     });
 
-    it('fails to submit twice', async () => {
-      await oracles.submitMerkleRoot(
-        currentNonce,
-        merkleRoot,
-        merkleProofs,
-        signatures,
-        {
-          from: oracleAccounts[0],
-        }
-      );
-
-      await expectRevert(
-        oracles.submitMerkleRoot(
-          currentNonce,
-          merkleRoot,
-          merkleProofs,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid nonce'
-      );
-    });
-
     it('fails to submit too early', async () => {
-      await oracles.submitMerkleRoot(
-        currentNonce,
-        merkleRoot,
-        merkleProofs,
-        signatures,
-        {
-          from: oracleAccounts[0],
-        }
-      );
+      await oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+        from: oracleAccounts[0],
+      });
 
       await expectRevert(
-        oracles.submitMerkleRoot(
-          currentNonce.add(new BN(1)),
-          merkleRoot,
-          merkleProofs,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+          from: oracleAccounts[0],
+        }),
         'Oracles: too early'
       );
     });
@@ -444,7 +369,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     it('fails to submit with not enough signatures', async () => {
       await expectRevert(
         oracles.submitMerkleRoot(
-          currentNonce,
           merkleRoot,
           merkleProofs,
           signatures.slice(signatures.length - 1),
@@ -459,15 +383,9 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     it('fails to submit with invalid signature', async () => {
       signatures[0] = await web3.eth.sign(candidateId, anyone);
       await expectRevert(
-        oracles.submitMerkleRoot(
-          currentNonce,
-          merkleRoot,
-          merkleProofs,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+          from: oracleAccounts[0],
+        }),
         'Oracles: invalid signer'
       );
     });
@@ -475,22 +393,15 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     it('fails to submit with repeated signature', async () => {
       signatures.push(signatures[0]);
       await expectRevert(
-        oracles.submitMerkleRoot(
-          currentNonce,
-          merkleRoot,
-          merkleProofs,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
+        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+          from: oracleAccounts[0],
+        }),
         'Oracles: repeated signature'
       );
     });
 
     it('submits data with enough signatures', async () => {
       let receipt = await oracles.submitMerkleRoot(
-        currentNonce,
         merkleRoot,
         merkleProofs,
         signatures,

@@ -1,4 +1,3 @@
-const { expect } = require('chai');
 const { expectRevert, send, ether } = require('@openzeppelin/test-helpers');
 const {
   stopImpersonatingAccount,
@@ -12,22 +11,24 @@ const Pool = artifacts.require('Pool');
 
 contract('Pool (upgrading)', ([sender]) => {
   const admin = contractSettings.admin;
-  let pool;
+  let pool,
+    poolValidators,
+    oracles,
+    partnersRevenueSharing,
+    operatorsRevenueSharing;
 
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender, admin, ether('5'));
-    await upgradeContracts();
+    ({
+      poolValidators,
+      oracles,
+      partnersRevenueSharing,
+      operatorsRevenueSharing,
+    } = await upgradeContracts());
     pool = await Pool.at(contracts.pool);
-
-    expect(await pool.activatedValidators()).to.bignumber.equal(
-      contractSettings.activatedValidators
-    );
-    expect(await pool.pendingValidatorsLimit()).to.bignumber.equal(
-      contractSettings.pendingValidatorsLimit
-    );
   });
 
   afterEach(async () => resetFork());
@@ -35,11 +36,10 @@ contract('Pool (upgrading)', ([sender]) => {
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
       pool.upgrade(
-        contracts.oracles,
-        contractSettings.activatedValidators,
-        contractSettings.pendingValidators,
-        contractSettings.minActivatingDeposit,
-        contractSettings.pendingValidatorsLimit,
+        poolValidators,
+        oracles,
+        partnersRevenueSharing,
+        operatorsRevenueSharing,
         { from: sender }
       ),
       'OwnablePausable: access denied'
@@ -49,11 +49,10 @@ contract('Pool (upgrading)', ([sender]) => {
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
       pool.upgrade(
-        contracts.oracles,
-        contractSettings.activatedValidators,
-        contractSettings.pendingValidators,
-        contractSettings.minActivatingDeposit,
-        contractSettings.pendingValidatorsLimit,
+        poolValidators,
+        oracles,
+        partnersRevenueSharing,
+        operatorsRevenueSharing,
         { from: admin }
       ),
       'Pausable: not paused'
@@ -64,11 +63,10 @@ contract('Pool (upgrading)', ([sender]) => {
     await pool.pause({ from: admin });
     await expectRevert(
       pool.upgrade(
-        contracts.oracles,
-        contractSettings.activatedValidators,
-        contractSettings.pendingValidators,
-        contractSettings.minActivatingDeposit,
-        contractSettings.pendingValidatorsLimit,
+        poolValidators,
+        oracles,
+        partnersRevenueSharing,
+        operatorsRevenueSharing,
         { from: admin }
       ),
       'Pool: already upgraded'

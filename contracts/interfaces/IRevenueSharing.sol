@@ -23,12 +23,10 @@ interface IRevenueSharing {
     /**
     * @dev Event for tracking new accounts.
     * @param beneficiary - address where the reward will be transferred.
-    * @param claimer - address that can execute collection of the rewards.
     * @param revenueShare - revenue share percentage.
     */
     event AccountAdded(
         address indexed beneficiary,
-        address indexed claimer,
         uint128 indexed revenueShare
     );
 
@@ -50,7 +48,7 @@ interface IRevenueSharing {
     */
     event RevenueShareUpdated(
         address indexed beneficiary,
-        uint128 indexed revenueShare,
+        uint256 indexed revenueShare,
         uint256 reward
     );
 
@@ -89,16 +87,6 @@ interface IRevenueSharing {
     );
 
     /**
-    * @dev Event for tracking the claimer updates.
-    * @param beneficiary - address of the beneficiary.
-    * @param claimer - new claimer address.
-    */
-    event ClaimerUpdated(
-        address indexed beneficiary,
-        address indexed claimer
-    );
-
-    /**
     * @dev Function for getting the total allocated points.
     */
     function totalPoints() external view returns (uint128);
@@ -123,30 +111,17 @@ interface IRevenueSharing {
     function checkpoints(address beneficiary) external view returns (uint128, uint128, uint128, uint128);
 
     /**
-    * @dev Function for retrieving beneficiary's claimer.
-    * @param beneficiary - address of the beneficiary account.
-    */
-    function claimers(address beneficiary) external view returns (address);
-
-    /**
     * @dev Function for checking whether the beneficiary address is added.
     * @param beneficiary - address of the beneficiary account.
     */
     function isAdded(address beneficiary) external view returns (bool);
 
     /**
-    * @dev Function for updating the claimer.
-    * @param newClaimer - the new address of the claimer that can execute collection of rewards.
-    */
-    function updateClaimer(address newClaimer) external;
-
-    /**
     * @dev Function for adding new account.
-    * @param claimer - the address of the claimer that can execute collection of rewards.
     * @param beneficiary - the address of the beneficiary, where the rewards are directed.
     * @param revenueShare - the revenue share that the account will earn (up to 10000 (100.00%)).
     */
-    function addAccount(address claimer, address beneficiary, uint128 revenueShare) external;
+    function addAccount(address beneficiary, uint128 revenueShare) external;
 
     /**
     * @dev Function for removing account.
@@ -159,7 +134,7 @@ interface IRevenueSharing {
     * @param beneficiary - the address of the beneficiary to update the revenue share for.
     * @param revenueShare - the new revenue share.
     */
-    function updateRevenueShare(address beneficiary, uint128 revenueShare) external;
+    function updateRevenueShare(address beneficiary, uint256 revenueShare) external;
 
     /**
     * @dev Function for increasing account's contributed amount.
@@ -169,14 +144,14 @@ interface IRevenueSharing {
     function increaseAmount(address beneficiary, uint256 amount) external;
 
     /**
-    * @dev Function for collecting reward. Can be called by beneficiary or claimer.
+    * @dev Function for collecting reward. Can be executed by anyone, rewards are directed to beneficiary.
     * @param beneficiary - the address of the beneficiary to collect rewards for.
     */
     function collectReward(address beneficiary) external;
 
     /**
-    * @dev Function for collecting rewards. Can be called by beneficiary or claimer.
-    * @param beneficiaries - the list of beneficiaries to collect the rewards for. Must have the same claimer.
+    * @dev Function for collecting rewards for several beneficiaries in single transaction.
+    * @param beneficiaries - the list of beneficiaries to collect the rewards for.
     */
     function collectRewards(address[] calldata beneficiaries) external;
 

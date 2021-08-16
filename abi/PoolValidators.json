@@ -5,17 +5,17 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "operator",
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "uint128",
-        "name": "revenueShare",
-        "type": "uint128"
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "collateral",
+        "type": "uint256"
       }
     ],
-    "name": "AccountAdded",
+    "name": "CollateralDeposited",
     "type": "event"
   },
   {
@@ -24,17 +24,23 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "collateralRecipient",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "reward",
+        "name": "collateral",
         "type": "uint256"
       }
     ],
-    "name": "AccountRemoved",
+    "name": "CollateralWithdrawn",
     "type": "event"
   },
   {
@@ -43,23 +49,116 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "operator",
         "type": "address"
       },
       {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "initializeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
+        "internalType": "string",
+        "name": "initializeMerkleProofs",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "finalizeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "finalizeMerkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "OperatorAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "OperatorRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "reward",
+        "name": "refundedAmount",
         "type": "uint256"
       }
     ],
-    "name": "AmountIncreased",
+    "name": "OperatorSlashed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "initializeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "initializeMerkleProofs",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "finalizeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "finalizeMerkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "OperatorUpdated",
     "type": "event"
   },
   {
@@ -73,75 +172,6 @@
       }
     ],
     "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "revenueShare",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
-      }
-    ],
-    "name": "RevenueShareUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardCollected",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "periodReward",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsUpdated",
     "type": "event"
   },
   {
@@ -262,16 +292,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "_account",
         "type": "address"
-      },
-      {
-        "internalType": "uint128",
-        "name": "revenueShare",
-        "type": "uint128"
       }
     ],
-    "name": "addAccount",
+    "name": "addAdmin",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -280,11 +305,31 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "_operator",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "initializeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "initializeMerkleProofs",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "finalizeMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "finalizeMerkleProofs",
+        "type": "string"
       }
     ],
-    "name": "addAdmin",
+    "name": "addOperator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -310,27 +355,12 @@
         "type": "address"
       }
     ],
-    "name": "checkpoints",
+    "name": "collaterals",
     "outputs": [
       {
-        "internalType": "uint128",
-        "name": "amount",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "revenueShare",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "unclaimedReward",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "rewardPerPoint",
-        "type": "uint128"
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -340,11 +370,56 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "_operator",
         "type": "address"
       }
     ],
-    "name": "collectReward",
+    "name": "depositCollateral",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
+        "type": "tuple"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "finalizeValidator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -352,14 +427,30 @@
   {
     "inputs": [
       {
-        "internalType": "address[]",
-        "name": "beneficiaries",
-        "type": "address[]"
+        "internalType": "address",
+        "name": "_operator",
+        "type": "address"
       }
     ],
-    "name": "collectRewards",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "getOperator",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -470,24 +561,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "addedAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_admin",
         "type": "address"
       },
@@ -498,7 +571,7 @@
       },
       {
         "internalType": "address",
-        "name": "_rewardEthToken",
+        "name": "_oracles",
         "type": "address"
       }
     ],
@@ -510,20 +583,46 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "isAdded",
-    "outputs": [
+        "components": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
+        "type": "tuple"
+      },
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
       }
     ],
-    "stateMutability": "view",
+    "name": "initializeValidator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -588,30 +687,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "_account",
         "type": "address"
       }
     ],
-    "name": "pointsOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "removeAccount",
+    "name": "removeAdmin",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -620,11 +700,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "_operator",
         "type": "address"
       }
     ],
-    "name": "removeAdmin",
+    "name": "removeOperator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -681,46 +761,46 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "rewardOf",
-    "outputs": [
+        "components": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
+        "type": "tuple"
+      },
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rewardPerPoint",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalPoints",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "slashOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -733,42 +813,32 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newRevenueShare",
-        "type": "uint256"
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    "name": "updateRevenueShare",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "validatorStatuses",
+    "outputs": [
+      {
+        "internalType": "enum IPoolValidators.ValidatorStatus",
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "totalReward",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalStaked",
-        "type": "uint256"
+        "internalType": "address payable",
+        "name": "collateralRecipient",
+        "type": "address"
       }
     ],
-    "name": "updateRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "name": "withdrawCollateral",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

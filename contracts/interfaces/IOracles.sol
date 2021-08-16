@@ -47,28 +47,28 @@ interface IOracles {
     /**
     * @dev Event for tracking validator initialization votes.
     * @param signer - address of the signed oracle.
-    * @param merkleRoot - validator initialization merkle root.
-    * @param index - validator initialization index.
+    * @param operator - address of the operator the vote was sent for.
+    * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator initialization nonce.
     */
     event InitializeValidatorVoteSubmitted(
         address indexed signer,
-        bytes32 indexed merkleRoot,
-        uint256 index,
+        address indexed operator,
+        bytes publicKey,
         uint256 nonce
     );
 
     /**
     * @dev Event for tracking validator finalization votes.
     * @param signer - address of the signed oracle.
-    * @param merkleRoot - validator finalization merkle root.
-    * @param index - validator finalization index.
+    * @param operator - address of the operator the vote was sent for.
+    * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator finalization nonce.
     */
     event FinalizeValidatorVoteSubmitted(
         address indexed signer,
-        bytes32 indexed merkleRoot,
-        uint256 index,
+        address indexed operator,
+        bytes publicKey,
         uint256 nonce
     );
 
@@ -83,6 +83,7 @@ interface IOracles {
     * @param _prevOracles - address of the previous Oracles contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _pool - address of the Pool contract.
+    * @param _poolValidators - address of the PoolValidators contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
     * @param _syncPeriod - oracles sync period (in blocks).
     */
@@ -91,6 +92,7 @@ interface IOracles {
         address _prevOracles,
         address _rewardEthToken,
         address _pool,
+        address _poolValidators,
         address _merkleDistributor,
         uint256 _syncPeriod
     ) external;
@@ -140,13 +142,11 @@ interface IOracles {
     /**
     * @dev Function for submitting oracle vote for total rewards.
     * The quorum of signatures over the same data is required to submit the new value.
-    * @param _nonce - current nonce.
     * @param totalRewards - voted total rewards.
     * @param activatedValidators - voted amount of activated validators.
     * @param signatures - oracles' signatures.
     */
     function submitRewards(
-        uint256 _nonce,
         uint256 totalRewards,
         uint256 activatedValidators,
         bytes[] calldata signatures
@@ -155,41 +155,39 @@ interface IOracles {
     /**
     * @dev Function for submitting new merkle root.
     * The quorum of signatures over the same data is required to submit the new value.
-    * @param _nonce - current nonce.
     * @param merkleRoot - hash of the new merkle root.
     * @param merkleProofs - link to the merkle proofs.
     * @param signatures - oracles' signatures.
     */
     function submitMerkleRoot(
-        uint256 _nonce,
         bytes32 merkleRoot,
         string memory merkleProofs,
         bytes[] memory signatures
     ) external;
 
     /**
-    * @dev Function for submitting initializing new validator.
+    * @dev Function for submitting initialization of the new validator.
     * The quorum of signatures over the same data is required to initialize.
-    * @param _nonce - current nonce.
-    * @param validator - new validator.
+    * @param depositData - the deposit data for the initialization.
+    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
     * @param signatures - oracles' signatures.
     */
     function initializeValidator(
-        uint256 _nonce,
-        IPoolValidators.Validator memory validator,
+        IPoolValidators.DepositData memory depositData,
+        bytes32[] memory merkleProof,
         bytes[] memory signatures
     ) external;
 
     /**
-    * @dev Function for submitting finalizing new validator.
+    * @dev Function for submitting finalization of the new validator.
     * The quorum of signatures over the same data is required to finalize.
-    * @param _nonce - current nonce.
-    * @param validator - new validator.
+    * @param depositData - the deposit data for the finalization.
+    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the finalize merkle root.
     * @param signatures - oracles' signatures.
     */
     function finalizeValidator(
-        uint256 _nonce,
-        IPoolValidators.Validator memory validator,
+        IPoolValidators.DepositData memory depositData,
+        bytes32[] memory merkleProof,
         bytes[] memory signatures
     ) external;
 }

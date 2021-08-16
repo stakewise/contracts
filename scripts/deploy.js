@@ -1,6 +1,6 @@
-const { prepareContractsUpgrades } = require('../deployments');
+const { deployContracts } = require('../deployments');
 
-prepareContractsUpgrades()
+deployContracts()
   .then(() => process.exit(0))
   .catch((error) => {
     console.error(error);

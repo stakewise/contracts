@@ -22,9 +22,6 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
     // @dev Maps beneficiary address to the reward checkpoint.
     mapping(address => Checkpoint) public override checkpoints;
 
-    // @dev Maps beneficiary address to its rewards' claimer.
-    mapping(address => address) public override claimers;
-
     // @dev Address of the Pool contract.
     address private pool;
 
@@ -56,116 +53,135 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
     /**
      * @dev See {IRevenueSharing-addAccount}.
      */
-    function addAccount(address claimer, address beneficiary, uint128 revenueShare) external override onlyAdmin whenNotPaused {
+    function addAccount(address beneficiary, uint128 revenueShare) external override onlyAdmin whenNotPaused {
         require(checkpoints[beneficiary].revenueShare == 0, "RevenueSharing: account already added");
         require(revenueShare > 0 && revenueShare <= 1e4, "RevenueSharing: invalid revenue share");
-        require(claimer != address(0) && beneficiary != address(0), "RevenueSharing: invalid claimer or beneficiary");
+        require(beneficiary != address(0), "RevenueSharing: invalid beneficiary");
 
         // register new checkpoint
         checkpoints[beneficiary] = Checkpoint({
-        amount : 0,
-        revenueShare : revenueShare,
-        unclaimedReward : 0,
-        rewardPerPoint : rewardPerPoint
+            amount: 0,
+            revenueShare: revenueShare,
+            unclaimedReward: 0,
+            rewardPerPoint: rewardPerPoint
         });
-
-        // register account that can claim rewards
-        claimers[beneficiary] = claimer;
-        emit AccountAdded(beneficiary, claimer, revenueShare);
+        emit AccountAdded(beneficiary, revenueShare);
     }
 
     /**
      * @dev See {IRevenueSharing-removeAccount}.
      */
     function removeAccount(address beneficiary) external override onlyAdmin whenNotPaused {
-        Checkpoint memory checkpoint = checkpoints[beneficiary];
-        require(checkpoint.revenueShare != 0, "RevenueSharing: account is not added");
-
-        // calculate unclaimed reward
-        uint256 accountPoints = uint256(checkpoint.amount).mul(checkpoint.revenueShare);
-        uint256 reward = _calculateReward(
-            accountPoints,
+        Checkpoint storage checkpoint = checkpoints[beneficiary];
+        (
+            uint256 amount,
+            uint256 revenueShare,
+            uint256 prevReward,
+            uint256 prevRewardPerPoint
+        ) = (
+            checkpoint.amount,
+            checkpoint.revenueShare,
             checkpoint.unclaimedReward,
-            rewardPerPoint,
             checkpoint.rewardPerPoint
         );
+        require(revenueShare != 0, "RevenueSharing: account is not added");
+
+        // calculate new reward
+        uint256 accountPoints = amount.mul(revenueShare);
+        uint256 newReward = _calculateReward(accountPoints, prevReward, prevRewardPerPoint, rewardPerPoint);
 
         // clean up account
         delete checkpoints[beneficiary];
-        delete claimers[beneficiary];
         totalPoints = uint256(totalPoints).sub(accountPoints).toUint128();
 
-        if (reward > 0) {
-            rewardEthToken.safeTransfer(beneficiary, reward);
+        // transfer funds
+        if (newReward > 0) {
+            rewardEthToken.safeTransfer(beneficiary, newReward);
         }
-        emit AccountRemoved(beneficiary, reward);
+        emit AccountRemoved(beneficiary, newReward);
     }
 
     /**
      * @dev See {IRevenueSharing-updateRevenueShare}.
      */
-    function updateRevenueShare(address beneficiary, uint128 revenueShare) external override onlyAdmin whenNotPaused {
+    function updateRevenueShare(address beneficiary, uint256 newRevenueShare) external override onlyAdmin whenNotPaused {
         Checkpoint storage checkpoint = checkpoints[beneficiary];
-        require(checkpoint.revenueShare != 0, "RevenueSharing: account is not added");
-        require(revenueShare > 0 && revenueShare <= 1e4 && checkpoint.revenueShare != revenueShare, "RevenueSharing: invalid revenue share");
-
-        // SLOAD for gas optimization
-        uint128 _rewardPerPoint = rewardPerPoint;
-
-        // calculate unclaimed reward
-        uint256 prevPoints = uint256(checkpoint.amount).mul(checkpoint.revenueShare);
-        uint256 reward = _calculateReward(
-            prevPoints,
+        (
+            uint256 amount,
+            uint256 prevRevenueShare,
+            uint256 prevReward,
+            uint256 prevRewardPerPoint
+        ) = (
+            checkpoint.amount,
+            checkpoint.revenueShare,
             checkpoint.unclaimedReward,
-            rewardPerPoint,
             checkpoint.rewardPerPoint
         );
+        require(prevRevenueShare != 0, "RevenueSharing: account is not added");
+        require(newRevenueShare > 0 && newRevenueShare <= 1e4 && prevRevenueShare != newRevenueShare, "RevenueSharing: invalid revenue share");
+
+        // SLOAD for gas optimization
+        uint128 newRewardPerPoint = rewardPerPoint;
+
+        // calculate new reward
+        uint256 prevPoints = amount.mul(prevRevenueShare);
+        uint256 newReward = _calculateReward(prevPoints, prevReward, prevRewardPerPoint, newRewardPerPoint);
 
         // update total points and checkpoint
-        totalPoints = uint256(totalPoints).sub(prevPoints).add(uint256(checkpoint.amount).mul(revenueShare)).toUint128();
-        (checkpoint.revenueShare, checkpoint.rewardPerPoint, checkpoint.unclaimedReward) = (revenueShare, _rewardPerPoint, reward.toUint128());
-        emit RevenueShareUpdated(beneficiary, revenueShare, reward);
+        totalPoints = uint256(totalPoints).sub(prevPoints).add(amount.mul(newRevenueShare)).toUint128();
+        (
+            checkpoint.revenueShare,
+            checkpoint.rewardPerPoint,
+            checkpoint.unclaimedReward
+        ) = (
+            newRevenueShare.toUint128(),
+            newRewardPerPoint,
+            newReward.toUint128()
+        );
+        emit RevenueShareUpdated(beneficiary, newRevenueShare, newReward);
     }
 
     /**
      * @dev See {IRevenueSharing-increaseAmount}.
      */
-    function increaseAmount(address beneficiary, uint256 amount) external override whenNotPaused {
+    function increaseAmount(address beneficiary, uint256 addedAmount) external override whenNotPaused {
         require(msg.sender == pool || hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "RevenueSharing: access denied");
-        require(amount > 0, "RevenueSharing: invalid amount");
+        require(addedAmount > 0, "RevenueSharing: invalid amount");
 
         Checkpoint storage checkpoint = checkpoints[beneficiary];
-        require(checkpoint.revenueShare != 0, "RevenueSharing: account is not added");
-
-        // SLOAD for gas optimization
-        uint128 _rewardPerPoint = rewardPerPoint;
-
-        // calculate unclaimed reward
-        uint256 prevPoints = uint256(checkpoint.amount).mul(checkpoint.revenueShare);
-        uint256 reward = _calculateReward(
-            prevPoints,
+        (
+            uint256 prevAmount,
+            uint256 revenueShare,
+            uint256 prevReward,
+            uint256 prevRewardPerPoint
+        ) = (
+            checkpoint.amount,
+            checkpoint.revenueShare,
             checkpoint.unclaimedReward,
-            rewardPerPoint,
             checkpoint.rewardPerPoint
         );
+        require(revenueShare != 0, "RevenueSharing: account is not added");
+
+        // SLOAD for gas optimization
+        uint128 newRewardPerPoint = rewardPerPoint;
+
+        // calculate new reward
+        uint256 prevPoints = prevAmount.mul(revenueShare);
+        uint256 newReward = _calculateReward(prevPoints, prevReward, prevRewardPerPoint, newRewardPerPoint);
 
         // update total points and checkpoint
-        uint256 newAmount = amount.add(checkpoint.amount);
-        totalPoints = uint256(totalPoints).sub(prevPoints).add(newAmount.mul(checkpoint.revenueShare)).toUint128();
-        (checkpoint.amount, checkpoint.rewardPerPoint, checkpoint.unclaimedReward) = (newAmount.toUint128(), _rewardPerPoint, reward.toUint128());
-        emit AmountIncreased(beneficiary, amount, reward);
-    }
-
-    /**
-     * @dev See {IRevenueSharing-updateClaimer}.
-     */
-    function updateClaimer(address newClaimer) external override whenNotPaused {
-        address prevClaimer = claimers[msg.sender];
-        require(prevClaimer != address(0), "RevenueSharing: account is not added");
-        require(newClaimer != address(0) && prevClaimer != newClaimer, "RevenueSharing: invalid new claimer");
-
-        claimers[msg.sender] = newClaimer;
-        emit ClaimerUpdated(msg.sender, newClaimer);
+        uint256 newAmount = prevAmount.add(addedAmount);
+        totalPoints = uint256(totalPoints).sub(prevPoints).add(newAmount.mul(revenueShare)).toUint128();
+        (
+            checkpoint.amount,
+            checkpoint.rewardPerPoint,
+            checkpoint.unclaimedReward
+        ) = (
+            newAmount.toUint128(),
+            newRewardPerPoint,
+            newReward.toUint128()
+        );
+        emit AmountIncreased(beneficiary, addedAmount, newReward);
     }
 
     /**
@@ -187,8 +203,8 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
         return _calculateReward(
             uint256(checkpoint.amount).mul(checkpoint.revenueShare),
             checkpoint.unclaimedReward,
-            rewardPerPoint,
-            checkpoint.rewardPerPoint
+            checkpoint.rewardPerPoint,
+            rewardPerPoint
         );
     }
 
@@ -202,7 +218,7 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
     /**
      * @dev See {IRevenueSharing-collectRewards}.
      */
-    function collectRewards(address[] calldata beneficiaries) external override whenNotPaused {
+    function collectRewards(address[] memory beneficiaries) external override whenNotPaused {
         for (uint256 i = 0; i < beneficiaries.length; i++) {
             _collectReward(beneficiaries[i]);
         }
@@ -210,28 +226,38 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
 
     function _collectReward(address beneficiary) internal {
         Checkpoint storage checkpoint = checkpoints[beneficiary];
-        require(checkpoint.revenueShare != 0, "RevenueSharing: account is not added");
-        require(beneficiary == msg.sender || claimers[beneficiary] == msg.sender, "RevenueSharing: access denied");
-
-        // SLOAD for gas optimization
-        uint128 _rewardPerPoint = rewardPerPoint;
-
-        // calculate unclaimed reward
-        uint256 accountPoints = uint256(checkpoint.amount).mul(checkpoint.revenueShare);
-        uint256 reward = _calculateReward(
-            accountPoints,
+        (
+            uint256 amount,
+            uint256 revenueShare,
+            uint256 prevReward,
+            uint256 prevRewardPerPoint
+        ) = (
+            checkpoint.amount,
+            checkpoint.revenueShare,
             checkpoint.unclaimedReward,
-            rewardPerPoint,
             checkpoint.rewardPerPoint
         );
+        require(revenueShare != 0, "RevenueSharing: account is not added");
 
-        (checkpoint.rewardPerPoint, checkpoint.unclaimedReward) = (_rewardPerPoint, 0);
+        // SLOAD for gas optimization
+        uint128 newRewardPerPoint = rewardPerPoint;
 
-        if (reward > 0) {
-            rewardEthToken.safeTransfer(beneficiary, reward);
+        // calculate new reward
+        uint256 accountPoints = amount.mul(revenueShare);
+        uint256 newReward = _calculateReward(
+            accountPoints,
+            prevReward,
+            prevRewardPerPoint,
+            newRewardPerPoint
+        );
+
+        (checkpoint.rewardPerPoint, checkpoint.unclaimedReward) = (newRewardPerPoint, 0);
+
+        if (newReward > 0) {
+            rewardEthToken.safeTransfer(beneficiary, newReward);
         }
 
-        emit RewardCollected(msg.sender, beneficiary, reward);
+        emit RewardCollected(msg.sender, beneficiary, newReward);
     }
 
     /**
@@ -263,18 +289,18 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
 
     function _calculateReward(
         uint256 points,
-        uint256 unclaimedReward,
-        uint256 newRewardPerPoint,
-        uint256 prevRewardPerPoint
+        uint256 prevReward,
+        uint256 prevRewardPerPoint,
+        uint256 newRewardPerPoint
     )
-        internal pure returns (uint256 reward)
+        internal pure returns (uint256 newReward)
     {
         if (newRewardPerPoint > prevRewardPerPoint) {
-            reward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e31);
+            newReward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e31);
         }
 
-        if (unclaimedReward > 0) {
-            reward = reward.add(unclaimedReward);
+        if (prevReward > 0) {
+            newReward = newReward.add(prevReward);
         }
     }
 }

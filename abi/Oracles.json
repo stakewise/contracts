@@ -10,15 +10,15 @@
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "merkleRoot",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
       },
       {
         "indexed": false,
@@ -41,15 +41,15 @@
       },
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "merkleRoot",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
       },
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
+        "internalType": "bytes",
+        "name": "publicKey",
+        "type": "bytes"
       },
       {
         "indexed": false,
@@ -337,16 +337,21 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint256",
-            "name": "index",
-            "type": "uint256"
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes",
@@ -357,26 +362,16 @@
             "internalType": "bytes",
             "name": "signature",
             "type": "bytes"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "merkleRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "merkleProof",
-            "type": "bytes32[]"
           }
         ],
-        "internalType": "struct IPoolValidators.Validator",
-        "name": "validator",
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
         "type": "tuple"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
       },
       {
         "internalType": "bytes[]",
@@ -517,6 +512,11 @@
       },
       {
         "internalType": "address",
+        "name": "_poolValidators",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "_merkleDistributor",
         "type": "address"
       },
@@ -534,16 +534,21 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
         "components": [
           {
-            "internalType": "uint256",
-            "name": "index",
-            "type": "uint256"
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
           },
           {
             "internalType": "bytes",
@@ -554,26 +559,16 @@
             "internalType": "bytes",
             "name": "signature",
             "type": "bytes"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "merkleRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32[]",
-            "name": "merkleProof",
-            "type": "bytes32[]"
           }
         ],
-        "internalType": "struct IPoolValidators.Validator",
-        "name": "validator",
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
         "type": "tuple"
+      },
+      {
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
       },
       {
         "internalType": "bytes[]",
@@ -780,11 +775,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
-      {
         "internalType": "bytes32",
         "name": "merkleRoot",
         "type": "bytes32"
@@ -807,11 +797,6 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      },
       {
         "internalType": "uint256",
         "name": "totalRewards",

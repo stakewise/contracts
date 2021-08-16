@@ -42,7 +42,7 @@ contract MulticallMock {
         external
     {
         rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
-        oracles.submitRewards(oracles.currentNonce(), totalRewards, activatedValidators, signatures);
+        oracles.submitRewards(totalRewards, activatedValidators, signatures);
     }
 
     function updateTotalRewardsAndTransferRewards(
@@ -53,7 +53,7 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitRewards(oracles.currentNonce(), totalRewards, activatedValidators, signatures);
+        oracles.submitRewards(totalRewards, activatedValidators, signatures);
         rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
     }
 
@@ -67,7 +67,7 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitRewards(oracles.currentNonce(), oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
     }
 
@@ -82,7 +82,7 @@ contract MulticallMock {
         external
     {
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
-        oracles.submitRewards(oracles.currentNonce(), oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
     }
 
     function claimAndUpdateMerkleRoot(
@@ -96,7 +96,7 @@ contract MulticallMock {
         external
     {
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
-        oracles.submitMerkleRoot(oracles.currentNonce(), merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
+        oracles.submitMerkleRoot(merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
     }
 
     function updateMerkleRootAndClaim(
@@ -109,7 +109,7 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitMerkleRoot(oracles.currentNonce(), merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
+        oracles.submitMerkleRoot(merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
     }
 
@@ -121,7 +121,7 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitRewards(oracles.currentNonce(), totalRewards, activatedValidators, signatures);
+        oracles.submitRewards(totalRewards, activatedValidators, signatures);
         stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
     }
 
@@ -134,7 +134,7 @@ contract MulticallMock {
         external
     {
         stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
-        oracles.submitRewards(oracles.currentNonce(), totalRewards, activatedValidators, signatures);
+        oracles.submitRewards(totalRewards, activatedValidators, signatures);
     }
 
     function updateTotalRewardsAndMerkleRoot(
@@ -143,7 +143,7 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitRewards(oracles.currentNonce(), oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
-        oracles.submitMerkleRoot(oracles.currentNonce(), merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
+        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        oracles.submitMerkleRoot(merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
     }
 }

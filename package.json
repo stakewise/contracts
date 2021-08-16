@@ -19,7 +19,7 @@
     "slither": "pip3 install --user slither-analyzer && slither .",
     "test": "hardhat test",
     "test:gas": "hardhat test --gas --optimizer",
-    "prepare-upgrade": "yarn compile --optimizer && npx hardhat run --no-compile scripts/prepareUpgrade.js",
+    "deploy-contracts": "yarn compile --optimizer && npx hardhat run --no-compile scripts/deploy.js",
     "upgrade-contracts": "yarn compile --optimizer && npx hardhat run --no-compile scripts/upgrade.js",
     "verify": "npx hardhat verify --optimizer"
   },
