@@ -95,7 +95,7 @@ interface IPool {
     function VALIDATOR_INIT_DEPOSIT() external view returns (uint256);
 
     /**
-    * @dev Function for getting the total amount of pending validators.
+    * @dev Function for retrieving the total amount of pending validators.
     */
     function pendingValidators() external view returns (uint256);
 
@@ -105,7 +105,7 @@ interface IPool {
     function activatedValidators() external view returns (uint256);
 
     /**
-    * @dev Function for getting the withdrawal credentials used to
+    * @dev Function for retrieving the withdrawal credentials used to
     * initiate pool validators withdrawal from the beacon chain.
     */
     function withdrawalCredentials() external view returns (bytes32);

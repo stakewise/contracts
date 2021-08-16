@@ -62,7 +62,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-upgrade}.
      */
     function upgrade(address _oracles, address _operatorsRevenueSharing, address _partnersRevenueSharing) external override onlyAdmin whenPaused {
-        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "RewardEthToken: already upgraded");
+        require(address(operatorsRevenueSharing) == address(0), "RewardEthToken: already upgraded");
         oracles = _oracles;
         operatorsRevenueSharing = IRevenueSharing(_operatorsRevenueSharing);
         partnersRevenueSharing = IRevenueSharing(_partnersRevenueSharing);

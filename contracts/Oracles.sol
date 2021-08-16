@@ -172,7 +172,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit RewardsVoteSubmitted(signer, _nonce, totalRewards, activatedValidators);
+            emit RewardsVoteSubmitted(msg.sender, signer, _nonce, totalRewards, activatedValidators);
         }
 
         // increment nonce for future signatures
@@ -220,7 +220,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit MerkleRootVoteSubmitted(signer, _nonce, merkleRoot, merkleProofs);
+            emit MerkleRootVoteSubmitted(msg.sender, signer, _nonce, merkleRoot, merkleProofs);
         }
 
         // increment nonce for future signatures
@@ -262,7 +262,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit InitializeValidatorVoteSubmitted(signer, depositData.operator, depositData.publicKey, _nonce);
+            emit InitializeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, _nonce);
         }
 
         // increment nonce for future signatures
@@ -304,7 +304,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit FinalizeValidatorVoteSubmitted(signer, depositData.operator, depositData.publicKey, _nonce);
+            emit FinalizeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, _nonce);
         }
 
         // increment nonce for future signatures

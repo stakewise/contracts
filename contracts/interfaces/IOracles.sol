@@ -11,12 +11,14 @@ pragma abicoder v2;
 interface IOracles {
     /**
     * @dev Event for tracking oracle rewards votes.
+    * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
     * @param nonce - current nonce.
     * @param totalRewards - submitted value of total rewards.
     * @param activatedValidators - submitted amount of activated validators.
     */
     event RewardsVoteSubmitted(
+        address indexed sender,
         address indexed oracle,
         uint256 nonce,
         uint256 totalRewards,
@@ -25,12 +27,14 @@ interface IOracles {
 
     /**
     * @dev Event for tracking oracle merkle root votes.
+    * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
     * @param nonce - current nonce.
     * @param merkleRoot - new merkle root.
     * @param merkleProofs - link to the merkle proofs.
     */
     event MerkleRootVoteSubmitted(
+        address indexed sender,
         address indexed oracle,
         uint256 nonce,
         bytes32 indexed merkleRoot,
@@ -46,12 +50,14 @@ interface IOracles {
 
     /**
     * @dev Event for tracking validator initialization votes.
+    * @param sender - address of the transaction sender.
     * @param signer - address of the signed oracle.
     * @param operator - address of the operator the vote was sent for.
     * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator initialization nonce.
     */
     event InitializeValidatorVoteSubmitted(
+        address indexed sender,
         address indexed signer,
         address indexed operator,
         bytes publicKey,
@@ -60,12 +66,14 @@ interface IOracles {
 
     /**
     * @dev Event for tracking validator finalization votes.
+    * @param sender - address of the transaction sender.
     * @param signer - address of the signed oracle.
     * @param operator - address of the operator the vote was sent for.
     * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator finalization nonce.
     */
     event FinalizeValidatorVoteSubmitted(
+        address indexed sender,
         address indexed signer,
         address indexed operator,
         bytes publicKey,

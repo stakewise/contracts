@@ -4,7 +4,6 @@ pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IDepositContract.sol";
@@ -20,12 +19,11 @@ import "../interfaces/IPoolValidators.sol";
  */
 contract Pool is IPool, OwnablePausableUpgradeable {
     using SafeMathUpgradeable for uint256;
-    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     // @dev Validator deposit amount.
     uint256 public constant override VALIDATOR_TOTAL_DEPOSIT = 32 ether;
 
-    // @dev Validator initialization deposit amount.
+    // @dev Validator initialization amount.
     uint256 public constant override VALIDATOR_INIT_DEPOSIT = 1 ether;
 
     // @dev Total activated validators.
@@ -66,8 +64,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
 
     /**
      * @dev See {IPool-upgrade}.
-     * The `initialize` must be called before upgrading in previous implementation contract:
-     * https://github.com/stakewise/contracts/blob/v1.3.0/contracts/collectors/Pool.sol#L55
+     * The `initialize` function must be defined if deploying contract
+     * for the first time that will initialize the state variables above.
      */
     function upgrade(
         address _poolValidators,
@@ -130,7 +128,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-    * @dev Function for staking ETH.
+    * @dev Function for staking ETH using transfer.
     */
     receive() external payable {
         _stake(msg.sender, msg.value);
@@ -148,7 +146,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-stakeWithPartner}.
+     * @dev See {IPool-stakeWithPartnerOnBehalf}.
      */
     function stakeWithPartnerOnBehalf(address partner, address recipient) external payable override {
         // stake amount
