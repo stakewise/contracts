@@ -353,7 +353,6 @@ contract('RevenueSharing', ([beneficiary, anyone, ...otherAccounts]) => {
         periodReward
       );
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -423,7 +422,7 @@ contract('RevenueSharing', ([beneficiary, anyone, ...otherAccounts]) => {
       });
       const reward = receipt.logs[0].args.reward;
       expect(reward).to.bignumber.greaterThan(new BN(0));
-      expect(reward).to.bignumber.equal(revenueCut);
+      expect(reward.sub(revenueCut)).to.bignumber.lessThan(new BN(10e8));
       expect(await revenueSharing.rewardOf(beneficiary)).to.bignumber.equal(
         new BN(0)
       );
@@ -451,7 +450,6 @@ contract('RevenueSharing', ([beneficiary, anyone, ...otherAccounts]) => {
         periodReward
       );
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,

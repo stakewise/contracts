@@ -281,9 +281,10 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
         uint256 periodReward = totalReward.mul(_totalPoints).div(totalStaked.mul(1e4));
 
         // update reward per point
-        rewardPerPoint = prevRewardPerPoint.add(periodReward.mul(1e31).div(_totalPoints)).toUint128();
+        uint256 newRewardPerPoint = prevRewardPerPoint.add(periodReward.mul(1e22).div(_totalPoints));
+        rewardPerPoint = newRewardPerPoint.toUint128();
 
-        emit RewardsUpdated(msg.sender, periodReward);
+        emit RewardsUpdated(msg.sender, periodReward, newRewardPerPoint);
         return periodReward;
     }
 
@@ -296,7 +297,7 @@ contract RevenueSharing is IRevenueSharing, OwnablePausableUpgradeable {
         internal pure returns (uint256 newReward)
     {
         if (newRewardPerPoint > prevRewardPerPoint) {
-            newReward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e31);
+            newReward = points.mul(newRewardPerPoint.sub(prevRewardPerPoint)).div(1e22);
         }
 
         if (prevReward > 0) {

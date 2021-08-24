@@ -139,6 +139,12 @@
         "internalType": "uint256",
         "name": "periodReward",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "rewardPerPoint",
+        "type": "uint256"
       }
     ],
     "name": "RewardsUpdated",

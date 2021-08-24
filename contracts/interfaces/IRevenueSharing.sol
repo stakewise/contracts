@@ -80,10 +80,12 @@ interface IRevenueSharing {
     * @dev Event for tracking total rewards update.
     * @param sender - address of the transaction sender.
     * @param periodReward - period reward.
+    * @param rewardPerPoint - new reward per point.
     */
     event RewardsUpdated(
         address indexed sender,
-        uint256 periodReward
+        uint256 periodReward,
+        uint256 rewardPerPoint
     );
 
     /**
