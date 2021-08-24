@@ -136,7 +136,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     });
 
     it('oracles contract can set activated validators', async () => {
-      await pool.stake(anyone, {
+      await pool.stake({
         from: anyone,
         value: ether('32'),
       });
@@ -154,7 +154,6 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
       );
 
       let receipt = await setActivatedValidators({
-        admin,
         pool,
         rewardEthToken,
         activatedValidators,

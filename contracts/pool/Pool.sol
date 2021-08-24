@@ -233,6 +233,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         require(msg.sender == address(validators), "Pool: access denied");
         require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
 
+        emit ValidatorInitialized(depositData.publicKey, depositData.operator);
+
         // initiate validator registration
         validatorRegistration.deposit{value : VALIDATOR_INIT_DEPOSIT}(
             depositData.publicKey,
@@ -240,7 +242,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             depositData.signature,
             depositData.depositDataRoot
         );
-        emit ValidatorInitialized(depositData.publicKey, depositData.operator);
     }
 
     /**
@@ -258,6 +259,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             operatorsRevenueSharing.increaseAmount(depositData.operator, VALIDATOR_TOTAL_DEPOSIT);
         }
 
+        emit ValidatorRegistered(depositData.publicKey, depositData.operator);
+
         // finalize validator registration
         validatorRegistration.deposit{value : VALIDATOR_TOTAL_DEPOSIT.sub(VALIDATOR_INIT_DEPOSIT)}(
             depositData.publicKey,
@@ -265,7 +268,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             depositData.signature,
             depositData.depositDataRoot
         );
-        emit ValidatorRegistered(depositData.publicKey, depositData.operator);
     }
 
     /**

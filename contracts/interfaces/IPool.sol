@@ -15,14 +15,14 @@ interface IPool {
     * @param publicKey - validator public key.
     * @param operator - address of the validator operator.
     */
-    event ValidatorInitialized(bytes indexed publicKey, address indexed operator);
+    event ValidatorInitialized(bytes publicKey, address operator);
 
     /**
     * @dev Event for tracking registered validators.
     * @param publicKey - validator public key.
     * @param operator - address of the validator operator.
     */
-    event ValidatorRegistered(bytes indexed publicKey, address indexed operator);
+    event ValidatorRegistered(bytes publicKey, address operator);
 
     /**
     * @dev Event for tracking refunds.

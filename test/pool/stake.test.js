@@ -72,14 +72,14 @@ contract('Pool (stake)', (accounts) => {
   describe('stake', () => {
     it('fails to stake with zero amount', async () => {
       await expectRevert(
-        pool.stake(sender1, { from: sender1, value: ether('0') }),
+        pool.stake({ from: sender1, value: ether('0') }),
         'Pool: invalid deposit amount'
       );
     });
 
     it('fails to stake with zero address', async () => {
       await expectRevert(
-        pool.stake(constants.ZERO_ADDRESS, {
+        pool.stakeOnBehalf(constants.ZERO_ADDRESS, {
           from: sender1,
           value: ether('0'),
         }),
@@ -363,7 +363,7 @@ contract('Pool (stake)', (accounts) => {
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
       depositAmount = ether('32');
-      await pool.stake(sender1, {
+      await pool.stake({
         from: sender1,
         value: depositAmount,
       });

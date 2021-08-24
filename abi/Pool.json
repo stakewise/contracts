@@ -236,13 +236,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "bytes",
         "name": "publicKey",
         "type": "bytes"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "operator",
         "type": "address"
@@ -255,13 +255,13 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "bytes",
         "name": "publicKey",
         "type": "bytes"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "address",
         "name": "operator",
         "type": "address"
