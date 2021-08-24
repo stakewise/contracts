@@ -109,7 +109,7 @@
         "type": "address"
       },
       {
-        "indexed": true,
+        "indexed": false,
         "internalType": "bytes",
         "name": "publicKey",
         "type": "bytes"
@@ -122,43 +122,6 @@
       }
     ],
     "name": "OperatorSlashed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "initializeMerkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "initializeMerkleProofs",
-        "type": "string"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "finalizeMerkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "finalizeMerkleProofs",
-        "type": "string"
-      }
-    ],
-    "name": "OperatorUpdated",
     "type": "event"
   },
   {

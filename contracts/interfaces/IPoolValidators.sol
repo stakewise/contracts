@@ -83,22 +83,6 @@ interface IPoolValidators {
     );
 
     /**
-    * @dev Event for tracking existing operators updates.
-    * @param operator - address of the operator.
-    * @param initializeMerkleRoot - validators initialization merkle root.
-    * @param initializeMerkleProofs - validators initialization merkle proofs.
-    * @param finalizeMerkleRoot - validators finalization merkle root.
-    * @param finalizeMerkleProofs - validators finalization merkle proofs.
-    */
-    event OperatorUpdated(
-        address indexed operator,
-        bytes32 indexed initializeMerkleRoot,
-        string initializeMerkleProofs,
-        bytes32 indexed finalizeMerkleRoot,
-        string finalizeMerkleProofs
-    );
-
-    /**
     * @dev Event for tracking operators' removals.
     * @param sender - address of the transaction sender.
     * @param operator - address of the operator.
@@ -116,7 +100,7 @@ interface IPoolValidators {
     */
     event OperatorSlashed(
         address indexed operator,
-        bytes indexed publicKey,
+        bytes publicKey,
         uint256 refundedAmount
     );
 

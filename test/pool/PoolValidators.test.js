@@ -66,7 +66,7 @@ contract('Pool Validators', (accounts) => {
     // collect validator deposit
     let poolBalance = await balance.current(pool.address);
     let depositAmount = validatorDeposit.sub(poolBalance);
-    await pool.stake(anyone, {
+    await pool.stake({
       from: anyone,
       value: depositAmount,
     });
@@ -698,7 +698,7 @@ contract('Pool Validators', (accounts) => {
 
       await expectEvent(receipt, 'OperatorSlashed', {
         operator,
-        publicKey: keccak256(publicKey),
+        publicKey,
         refundedAmount: initAmount,
       });
 
@@ -891,7 +891,7 @@ contract('Pool Validators', (accounts) => {
         'ValidatorInitialized',
         {
           operator,
-          publicKey: keccak256(publicKey),
+          publicKey,
         }
       );
       expect(
@@ -1069,7 +1069,7 @@ contract('Pool Validators', (accounts) => {
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'ValidatorRegistered', {
         operator,
-        publicKey: keccak256(publicKey),
+        publicKey,
       });
       expect(
         await validators.validatorStatuses(
