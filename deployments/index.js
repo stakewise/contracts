@@ -44,7 +44,8 @@ async function deployAndInitializeOracles(poolValidatorsContractAddress) {
       contracts.pool,
       poolValidatorsContractAddress,
       contracts.merkleDistributor,
-      contractSettings.syncPeriod,
+      contractSettings.rewardVotesSources,
+      contractSettings.validatorVotesSources,
     ],
     {
       kind: 'transparent',

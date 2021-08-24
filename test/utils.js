@@ -85,7 +85,6 @@ async function checkRewardEthToken({
 }
 
 async function setActivatedValidators({
-  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -97,10 +96,8 @@ async function setActivatedValidators({
     return;
   }
 
-  await enableRewardsVoting({ rewardEthToken, oracles, admin });
-
   let totalRewards = await rewardEthToken.totalRewards();
-  let nonce = await oracles.currentNonce();
+  let nonce = await oracles.currentRewardsNonce();
 
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'uint256', 'uint256'],
@@ -133,22 +130,7 @@ async function setActivatedValidators({
   return receipt;
 }
 
-async function enableRewardsVoting({ rewardEthToken, oracles, admin }) {
-  if (await oracles.isRewardsVoting()) {
-    return;
-  }
-  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-  let latestBlock = await time.latestBlock();
-  await oracles.setSyncPeriod(
-    latestBlock.sub(lastUpdateBlockNumber).sub(new BN(1)),
-    {
-      from: admin,
-    }
-  );
-}
-
 async function setTotalRewards({
-  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -158,11 +140,9 @@ async function setTotalRewards({
   if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
     return;
   }
-  await enableRewardsVoting({ rewardEthToken, oracles, admin });
-
   // calculate candidate ID
   let activatedValidators = await pool.activatedValidators();
-  let nonce = await oracles.currentNonce();
+  let nonce = await oracles.currentRewardsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'uint256', 'uint256'],
     [nonce.toString(), totalRewards.toString(), activatedValidators.toString()]
@@ -202,7 +182,7 @@ async function setMerkleRoot({
     return;
   }
 
-  let nonce = await oracles.currentNonce();
+  let nonce = await oracles.currentRewardsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'bytes32', 'string'],
     [nonce.toString(), merkleRoot, merkleProofs]
@@ -233,7 +213,7 @@ async function initializeValidator({
   oracles,
   oracleAccounts,
 }) {
-  let nonce = await oracles.currentNonce();
+  let nonce = await oracles.currentValidatorsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'bytes', 'address'],
     [nonce.toString(), publicKey, operator]
@@ -269,7 +249,7 @@ async function finalizeValidator({
   oracles,
   oracleAccounts,
 }) {
-  let nonce = await oracles.currentNonce();
+  let nonce = await oracles.currentValidatorsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'bytes', 'address'],
     [nonce.toString(), publicKey, operator]
@@ -407,7 +387,7 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
   let oracleAccounts = [];
   for (let i = 0; i < totalOracles; i++) {
     let newOracle = accounts[i];
-    await oracles.addOracle(newOracle, { from: admin });
+    await oracles.addOracle(newOracle, 'example12.com', { from: admin });
     oracleAccounts.push(newOracle);
   }
 
@@ -426,7 +406,6 @@ module.exports = {
   setTotalRewards,
   setMerkleRoot,
   setupOracleAccounts,
-  enableRewardsVoting,
   initializeValidator,
   finalizeValidator,
   registerValidator,

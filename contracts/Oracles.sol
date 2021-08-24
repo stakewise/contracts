@@ -26,6 +26,13 @@ interface IAccessControlUpgradeable {
     function getRoleMember(bytes32 role, uint256 index) external view returns (address);
 }
 
+interface IPrevOracles {
+    /**
+    * @dev Function for retrieving current rewards nonce.
+    */
+    function currentNonce() external view returns (uint256);
+}
+
 /**
  * @title Oracles
  *
@@ -38,8 +45,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
-    // @dev Nonce is used to protect from submitting the same vote several times.
-    CountersUpgradeable.Counter private nonce;
+    // @dev Rewards nonce is used to protect from submitting the same rewards vote several times.
+    CountersUpgradeable.Counter private rewardsNonce;
+
+    // @dev Validators nonce is used to protect from submitting the same validator vote several times.
+    CountersUpgradeable.Counter private validatorsNonce;
 
     // @dev Address of the RewardEthToken contract.
     IRewardEthToken private rewardEthToken;
@@ -53,82 +63,77 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     // @dev Address of the MerkleDistributor contract.
     IMerkleDistributor private merkleDistributor;
 
-    // @dev Defines how often oracles submit data (in blocks).
-    uint256 public override syncPeriod;
-
     /**
      * @dev See {IOracles-initialize}.
      */
     function initialize(
-        address _admin,
-        address _prevOracles,
+        address admin,
+        address prevOracles,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
         address _merkleDistributor,
-        uint256 _syncPeriod
+        string[] memory rewardVotesSources,
+        string[] memory validatorVotesSources
     )
         external override initializer
     {
-        __OwnablePausableUpgradeable_init(_admin);
+        __OwnablePausableUpgradeable_init(admin);
 
         // migrate data from previous Oracles contract
-        nonce._value = IOracles(_prevOracles).currentNonce();
-        uint256 oraclesCount = IAccessControlUpgradeable(_prevOracles).getRoleMemberCount(ORACLE_ROLE);
+        rewardsNonce._value = IPrevOracles(prevOracles).currentNonce();
+        uint256 oraclesCount = IAccessControlUpgradeable(prevOracles).getRoleMemberCount(ORACLE_ROLE);
+        require(
+            oraclesCount == rewardVotesSources.length && oraclesCount == validatorVotesSources.length,
+            "Oracles: invalid length of votes sources"
+        );
         for(uint256 i = 0; i < oraclesCount; i++) {
-            address oracle = IAccessControlUpgradeable(_prevOracles).getRoleMember(ORACLE_ROLE, i);
+            address oracle = IAccessControlUpgradeable(prevOracles).getRoleMember(ORACLE_ROLE, i);
             _setupRole(ORACLE_ROLE, oracle);
+            emit OracleAdded(oracle, rewardVotesSources[i], validatorVotesSources[i]);
         }
 
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         pool = IPool(_pool);
         poolValidators = IPoolValidators(_poolValidators);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
-        syncPeriod = _syncPeriod;
     }
 
     /**
-     * @dev See {IOracles-currentNonce}.
+     * @dev See {IOracles-currentRewardsNonce}.
      */
-    function currentNonce() external override view returns (uint256) {
-        return nonce.current();
+    function currentRewardsNonce() external override view returns (uint256) {
+        return rewardsNonce.current();
+    }
+
+    /**
+     * @dev See {IOracles-currentValidatorsNonce}.
+     */
+    function currentValidatorsNonce() external override view returns (uint256) {
+        return validatorsNonce.current();
     }
 
     /**
      * @dev See {IOracles-isOracle}.
      */
-    function isOracle(address _account) external override view returns (bool) {
-        return hasRole(ORACLE_ROLE, _account);
+    function isOracle(address account) external override view returns (bool) {
+        return hasRole(ORACLE_ROLE, account);
     }
 
     /**
      * @dev See {IOracles-addOracle}.
      */
-    function addOracle(address _account) external override {
-        grantRole(ORACLE_ROLE, _account);
+    function addOracle(address account, string memory rewardVotesSource, string memory validatorVotesSource) external override {
+        grantRole(ORACLE_ROLE, account);
+        emit OracleAdded(account, rewardVotesSource, validatorVotesSource);
     }
 
     /**
      * @dev See {IOracles-removeOracle}.
      */
-    function removeOracle(address _account) external override {
-        revokeRole(ORACLE_ROLE, _account);
-    }
-
-    /**
-     * @dev See {IOracles-setSyncPeriod}.
-     */
-    function setSyncPeriod(uint256 _syncPeriod) external override onlyAdmin {
-        require(!isRewardsVoting(), "Oracles: cannot update during voting");
-        syncPeriod = _syncPeriod;
-        emit SyncPeriodUpdated(_syncPeriod, msg.sender);
-    }
-
-    /**
-     * @dev See {IOracles-isRewardsVoting}.
-     */
-    function isRewardsVoting() public override view returns (bool) {
-        return rewardEthToken.lastUpdateBlockNumber().add(syncPeriod) < block.number;
+    function removeOracle(address account) external override {
+        revokeRole(ORACLE_ROLE, account);
+        emit OracleRemoved(account);
     }
 
     /**
@@ -149,16 +154,15 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     )
         external override whenNotPaused
     {
-        require(isRewardsVoting(), "Oracles: too early");
         require(
             signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
             "Oracles: invalid number of signatures"
         );
 
         // calculate candidate ID hash
-        uint256 _nonce = nonce.current();
+        uint256 nonce = rewardsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, totalRewards, activatedValidators))
+            keccak256(abi.encode(nonce, totalRewards, activatedValidators))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -172,11 +176,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit RewardsVoteSubmitted(msg.sender, signer, _nonce, totalRewards, activatedValidators);
+            emit RewardsVoteSubmitted(msg.sender, signer, nonce, totalRewards, activatedValidators);
         }
 
         // increment nonce for future signatures
-        nonce.increment();
+        rewardsNonce.increment();
 
         // update total rewards
         rewardEthToken.updateTotalRewards(totalRewards);
@@ -204,9 +208,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         );
 
         // calculate candidate ID hash
-        uint256 _nonce = nonce.current();
+        uint256 nonce = rewardsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, merkleRoot, merkleProofs))
+            keccak256(abi.encode(nonce, merkleRoot, merkleProofs))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -220,11 +224,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit MerkleRootVoteSubmitted(msg.sender, signer, _nonce, merkleRoot, merkleProofs);
+            emit MerkleRootVoteSubmitted(msg.sender, signer, nonce, merkleRoot, merkleProofs);
         }
 
         // increment nonce for future signatures
-        nonce.increment();
+        rewardsNonce.increment();
 
         // update merkle root
         merkleDistributor.setMerkleRoot(merkleRoot, merkleProofs);
@@ -246,9 +250,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         );
 
         // calculate candidate ID hash
-        uint256 _nonce = nonce.current();
+        uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, depositData.publicKey, depositData.operator))
+            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -262,11 +266,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit InitializeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, _nonce);
+            emit InitializeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, nonce);
         }
 
         // increment nonce for future signatures
-        nonce.increment();
+        validatorsNonce.increment();
 
         // initialize validator
         poolValidators.initializeValidator(depositData, merkleProof);
@@ -288,9 +292,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         );
 
         // calculate candidate ID hash
-        uint256 _nonce = nonce.current();
+        uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(_nonce, depositData.publicKey, depositData.operator))
+            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -304,11 +308,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit FinalizeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, _nonce);
+            emit FinalizeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, nonce);
         }
 
         // increment nonce for future signatures
-        nonce.increment();
+        validatorsNonce.increment();
 
         // finalize validator
         poolValidators.finalizeValidator(depositData, merkleProof);

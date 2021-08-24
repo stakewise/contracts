@@ -13,7 +13,6 @@ const {
   resetFork,
   setupOracleAccounts,
   setTotalRewards,
-  enableRewardsVoting,
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
@@ -28,6 +27,8 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
   let admin = contractSettings.admin;
   let oracles, rewardEthToken, pool, merkleDistributor;
   let [oracle, anotherOracle] = accounts;
+  let rewardVotesSource = 'example10.com';
+  let validatorVotesSource = 'example10.com';
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -47,13 +48,23 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
   describe('assigning', () => {
     it('admin can assign oracle role to another account', async () => {
-      const receipt = await oracles.addOracle(oracle, {
-        from: admin,
-      });
+      const receipt = await oracles.addOracle(
+        oracle,
+        rewardVotesSource,
+        validatorVotesSource,
+        {
+          from: admin,
+        }
+      );
       expectEvent(receipt, 'RoleGranted', {
         role: await oracles.ORACLE_ROLE(),
         account: oracle,
         sender: admin,
+      });
+      expectEvent(receipt, 'OracleAdded', {
+        oracle,
+        rewardVotesSource,
+        validatorVotesSource,
       });
       expect(await oracles.isOracle(oracle)).equal(true);
       expect(await oracles.isOracle(admin)).equal(false);
@@ -62,7 +73,9 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
     it('others cannot assign oracle role to an account', async () => {
       await expectRevert(
-        oracles.addOracle(oracle, { from: anyone }),
+        oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+          from: anyone,
+        }),
         'AccessControl: sender must be an admin to grant'
       );
       expect(await oracles.isOracle(oracle)).equal(false);
@@ -70,9 +83,16 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('oracles cannot assign oracle role to others', async () => {
-      await oracles.addOracle(oracle, { from: admin });
+      await oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+        from: admin,
+      });
       await expectRevert(
-        oracles.addOracle(anotherOracle, { from: oracle }),
+        oracles.addOracle(
+          anotherOracle,
+          rewardVotesSource,
+          validatorVotesSource,
+          { from: oracle }
+        ),
         'AccessControl: sender must be an admin to grant'
       );
       expect(await oracles.isOracle(oracle)).equal(true);
@@ -82,8 +102,15 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
   describe('removing', () => {
     beforeEach(async () => {
-      await oracles.addOracle(oracle, { from: admin });
-      await oracles.addOracle(anotherOracle, { from: admin });
+      await oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+        from: admin,
+      });
+      await oracles.addOracle(
+        anotherOracle,
+        rewardVotesSource,
+        validatorVotesSource,
+        { from: admin }
+      );
     });
 
     it('anyone cannot remove oracles', async () => {
@@ -118,43 +145,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
   });
 
-  describe('oracles sync period', () => {
-    it('admin user can update sync period', async () => {
-      let newSyncPeriod = new BN('700');
-      const receipt = await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      expectEvent(receipt, 'SyncPeriodUpdated', {
-        syncPeriod: newSyncPeriod,
-        sender: admin,
-      });
-      expect(await oracles.syncPeriod()).bignumber.equal(newSyncPeriod);
-    });
-
-    it('anyone cannot update oracles sync period', async () => {
-      let newSyncPeriod = new BN('700');
-      await expectRevert(
-        oracles.setSyncPeriod(newSyncPeriod, {
-          from: anyone,
-        }),
-        'OwnablePausable: access denied'
-      );
-      expect(await oracles.syncPeriod()).bignumber.equal(
-        new BN(contractSettings.syncPeriod)
-      );
-    });
-
-    it('cannot update oracles sync period when voting for rewards', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
-      await expectRevert(
-        oracles.setSyncPeriod(new BN('900'), {
-          from: admin,
-        }),
-        'Oracles: cannot update during voting'
-      );
-    });
-  });
-
   describe('rewards voting', () => {
     let prevTotalRewards,
       newTotalRewards,
@@ -168,7 +158,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       prevTotalRewards = await rewardEthToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
-      currentNonce = await oracles.currentNonce();
+      currentNonce = await oracles.currentRewardsNonce();
       newActivatedValidators = (await pool.activatedValidators()).add(
         await pool.pendingValidators()
       );
@@ -206,22 +196,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       );
     });
 
-    it('fails to submit too early', async () => {
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: too early'
-      );
-    });
-
     it('fails to submit with not enough signatures', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       await expectRevert(
         oracles.submitRewards(
           newTotalRewards,
@@ -236,7 +211,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('fails to submit with invalid signature', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       signatures[0] = await web3.eth.sign(candidateId, anyone);
       await expectRevert(
         oracles.submitRewards(
@@ -252,7 +226,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       signatures.push(signatures[0]);
       await expectRevert(
         oracles.submitRewards(
@@ -268,7 +241,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('submits data with enough signatures', async () => {
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let receipt = await oracles.submitRewards(
         newTotalRewards,
         newActivatedValidators,
@@ -315,7 +287,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -323,7 +294,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         totalRewards,
       });
 
-      currentNonce = await oracles.currentNonce();
+      currentNonce = await oracles.currentRewardsNonce();
 
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'bytes32', 'string'],
@@ -444,7 +415,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       let activatedValidators = await pool.activatedValidators();
 
       // create rewards signatures
-      let currentNonce = await oracles.currentNonce();
+      let currentNonce = await oracles.currentRewardsNonce();
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
         [
@@ -460,7 +431,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       ];
 
       // create merkle root signatures
-      currentNonce = await oracles.currentNonce();
+      currentNonce = await oracles.currentRewardsNonce();
       encoded = defaultAbiCoder.encode(
         ['uint256', 'bytes32', 'string'],
         [currentNonce.toString(), merkleRoot, merkleProofs]

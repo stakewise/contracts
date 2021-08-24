@@ -42,13 +42,6 @@ interface IOracles {
     );
 
     /**
-    * @dev Event for tracking changes of oracles' sync periods.
-    * @param syncPeriod - new sync period in blocks.
-    * @param sender - address of the transaction sender.
-    */
-    event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
-
-    /**
     * @dev Event for tracking validator initialization votes.
     * @param sender - address of the transaction sender.
     * @param signer - address of the signed oracle.
@@ -81,40 +74,46 @@ interface IOracles {
     );
 
     /**
-    * @dev Function for retrieving oracles sync period (in blocks).
+    * @dev Event for tracking new or updates oracles.
+    * @param oracle - address of new or updated oracle.
+    * @param rewardVotesSource - the new or updated source from where the votes for the rewards can be fetched.
+    * @param validatorVotesSource - the new or updated source from where the votes for the validators can be fetched.
     */
-    function syncPeriod() external view returns (uint256);
+    event OracleAdded(address indexed oracle, string rewardVotesSource, string validatorVotesSource);
+
+    /**
+    * @dev Event for tracking removed oracles.
+    * @param oracle - address of removed oracle.
+    */
+    event OracleRemoved(address indexed oracle);
 
     /**
     * @dev Constructor for initializing the Oracles contract.
-    * @param _admin - address of the contract admin.
-    * @param _prevOracles - address of the previous Oracles contract.
+    * @param admin - address of the contract admin.
+    * @param prevOracles - address of the previous Oracles contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _pool - address of the Pool contract.
     * @param _poolValidators - address of the PoolValidators contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
-    * @param _syncPeriod - oracles sync period (in blocks).
+    * @param rewardVotesSources - array of reward votes sources that correspond to the oracle addresses.
+    * @param validatorVotesSources - array of validator votes sources that correspond to the oracle addresses.
     */
     function initialize(
-        address _admin,
-        address _prevOracles,
+        address admin,
+        address prevOracles,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
         address _merkleDistributor,
-        uint256 _syncPeriod
+        string[] memory rewardVotesSources,
+        string[] memory validatorVotesSources
     ) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
-    * @param _account - account to check.
+    * @param account - account to check.
     */
-    function isOracle(address _account) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether the oracles are currently voting for new total rewards.
-    */
-    function isRewardsVoting() external view returns (bool);
+    function isOracle(address account) external view returns (bool);
 
     /**
     * @dev Function for checking whether the oracles are currently voting for new merkle root.
@@ -122,30 +121,30 @@ interface IOracles {
     function isMerkleRootVoting() external view returns (bool);
 
     /**
-    * @dev Function for retrieving current nonce.
+    * @dev Function for retrieving current rewards nonce.
     */
-    function currentNonce() external view returns (uint256);
+    function currentRewardsNonce() external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving current validators nonce.
+    */
+    function currentValidatorsNonce() external view returns (uint256);
 
     /**
     * @dev Function for adding an oracle role to the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to assign an oracle role to.
+    * @param account - account to assign an oracle role to.
+    * @param rewardVotesSource - source where the votes for new reward will be published by oracle.
+    * @param validatorVotesSource - source where the votes for new validator will be published by oracle.
     */
-    function addOracle(address _account) external;
+    function addOracle(address account, string memory rewardVotesSource, string memory validatorVotesSource) external;
 
     /**
     * @dev Function for removing an oracle role from the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to remove an oracle role from.
+    * @param account - account to remove an oracle role from.
     */
-    function removeOracle(address _account) external;
-
-    /**
-    * @dev Function for updating oracles sync period. The number of blocks after they will submit the off-chain data.
-    * Can only be called by an account with an admin role.
-    * @param _syncPeriod - new sync period.
-    */
-    function setSyncPeriod(uint256 _syncPeriod) external;
+    function removeOracle(address account) external;
 
     /**
     * @dev Function for submitting oracle vote for total rewards.

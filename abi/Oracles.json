@@ -114,6 +114,44 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "rewardVotesSource",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "validatorVotesSource",
+        "type": "string"
+      }
+    ],
+    "name": "OracleAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oracle",
+        "type": "address"
+      }
+    ],
+    "name": "OracleRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -240,25 +278,6 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint256",
-        "name": "syncPeriod",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "SyncPeriodUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
         "internalType": "address",
         "name": "account",
         "type": "address"
@@ -323,8 +342,18 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "rewardVotesSource",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "validatorVotesSource",
+        "type": "string"
       }
     ],
     "name": "addOracle",
@@ -347,7 +376,20 @@
   },
   {
     "inputs": [],
-    "name": "currentNonce",
+    "name": "currentRewardsNonce",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "currentValidatorsNonce",
     "outputs": [
       {
         "internalType": "uint256",
@@ -516,12 +558,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_admin",
+        "name": "admin",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "_prevOracles",
+        "name": "prevOracles",
         "type": "address"
       },
       {
@@ -545,9 +587,14 @@
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "_syncPeriod",
-        "type": "uint256"
+        "internalType": "string[]",
+        "name": "rewardVotesSources",
+        "type": "string[]"
+      },
+      {
+        "internalType": "string[]",
+        "name": "validatorVotesSources",
+        "type": "string[]"
       }
     ],
     "name": "initialize",
@@ -641,7 +688,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -665,19 +712,6 @@
       }
     ],
     "name": "isPauser",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "isRewardsVoting",
     "outputs": [
       {
         "internalType": "bool",
@@ -725,7 +759,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
       }
     ],
@@ -786,19 +820,6 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "_syncPeriod",
-        "type": "uint256"
-      }
-    ],
-    "name": "setSyncPeriod",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "bytes32",
         "name": "merkleRoot",
         "type": "bytes32"
@@ -840,19 +861,6 @@
     "name": "submitRewards",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "syncPeriod",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {

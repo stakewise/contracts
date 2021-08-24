@@ -8,6 +8,7 @@ const {
 } = require('../utils');
 
 const Oracles = artifacts.require('Oracles');
+const PrevOracles = artifacts.require('IPrevOracles');
 
 contract('Oracles (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
@@ -25,16 +26,14 @@ contract('Oracles (upgrading)', ([anyone]) => {
   afterEach(async () => resetFork());
 
   it('initializes with values from previous contract', async () => {
-    let prevOracles = await Oracles.at(contracts.oracles);
+    let prevOracles = await PrevOracles.at(contracts.oracles);
     expect(await prevOracles.currentNonce()).to.bignumber.equal(
-      await oracles.currentNonce()
+      await oracles.currentRewardsNonce()
     );
 
+    prevOracles = await Oracles.at(contracts.oracles);
     let oraclesRole = await oracles.ORACLE_ROLE();
     let totalOracles = await oracles.getRoleMemberCount(oraclesRole);
-    expect(await oracles.syncPeriod()).to.bignumber.equal(
-      contractSettings.syncPeriod
-    );
     expect(totalOracles).to.bignumber.equal(
       await prevOracles.getRoleMemberCount(oraclesRole)
     );
