@@ -82,7 +82,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.stake(account, {
+      await pool.stake({
         from: account,
         value: deposit,
       });
@@ -127,7 +127,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.stake(account, {
+      await pool.stake({
         from: account,
         value: deposit,
       });
@@ -147,7 +147,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       ).to.be.bignumber.equal(distributorReward);
 
       // mint sETH2 for normal account
-      await pool.stake(anyone, {
+      await pool.stake({
         from: anyone,
         value: ether('5'),
       });
@@ -161,7 +161,6 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       // new rewards arrive
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -211,7 +210,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     it('toggling rewards does not affect current rewards balance', async () => {
       // mint sETH2 for disabled account
       let deposit = ether('5');
-      await pool.stake(account, {
+      await pool.stake({
         from: account,
         value: deposit,
       });
@@ -226,7 +225,6 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -292,7 +290,6 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       // next rewards arrive
       totalRewards = totalRewards.add(ether('10'));
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,

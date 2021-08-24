@@ -15,7 +15,6 @@ const {
   checkStakedEthToken,
   setupOracleAccounts,
   setTotalRewards,
-  enableRewardsVoting,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
@@ -56,7 +55,7 @@ contract('StakedEthToken', (accounts) => {
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
 
     totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-    let currentNonce = await oracles.currentNonce();
+    let currentNonce = await oracles.currentRewardsNonce();
     activatedValidators = await pool.activatedValidators();
     let encoded = defaultAbiCoder.encode(
       ['uint256', 'uint256', 'uint256'],
@@ -97,7 +96,7 @@ contract('StakedEthToken', (accounts) => {
       let prevPrincipal = await stakedEthToken.distributorPrincipal();
       await stakedEthToken.toggleRewards(sender1, true, { from: admin });
       let amount = ether('10');
-      let receipt = await pool.stake(sender1, {
+      let receipt = await pool.stake({
         from: sender1,
         value: amount,
       });
@@ -120,7 +119,7 @@ contract('StakedEthToken', (accounts) => {
       await pool.setMinActivatingDeposit(value.add(ether('1')), {
         from: admin,
       });
-      await pool.stake(sender1, {
+      await pool.stake({
         from: sender1,
         value,
       });
@@ -244,7 +243,6 @@ contract('StakedEthToken', (accounts) => {
     it('preserves rewards during sETH2 transfer', async () => {
       let totalRewards = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
-        admin,
         totalRewards,
         rewardEthToken,
         pool,
@@ -393,8 +391,6 @@ contract('StakedEthToken', (accounts) => {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       await expectRevert(
         multicallMock.updateTotalRewardsAndTransferStakedEth(
           totalRewards,
@@ -429,8 +425,6 @@ contract('StakedEthToken', (accounts) => {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let receipt = await multicallMock.transferStakedEthAndUpdateTotalRewards(
         totalRewards,
         activatedValidators,

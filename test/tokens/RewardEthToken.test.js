@@ -17,7 +17,6 @@ const {
   checkRewardEthToken,
   setTotalRewards,
   setupOracleAccounts,
-  enableRewardsVoting,
 } = require('../utils');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
@@ -158,7 +157,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         pool,
@@ -195,7 +193,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         pool,
@@ -231,14 +228,14 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         partnersRevenueSharing,
       ]) {
         // add accounts
-        await revenueSharing.addAccount(claimer, beneficiary1, revenueShare1, {
+        await revenueSharing.addAccount(beneficiary1, revenueShare1, {
           from: admin,
         });
         await revenueSharing.increaseAmount(beneficiary1, contributedAmount1, {
           from: admin,
         });
 
-        await revenueSharing.addAccount(claimer, beneficiary2, revenueShare2, {
+        await revenueSharing.addAccount(beneficiary2, revenueShare2, {
           from: admin,
         });
         await revenueSharing.increaseAmount(beneficiary2, contributedAmount2, {
@@ -255,7 +252,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         protocolFeeRecipient
       );
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -341,18 +337,17 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
         from: admin,
       });
-      await pool.stake(sender1, {
+      await pool.stake({
         from: sender1,
         value: stakedAmount1,
       });
-      await pool.stake(sender2, {
+      await pool.stake({
         from: sender2,
         value: stakedAmount2,
       });
 
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
-        admin,
         totalRewards: totalSupply,
         rewardEthToken,
         pool,
@@ -503,12 +498,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
 
-      let currentNonce = await oracles.currentNonce();
+      let currentNonce = await oracles.currentRewardsNonce();
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
         [
@@ -554,12 +547,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      await enableRewardsVoting({ rewardEthToken, admin, oracles });
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
 
-      let currentNonce = await oracles.currentNonce();
+      let currentNonce = await oracles.currentRewardsNonce();
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
         [

@@ -387,7 +387,9 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
   let oracleAccounts = [];
   for (let i = 0; i < totalOracles; i++) {
     let newOracle = accounts[i];
-    await oracles.addOracle(newOracle, 'example12.com', { from: admin });
+    await oracles.addOracle(newOracle, 'example12.com', 'example13.com', {
+      from: admin,
+    });
     oracleAccounts.push(newOracle);
   }
 

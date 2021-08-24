@@ -6,7 +6,6 @@ const {
   send,
   BN,
   constants,
-  time,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../deployments');
 const { contractSettings, contracts } = require('../deployments/settings');
@@ -226,7 +225,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       // new rewards arrive
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -306,7 +304,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.stake(anyone, {
+      await pool.stake({
         from: anyone,
         value: ether('1000'),
       });
@@ -325,7 +323,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
 
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -361,7 +358,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.stake(anyone, {
+      await pool.stake({
         from: anyone,
         value: ether('1000'),
       });
@@ -369,7 +366,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         from: admin,
       });
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -473,18 +469,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           merkleDistributor.address
         );
 
-        // wait for rewards voting time
-        let newSyncPeriod = new BN('700');
-        await oracles.setSyncPeriod(newSyncPeriod, {
-          from: admin,
-        });
-        let lastUpdateBlockNumber =
-          await rewardEthToken.lastUpdateBlockNumber();
-        await time.advanceBlockTo(
-          lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-        );
-
-        await pool.stake(anyone, {
+        await pool.stake({
           from: anyone,
           value: ether('1000'),
         });
@@ -502,7 +487,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         activatedValidators = await pool.activatedValidators();
 
         // create rewards signature
-        let currentNonce = await oracles.currentNonce();
+        let currentNonce = await oracles.currentRewardsNonce();
         let encoded = defaultAbiCoder.encode(
           ['uint256', 'uint256', 'uint256'],
           [

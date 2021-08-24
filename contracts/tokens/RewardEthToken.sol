@@ -197,7 +197,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     )
         internal pure returns (uint256)
     {
-        return currentReward.add(stakedEthAmount.mul(periodRewardPerToken).div(1e27));
+        return currentReward.add(stakedEthAmount.mul(periodRewardPerToken).div(1e18));
     }
 
     /**
@@ -226,7 +226,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         uint256 protocolReward = periodRewards.mul(protocolFee).div(1e4);
         uint256 prevRewardPerToken = rewardPerToken;
         uint256 totalStaked = stakedEthToken.totalDeposits();
-        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e27).div(totalStaked));
+        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(totalStaked));
         uint128 newRewardPerToken128 = newRewardPerToken.toUint128();
 
         // store previous distributor rewards for period reward calculation
