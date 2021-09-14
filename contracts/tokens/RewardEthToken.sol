@@ -179,7 +179,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         if (stakedEthAmount == 0) {
             checkpoints[account] = Checkpoint({
                 reward: cp.reward,
-                rewardPerToken: newRewardPerToken
+                rewardPerToken: cp.rewardPerToken
             });
         } else {
             uint256 periodRewardPerToken = uint256(newRewardPerToken).sub(cp.rewardPerToken);
