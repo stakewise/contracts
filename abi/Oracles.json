@@ -11,7 +11,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "signer",
+        "name": "oracle",
         "type": "address"
       },
       {
@@ -48,7 +48,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "signer",
+        "name": "oracle",
         "type": "address"
       },
       {
@@ -118,18 +118,6 @@
         "internalType": "address",
         "name": "oracle",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "rewardVotesSource",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "validatorVotesSource",
-        "type": "string"
       }
     ],
     "name": "OracleAdded",
@@ -344,16 +332,6 @@
         "internalType": "address",
         "name": "account",
         "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "rewardVotesSource",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "validatorVotesSource",
-        "type": "string"
       }
     ],
     "name": "addOracle",
@@ -585,16 +563,6 @@
         "internalType": "address",
         "name": "_merkleDistributor",
         "type": "address"
-      },
-      {
-        "internalType": "string[]",
-        "name": "rewardVotesSources",
-        "type": "string[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "validatorVotesSources",
-        "type": "string[]"
       }
     ],
     "name": "initialize",

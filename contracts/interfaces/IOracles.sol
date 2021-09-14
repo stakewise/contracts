@@ -44,14 +44,14 @@ interface IOracles {
     /**
     * @dev Event for tracking validator initialization votes.
     * @param sender - address of the transaction sender.
-    * @param signer - address of the signed oracle.
+    * @param oracle - address of the signed oracle.
     * @param operator - address of the operator the vote was sent for.
     * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator initialization nonce.
     */
     event InitializeValidatorVoteSubmitted(
         address indexed sender,
-        address indexed signer,
+        address indexed oracle,
         address indexed operator,
         bytes publicKey,
         uint256 nonce
@@ -60,14 +60,14 @@ interface IOracles {
     /**
     * @dev Event for tracking validator finalization votes.
     * @param sender - address of the transaction sender.
-    * @param signer - address of the signed oracle.
+    * @param oracle - address of the signed oracle.
     * @param operator - address of the operator the vote was sent for.
     * @param publicKey - public key of the validator the vote was sent for.
     * @param nonce - validator finalization nonce.
     */
     event FinalizeValidatorVoteSubmitted(
         address indexed sender,
-        address indexed signer,
+        address indexed oracle,
         address indexed operator,
         bytes publicKey,
         uint256 nonce
@@ -76,10 +76,8 @@ interface IOracles {
     /**
     * @dev Event for tracking new or updates oracles.
     * @param oracle - address of new or updated oracle.
-    * @param rewardVotesSource - the new or updated source from where the votes for the rewards can be fetched.
-    * @param validatorVotesSource - the new or updated source from where the votes for the validators can be fetched.
     */
-    event OracleAdded(address indexed oracle, string rewardVotesSource, string validatorVotesSource);
+    event OracleAdded(address indexed oracle);
 
     /**
     * @dev Event for tracking removed oracles.
@@ -95,8 +93,6 @@ interface IOracles {
     * @param _pool - address of the Pool contract.
     * @param _poolValidators - address of the PoolValidators contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
-    * @param rewardVotesSources - array of reward votes sources that correspond to the oracle addresses.
-    * @param validatorVotesSources - array of validator votes sources that correspond to the oracle addresses.
     */
     function initialize(
         address admin,
@@ -104,9 +100,7 @@ interface IOracles {
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
-        address _merkleDistributor,
-        string[] memory rewardVotesSources,
-        string[] memory validatorVotesSources
+        address _merkleDistributor
     ) external;
 
     /**
@@ -134,10 +128,8 @@ interface IOracles {
     * @dev Function for adding an oracle role to the account.
     * Can only be called by an account with an admin role.
     * @param account - account to assign an oracle role to.
-    * @param rewardVotesSource - source where the votes for new reward will be published by oracle.
-    * @param validatorVotesSource - source where the votes for new validator will be published by oracle.
     */
-    function addOracle(address account, string memory rewardVotesSource, string memory validatorVotesSource) external;
+    function addOracle(address account) external;
 
     /**
     * @dev Function for removing an oracle role from the account.

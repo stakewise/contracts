@@ -265,7 +265,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
             newTotalRewards,
             newRewardPerToken,
             newDistributorBalance.sub(prevDistributorBalance),
-            leftReward
+            _protocolFeeRecipient == address(0) ? leftReward: 0
         );
     }
 

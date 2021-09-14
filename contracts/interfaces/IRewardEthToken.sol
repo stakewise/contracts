@@ -42,14 +42,14 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardPerToken - calculated reward per token for account reward calculation.
-    * @param distributorPeriodReward - distributor period reward.
-    * @param protocolReward - protocol period reward.
+    * @param distributorReward - distributor reward.
+    * @param protocolReward - protocol reward.
     */
     event RewardsUpdated(
         uint256 periodRewards,
         uint256 totalRewards,
         uint256 rewardPerToken,
-        uint256 distributorPeriodReward,
+        uint256 distributorReward,
         uint256 protocolReward
     );
 

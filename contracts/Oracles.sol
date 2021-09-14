@@ -26,13 +26,6 @@ interface IAccessControlUpgradeable {
     function getRoleMember(bytes32 role, uint256 index) external view returns (address);
 }
 
-interface IPrevOracles {
-    /**
-    * @dev Function for retrieving current rewards nonce.
-    */
-    function currentNonce() external view returns (uint256);
-}
-
 /**
  * @title Oracles
  *
@@ -72,25 +65,18 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
-        address _merkleDistributor,
-        string[] memory rewardVotesSources,
-        string[] memory validatorVotesSources
+        address _merkleDistributor
     )
         external override initializer
     {
         __OwnablePausableUpgradeable_init(admin);
 
         // migrate data from previous Oracles contract
-        rewardsNonce._value = IPrevOracles(prevOracles).currentNonce();
         uint256 oraclesCount = IAccessControlUpgradeable(prevOracles).getRoleMemberCount(ORACLE_ROLE);
-        require(
-            oraclesCount == rewardVotesSources.length && oraclesCount == validatorVotesSources.length,
-            "Oracles: invalid length of votes sources"
-        );
         for(uint256 i = 0; i < oraclesCount; i++) {
             address oracle = IAccessControlUpgradeable(prevOracles).getRoleMember(ORACLE_ROLE, i);
             _setupRole(ORACLE_ROLE, oracle);
-            emit OracleAdded(oracle, rewardVotesSources[i], validatorVotesSources[i]);
+            emit OracleAdded(oracle);
         }
 
         rewardEthToken = IRewardEthToken(_rewardEthToken);
@@ -123,9 +109,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     /**
      * @dev See {IOracles-addOracle}.
      */
-    function addOracle(address account, string memory rewardVotesSource, string memory validatorVotesSource) external override {
+    function addOracle(address account) external override {
         grantRole(ORACLE_ROLE, account);
-        emit OracleAdded(account, rewardVotesSource, validatorVotesSource);
+        emit OracleAdded(account);
     }
 
     /**
@@ -162,7 +148,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         // calculate candidate ID hash
         uint256 nonce = rewardsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, totalRewards, activatedValidators))
+            keccak256(abi.encode(nonce, activatedValidators, totalRewards))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -210,7 +196,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         // calculate candidate ID hash
         uint256 nonce = rewardsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, merkleRoot, merkleProofs))
+            keccak256(abi.encode(nonce, merkleProofs, merkleRoot))
         );
 
         // check signatures and calculate number of submitted oracle votes

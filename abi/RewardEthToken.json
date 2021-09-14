@@ -119,7 +119,7 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "distributorPeriodReward",
+        "name": "distributorReward",
         "type": "uint256"
       },
       {
