@@ -9,7 +9,6 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IDepositContract.sol";
 import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IPool.sol";
-import "../interfaces/IRevenueSharing.sol";
 import "../interfaces/IPoolValidators.sol";
 
 /**
@@ -56,32 +55,15 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Pending validators percent limit. If it's not exceeded tokens can be minted immediately.
     uint256 public override pendingValidatorsLimit;
 
-    // @dev Address of the Partners Revenue Sharing contract.
-    IRevenueSharing private partnersRevenueSharing;
-
-    // @dev Address of the Operators Revenue Sharing contract.
-    IRevenueSharing private operatorsRevenueSharing;
-
     /**
      * @dev See {IPool-upgrade}.
-     * The `initialize` function must be defined if deploying contract
-     * for the first time that will initialize the state variables above.
      */
-    function upgrade(
-        address _poolValidators,
-        address _oracles,
-        address _partnersRevenueSharing,
-        address _operatorsRevenueSharing
-    )
-        external override onlyAdmin whenPaused
-    {
-        require(address(partnersRevenueSharing) == address(0), "Pool: already upgraded");
+    function upgrade(address _poolValidators, address _oracles) external override onlyAdmin whenPaused {
+        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "Pool: already upgraded");
 
         // set contract addresses
         validators = IPoolValidators(_poolValidators);
         oracles = _oracles;
-        partnersRevenueSharing = IRevenueSharing(_partnersRevenueSharing);
-        operatorsRevenueSharing = IRevenueSharing(_operatorsRevenueSharing);
     }
 
     /**
@@ -140,9 +122,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function stakeWithPartner(address partner) external payable override {
         // stake amount
         _stake(msg.sender, msg.value);
-
-        // increase revenue sharing amount for partner
-        partnersRevenueSharing.increaseAmount(partner, msg.value);
+        emit StakedWithPartner(partner, msg.value);
     }
 
     /**
@@ -151,9 +131,25 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function stakeWithPartnerOnBehalf(address partner, address recipient) external payable override {
         // stake amount
         _stake(recipient, msg.value);
+        emit StakedWithPartner(partner, msg.value);
+    }
 
-        // increase revenue sharing amount for partner
-        partnersRevenueSharing.increaseAmount(partner, msg.value);
+    /**
+     * @dev See {IPool-stakeWithReferrer}.
+     */
+    function stakeWithReferrer(address referrer) external payable override {
+        // stake amount
+        _stake(msg.sender, msg.value);
+        emit StakedWithReferrer(referrer, msg.value);
+    }
+
+    /**
+     * @dev See {IPool-stakeWithReferrerOnBehalf}.
+     */
+    function stakeWithReferrerOnBehalf(address referrer, address recipient) external payable override {
+        // stake amount
+        _stake(recipient, msg.value);
+        emit StakedWithReferrer(referrer, msg.value);
     }
 
     function _stake(address recipient, uint256 value) internal whenNotPaused {
@@ -253,12 +249,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
 
         // update number of pending validators
         pendingValidators = pendingValidators.add(1);
-
-        // update operator's revenue sharing
-        if (operatorsRevenueSharing.isAdded(depositData.operator)) {
-            operatorsRevenueSharing.increaseAmount(depositData.operator, VALIDATOR_TOTAL_DEPOSIT);
-        }
-
         emit ValidatorRegistered(depositData.publicKey, depositData.operator);
 
         // finalize validator registration

@@ -69,6 +69,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
         external override onlyAdmin whenNotPaused
     {
         require(_operator != address(0), "PoolValidators: invalid operator");
+        // merkle roots and proofs must be validated off chain before submitting the transaction
         require(
             initializeMerkleRoot != "" && finalizeMerkleRoot != "" && finalizeMerkleRoot != initializeMerkleRoot,
             "PoolValidators: invalid merkle roots"

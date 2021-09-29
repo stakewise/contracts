@@ -26,6 +26,13 @@ interface IAccessControlUpgradeable {
     function getRoleMember(bytes32 role, uint256 index) external view returns (address);
 }
 
+interface IPrevOracles {
+    /**
+    * @dev Function for retrieving current rewards nonce.
+    */
+    function currentNonce() external view returns (uint256);
+}
+
 /**
  * @title Oracles
  *
@@ -72,6 +79,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         __OwnablePausableUpgradeable_init(admin);
 
         // migrate data from previous Oracles contract
+        rewardsNonce._value = IPrevOracles(prevOracles).currentNonce().add(1000);
         uint256 oraclesCount = IAccessControlUpgradeable(prevOracles).getRoleMemberCount(ORACLE_ROLE);
         for(uint256 i = 0; i < oraclesCount; i++) {
             address oracle = IAccessControlUpgradeable(prevOracles).getRoleMember(ORACLE_ROLE, i);
@@ -83,6 +91,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         pool = IPool(_pool);
         poolValidators = IPoolValidators(_poolValidators);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
+        emit Initialized(rewardsNonce.current());
     }
 
     /**

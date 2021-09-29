@@ -24,7 +24,6 @@ const { initializeData } = require('./initializeMerkleRoot');
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const PoolValidators = artifacts.require('PoolValidators');
-const RevenueSharing = artifacts.require('RevenueSharing');
 const Oracles = artifacts.require('Oracles');
 
 contract('Pool (stake)', (accounts) => {
@@ -33,7 +32,6 @@ contract('Pool (stake)', (accounts) => {
   let pool,
     stakedEthToken,
     validators,
-    partnersRevenueSharing,
     oracles,
     oracleAccounts,
     totalSupply,
@@ -51,9 +49,6 @@ contract('Pool (stake)', (accounts) => {
     pool = await Pool.at(contracts.pool);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     validators = await PoolValidators.at(upgradedContracts.poolValidators);
-    partnersRevenueSharing = await RevenueSharing.at(
-      upgradedContracts.partnersRevenueSharing
-    );
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({
       admin,
@@ -260,80 +255,38 @@ contract('Pool (stake)', (accounts) => {
 
     describe('staking with partner', () => {
       const partner = otherAccounts[0];
-      const revenueShare = new BN(1000);
-
-      beforeEach(async () => {
-        await partnersRevenueSharing.addAccount(partner, revenueShare, {
-          from: admin,
-        });
-      });
-
-      it('fails to stake with invalid partner', async () => {
-        await expectRevert(
-          pool.stakeWithPartner(sender1, {
-            from: sender1,
-            value: ether('1'),
-          }),
-          'RevenueSharing: account is not added'
-        );
-      });
 
       it('can stake with partner', async () => {
         let amount = ether('1');
         totalSupply = totalSupply.add(amount);
 
-        let prevTotalPoints = await partnersRevenueSharing.totalPoints();
         let receipt = await pool.stakeWithPartner(partner, {
           from: sender1,
           value: amount,
         });
-        await expectEvent.inTransaction(
-          receipt.tx,
-          StakedEthToken,
-          'Transfer',
-          {
-            from: constants.ZERO_ADDRESS,
-            to: sender1,
-            value: amount,
-          }
-        );
+        await expectEvent(receipt, 'StakedWithPartner', {
+          partner,
+          amount,
+        });
         await checkStakedEthToken({
           stakedEthToken,
           totalSupply,
           account: sender1,
           balance: amount,
         });
-
-        await expectEvent.inTransaction(
-          receipt.tx,
-          RevenueSharing,
-          'AmountIncreased',
-          {
-            beneficiary: partner,
-            amount: amount,
-            reward: new BN(0),
-          }
-        );
-
-        let points = revenueShare.mul(amount);
-        expect(
-          (await partnersRevenueSharing.checkpoints(partner)).amount
-        ).to.bignumber.equal(amount);
-        expect(
-          await partnersRevenueSharing.pointsOf(partner)
-        ).to.bignumber.equal(points);
-        expect(await partnersRevenueSharing.totalPoints()).to.bignumber.equal(
-          prevTotalPoints.add(points)
-        );
       });
 
-      it('can stake with partner and different recipient', async () => {
+      it('can stake with partner to different recipient address', async () => {
         let amount = ether('1');
         totalSupply = totalSupply.add(amount);
 
         let receipt = await pool.stakeWithPartnerOnBehalf(partner, sender2, {
           from: sender1,
           value: amount,
+        });
+        await expectEvent(receipt, 'StakedWithPartner', {
+          partner,
+          amount,
         });
         await expectEvent.inTransaction(
           receipt.tx,
@@ -350,6 +303,72 @@ contract('Pool (stake)', (accounts) => {
           totalSupply,
           account: sender2,
           balance: amount,
+        });
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender1,
+          balance: new BN(0),
+        });
+      });
+    });
+
+    describe('staking with referrer', () => {
+      const referrer = otherAccounts[0];
+
+      it('can stake with referrer', async () => {
+        let amount = ether('1');
+        totalSupply = totalSupply.add(amount);
+
+        let receipt = await pool.stakeWithReferrer(referrer, {
+          from: sender1,
+          value: amount,
+        });
+        await expectEvent(receipt, 'StakedWithReferrer', {
+          referrer,
+          amount,
+        });
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender1,
+          balance: amount,
+        });
+      });
+
+      it('can stake with referrer to different recipient address', async () => {
+        let amount = ether('1');
+        totalSupply = totalSupply.add(amount);
+
+        let receipt = await pool.stakeWithReferrerOnBehalf(referrer, sender2, {
+          from: sender1,
+          value: amount,
+        });
+        await expectEvent(receipt, 'StakedWithReferrer', {
+          referrer,
+          amount,
+        });
+        await expectEvent.inTransaction(
+          receipt.tx,
+          StakedEthToken,
+          'Transfer',
+          {
+            from: constants.ZERO_ADDRESS,
+            to: sender2,
+            value: amount,
+          }
+        );
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender2,
+          balance: amount,
+        });
+        await checkStakedEthToken({
+          stakedEthToken,
+          totalSupply,
+          account: sender1,
+          balance: new BN(0),
         });
       });
     });

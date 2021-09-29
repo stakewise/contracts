@@ -5,17 +5,30 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "OperatorRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "uint128",
+        "indexed": false,
+        "internalType": "uint256",
         "name": "revenueShare",
-        "type": "uint128"
+        "type": "uint256"
       }
     ],
-    "name": "AccountAdded",
+    "name": "OperatorUpdated",
     "type": "event"
   },
   {
@@ -24,17 +37,11 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "partner",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
       }
     ],
-    "name": "AccountRemoved",
+    "name": "PartnerRemoved",
     "type": "event"
   },
   {
@@ -43,23 +50,17 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "partner",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
+        "name": "revenueShare",
         "type": "uint256"
       }
     ],
-    "name": "AmountIncreased",
+    "name": "PartnerUpdated",
     "type": "event"
   },
   {
@@ -81,23 +82,11 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "referrer",
         "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "revenueShare",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
       }
     ],
-    "name": "RevenueShareUpdated",
+    "name": "ReferrerAdded",
     "type": "event"
   },
   {
@@ -106,48 +95,11 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "referrer",
         "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "reward",
-        "type": "uint256"
       }
     ],
-    "name": "RewardCollected",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "periodReward",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardPerPoint",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsUpdated",
+    "name": "ReferrerRemoved",
     "type": "event"
   },
   {
@@ -268,24 +220,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "internalType": "uint128",
-        "name": "revenueShare",
-        "type": "uint128"
-      }
-    ],
-    "name": "addAccount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -312,58 +246,11 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "",
+        "name": "account",
         "type": "address"
       }
     ],
-    "name": "checkpoints",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "amount",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "revenueShare",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "unclaimedReward",
-        "type": "uint128"
-      },
-      {
-        "internalType": "uint128",
-        "name": "rewardPerPoint",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "collectReward",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "beneficiaries",
-        "type": "address[]"
-      }
-    ],
-    "name": "collectRewards",
+    "name": "addReferrer",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -476,60 +363,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "addedAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseAmount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_pool",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_rewardEthToken",
+        "name": "admin",
         "type": "address"
       }
     ],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "isAdded",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -594,38 +434,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "pointsOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "beneficiary",
-        "type": "address"
-      }
-    ],
-    "name": "removeAccount",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -639,11 +447,50 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "removeOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "removePartner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
     ],
     "name": "removePauser",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "removeReferrer",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -688,50 +535,16 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "account",
         "type": "address"
-      }
-    ],
-    "name": "rewardOf",
-    "outputs": [
+      },
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "revenueShare",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rewardPerPoint",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalPoints",
-    "outputs": [
-      {
-        "internalType": "uint128",
-        "name": "",
-        "type": "uint128"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "unpause",
+    "name": "setOperator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -740,41 +553,24 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "beneficiary",
+        "name": "account",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "newRevenueShare",
+        "name": "revenueShare",
         "type": "uint256"
       }
     ],
-    "name": "updateRevenueShare",
+    "name": "setPartner",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "totalReward",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalStaked",
-        "type": "uint256"
-      }
-    ],
-    "name": "updateRewards",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [],
+    "name": "unpause",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

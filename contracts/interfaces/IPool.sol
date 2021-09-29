@@ -71,18 +71,26 @@ interface IPool {
     event PendingValidatorsLimitUpdated(uint256 pendingValidatorsLimit, address sender);
 
     /**
-    * @dev Function for upgrading the Pools contract.
+    * @dev Event for tracking added deposits with partner.
+    * @param partner - address of the partner.
+    * @param amount - the amount added.
+    */
+    event StakedWithPartner(address indexed partner, uint256 amount);
+
+    /**
+    * @dev Event for tracking added deposits with referrer.
+    * @param referrer - address of the referrer.
+    * @param amount - the amount added.
+    */
+    event StakedWithReferrer(address indexed referrer, uint256 amount);
+
+    /**
+    * @dev Function for upgrading the Pools contract. The `initialize` function must be defined if deploying contract
+    * for the first time that will initialize the state variables above.
     * @param _poolValidators - address of the PoolValidators contract.
     * @param _oracles - address of the Oracles contract.
-    * @param _partnersRevenueSharing - address of the PartnersRevenueSharing contract.
-    * @param _operatorsRevenueSharing - address of the OperatorsRevenueSharing contract.
     */
-    function upgrade(
-        address _poolValidators,
-        address _oracles,
-        address _partnersRevenueSharing,
-        address _operatorsRevenueSharing
-    ) external;
+    function upgrade(address _poolValidators, address _oracles) external;
 
     /**
     * @dev Function for getting the total validator deposit.
@@ -172,17 +180,31 @@ interface IPool {
 
     /**
     * @dev Function for staking ether with the partner that will receive the revenue share from the protocol fee.
-    * @param partner - address of partner who will get its contributed amount increased.
+    * @param partner - address of partner who will get the revenue share.
     */
     function stakeWithPartner(address partner) external payable;
 
     /**
     * @dev Function for staking ether with the partner that will receive the revenue share from the protocol fee
     * and the different tokens' recipient.
-    * @param partner - address of partner who will get its contributed amount increased.
+    * @param partner - address of partner who will get the revenue share.
     * @param recipient - address of the tokens recipient.
     */
     function stakeWithPartnerOnBehalf(address partner, address recipient) external payable;
+
+    /**
+    * @dev Function for staking ether with the referrer who will receive the one time bonus.
+    * @param referrer - address of referrer who will get its referral bonus.
+    */
+    function stakeWithReferrer(address referrer) external payable;
+
+    /**
+    * @dev Function for staking ether with the referrer who will receive the one time bonus
+    * and the different tokens' recipient.
+    * @param referrer - address of referrer who will get its referral bonus.
+    * @param recipient - address of the tokens recipient.
+    */
+    function stakeWithReferrerOnBehalf(address referrer, address recipient) external payable;
 
     /**
     * @dev Function for minting account's tokens for the specific validator index.

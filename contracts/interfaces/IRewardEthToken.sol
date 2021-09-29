@@ -9,6 +9,16 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  */
 interface IRewardEthToken is IERC20Upgradeable {
     /**
+    * @dev Structure for storing information about user reward checkpoint.
+    * @param rewardPerToken - user reward per token.
+    * @param reward - user reward checkpoint.
+    */
+    struct Checkpoint {
+        uint128 reward;
+        uint128 rewardPerToken;
+    }
+
+    /**
     * @dev Event for tracking updated protocol fee recipient.
     * @param recipient - address of the new fee recipient.
     */
@@ -28,16 +38,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     event RewardsToggled(address indexed account, bool isDisabled);
 
     /**
-    * @dev Structure for storing information about user reward checkpoint.
-    * @param rewardPerToken - user reward per token.
-    * @param reward - user reward checkpoint.
-    */
-    struct Checkpoint {
-        uint128 reward;
-        uint128 rewardPerToken;
-    }
-
-    /**
     * @dev Event for tracking rewards update by oracles.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
@@ -54,18 +54,11 @@ interface IRewardEthToken is IERC20Upgradeable {
     );
 
     /**
-    * @dev Event for tracking revenue shares updates.
-    * @param revenueShares - new revenue shares.
-    */
-    event RevenueSharesUpdated(address[] revenueShares);
-
-    /**
-    * @dev Function for upgrading the RewardEthToken contract.
+    * @dev Function for upgrading the RewardEthToken contract. The `initialize` function must be defined
+    * if deploying contract for the first time that will initialize the state variables above.
     * @param _oracles - address of the Oracles contract.
-    * @param _operatorsRevenueSharing - address of the Operators Revenue Sharing contract.
-    * @param _partnersRevenueSharing - address of the Partners Revenue Sharing contract.
     */
-    function upgrade(address _oracles, address _operatorsRevenueSharing, address _partnersRevenueSharing) external;
+    function upgrade(address _oracles) external;
 
     /**
     * @dev Function for getting the address of the merkle distributor.

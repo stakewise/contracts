@@ -27,8 +27,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
   let admin = contractSettings.admin;
   let oracles, rewardEthToken, pool, merkleDistributor;
   let [oracle, anotherOracle] = accounts;
-  let rewardVotesSource = 'example10.com';
-  let validatorVotesSource = 'example10.com';
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -48,14 +46,9 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
   describe('assigning', () => {
     it('admin can assign oracle role to another account', async () => {
-      const receipt = await oracles.addOracle(
-        oracle,
-        rewardVotesSource,
-        validatorVotesSource,
-        {
-          from: admin,
-        }
-      );
+      const receipt = await oracles.addOracle(oracle, {
+        from: admin,
+      });
       expectEvent(receipt, 'RoleGranted', {
         role: await oracles.ORACLE_ROLE(),
         account: oracle,
@@ -63,8 +56,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       });
       expectEvent(receipt, 'OracleAdded', {
         oracle,
-        rewardVotesSource,
-        validatorVotesSource,
       });
       expect(await oracles.isOracle(oracle)).equal(true);
       expect(await oracles.isOracle(admin)).equal(false);
@@ -73,7 +64,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
     it('others cannot assign oracle role to an account', async () => {
       await expectRevert(
-        oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+        oracles.addOracle(oracle, {
           from: anyone,
         }),
         'AccessControl: sender must be an admin to grant'
@@ -83,16 +74,11 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('oracles cannot assign oracle role to others', async () => {
-      await oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+      await oracles.addOracle(oracle, {
         from: admin,
       });
       await expectRevert(
-        oracles.addOracle(
-          anotherOracle,
-          rewardVotesSource,
-          validatorVotesSource,
-          { from: oracle }
-        ),
+        oracles.addOracle(anotherOracle, { from: oracle }),
         'AccessControl: sender must be an admin to grant'
       );
       expect(await oracles.isOracle(oracle)).equal(true);
@@ -102,15 +88,10 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
 
   describe('removing', () => {
     beforeEach(async () => {
-      await oracles.addOracle(oracle, rewardVotesSource, validatorVotesSource, {
+      await oracles.addOracle(oracle, {
         from: admin,
       });
-      await oracles.addOracle(
-        anotherOracle,
-        rewardVotesSource,
-        validatorVotesSource,
-        { from: admin }
-      );
+      await oracles.addOracle(anotherOracle, { from: admin });
     });
 
     it('anyone cannot remove oracles', async () => {
@@ -167,8 +148,8 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         ['uint256', 'uint256', 'uint256'],
         [
           currentNonce.toString(),
-          newTotalRewards.toString(),
           newActivatedValidators.toString(),
+          newTotalRewards.toString(),
         ]
       );
       candidateId = keccak256(encoded);
@@ -297,11 +278,11 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       currentNonce = await oracles.currentRewardsNonce();
 
       let encoded = defaultAbiCoder.encode(
-        ['uint256', 'bytes32', 'string'],
+        ['uint256', 'string', 'bytes32'],
         [
           currentNonce.toString(),
-          merkleRoot.toString(),
           merkleProofs.toString(),
+          merkleRoot.toString(),
         ]
       );
       candidateId = keccak256(encoded);
@@ -433,8 +414,8 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       // create merkle root signatures
       currentNonce = await oracles.currentRewardsNonce();
       encoded = defaultAbiCoder.encode(
-        ['uint256', 'bytes32', 'string'],
-        [currentNonce.toString(), merkleRoot, merkleProofs]
+        ['uint256', 'string', 'bytes32'],
+        [currentNonce.toString(), merkleProofs, merkleRoot]
       );
       candidateId = keccak256(encoded);
 

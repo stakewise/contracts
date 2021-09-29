@@ -1,4 +1,4 @@
-const { send, ether } = require('@openzeppelin/test-helpers');
+const { send, ether, BN } = require('@openzeppelin/test-helpers');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
@@ -28,7 +28,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
   it('initializes with values from previous contract', async () => {
     let prevOracles = await PrevOracles.at(contracts.oracles);
     expect(await prevOracles.currentNonce()).to.bignumber.equal(
-      await oracles.currentRewardsNonce()
+      (await oracles.currentRewardsNonce()).sub(new BN('1000'))
     );
 
     prevOracles = await Oracles.at(contracts.oracles);

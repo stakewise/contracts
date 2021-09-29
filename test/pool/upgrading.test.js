@@ -11,23 +11,14 @@ const Pool = artifacts.require('Pool');
 
 contract('Pool (upgrading)', ([sender]) => {
   const admin = contractSettings.admin;
-  let pool,
-    poolValidators,
-    oracles,
-    partnersRevenueSharing,
-    operatorsRevenueSharing;
+  let pool, poolValidators, oracles;
 
   after(async () => stopImpersonatingAccount(admin));
 
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender, admin, ether('5'));
-    ({
-      poolValidators,
-      oracles,
-      partnersRevenueSharing,
-      operatorsRevenueSharing,
-    } = await upgradeContracts());
+    ({ poolValidators, oracles } = await upgradeContracts());
     pool = await Pool.at(contracts.pool);
   });
 
@@ -35,26 +26,14 @@ contract('Pool (upgrading)', ([sender]) => {
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      pool.upgrade(
-        poolValidators,
-        oracles,
-        partnersRevenueSharing,
-        operatorsRevenueSharing,
-        { from: sender }
-      ),
+      pool.upgrade(poolValidators, oracles, { from: sender }),
       'OwnablePausable: access denied'
     );
   });
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      pool.upgrade(
-        poolValidators,
-        oracles,
-        partnersRevenueSharing,
-        operatorsRevenueSharing,
-        { from: admin }
-      ),
+      pool.upgrade(poolValidators, oracles, { from: admin }),
       'Pausable: not paused'
     );
   });
@@ -62,13 +41,7 @@ contract('Pool (upgrading)', ([sender]) => {
   it('fails to upgrade twice', async () => {
     await pool.pause({ from: admin });
     await expectRevert(
-      pool.upgrade(
-        poolValidators,
-        oracles,
-        partnersRevenueSharing,
-        operatorsRevenueSharing,
-        { from: admin }
-      ),
+      pool.upgrade(poolValidators, oracles, { from: admin }),
       'Pool: already upgraded'
     );
   });

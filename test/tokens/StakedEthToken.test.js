@@ -61,8 +61,8 @@ contract('StakedEthToken', (accounts) => {
       ['uint256', 'uint256', 'uint256'],
       [
         currentNonce.toString(),
-        totalRewards.toString(),
         activatedValidators.toString(),
+        totalRewards.toString(),
       ]
     );
     let candidateId = hexlify(keccak256(encoded));

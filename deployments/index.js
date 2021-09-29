@@ -44,8 +44,6 @@ async function deployAndInitializeOracles(poolValidatorsContractAddress) {
       contracts.pool,
       poolValidatorsContractAddress,
       contracts.merkleDistributor,
-      contractSettings.rewardVotesSources,
-      contractSettings.validatorVotesSources,
     ],
     {
       kind: 'transparent',
@@ -55,15 +53,11 @@ async function deployAndInitializeOracles(poolValidatorsContractAddress) {
   return proxy.address;
 }
 
-async function deployAndInitializeRevenueSharing() {
-  const RevenueSharing = await ethers.getContractFactory('RevenueSharing');
-  const proxy = await upgrades.deployProxy(
-    RevenueSharing,
-    [contractSettings.admin, contracts.pool, contracts.rewardEthToken],
-    {
-      kind: 'transparent',
-    }
-  );
+async function deployAndInitializeRoles() {
+  const Roles = await ethers.getContractFactory('Roles');
+  const proxy = await upgrades.deployProxy(Roles, [contractSettings.admin], {
+    kind: 'transparent',
+  });
   await proxy.deployed();
   return proxy.address;
 }
@@ -95,9 +89,7 @@ async function upgradeMerkleDistributor(oraclesContractAddress) {
 
 async function upgradePool(
   poolValidatorsContractAddress,
-  oraclesContractAddress,
-  partnersRevenueSharingContractAddress,
-  operatorsRevenueSharingContractAddress
+  oraclesContractAddress
 ) {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
   const Pool = await ethers.getContractFactory('Pool', signer);
@@ -111,22 +103,13 @@ async function upgradePool(
   await proxy.deployed();
 
   // call upgrade
-  await pool.upgrade(
-    poolValidatorsContractAddress,
-    oraclesContractAddress,
-    partnersRevenueSharingContractAddress,
-    operatorsRevenueSharingContractAddress
-  );
+  await pool.upgrade(poolValidatorsContractAddress, oraclesContractAddress);
 
   // unpause
   return pool.unpause();
 }
 
-async function upgradeRewardEthToken(
-  oraclesContractAddress,
-  operatorsRevenueSharingContractAddress,
-  partnersRevenueSharingContractAddress
-) {
+async function upgradeRewardEthToken(oraclesContractAddress) {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
   const RewardEthToken = await ethers.getContractFactory(
     'RewardEthToken',
@@ -148,11 +131,7 @@ async function upgradeRewardEthToken(
   await proxy.deployed();
 
   // call upgrade
-  await rewardEthToken.upgrade(
-    oraclesContractAddress,
-    operatorsRevenueSharingContractAddress,
-    partnersRevenueSharingContractAddress
-  );
+  await rewardEthToken.upgrade(oraclesContractAddress);
 
   return rewardEthToken.unpause();
 }
@@ -167,64 +146,33 @@ async function deployContracts() {
   await initializePoolValidators(poolValidators, oracles);
   log(white('Initialized Pool Validators contract'));
 
-  const operatorsRevenueSharing = await deployAndInitializeRevenueSharing();
-  log(
-    white(
-      `Deployed Operators Revenue Sharing contract: ${green(
-        operatorsRevenueSharing
-      )}`
-    )
-  );
-
-  const partnersRevenueSharing = await deployAndInitializeRevenueSharing();
-  log(
-    white(
-      `Deployed Partners Revenue Sharing contract: ${green(
-        partnersRevenueSharing
-      )}`
-    )
-  );
+  const roles = await deployAndInitializeRoles();
+  log(white(`Deployed and initialized Roles contract: ${green(roles)}`));
 
   return {
     poolValidators,
     oracles,
-    operatorsRevenueSharing,
-    partnersRevenueSharing,
+    roles,
   };
 }
 
 async function upgradeContracts() {
-  const {
-    poolValidators,
-    oracles,
-    partnersRevenueSharing,
-    operatorsRevenueSharing,
-  } = await deployContracts();
+  const { poolValidators, oracles, roles } = await deployContracts();
 
   await upgradeMerkleDistributor(oracles);
   log(white('Upgraded MerkleDistributor contract'));
 
-  await upgradePool(
-    poolValidators,
-    oracles,
-    partnersRevenueSharing,
-    operatorsRevenueSharing
-  );
+  await upgradePool(poolValidators, oracles);
   log(white('Upgraded Pool contract'));
 
-  await upgradeRewardEthToken(
-    oracles,
-    operatorsRevenueSharing,
-    partnersRevenueSharing
-  );
+  await upgradeRewardEthToken(oracles);
   log(white('Upgraded RewardEthToken contract'));
 
   return {
     ...contracts,
     poolValidators,
     oracles,
-    operatorsRevenueSharing,
-    partnersRevenueSharing,
+    roles,
   };
 }
 

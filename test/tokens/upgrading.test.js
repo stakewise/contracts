@@ -11,7 +11,7 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 
 contract('RewardEthToken (upgrading)', ([anyone]) => {
   let admin = contractSettings.admin;
-  let rewardEthToken, oracles, partnersRevenueSharing, operatorsRevenueSharing;
+  let rewardEthToken, oracles;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -20,36 +20,25 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
     await send.ether(anyone, admin, ether('5'));
 
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    ({ oracles, partnersRevenueSharing, operatorsRevenueSharing } =
-      await upgradeContracts());
+    ({ oracles } = await upgradeContracts());
   });
 
   afterEach(async () => resetFork());
 
   it('fails to upgrade with not admin privilege', async () => {
     await expectRevert(
-      rewardEthToken.upgrade(
-        oracles,
-        operatorsRevenueSharing,
-        partnersRevenueSharing,
-        {
-          from: anyone,
-        }
-      ),
+      rewardEthToken.upgrade(oracles, {
+        from: anyone,
+      }),
       'OwnablePausable: access denied'
     );
   });
 
   it('fails to upgrade when not paused', async () => {
     await expectRevert(
-      rewardEthToken.upgrade(
-        oracles,
-        operatorsRevenueSharing,
-        partnersRevenueSharing,
-        {
-          from: admin,
-        }
-      ),
+      rewardEthToken.upgrade(oracles, {
+        from: admin,
+      }),
       'Pausable: not paused'
     );
   });
@@ -57,14 +46,9 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
   it('fails to upgrade twice', async () => {
     await rewardEthToken.pause({ from: admin });
     await expectRevert(
-      rewardEthToken.upgrade(
-        oracles,
-        operatorsRevenueSharing,
-        partnersRevenueSharing,
-        {
-          from: admin,
-        }
-      ),
+      rewardEthToken.upgrade(oracles, {
+        from: admin,
+      }),
       'RewardEthToken: already upgraded'
     );
   });

@@ -28,19 +28,6 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
       '0x003e294ffc37978496f1b9298d5984ad4d55d4e2d1e6a06ee6904810c7b9e0d5',
     minActivatingDeposit: '5000000000000000000', // 5 ETH
     pendingValidatorsLimit: '500', // 5 %
-    // TODO: update with real sources for oracles
-    rewardVotesSources: [
-      'example1.com',
-      'example2.com',
-      'example3.com',
-      'example4.com',
-    ],
-    validatorVotesSources: [
-      'example5.com',
-      'example6.com',
-      'example7.com',
-      'example8.com',
-    ],
   };
 } else {
   contracts = {
@@ -69,19 +56,6 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
       '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
     minActivatingDeposit: '32000000000000000000', // 32 ETH
     pendingValidatorsLimit: '500', // 5 %
-    // TODO: update with real sources for oracles
-    rewardVotesSources: [
-      'example1.com',
-      'example2.com',
-      'example3.com',
-      'example4.com',
-    ],
-    validatorVotesSources: [
-      'example5.com',
-      'example6.com',
-      'example7.com',
-      'example8.com',
-    ],
   };
 }
 

@@ -23,7 +23,6 @@ const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
-const RevenueSharing = artifacts.require('RevenueSharing');
 const MulticallMock = artifacts.require('MulticallMock');
 const protocolFee = new BN(1000);
 
@@ -31,9 +30,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   const admin = contractSettings.admin;
   let stakedEthToken,
     rewardEthToken,
-    protocolFeeRecipient,
-    operatorsRevenueSharing,
-    partnersRevenueSharing,
     totalSupply,
     pool,
     oracles,
@@ -49,12 +45,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    operatorsRevenueSharing = await RevenueSharing.at(
-      contracts.operatorsRevenueSharing
-    );
-    partnersRevenueSharing = await RevenueSharing.at(
-      contracts.partnersRevenueSharing
-    );
 
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
@@ -206,124 +196,38 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
+          protocolReward: new BN(0),
         }
       );
     });
 
-    it('rewards update with revenue shares', async () => {
-      let [beneficiary1, revenueShare1, contributedAmount1] = [
-        accounts[0],
-        new BN(1000),
-        ether('30'),
-      ];
-      let [beneficiary2, revenueShare2, contributedAmount2] = [
-        accounts[1],
-        new BN(2000),
-        ether('50'),
-      ];
-      let claimer = accounts[2];
+    it('assigns protocol fee to distributor', async () => {
+      await rewardEthToken.setProtocolFeeRecipient(constants.ZERO_ADDRESS, {
+        from: admin,
+      });
 
-      for (const revenueSharing of [
-        operatorsRevenueSharing,
-        partnersRevenueSharing,
-      ]) {
-        // add accounts
-        await revenueSharing.addAccount(beneficiary1, revenueShare1, {
-          from: admin,
-        });
-        await revenueSharing.increaseAmount(beneficiary1, contributedAmount1, {
-          from: admin,
-        });
-
-        await revenueSharing.addAccount(beneficiary2, revenueShare2, {
-          from: admin,
-        });
-        await revenueSharing.increaseAmount(beneficiary2, contributedAmount2, {
-          from: admin,
-        });
-      }
-
-      // increase reward
       let periodReward = ether('10');
-      let totalRewards = (await rewardEthToken.totalRewards()).add(
-        periodReward
-      );
-      let prevProtocolFeeRecipientBalance = await rewardEthToken.balanceOf(
-        protocolFeeRecipient
-      );
-      await setTotalRewards({
+      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let newTotalRewards = prevTotalRewards.add(periodReward);
+      let receipt = await setTotalRewards({
         rewardEthToken,
         oracles,
-        oracleAccounts,
         pool,
-        totalRewards,
+        totalRewards: newTotalRewards,
+        oracleAccounts,
       });
-      let protocolReward = (
-        await rewardEthToken.balanceOf(protocolFeeRecipient)
-      ).sub(prevProtocolFeeRecipientBalance);
-      expect(protocolReward).to.bignumber.greaterThan(new BN(0));
-
-      let operatorsRevenueCut = await rewardEthToken.balanceOf(
-        operatorsRevenueSharing.address
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          totalRewards: newTotalRewards,
+          protocolReward: periodReward
+            .mul(await rewardEthToken.protocolFee())
+            .div(new BN(10000)),
+        }
       );
-
-      let partnersRevenueCut = await rewardEthToken.balanceOf(
-        partnersRevenueSharing.address
-      );
-      expect(operatorsRevenueCut).to.bignumber.greaterThan(new BN(0));
-      expect(partnersRevenueCut).to.bignumber.greaterThan(new BN(0));
-      expect(operatorsRevenueCut).to.bignumber.greaterThan(partnersRevenueCut);
-      expect(operatorsRevenueCut.add(partnersRevenueCut)).to.bignumber.lessThan(
-        periodReward
-      );
-
-      for (const [revenueSharing, revenueCut] of [
-        [operatorsRevenueSharing, operatorsRevenueCut],
-        [partnersRevenueSharing, partnersRevenueCut],
-      ]) {
-        let receipt = await revenueSharing.collectRewards(
-          [beneficiary1, beneficiary2],
-          {
-            from: claimer,
-          }
-        );
-        await expectEvent(receipt, 'RewardCollected', {
-          sender: claimer,
-          beneficiary: beneficiary1,
-        });
-        await expectEvent(receipt, 'RewardCollected', {
-          sender: claimer,
-          beneficiary: beneficiary2,
-        });
-
-        // check reward of the beneficiary1
-        const reward1 = receipt.logs[0].args.reward;
-        expect(reward1).to.bignumber.greaterThan(new BN(0));
-        expect(await revenueSharing.rewardOf(beneficiary1)).to.bignumber.equal(
-          new BN(0)
-        );
-
-        // check reward of the beneficiary2
-        const reward2 = receipt.logs[1].args.reward;
-        expect(reward2).to.bignumber.greaterThan(new BN(0));
-        expect(await revenueSharing.rewardOf(beneficiary2)).to.bignumber.equal(
-          new BN(0)
-        );
-        expect(reward1.add(reward2)).to.bignumber.lessThan(revenueCut);
-        expect(reward2).to.bignumber.greaterThan(reward1);
-      }
-
-      let gwei = ether('0.000000001');
-      expect(
-        await rewardEthToken.balanceOf(operatorsRevenueSharing.address)
-      ).to.bignumber.lessThan(gwei);
-      expect(
-        await rewardEthToken.balanceOf(partnersRevenueSharing.address)
-      ).to.bignumber.lessThan(gwei);
-
-      expect(
-        await rewardEthToken.balanceOf(protocolFeeRecipient)
-      ).to.bignumber.equal(prevProtocolFeeRecipientBalance.add(protocolReward));
     });
   });
 
@@ -506,8 +410,8 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         ['uint256', 'uint256', 'uint256'],
         [
           currentNonce.toString(),
-          totalRewards.toString(),
           activatedValidators.toString(),
+          totalRewards.toString(),
         ]
       );
       let candidateId = hexlify(keccak256(encoded));
@@ -555,8 +459,8 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         ['uint256', 'uint256', 'uint256'],
         [
           currentNonce.toString(),
-          totalRewards.toString(),
           activatedValidators.toString(),
+          totalRewards.toString(),
         ]
       );
       let candidateId = hexlify(keccak256(encoded));

@@ -41,6 +41,81 @@
       },
       {
         "indexed": true,
+        "internalType": "bytes32",
+        "name": "merkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "merkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "MerkleRootUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "origin",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "rewardsLink",
+        "type": "string"
+      }
+    ],
+    "name": "OneTimeDistributionAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "address",
         "name": "token",
         "type": "address"
@@ -70,45 +145,7 @@
         "type": "uint256"
       }
     ],
-    "name": "DistributionAdded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "merkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "merkleProofs",
-        "type": "string"
-      }
-    ],
-    "name": "MerkleRootUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Paused",
+    "name": "PeriodicDistributionAdded",
     "type": "event"
   },
   {
@@ -312,6 +349,44 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "origin",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "rewardsLink",
+        "type": "string"
+      }
+    ],
+    "name": "distributeOneTime",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
         "name": "token",
         "type": "address"
       },
@@ -331,7 +406,7 @@
         "type": "uint256"
       }
     ],
-    "name": "distribute",
+    "name": "distributePeriodically",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -67,19 +67,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "address[]",
-        "name": "revenueShares",
-        "type": "address[]"
-      }
-    ],
-    "name": "RevenueSharesUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "account",
@@ -1072,16 +1059,6 @@
       {
         "internalType": "address",
         "name": "_oracles",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_operatorsRevenueSharing",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_partnersRevenueSharing",
         "type": "address"
       }
     ],

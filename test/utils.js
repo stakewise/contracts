@@ -6,7 +6,6 @@ const {
   ether,
   expectEvent,
   constants,
-  time,
 } = require('@openzeppelin/test-helpers');
 const {
   initializeMerkleRoot,
@@ -101,7 +100,7 @@ async function setActivatedValidators({
 
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'uint256', 'uint256'],
-    [nonce.toString(), totalRewards.toString(), activatedValidators.toString()]
+    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
   );
   let candidateId = hexlify(keccak256(encoded));
 
@@ -145,7 +144,7 @@ async function setTotalRewards({
   let nonce = await oracles.currentRewardsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'uint256', 'uint256'],
-    [nonce.toString(), totalRewards.toString(), activatedValidators.toString()]
+    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
   );
   let candidateId = hexlify(keccak256(encoded));
 
@@ -184,8 +183,8 @@ async function setMerkleRoot({
 
   let nonce = await oracles.currentRewardsNonce();
   let encoded = defaultAbiCoder.encode(
-    ['uint256', 'bytes32', 'string'],
-    [nonce.toString(), merkleRoot, merkleProofs]
+    ['uint256', 'string', 'bytes32'],
+    [nonce.toString(), merkleProofs, merkleRoot]
   );
   let candidateId = hexlify(keccak256(encoded));
 
@@ -387,7 +386,7 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
   let oracleAccounts = [];
   for (let i = 0; i < totalOracles; i++) {
     let newOracle = accounts[i];
-    await oracles.addOracle(newOracle, 'example12.com', 'example13.com', {
+    await oracles.addOracle(newOracle, {
       from: admin,
     });
     oracleAccounts.push(newOracle);

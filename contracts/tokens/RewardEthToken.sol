@@ -9,7 +9,6 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
-import "../interfaces/IRevenueSharing.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -52,20 +51,12 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
-    // @dev Address of the Operators Revenue Sharing contract.
-    IRevenueSharing private operatorsRevenueSharing;
-
-    // @dev Address of the Partners Revenue Sharing contract.
-    IRevenueSharing private partnersRevenueSharing;
-
     /**
      * @dev See {IRewardEthToken-upgrade}.
      */
-    function upgrade(address _oracles, address _operatorsRevenueSharing, address _partnersRevenueSharing) external override onlyAdmin whenPaused {
-        require(address(operatorsRevenueSharing) == address(0), "RewardEthToken: already upgraded");
+    function upgrade(address _oracles) external override onlyAdmin whenPaused {
+        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "RewardEthToken: already upgraded");
         oracles = _oracles;
-        operatorsRevenueSharing = IRevenueSharing(_operatorsRevenueSharing);
-        partnersRevenueSharing = IRevenueSharing(_partnersRevenueSharing);
     }
 
     /**
@@ -74,7 +65,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function setRewardsDisabled(address account, bool isDisabled) external override {
         require(msg.sender == address(stakedEthToken), "RewardEthToken: access denied");
         require(rewardsDisabled[account] != isDisabled, "RewardEthToken: value did not change");
-        require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot disable during rewards update");
 
         uint128 _rewardPerToken = rewardPerToken;
         checkpoints[account] = Checkpoint({
@@ -90,6 +80,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IRewardEthToken-setProtocolFeeRecipient}.
      */
     function setProtocolFeeRecipient(address recipient) external override onlyAdmin {
+        // can be address(0) to distribute fee through the Merkle Distributor
         protocolFeeRecipient = recipient;
         emit ProtocolFeeRecipientUpdated(recipient);
     }
@@ -220,13 +211,15 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
         uint256 periodRewards = newTotalRewards.sub(totalRewards);
-        if (periodRewards == 0) return;
+        if (periodRewards == 0) {
+            lastUpdateBlockNumber = block.number;
+            emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);
+        }
 
         // calculate protocol reward and new reward per token amount
         uint256 protocolReward = periodRewards.mul(protocolFee).div(1e4);
         uint256 prevRewardPerToken = rewardPerToken;
-        uint256 totalStaked = stakedEthToken.totalDeposits();
-        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(totalStaked));
+        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(stakedEthToken.totalDeposits()));
         uint128 newRewardPerToken128 = newRewardPerToken.toUint128();
 
         // store previous distributor rewards for period reward calculation
@@ -235,18 +228,15 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         // update total rewards and new reward per token
         (totalRewards, rewardPerToken) = (newTotalRewards.toUint128(), newRewardPerToken128);
 
-        // update revenue shares
-        uint256 leftReward = _updateRevenueShares(protocolReward, totalStaked, newRewardPerToken);
-
         uint256 newDistributorBalance = _balanceOf(address(0), newRewardPerToken);
         address _protocolFeeRecipient = protocolFeeRecipient;
-        if (_protocolFeeRecipient == address(0) && leftReward > 0) {
-            // add left protocol reward to the merkle distributor
-            newDistributorBalance = newDistributorBalance.add(leftReward);
-        } else if (leftReward > 0) {
+        if (_protocolFeeRecipient == address(0) && protocolReward > 0) {
+            // add protocol reward to the merkle distributor
+            newDistributorBalance = newDistributorBalance.add(protocolReward);
+        } else if (protocolReward > 0) {
             // update fee recipient's checkpoint and add its period reward
             checkpoints[_protocolFeeRecipient] = Checkpoint({
-                reward: _balanceOf(_protocolFeeRecipient, newRewardPerToken).add(leftReward).toUint128(),
+                reward: _balanceOf(_protocolFeeRecipient, newRewardPerToken).add(protocolReward).toUint128(),
                 rewardPerToken: newRewardPerToken128
             });
         }
@@ -265,35 +255,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
             newTotalRewards,
             newRewardPerToken,
             newDistributorBalance.sub(prevDistributorBalance),
-            _protocolFeeRecipient == address(0) ? leftReward: 0
+            _protocolFeeRecipient == address(0) ? protocolReward: 0
         );
-    }
-
-    function _updateRevenueShares(uint256 protocolReward, uint256 totalStaked, uint256 newRewardPerToken) internal returns (uint256) {
-        // SLOAD for gas optimization
-        (IRevenueSharing _operatorsRevenueSharing, IRevenueSharing _partnersRevenueSharing) = (operatorsRevenueSharing, partnersRevenueSharing);
-
-        uint128 newRewardPerToken128 = newRewardPerToken.toUint128();
-
-        // update operators revenue sharing
-        uint256 operatorsCut = _operatorsRevenueSharing.updateRewards(protocolReward, totalStaked);
-        if (operatorsCut > 0) {
-            checkpoints[address(_operatorsRevenueSharing)] = Checkpoint({
-                reward: _balanceOf(address(_operatorsRevenueSharing), newRewardPerToken).add(operatorsCut).toUint128(),
-                rewardPerToken: newRewardPerToken128
-            });
-        }
-
-        // update partners revenue sharing
-        uint256 partnersCut = _partnersRevenueSharing.updateRewards(protocolReward.sub(operatorsCut), totalStaked);
-        if (partnersCut > 0) {
-            checkpoints[address(_partnersRevenueSharing)] = Checkpoint({
-                reward: _balanceOf(address(_partnersRevenueSharing), newRewardPerToken).add(partnersCut).toUint128(),
-                rewardPerToken: newRewardPerToken128
-            });
-        }
-
-        return protocolReward.sub(operatorsCut).sub(partnersCut);
     }
 
     /**

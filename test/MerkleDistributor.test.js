@@ -114,10 +114,11 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     );
   });
 
-  describe('distribute', () => {
+  describe('periodically distribute', () => {
     it('not admin fails to distribute tokens', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -132,7 +133,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
     it('fails to distribute tokens with zero amount', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           new BN(0),
@@ -145,9 +147,26 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
     });
 
+    it('fails to distribute tokens from zero address', async () => {
+      await expectRevert(
+        merkleDistributor.distributePeriodically(
+          constants.ZERO_ADDRESS,
+          token.address,
+          beneficiary,
+          amount,
+          durationInBlocks,
+          {
+            from: admin,
+          }
+        ),
+        'ERC20: transfer from the zero address'
+      );
+    });
+
     it('fails to distribute tokens with max uint duration', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -162,7 +181,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
     it('fails to distribute tokens with zero duration', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -177,7 +197,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
     it('fails to distribute tokens without allowance', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -195,7 +216,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         from: admin,
       });
 
-      let receipt = await merkleDistributor.distribute(
+      let receipt = await merkleDistributor.distributePeriodically(
+        admin,
         token.address,
         beneficiary,
         amount,
@@ -206,13 +228,110 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
 
       let startBlock = new BN(receipt.receipt.blockNumber);
-      await expectEvent(receipt, 'DistributionAdded', {
-        sender: admin,
+      await expectEvent(receipt, 'PeriodicDistributionAdded', {
+        from: admin,
         token: token.address,
         beneficiary,
         amount,
         startBlock: startBlock,
         endBlock: startBlock.add(durationInBlocks),
+      });
+      expect(
+        await token.balanceOf(merkleDistributor.address)
+      ).to.bignumber.equal(prevDistributorBalance.add(amount));
+    });
+  });
+
+  describe('one time distribute', () => {
+    const origin = '0x1111111111111111111111111111111111111111';
+    const rewardsLink = 'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
+
+    it('not admin fails to distribute tokens', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: anyone,
+          }
+        ),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('fails to distribute tokens with zero amount', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          new BN(0),
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'MerkleDistributor: invalid amount'
+      );
+    });
+
+    it('fails to distribute tokens from zero address', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          constants.ZERO_ADDRESS,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'ERC20: transfer from the zero address'
+      );
+    });
+
+    it('fails to distribute tokens without allowance', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'SafeMath: subtraction overflow'
+      );
+    });
+
+    it('admin can distribute tokens', async () => {
+      await token.approve(merkleDistributor.address, amount, {
+        from: admin,
+      });
+
+      let receipt = await merkleDistributor.distributeOneTime(
+        admin,
+        origin,
+        token.address,
+        amount,
+        rewardsLink,
+        {
+          from: admin,
+        }
+      );
+
+      await expectEvent(receipt, 'OneTimeDistributionAdded', {
+        from: admin,
+        origin,
+        token: token.address,
+        amount,
+        rewardsLink,
       });
       expect(
         await token.balanceOf(merkleDistributor.address)
@@ -492,8 +611,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           ['uint256', 'uint256', 'uint256'],
           [
             currentNonce.toString(),
-            totalRewards.toString(),
             activatedValidators.toString(),
+            totalRewards.toString(),
           ]
         );
         let candidateId = hexlify(keccak256(encoded));
@@ -503,8 +622,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
         // create merkle root signature
         encoded = defaultAbiCoder.encode(
-          ['uint256', 'bytes32', 'string'],
-          [currentNonce.add(new BN(1)).toString(), merkleRoot, merkleProofs]
+          ['uint256', 'string', 'bytes32'],
+          [currentNonce.add(new BN(1)).toString(), merkleProofs, merkleRoot]
         );
         candidateId = hexlify(keccak256(encoded));
         merkleRootSignatures = [

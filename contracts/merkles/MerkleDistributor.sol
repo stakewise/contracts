@@ -37,8 +37,6 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
 
     /**
      * @dev See {IMerkleDistributor-upgrade}.
-     * The `initialize` must be called before upgrading in previous implementation contract:
-     * https://github.com/stakewise/contracts/blob/v1.3.0/contracts/collectors/Pool.sol#L55
      */
     function upgrade(address _oracles) external override onlyAdmin whenPaused {
         require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "MerkleDistributor: already upgraded");
@@ -57,17 +55,16 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
      */
     function setMerkleRoot(bytes32 newMerkleRoot, string calldata newMerkleProofs) external override {
         require(msg.sender == address(oracles), "MerkleDistributor: access denied");
-        if (newMerkleRoot != merkleRoot) {
-            merkleRoot = newMerkleRoot;
-            emit MerkleRootUpdated(msg.sender, newMerkleRoot, newMerkleProofs);
-        }
+        merkleRoot = newMerkleRoot;
         lastUpdateBlockNumber = block.number;
+        emit MerkleRootUpdated(msg.sender, newMerkleRoot, newMerkleProofs);
     }
 
     /**
-     * @dev See {IMerkleDistributor-distribute}.
+     * @dev See {IMerkleDistributor-distributePeriodically}.
      */
-    function distribute(
+    function distributePeriodically(
+        address from,
         address token,
         address beneficiary,
         uint256 amount,
@@ -81,8 +78,26 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         uint256 endBlock = startBlock + durationInBlocks;
         require(endBlock > startBlock, "MerkleDistributor: invalid blocks duration");
 
-        IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
-        emit DistributionAdded(msg.sender, token, beneficiary, amount, startBlock, endBlock);
+        IERC20Upgradeable(token).safeTransferFrom(from, address(this), amount);
+        emit PeriodicDistributionAdded(from, token, beneficiary, amount, startBlock, endBlock);
+    }
+
+    /**
+     * @dev See {IMerkleDistributor-distributeOneTime}.
+     */
+    function distributeOneTime(
+        address from,
+        address origin,
+        address token,
+        uint256 amount,
+        string memory rewardsLink
+    )
+        external override onlyAdmin
+    {
+        require(amount > 0, "MerkleDistributor: invalid amount");
+
+        IERC20Upgradeable(token).safeTransferFrom(from, address(this), amount);
+        emit OneTimeDistributionAdded(from, origin, token, amount, rewardsLink);
     }
 
     /**
