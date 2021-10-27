@@ -10,7 +10,6 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const GAS_PRICE = 20e9; // 20 Gwei
 const BLOCK_NUMBER = 12985770;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
@@ -102,9 +101,6 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      blockGasLimit: 0x1fffffffffffff,
-      gasPrice: GAS_PRICE,
-      allowUnlimitedContractSize: true,
       forking: {
         url: process.env.HARDHAT_FORK_API_URL,
         blockNumber: BLOCK_NUMBER,
@@ -112,9 +108,6 @@ module.exports = {
     },
     local: {
       url: 'http://localhost:8545',
-      blockGasLimit: 0x1fffffffffffff,
-      gasPrice: GAS_PRICE,
-      allowUnlimitedContractSize: true,
     },
   },
   throwOnTransactionFailures: true,

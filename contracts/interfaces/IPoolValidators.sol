@@ -12,11 +12,13 @@ interface IPoolValidators {
     * @param initializeMerkleRoot - validators registration initialization merkle root.
     * @param finalizeMerkleRoot - validators registration finalization merkle root.
     * @param locked - defines whether operator is currently locked.
+    * @param committed - defines whether operator has committed its readiness to host validators.
     */
     struct Operator {
         bytes32 initializeMerkleRoot;
         bytes32 finalizeMerkleRoot;
         bool locked;
+        bool committed;
     }
 
     /**
@@ -61,11 +63,11 @@ interface IPoolValidators {
     );
 
     /**
-    * @dev Event for tracking operator's collateral deposit.
-    * @param operator - address of the operator.
-    * @param collateral - amount deposited.
+    * @dev Event for tracking operator's commitments.
+    * @param operator - address of the operator that expressed its readiness to host validators.
+    * @param collateral - collateral amount deposited.
     */
-    event CollateralDeposited(
+    event OperatorCommitted(
         address indexed operator,
         uint256 collateral
     );
@@ -147,10 +149,11 @@ interface IPoolValidators {
     ) external;
 
     /**
-    * @dev Function for adding operator's collateral.
-    * @param _operator - address of the operator to add a collateral for.
+    * @dev Function for committing operator. If 1 ETH collateral was not deposited yet,
+    * it must be sent together with the function call. Must be called by the operator address
+    * specified through the `addOperator` function call.
     */
-    function depositCollateral(address _operator) external payable;
+    function commitOperator() external payable;
 
     /**
     * @dev Function for withdrawing operator's collateral. Can only be called when the operator was removed.

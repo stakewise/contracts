@@ -87,6 +87,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
         // update operator
         operator.initializeMerkleRoot = initializeMerkleRoot;
         operator.finalizeMerkleRoot = finalizeMerkleRoot;
+        operator.committed = false;
 
         emit OperatorAdded(
             _operator,
@@ -98,17 +99,21 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     }
 
     /**
-     * @dev See {IPoolValidators-depositCollateral}.
+     * @dev See {IPoolValidators-commitOperator}.
      */
-    function depositCollateral(address _operator) external payable override whenNotPaused {
-        require(_operator != address(0), "PoolValidators: invalid operator");
-        require(collaterals[_operator] == 0, "PoolValidators: collateral exists");
-        require(msg.value == pool.VALIDATOR_INIT_DEPOSIT(), "PoolValidators: invalid collateral");
+    function commitOperator() external payable override whenNotPaused {
+        // mark operator as committed
+        Operator storage operator = operators[msg.sender];
+        require(operator.initializeMerkleRoot != "", "PoolValidators: invalid operator");
+        operator.committed = true;
+
+        uint256 newCollateral = collaterals[msg.sender].add(msg.value);
+        require(newCollateral >= pool.VALIDATOR_INIT_DEPOSIT(), "PoolValidators: invalid collateral");
 
         // update collateral
-        collaterals[_operator] = msg.value;
+        collaterals[msg.sender] = newCollateral;
 
-        emit CollateralDeposited(_operator, msg.value);
+        emit OperatorCommitted(msg.sender, msg.value);
     }
 
     /**
@@ -172,7 +177,9 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
 
         uint256 refundAmount = pool.VALIDATOR_INIT_DEPOSIT();
         uint256 operatorCollateral = collaterals[depositData.operator];
-        require(operatorCollateral >= refundAmount, "PoolValidators: insufficient collateral");
+        if (refundAmount > operatorCollateral) {
+            refundAmount = operatorCollateral;
+        }
 
         // mark validator as slashed
         bytes32 validatorId = keccak256(abi.encode(depositData.publicKey));
@@ -209,8 +216,16 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
 
         // fetch operator
         Operator storage operator = operators[depositData.operator];
-        (bytes32 initializeMerkleRoot, bool locked) = (operator.initializeMerkleRoot, operator.locked);
-        require(initializeMerkleRoot != "", "PoolValidators: invalid operator");
+        (
+            bytes32 initializeMerkleRoot,
+            bool locked,
+            bool committed
+        ) = (
+            operator.initializeMerkleRoot,
+            operator.locked,
+            operator.committed
+        );
+        require(committed, "PoolValidators: operator not committed");
         require(
             collaterals[depositData.operator] >= pool.VALIDATOR_INIT_DEPOSIT(),
             "PoolValidators: invalid operator collateral"

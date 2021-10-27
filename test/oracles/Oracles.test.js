@@ -401,8 +401,8 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         ['uint256', 'uint256', 'uint256'],
         [
           currentNonce.toString(),
-          totalRewards.toString(),
           activatedValidators.toString(),
+          totalRewards.toString(),
         ]
       );
       candidateId = keccak256(encoded);
