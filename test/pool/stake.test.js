@@ -97,8 +97,9 @@ contract('Pool (stake)', (accounts) => {
 
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
+      let maxAmount = await pool.minActivatingDeposit();
       let depositAmount1 = getDepositAmount({
-        max: new BN(contractSettings.minActivatingDeposit),
+        max: maxAmount,
       });
       totalSupply = totalSupply.add(depositAmount1);
       poolBalance = poolBalance.add(depositAmount1);
@@ -115,8 +116,9 @@ contract('Pool (stake)', (accounts) => {
       });
 
       // User 2 creates a deposit
+      maxAmount = await pool.minActivatingDeposit();
       let depositAmount2 = getDepositAmount({
-        max: new BN(contractSettings.minActivatingDeposit),
+        max: maxAmount,
       });
       totalSupply = totalSupply.add(depositAmount2);
       poolBalance = poolBalance.add(depositAmount2);

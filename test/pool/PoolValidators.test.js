@@ -214,9 +214,9 @@ contract('Pool Validators', (accounts) => {
         }
       );
 
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
 
       let {
@@ -358,9 +358,9 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('fails to remove locked operator', async () => {
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
 
       let {
@@ -406,10 +406,23 @@ contract('Pool Validators', (accounts) => {
     });
   });
 
-  describe('deposit collateral', () => {
-    it('fails to deposit with zero operator address', async () => {
+  describe('commit operator', () => {
+    beforeEach(async () => {
+      await validators.addOperator(
+        operator,
+        initializeMerkleRoot,
+        initializeMerkleProofs,
+        finalizeMerkleRoot,
+        finalizeMerkleProofs,
+        {
+          from: admin,
+        }
+      );
+    });
+
+    it('fails to commit invalid operator', async () => {
       await expectRevert(
-        validators.depositCollateral(constants.ZERO_ADDRESS, {
+        validators.commitOperator({
           value: initAmount,
           from: anyone,
         }),
@@ -417,37 +430,37 @@ contract('Pool Validators', (accounts) => {
       );
     });
 
-    it('fails to deposit when collateral exists', async () => {
-      await validators.depositCollateral(operator, {
+    it('fails to commit operator twice', async () => {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
       await expectRevert(
-        validators.depositCollateral(operator, {
+        validators.commitOperator({
           value: initAmount,
-          from: anyone,
+          from: operator,
         }),
-        'PoolValidators: collateral exists'
+        'PoolValidators: invalid operator'
       );
     });
 
-    it('fails to deposit with invalid collateral value', async () => {
+    it('fails to commit with invalid collateral value', async () => {
       await expectRevert(
-        validators.depositCollateral(operator, {
+        validators.commitOperator({
           value: initAmount.sub(new BN(1)),
-          from: anyone,
+          from: operator,
         }),
         'PoolValidators: invalid collateral'
       );
     });
 
-    it('anyone can deposit collateral', async () => {
-      let receipt = await validators.depositCollateral(operator, {
+    it('can commit operator', async () => {
+      let receipt = await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
 
-      await expectEvent(receipt, 'CollateralDeposited', {
+      await expectEvent(receipt, 'OperatorCommitted', {
         operator,
         collateral: initAmount,
       });
@@ -460,9 +473,19 @@ contract('Pool Validators', (accounts) => {
   describe('withdraw collateral', () => {
     const collateralRecipient = otherAccounts[0];
     beforeEach(async () => {
-      await validators.depositCollateral(operator, {
+      await validators.addOperator(
+        operator,
+        initializeMerkleRoot,
+        initializeMerkleProofs,
+        finalizeMerkleRoot,
+        finalizeMerkleProofs,
+        {
+          from: admin,
+        }
+      );
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
     });
 
@@ -476,16 +499,6 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('fails to withdraw for the existing operator', async () => {
-      await validators.addOperator(
-        operator,
-        initializeMerkleRoot,
-        initializeMerkleProofs,
-        finalizeMerkleRoot,
-        finalizeMerkleProofs,
-        {
-          from: admin,
-        }
-      );
       await expectRevert(
         validators.withdrawCollateral(collateralRecipient, {
           from: operator,
@@ -495,6 +508,7 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('fails to withdraw twice', async () => {
+      await validators.removeOperator(operator, { from: operator });
       await validators.withdrawCollateral(collateralRecipient, {
         from: operator,
       });
@@ -507,6 +521,7 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('operator can withdraw collateral', async () => {
+      await validators.removeOperator(operator, { from: admin });
       let currentBalance = await balance.current(collateralRecipient);
       let receipt = await validators.withdrawCollateral(collateralRecipient, {
         from: operator,
@@ -545,9 +560,9 @@ contract('Pool Validators', (accounts) => {
           from: admin,
         }
       );
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
     });
 
@@ -754,9 +769,9 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('fails to initialize twice', async () => {
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
       await initializeValidator({
         operator,
@@ -784,7 +799,7 @@ contract('Pool Validators', (accounts) => {
       );
     });
 
-    it('fails to initialize without collateral', async () => {
+    it('fails to initialize validator for not committed operator', async () => {
       await expectRevert(
         initializeValidator({
           operator,
@@ -796,11 +811,15 @@ contract('Pool Validators', (accounts) => {
           oracleAccounts,
           withdrawalCredentials,
         }),
-        'PoolValidators: invalid operator collateral'
+        'PoolValidators: operator not committed'
       );
     });
 
     it('fails to initialize for invalid operator', async () => {
+      await validators.commitOperator({
+        value: initAmount,
+        from: operator,
+      });
       await expectRevert(
         initializeValidator({
           operator: anyone,
@@ -812,14 +831,14 @@ contract('Pool Validators', (accounts) => {
           oracleAccounts,
           withdrawalCredentials,
         }),
-        'PoolValidators: invalid operator'
+        'PoolValidators: operator not committed'
       );
     });
 
     it('fails to initialize for invalid deposit data', async () => {
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
       await expectRevert(
         initializeValidator({
@@ -837,9 +856,9 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('fails to initialize for already locked operator', async () => {
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
       await initializeValidator({
         operator,
@@ -868,9 +887,9 @@ contract('Pool Validators', (accounts) => {
     });
 
     it('oracles can initialize validator', async () => {
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
 
       let poolBalance = await balance.current(pool.address);
@@ -928,9 +947,9 @@ contract('Pool Validators', (accounts) => {
         }
       );
 
-      await validators.depositCollateral(operator, {
+      await validators.commitOperator({
         value: initAmount,
-        from: anyone,
+        from: operator,
       });
 
       let {

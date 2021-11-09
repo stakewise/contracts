@@ -4,8 +4,9 @@ let contracts, contractSettings;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contracts = {
     validators: '0xE2F13059454b626e42e04845815E9Ed2E9774bF3',
-    oracles: '0xE54486fa4eB45716c5725d7A46FDDe810B8E8914',
+    oracles: '0x696b622baFA1747333BeE5D1142bb530E41d1063',
     pool: '0x8c1EfEcFb5c4F1099AB0460b5659342943764Df7',
+    poolValidators: '0xe3daeBE5D6Cd72372d03059BF8A2d9A53ABBdb8f',
     poolEscrow: '0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218',
     stakedEthToken: '0x221D9812823DBAb0F1fB40b0D294D9875980Ac19',
     rewardEthToken: '0x826f88d423440c305D9096cC1581Ae751eFCAfB0',
@@ -13,21 +14,14 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     vestingEscrowFactory: '0xbA91cdD484893c1f8F75DB55733ccaDcd0fE5f59',
     merkleDrop: '0xFc3513E92799F0169e5f14F354d0097E4b790498',
     merkleDistributor: '0x6Ef0172b79131C66c7012Db3545D637B116feb12',
+    roles: '0x039FF733aA9736D66bFA96aD61Fa635E97464D66',
+    contractChecker: '0x85ee326f839Bc430655A3fad447837072ef52C2F',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
   };
 
   contractSettings = {
-    cancelLockDuration: '86400', // 1 day
-    validatorPrice: '10000000000000000000', // 10 DAI / month
-    protocolFee: '1000', // 10%,
     admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
-    protocolFeeRecipient: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
-    VRC: '0x8c5fecdC472E27Bc447696F431E425D02dd46a8c',
     vestingEscrow: '0x4CDAe3f1Eaa84b88fFc97627Ef1c77F762794287',
-    withdrawalCredentials:
-      '0x003e294ffc37978496f1b9298d5984ad4d55d4e2d1e6a06ee6904810c7b9e0d5',
-    minActivatingDeposit: '5000000000000000000', // 5 ETH
-    pendingValidatorsLimit: '500', // 5 %
   };
 } else {
   contracts = {
@@ -45,17 +39,8 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   };
 
   contractSettings = {
-    cancelLockDuration: '86400', // 1 day
-    validatorPrice: '10000000000000000000', // 10 DAI / month
-    protocolFee: '1000', // 10 %,
     admin: '0x144a98cb1CdBb23610501fE6108858D9B7D24934',
-    protocolFeeRecipient: '0xf91AA4a655B6F43243ed4C2853F3508314DaA2aB',
-    VRC: '0x00000000219ab540356cbb839cbe05303d7705fa',
     vestingEscrow: '0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3',
-    withdrawalCredentials:
-      '0x0100000000000000000000002296e122c1a20fca3cac3371357bdad3be0df079',
-    minActivatingDeposit: '32000000000000000000', // 32 ETH
-    pendingValidatorsLimit: '500', // 5 %
   };
 }
 

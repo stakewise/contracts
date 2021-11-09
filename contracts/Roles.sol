@@ -51,20 +51,4 @@ contract Roles is IRoles, OwnablePausableUpgradeable {
         require(account != address(0), "Roles: account is the zero address");
         emit PartnerRemoved(account);
     }
-
-    /**
-     * @dev See {IRoles-addReferrer}.
-     */
-    function addReferrer(address account) external override onlyAdmin whenNotPaused {
-        require(account != address(0), "Roles: account is the zero address");
-        emit ReferrerAdded(account);
-    }
-
-    /**
-     * @dev See {IRoles-removeReferrer}.
-     */
-    function removeReferrer(address account) external override onlyAdmin whenNotPaused {
-        require(account != address(0), "Roles: account is the zero address");
-        emit ReferrerRemoved(account);
-    }
 }

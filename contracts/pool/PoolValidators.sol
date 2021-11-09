@@ -104,7 +104,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     function commitOperator() external payable override whenNotPaused {
         // mark operator as committed
         Operator storage operator = operators[msg.sender];
-        require(operator.initializeMerkleRoot != "", "PoolValidators: invalid operator");
+        require(operator.initializeMerkleRoot != "" && !operator.committed, "PoolValidators: invalid operator");
         operator.committed = true;
 
         uint256 newCollateral = collaterals[msg.sender].add(msg.value);
@@ -203,7 +203,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     /**
      * @dev See {IPoolValidators-initializeValidator}.
      */
-    function initializeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override whenNotPaused {
+    function initializeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override {
         require(msg.sender == oracles, "PoolValidators: access denied");
 
         // mark validator as initialized -> prevents from initializing the same validator twice
@@ -255,7 +255,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     /**
      * @dev See {IPoolValidators-finalizeValidator}.
      */
-    function finalizeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override whenNotPaused {
+    function finalizeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override {
         require(msg.sender == oracles, "PoolValidators: access denied");
 
         // mark validator as finalized -> prevents from finalizing the same validator twice

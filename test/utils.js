@@ -299,7 +299,7 @@ async function registerValidator({
   }
 
   if ((await validators.collaterals(operator)).lt(initAmount)) {
-    await validators.depositCollateral(operator, {
+    await validators.commitOperator({
       value: initAmount,
       from: operator,
     });

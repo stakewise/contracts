@@ -62,6 +62,13 @@ async function deployAndInitializeRoles() {
   return proxy.address;
 }
 
+async function deployAndInitializeContractChecker() {
+  const ContractChecker = await ethers.getContractFactory('ContractChecker');
+  const contractChecker = await ContractChecker.deploy();
+  await contractChecker.deployed();
+  return contractChecker.address;
+}
+
 async function upgradeMerkleDistributor(oraclesContractAddress) {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
   const MerkleDistributor = await ethers.getContractFactory(
@@ -148,6 +155,15 @@ async function deployContracts() {
 
   const roles = await deployAndInitializeRoles();
   log(white(`Deployed and initialized Roles contract: ${green(roles)}`));
+
+  const contractChecker = await deployAndInitializeContractChecker();
+  log(
+    white(
+      `Deployed and initialized ContractChecker contract: ${green(
+        contractChecker
+      )}`
+    )
+  );
 
   return {
     poolValidators,

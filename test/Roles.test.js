@@ -16,7 +16,7 @@ const {
 
 const Roles = artifacts.require('Roles');
 
-contract('Roles', ([anyone, operator, referrer, partner]) => {
+contract('Roles', ([anyone, operator, partner]) => {
   const admin = contractSettings.admin;
   let revenueShare = new BN(3000);
   let roles;
@@ -162,64 +162,6 @@ contract('Roles', ([anyone, operator, referrer, partner]) => {
       await roles.pause({ from: admin });
       await expectRevert(
         roles.removePartner(partner, {
-          from: admin,
-        }),
-        'Pausable: paused'
-      );
-    });
-  });
-
-  describe('referrers', () => {
-    it('not admin fails to add referrer', async () => {
-      await expectRevert(
-        roles.addReferrer(referrer, {
-          from: anyone,
-        }),
-        'OwnablePausable: access denied'
-      );
-    });
-
-    it('fails to add referrer to zero address', async () => {
-      await expectRevert(
-        roles.addReferrer(constants.ZERO_ADDRESS, {
-          from: admin,
-        }),
-        'Roles: account is the zero address'
-      );
-    });
-
-    it('fails to add referrer when paused', async () => {
-      await roles.pause({ from: admin });
-      await expectRevert(
-        roles.addReferrer(referrer, {
-          from: admin,
-        }),
-        'Pausable: paused'
-      );
-    });
-
-    it('admin can add referrer', async () => {
-      let receipt = await roles.addReferrer(referrer, {
-        from: admin,
-      });
-      await expectEvent(receipt, 'ReferrerAdded', {
-        referrer,
-      });
-    });
-
-    it('fails to remove zero address referrer', async () => {
-      await expectRevert(
-        roles.removeReferrer(constants.ZERO_ADDRESS, {
-          from: admin,
-        }),
-        'Roles: account is the zero address'
-      );
-    });
-
-    it('fails to remove referrer when paused', async () => {
-      await roles.pause({ from: admin });
-      await expectRevert(
-        roles.removeReferrer(operator, {
           from: admin,
         }),
         'Pausable: paused'

@@ -33,18 +33,6 @@ interface IRoles {
     event PartnerRemoved(address indexed partner);
 
     /**
-    * @dev Event for tracking referrers' additions.
-    * @param referrer - address of the referrer.
-    */
-    event ReferrerAdded(address indexed referrer);
-
-    /**
-    * @dev Event for tracking referrers' removals.
-    * @param referrer - address of the referrer.
-    */
-    event ReferrerRemoved(address indexed referrer);
-
-    /**
     * @dev Constructor for initializing the Roles contract.
     * @param admin - address of the contract admin.
     */
@@ -75,16 +63,4 @@ interface IRoles {
     * @param account - address of the account to remove.
     */
     function removePartner(address account) external;
-
-    /**
-    * @dev Function for adding the referrer. Can only be called by account with `admin` privilege.
-    * @param account - address of the account to add.
-    */
-    function addReferrer(address account) external;
-
-    /**
-    * @dev Function for removing the referrer. Can only be called by account with `admin` privilege.
-    * @param account - address of the account to remove.
-    */
-    function removeReferrer(address account) external;
 }
