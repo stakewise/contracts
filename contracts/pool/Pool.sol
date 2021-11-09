@@ -192,41 +192,43 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-activate}.
      */
-    function activate(address account, uint256 validatorIndex) external override whenNotPaused {
-        require(
-            validatorIndex.mul(1e4) <= activatedValidators.mul(pendingValidatorsLimit.add(1e4)),
-            "Pool: validator is not active yet"
+    function activate(address account, uint256 validatorIndex) external override {
+        uint256 activatedAmount = _activateAmount(
+            account,
+            validatorIndex,
+            activatedValidators.mul(pendingValidatorsLimit.add(1e4))
         );
 
-        uint256 amount = activations[account][validatorIndex];
-        require(amount > 0, "Pool: invalid validator index");
-
-        delete activations[account][validatorIndex];
-        stakedEthToken.mint(account, amount);
-        emit Activated(account, validatorIndex, amount, msg.sender);
+        stakedEthToken.mint(account, activatedAmount);
     }
 
     /**
      * @dev See {IPool-activateMultiple}.
      */
-    function activateMultiple(address account, uint256[] calldata validatorIndexes) external override whenNotPaused {
+    function activateMultiple(address account, uint256[] calldata validatorIndexes) external override {
         uint256 toMint;
-        uint256 _activatedValidators = activatedValidators;
+        uint256 maxValidatorIndex = activatedValidators.mul(pendingValidatorsLimit.add(1e4));
         for (uint256 i = 0; i < validatorIndexes.length; i++) {
-            uint256 validatorIndex = validatorIndexes[i];
-            require(
-                validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4)),
-                "Pool: validator is not active yet"
-            );
-
-            uint256 amount = activations[account][validatorIndex];
-            toMint = toMint.add(amount);
-            delete activations[account][validatorIndex];
-
-            emit Activated(account, validatorIndex, amount, msg.sender);
+            uint256 activatedAmount = _activateAmount(account, validatorIndexes[i], maxValidatorIndex);
+            toMint = toMint.add(activatedAmount);
         }
-        require(toMint > 0, "Pool: invalid validator index");
         stakedEthToken.mint(account, toMint);
+    }
+
+    function _activateAmount(
+        address account,
+        uint256 validatorIndex,
+        uint256 maxValidatorIndex
+    )
+        internal whenNotPaused returns (uint256 amount)
+    {
+        require(validatorIndex.mul(1e4) <= maxValidatorIndex, "Pool: validator is not active yet");
+
+        amount = activations[account][validatorIndex];
+        require(amount > 0, "Pool: invalid validator index");
+
+        delete activations[account][validatorIndex];
+        emit Activated(account, validatorIndex, amount, msg.sender);
     }
 
     /**
