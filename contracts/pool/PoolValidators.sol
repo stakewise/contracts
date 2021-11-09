@@ -39,6 +39,10 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
      * @dev See {IPoolValidators-initialize}.
      */
     function initialize(address _admin, address _pool, address _oracles) external override initializer {
+        require(_admin != address(0), "Pool: invalid admin address");
+        require(_pool != address(0), "Pool: invalid Pool address");
+        require(_oracles != address(0), "Pool: invalid Oracles address");
+
         __OwnablePausableUpgradeable_init(_admin);
         pool = IPool(_pool);
         oracles = _oracles;
