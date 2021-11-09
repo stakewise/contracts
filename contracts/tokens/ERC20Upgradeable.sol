@@ -199,7 +199,7 @@ abstract contract ERC20Upgradeable is Initializable, IERC20Upgradeable {
      * - `recipient` cannot be the zero address.
      * - `sender` must have a balance of at least `amount`.
      */
-    function _transfer(address sender, address recipient, uint256 amount) internal virtual { }
+    function _transfer(address sender, address recipient, uint256 amount) internal virtual;
 
     /**
      * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
