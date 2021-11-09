@@ -59,7 +59,14 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-upgrade}.
      */
     function upgrade(address _poolValidators, address _oracles) external override onlyAdmin whenPaused {
-        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "Pool: already upgraded");
+        require(
+            _poolValidators != address(0) && address(validators) == 0xaAc73D4A26Ae6906aa115118b7840b1F19fcd3A5,
+            "Pool: invalid PoolValidators address"
+        );
+        require(
+            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
+            "Pool: invalid Oracles address"
+        );
 
         // set contract addresses
         validators = IPoolValidators(_poolValidators);
