@@ -166,8 +166,8 @@ interface IOracles {
     */
     function submitMerkleRoot(
         bytes32 merkleRoot,
-        string memory merkleProofs,
-        bytes[] memory signatures
+        string calldata merkleProofs,
+        bytes[] calldata signatures
     ) external;
 
     /**
@@ -178,9 +178,9 @@ interface IOracles {
     * @param signatures - oracles' signatures.
     */
     function initializeValidator(
-        IPoolValidators.DepositData memory depositData,
-        bytes32[] memory merkleProof,
-        bytes[] memory signatures
+        IPoolValidators.DepositData calldata depositData,
+        bytes32[] calldata merkleProof,
+        bytes[] calldata signatures
     ) external;
 
     /**
@@ -191,8 +191,8 @@ interface IOracles {
     * @param signatures - oracles' signatures.
     */
     function finalizeValidator(
-        IPoolValidators.DepositData memory depositData,
-        bytes32[] memory merkleProof,
-        bytes[] memory signatures
+        IPoolValidators.DepositData calldata depositData,
+        bytes32[] calldata merkleProof,
+        bytes[] calldata signatures
     ) external;
 }

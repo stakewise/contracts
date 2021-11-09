@@ -224,13 +224,13 @@ interface IPool {
     * @dev Function for initializing new pool validator.
     * @param depositData - the deposit data to submit for the validator.
     */
-    function initializeValidator(IPoolValidators.DepositData memory depositData) external;
+    function initializeValidator(IPoolValidators.DepositData calldata depositData) external;
 
     /**
     * @dev Function for finalizing new pool validator registration.
     * @param depositData - the deposit data to submit for the validator.
     */
-    function finalizeValidator(IPoolValidators.DepositData memory depositData) external;
+    function finalizeValidator(IPoolValidators.DepositData calldata depositData) external;
 
     /**
     * @dev Function for refunding to the pool.

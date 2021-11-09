@@ -145,7 +145,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     function submitRewards(
         uint256 totalRewards,
         uint256 activatedValidators,
-        bytes[] memory signatures
+        bytes[] calldata signatures
     )
         external override whenNotPaused
     {
@@ -191,8 +191,8 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      */
     function submitMerkleRoot(
         bytes32 merkleRoot,
-        string memory merkleProofs,
-        bytes[] memory signatures
+        string calldata merkleProofs,
+        bytes[] calldata signatures
     )
         external override whenNotPaused
     {
@@ -233,9 +233,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-initializeValidator}.
      */
     function initializeValidator(
-        IPoolValidators.DepositData memory depositData,
-        bytes32[] memory merkleProof,
-        bytes[] memory signatures
+        IPoolValidators.DepositData calldata depositData,
+        bytes32[] calldata merkleProof,
+        bytes[] calldata signatures
     )
         external override whenNotPaused
     {
@@ -275,9 +275,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-finalizeValidator}.
      */
     function finalizeValidator(
-        IPoolValidators.DepositData memory depositData,
-        bytes32[] memory merkleProof,
-        bytes[] memory signatures
+        IPoolValidators.DepositData calldata depositData,
+        bytes32[] calldata merkleProof,
+        bytes[] calldata signatures
     )
         external override whenNotPaused
     {

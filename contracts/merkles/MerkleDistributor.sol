@@ -90,7 +90,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         address origin,
         address token,
         uint256 amount,
-        string memory rewardsLink
+        string calldata rewardsLink
     )
         external override onlyAdmin
     {

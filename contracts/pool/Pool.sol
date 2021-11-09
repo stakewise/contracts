@@ -225,7 +225,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-initializeValidator}.
      */
-    function initializeValidator(IPoolValidators.DepositData memory depositData) external override whenNotPaused {
+    function initializeValidator(IPoolValidators.DepositData calldata depositData) external override whenNotPaused {
         require(msg.sender == address(validators), "Pool: access denied");
         require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
 
@@ -243,7 +243,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-finalizeValidator}.
      */
-    function finalizeValidator(IPoolValidators.DepositData memory depositData) external override whenNotPaused {
+    function finalizeValidator(IPoolValidators.DepositData calldata depositData) external override whenNotPaused {
         require(msg.sender == address(validators), "Pool: access denied");
         require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
 

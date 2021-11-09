@@ -62,9 +62,9 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     function addOperator(
         address _operator,
         bytes32 initializeMerkleRoot,
-        string memory initializeMerkleProofs,
+        string calldata initializeMerkleProofs,
         bytes32 finalizeMerkleRoot,
-        string memory finalizeMerkleProofs
+        string calldata finalizeMerkleProofs
     )
         external override onlyAdmin whenNotPaused
     {
@@ -157,7 +157,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     /**
      * @dev See {IPoolValidators-slashOperator}.
      */
-    function slashOperator(DepositData memory depositData, bytes32[] memory merkleProof) external override onlyAdmin whenNotPaused {
+    function slashOperator(DepositData calldata depositData, bytes32[] calldata merkleProof) external override onlyAdmin whenNotPaused {
         // fetch operator
         Operator storage operator = operators[depositData.operator];
         bytes32 initializeMerkleRoot = operator.initializeMerkleRoot;
@@ -203,7 +203,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     /**
      * @dev See {IPoolValidators-initializeValidator}.
      */
-    function initializeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override {
+    function initializeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external override {
         require(msg.sender == oracles, "PoolValidators: access denied");
 
         // mark validator as initialized -> prevents from initializing the same validator twice
@@ -255,7 +255,7 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
     /**
      * @dev See {IPoolValidators-finalizeValidator}.
      */
-    function finalizeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external override {
+    function finalizeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external override {
         require(msg.sender == oracles, "PoolValidators: access denied");
 
         // mark validator as finalized -> prevents from finalizing the same validator twice

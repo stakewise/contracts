@@ -143,9 +143,9 @@ interface IPoolValidators {
     function addOperator(
         address _operator,
         bytes32 initializeMerkleRoot,
-        string memory initializeMerkleProofs,
+        string calldata initializeMerkleProofs,
         bytes32 finalizeMerkleRoot,
-        string memory finalizeMerkleProofs
+        string calldata finalizeMerkleProofs
     ) external;
 
     /**
@@ -172,19 +172,19 @@ interface IPoolValidators {
     * @param depositData - deposit data of the validator to slash.
     * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
     */
-    function slashOperator(DepositData memory depositData, bytes32[] memory merkleProof) external;
+    function slashOperator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
 
     /**
     * @dev Function for initializing the operator.
     * @param depositData - deposit data of the validator to initialize.
     * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
     */
-    function initializeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external;
+    function initializeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
 
     /**
     * @dev Function for finalizing the operator.
     * @param depositData - deposit data of the validator to finalize.
     * @param merkleProof - an array of hashes to verify whether the deposit data is part of the finalize merkle root.
     */
-    function finalizeValidator(DepositData memory depositData, bytes32[] memory merkleProof) external;
+    function finalizeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
 }
