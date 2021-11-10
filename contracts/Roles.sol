@@ -11,6 +11,8 @@ import "./interfaces/IRoles.sol";
  * @dev Roles contract assigns roles to the accounts for the rewards distribution.
  */
 contract Roles is IRoles, OwnablePausableUpgradeable {
+    uint256 public constant MAX_PERCENT = 1e4;
+
     /**
      * @dev See {IRoles-initialize}.
      */
@@ -23,7 +25,7 @@ contract Roles is IRoles, OwnablePausableUpgradeable {
      */
     function setOperator(address account, uint256 revenueShare) external override onlyAdmin whenNotPaused {
         require(account != address(0), "Roles: account is the zero address");
-        require(revenueShare <= 1e4, "Roles: invalid revenue share");
+        require(revenueShare <= MAX_PERCENT, "Roles: invalid revenue share");
         emit OperatorUpdated(account, revenueShare);
     }
 
@@ -40,7 +42,7 @@ contract Roles is IRoles, OwnablePausableUpgradeable {
      */
     function setPartner(address account, uint256 revenueShare) external override onlyAdmin whenNotPaused {
         require(account != address(0), "Roles: account is the zero address");
-        require(revenueShare <= 1e4, "Roles: invalid revenue share");
+        require(revenueShare <= MAX_PERCENT, "Roles: invalid revenue share");
         emit PartnerUpdated(account, revenueShare);
     }
 

@@ -179,6 +179,19 @@
   },
   {
     "inputs": [],
+    "name": "MAX_PERCENT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "PAUSER_ROLE",
     "outputs": [
       {
