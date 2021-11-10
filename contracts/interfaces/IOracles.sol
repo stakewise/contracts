@@ -94,7 +94,7 @@ interface IOracles {
     /**
     * @dev Constructor for initializing the Oracles contract.
     * @param admin - address of the contract admin.
-    * @param prevOracles - address of the previous Oracles contract.
+    * @param oraclesV1 - address of the Oracles V1 contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _pool - address of the Pool contract.
     * @param _poolValidators - address of the PoolValidators contract.
@@ -102,7 +102,7 @@ interface IOracles {
     */
     function initialize(
         address admin,
-        address prevOracles,
+        address oraclesV1,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,

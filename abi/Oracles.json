@@ -554,7 +554,7 @@
       },
       {
         "internalType": "address",
-        "name": "prevOracles",
+        "name": "oraclesV1",
         "type": "address"
       },
       {

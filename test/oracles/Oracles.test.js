@@ -221,6 +221,20 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       );
     });
 
+    it('fails to submit without oracle role assigned', async () => {
+      await expectRevert(
+        oracles.submitRewards(
+          newTotalRewards,
+          newActivatedValidators,
+          signatures,
+          {
+            from: anyone,
+          }
+        ),
+        'Oracles: access denied'
+      );
+    });
+
     it('submits data with enough signatures', async () => {
       let receipt = await oracles.submitRewards(
         newTotalRewards,
@@ -352,6 +366,15 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
       );
     });
 
+    it('fails to submit without oracle role assigned', async () => {
+      await expectRevert(
+        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+          from: anyone,
+        }),
+        'Oracles: access denied'
+      );
+    });
+
     it('submits data with enough signatures', async () => {
       let receipt = await oracles.submitMerkleRoot(
         merkleRoot,
@@ -377,13 +400,6 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     });
 
     it('fails to vote for total rewards and merkle root in same block', async () => {
-      // clean up oracles
-      for (let i = 1; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
       // deploy mocked oracle
       let mockedOracle = await MulticallMock.new(
         oracles.address,
@@ -391,6 +407,9 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         contracts.rewardEthToken,
         merkleDistributor.address
       );
+      await oracles.addOracle(mockedOracle.address, {
+        from: admin,
+      });
 
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
@@ -406,10 +425,10 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         ]
       );
       candidateId = keccak256(encoded);
-
-      let rewardsSignatures = [
-        await web3.eth.sign(candidateId, oracleAccounts[0]),
-      ];
+      let rewardSignatures = [];
+      for (const oracleAccount of oracleAccounts) {
+        rewardSignatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
 
       // create merkle root signatures
       currentNonce = await oracles.currentRewardsNonce();
@@ -418,17 +437,19 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
         [currentNonce.toString(), merkleProofs, merkleRoot]
       );
       candidateId = keccak256(encoded);
-
-      let merkleRootSignatures = [
-        await web3.eth.sign(candidateId, oracleAccounts[0]),
-      ];
+      let merkleRootSignatures = [];
+      for (const oracleAccount of oracleAccounts) {
+        merkleRootSignatures.push(
+          await web3.eth.sign(candidateId, oracleAccount)
+        );
+      }
 
       await expectRevert(
         mockedOracle.updateTotalRewardsAndMerkleRoot(
           {
             totalRewards: totalRewards.toString(),
             activatedValidators: activatedValidators.toString(),
-            signatures: rewardsSignatures,
+            signatures: rewardSignatures,
           },
           {
             merkleRoot,

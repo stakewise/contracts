@@ -6,32 +6,14 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
 import "./interfaces/IRewardEthToken.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 import "./interfaces/IMerkleDistributor.sol";
 import "./interfaces/IPoolValidators.sol";
-
-
-interface IAccessControlUpgradeable {
-    /**
-     * @dev See {AccessControlUpgradeable-getRoleMemberCount}.
-     */
-    function getRoleMemberCount(bytes32 role) external view returns (uint256);
-
-    /**
-     * @dev See {AccessControlUpgradeable-getRoleMember}.
-     */
-    function getRoleMember(bytes32 role, uint256 index) external view returns (address);
-}
-
-interface IPrevOracles {
-    /**
-    * @dev Function for retrieving current rewards nonce.
-    */
-    function currentNonce() external view returns (uint256);
-}
+import "./interfaces/IOraclesV1.sol";
 
 /**
  * @title Oracles
@@ -64,11 +46,19 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     IMerkleDistributor private merkleDistributor;
 
     /**
+    * @dev Modifier for checking whether the caller is an oracle.
+    */
+    modifier onlyOracle() {
+        require(hasRole(ORACLE_ROLE, msg.sender), "Oracles: access denied");
+        _;
+    }
+
+    /**
      * @dev See {IOracles-initialize}.
      */
     function initialize(
         address admin,
-        address prevOracles,
+        address oraclesV1,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
@@ -76,13 +66,19 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     )
         external override initializer
     {
+        require(admin != address(0), "Pool: invalid admin address");
+        require(_rewardEthToken != address(0), "Pool: invalid RewardEthToken address");
+        require(_pool != address(0), "Pool: invalid Pool address");
+        require(_poolValidators != address(0), "Pool: invalid PoolValidators address");
+        require(_merkleDistributor != address(0), "Pool: invalid MerkleDistributor address");
+
         __OwnablePausableUpgradeable_init(admin);
 
         // migrate data from previous Oracles contract
-        rewardsNonce._value = IPrevOracles(prevOracles).currentNonce().add(1000);
-        uint256 oraclesCount = IAccessControlUpgradeable(prevOracles).getRoleMemberCount(ORACLE_ROLE);
+        rewardsNonce._value = IOraclesV1(oraclesV1).currentNonce().add(1000);
+        uint256 oraclesCount = AccessControlUpgradeable(oraclesV1).getRoleMemberCount(ORACLE_ROLE);
         for(uint256 i = 0; i < oraclesCount; i++) {
-            address oracle = IAccessControlUpgradeable(prevOracles).getRoleMember(ORACLE_ROLE, i);
+            address oracle = AccessControlUpgradeable(oraclesV1).getRoleMember(ORACLE_ROLE, i);
             _setupRole(ORACLE_ROLE, oracle);
             emit OracleAdded(oracle);
         }
@@ -136,7 +132,15 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      */
     function isMerkleRootVoting() public override view returns (bool) {
         uint256 lastRewardBlockNumber = rewardEthToken.lastUpdateBlockNumber();
-        return merkleDistributor.lastUpdateBlockNumber() < lastRewardBlockNumber && lastRewardBlockNumber < block.number;
+        return merkleDistributor.lastUpdateBlockNumber() < lastRewardBlockNumber && lastRewardBlockNumber != block.number;
+    }
+
+    /**
+    * @dev Function for checking whether number of signatures is enough to update the value.
+    * @param signaturesCount - number of signatures.
+    */
+    function isEnoughSignatures(uint256 signaturesCount) internal view returns (bool) {
+        return signaturesCount.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2);
     }
 
     /**
@@ -147,12 +151,9 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         uint256 activatedValidators,
         bytes[] calldata signatures
     )
-        external override whenNotPaused
+        external override onlyOracle whenNotPaused
     {
-        require(
-            signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
-            "Oracles: invalid number of signatures"
-        );
+        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = rewardsNonce.current();
@@ -194,13 +195,10 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         string calldata merkleProofs,
         bytes[] calldata signatures
     )
-        external override whenNotPaused
+        external override onlyOracle whenNotPaused
     {
         require(isMerkleRootVoting(), "Oracles: too early");
-        require(
-            signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
-            "Oracles: invalid number of signatures"
-        );
+        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = rewardsNonce.current();
@@ -239,10 +237,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     )
         external override whenNotPaused
     {
-        require(
-            signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
-            "Oracles: invalid number of signatures"
-        );
+        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
@@ -281,10 +276,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     )
         external override whenNotPaused
     {
-        require(
-            signatures.length.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2),
-            "Oracles: invalid number of signatures"
-        );
+        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
