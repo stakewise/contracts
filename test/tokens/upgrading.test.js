@@ -49,7 +49,7 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
       rewardEthToken.upgrade(oracles, {
         from: admin,
       }),
-      'RewardEthToken: already upgraded'
+      'Pool: invalid Oracles address'
     );
   });
 });
