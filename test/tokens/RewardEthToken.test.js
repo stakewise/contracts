@@ -33,8 +33,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     totalSupply,
     pool,
     oracles,
-    oracleAccounts,
-    protocolFeeRecipient;
+    oracleAccounts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -50,7 +49,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
-    protocolFeeRecipient = await rewardEthToken.protocolFeeRecipient();
     totalSupply = await rewardEthToken.totalSupply();
     await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
   });
