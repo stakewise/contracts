@@ -285,7 +285,7 @@ async function registerValidator({
   initAmount = ether('1'),
   depositDataIndex = 0,
 }) {
-  if ((await validators.getOperator(operator))[2] !== constants.ZERO_BYTES32) {
+  if ((await validators.getOperator(operator))[0] === constants.ZERO_BYTES32) {
     await validators.addOperator(
       operator,
       initializeMerkleRoot,
@@ -296,13 +296,17 @@ async function registerValidator({
         from: admin,
       }
     );
-  }
 
-  if ((await validators.collaterals(operator)).lt(initAmount)) {
-    await validators.commitOperator({
-      value: initAmount,
-      from: operator,
-    });
+    if ((await validators.collaterals(operator)).lt(initAmount)) {
+      await validators.commitOperator({
+        value: initAmount,
+        from: operator,
+      });
+    } else {
+      await validators.commitOperator({
+        from: operator,
+      });
+    }
   }
 
   let {

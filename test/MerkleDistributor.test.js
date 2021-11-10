@@ -211,6 +211,23 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
     });
 
+    it('fails to distribute when paused', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.distributePeriodically(
+          admin,
+          token.address,
+          beneficiary,
+          amount,
+          durationInBlocks,
+          {
+            from: admin,
+          }
+        ),
+        'Pausable: paused'
+      );
+    });
+
     it('admin can distribute tokens', async () => {
       await token.approve(merkleDistributor.address, amount, {
         from: admin,
@@ -307,6 +324,23 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           }
         ),
         'SafeMath: subtraction overflow'
+      );
+    });
+
+    it('fails to distribute when paused', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'Pausable: paused'
       );
     });
 
@@ -573,13 +607,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           oracleAccounts,
         });
 
-        // clean up oracles
-        for (let i = 1; i < oracleAccounts.length; i++) {
-          await oracles.removeOracle(oracleAccounts[i], {
-            from: admin,
-          });
-        }
-
         // deploy mocked oracle
         multicallMock = await MulticallMock.new(
           oracles.address,
@@ -587,6 +614,9 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           rewardEthToken.address,
           merkleDistributor.address
         );
+        await oracles.addOracle(multicallMock.address, {
+          from: admin,
+        });
 
         await pool.stake({
           from: anyone,
@@ -616,9 +646,12 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           ]
         );
         let candidateId = hexlify(keccak256(encoded));
-        rewardsSignatures = [
-          await web3.eth.sign(candidateId, oracleAccounts[0]),
-        ];
+        rewardsSignatures = [];
+        for (const oracleAccount of oracleAccounts) {
+          rewardsSignatures.push(
+            await web3.eth.sign(candidateId, oracleAccount)
+          );
+        }
 
         // create merkle root signature
         encoded = defaultAbiCoder.encode(
@@ -626,9 +659,12 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           [currentNonce.add(new BN(1)).toString(), merkleProofs, merkleRoot]
         );
         candidateId = hexlify(keccak256(encoded));
-        merkleRootSignatures = [
-          await web3.eth.sign(candidateId, oracleAccounts[0]),
-        ];
+        merkleRootSignatures = [];
+        for (const oracleAccount of oracleAccounts) {
+          merkleRootSignatures.push(
+            await web3.eth.sign(candidateId, oracleAccount)
+          );
+        }
       });
 
       it('cannot claim after total rewards update in the same block', async () => {
@@ -680,7 +716,10 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         await oracles.submitRewards(
           totalRewards,
           activatedValidators,
-          rewardsSignatures
+          rewardsSignatures,
+          {
+            from: oracleAccounts[0],
+          }
         );
         await expectRevert(
           multicallMock.claimAndUpdateMerkleRoot(
@@ -702,7 +741,10 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         await oracles.submitRewards(
           totalRewards,
           activatedValidators,
-          rewardsSignatures
+          rewardsSignatures,
+          {
+            from: oracleAccounts[0],
+          }
         );
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await multicallMock.updateMerkleRootAndClaim(
@@ -745,7 +787,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         merkleDistributor.upgrade(oracles.address, {
           from: admin,
         }),
-        'MerkleDistributor: already upgraded'
+        'MerkleDistributor: invalid Oracles address'
       );
     });
   });

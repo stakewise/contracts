@@ -39,7 +39,10 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
      * @dev See {IMerkleDistributor-upgrade}.
      */
     function upgrade(address _oracles) external override onlyAdmin whenPaused {
-        require(address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514, "MerkleDistributor: already upgraded");
+        require(
+            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
+            "MerkleDistributor: invalid Oracles address"
+        );
         oracles = IOracles(_oracles);
     }
 
@@ -70,7 +73,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         uint256 amount,
         uint256 durationInBlocks
     )
-        external override onlyAdmin
+        external override onlyAdmin whenNotPaused
     {
         require(amount > 0, "MerkleDistributor: invalid amount");
 
@@ -92,7 +95,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         uint256 amount,
         string calldata rewardsLink
     )
-        external override onlyAdmin
+        external override onlyAdmin whenNotPaused
     {
         require(amount > 0, "MerkleDistributor: invalid amount");
 
@@ -132,6 +135,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     )
         external override whenNotPaused
     {
+        require(account != address(0), "MerkleDistributor: invalid account");
         address _rewardEthToken = rewardEthToken; // gas savings
         require(
             IRewardEthToken(_rewardEthToken).lastUpdateBlockNumber() < lastUpdateBlockNumber,
