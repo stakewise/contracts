@@ -87,6 +87,8 @@ contract PoolValidators is IPoolValidators, OwnablePausableUpgradeable, Reentran
         // load operator
         Operator storage operator = operators[_operator];
         require(!operator.locked, "PoolValidators: operator locked");
+        require(operator.initializeMerkleRoot != initializeMerkleRoot, "PoolValidators: same initialize merkle root");
+        require(operator.finalizeMerkleRoot != finalizeMerkleRoot, "PoolValidators: same finalize merkle root");
 
         // update operator
         operator.initializeMerkleRoot = initializeMerkleRoot;

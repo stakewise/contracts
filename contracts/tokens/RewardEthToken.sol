@@ -217,6 +217,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);
+            return;
         }
 
         // calculate protocol reward and new reward per token amount
@@ -267,6 +268,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      */
     function claim(address account, uint256 amount) external override {
         require(msg.sender == merkleDistributor, "RewardEthToken: access denied");
+        require(account != address(0), "RewardEthToken: invalid account");
 
         // update checkpoints, transfer amount from distributor to account
         uint128 _rewardPerToken = rewardPerToken;

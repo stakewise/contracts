@@ -33,7 +33,8 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     totalSupply,
     pool,
     oracles,
-    oracleAccounts;
+    oracleAccounts,
+    protocolFeeRecipient;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -383,13 +384,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('cannot transfer rewards after total rewards update in the same block', async () => {
-      // clean up oracles
-      for (let i = 1; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
       // deploy mocked oracle
       let multicallMock = await MulticallMock.new(
         oracles.address,
@@ -397,15 +391,18 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         rewardEthToken.address,
         merkleDistributor
       );
+      await oracles.addOracle(multicallMock.address, {
+        from: admin,
+      });
 
       await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
+      let currentNonce = await oracles.currentRewardsNonce();
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
-
-      let currentNonce = await oracles.currentRewardsNonce();
+      let signatures = [];
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
         [
@@ -415,14 +412,16 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         ]
       );
       let candidateId = hexlify(keccak256(encoded));
-      let signature = await web3.eth.sign(candidateId, oracleAccounts[0]);
+      for (const oracleAccount of oracleAccounts) {
+        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
 
       await expectRevert(
         multicallMock.updateTotalRewardsAndTransferRewards(
           totalRewards,
           activatedValidators,
           sender2,
-          [signature],
+          signatures,
           {
             from: sender1,
           }
@@ -432,13 +431,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('can transfer rewards before total rewards update in the same block', async () => {
-      // clean up oracles
-      for (let i = 1; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
       // deploy mocked multicall
       let multicallMock = await MulticallMock.new(
         oracles.address,
@@ -446,15 +438,18 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         rewardEthToken.address,
         merkleDistributor
       );
+      await oracles.addOracle(multicallMock.address, {
+        from: admin,
+      });
 
       await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
+      let currentNonce = await oracles.currentRewardsNonce();
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
-
-      let currentNonce = await oracles.currentRewardsNonce();
+      let signatures = [];
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'uint256', 'uint256'],
         [
@@ -464,12 +459,15 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         ]
       );
       let candidateId = hexlify(keccak256(encoded));
-      let signature = await web3.eth.sign(candidateId, oracleAccounts[0]);
+      for (const oracleAccount of oracleAccounts) {
+        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
+
       let receipt = await multicallMock.transferRewardsAndUpdateTotalRewards(
         totalRewards,
         activatedValidators,
         sender2,
-        [signature],
+        signatures,
         {
           from: sender1,
         }

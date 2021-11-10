@@ -42,7 +42,7 @@ contract('Pool (upgrading)', ([sender]) => {
     await pool.pause({ from: admin });
     await expectRevert(
       pool.upgrade(poolValidators, oracles, { from: admin }),
-      'Pool: already upgraded'
+      'Pool: invalid PoolValidators address'
     );
   });
 });
