@@ -405,13 +405,6 @@ contract('StakedEthToken', (accounts) => {
     });
 
     it('can transfer staked amount before total rewards update in the same block', async () => {
-      // clean up oracles
-      for (let i = 1; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
       // deploy mocked multicall
       let multicallMock = await MulticallMock.new(
         oracles.address,
@@ -419,6 +412,9 @@ contract('StakedEthToken', (accounts) => {
         contracts.rewardEthToken,
         merkleDistributor
       );
+      await oracles.addOracle(multicallMock.address, {
+        from: admin,
+      });
 
       await stakedEthToken.approve(multicallMock.address, value, {
         from: sender1,
