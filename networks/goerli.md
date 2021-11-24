@@ -17,8 +17,8 @@
 
 ## Pool Validators
 
-- Contract: [0xe3daeBE5D6Cd72372d03059BF8A2d9A53ABBdb8f](https://goerli.etherscan.io/address/0xe3daeBE5D6Cd72372d03059BF8A2d9A53ABBdb8f)
-- Transaction: [0xfd2d2f8d1b4dd575ac88238b1705a812d0222e38e11675ee2561ce1ec42c6565](https://goerli.etherscan.io/tx/0xfd2d2f8d1b4dd575ac88238b1705a812d0222e38e11675ee2561ce1ec42c6565)
+- Contract: [0x0d92156861a0BC7037cC21470327Bd3Bc750EB1D](https://goerli.etherscan.io/address/0x0d92156861a0BC7037cC21470327Bd3Bc750EB1D)
+- Transaction: [0x077b6fc63754433799822e20eb6b42f6b213f296f2a2bb80ef4fb402ede6161a](https://goerli.etherscan.io/tx/0x077b6fc63754433799822e20eb6b42f6b213f296f2a2bb80ef4fb402ede6161a)
 
 ## StakedEthToken
 
@@ -37,8 +37,8 @@
 
 ## Oracles
 
-- Contract: [0x696b622baFA1747333BeE5D1142bb530E41d1063](https://goerli.etherscan.io/address/0x696b622baFA1747333BeE5D1142bb530E41d1063)
-- Transaction: [0xe2e64089029fda80229418f8c74128ed1feba0939209394000e703186ce1c9f6](https://goerli.etherscan.io/tx/0xe2e64089029fda80229418f8c74128ed1feba0939209394000e703186ce1c9f6)
+- Contract: [0x06b0C9476315634dCc59AA3F3f7d5Df6feCbAa90](https://goerli.etherscan.io/address/0x06b0C9476315634dCc59AA3F3f7d5Df6feCbAa90)
+- Transaction: [0x133190b18ed0ac25af41a156eabaf3c82aa470c87ed9266c896f99a1ef858c10](https://goerli.etherscan.io/tx/0x133190b18ed0ac25af41a156eabaf3c82aa470c87ed9266c896f99a1ef858c10)
 
 ## Vesting Escrow
 
@@ -72,8 +72,8 @@
 
 ## Roles
 
-- Contract: [0x039FF733aA9736D66bFA96aD61Fa635E97464D66](https://goerli.etherscan.io/address/0x039FF733aA9736D66bFA96aD61Fa635E97464D66)
-- Transaction: [0xba8a985fd5618230288732e864561667673042b04dd33118999f9b149863d68e](https://goerli.etherscan.io/tx/0xba8a985fd5618230288732e864561667673042b04dd33118999f9b149863d68e)
+- Contract: [0x81aaa59d7d1000A56326Bb577DEbc287Cbd351cC](https://goerli.etherscan.io/address/0x81aaa59d7d1000A56326Bb577DEbc287Cbd351cC)
+- Transaction: [0x2e40569f3f18456efca62180037dfb98be4746ad9161cf77dc0107dc11c6fda3](https://goerli.etherscan.io/tx/0x2e40569f3f18456efca62180037dfb98be4746ad9161cf77dc0107dc11c6fda3)
 
 ## Contract Checker
 

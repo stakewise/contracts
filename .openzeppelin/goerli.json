@@ -46,18 +46,18 @@
       "kind": "transparent"
     },
     {
-      "address": "0xe3daeBE5D6Cd72372d03059BF8A2d9A53ABBdb8f",
-      "txHash": "0xfd2d2f8d1b4dd575ac88238b1705a812d0222e38e11675ee2561ce1ec42c6565",
+      "address": "0x0d92156861a0BC7037cC21470327Bd3Bc750EB1D",
+      "txHash": "0x077b6fc63754433799822e20eb6b42f6b213f296f2a2bb80ef4fb402ede6161a",
       "kind": "transparent"
     },
     {
-      "address": "0x696b622baFA1747333BeE5D1142bb530E41d1063",
-      "txHash": "0xe2e64089029fda80229418f8c74128ed1feba0939209394000e703186ce1c9f6",
+      "address": "0x06b0C9476315634dCc59AA3F3f7d5Df6feCbAa90",
+      "txHash": "0x133190b18ed0ac25af41a156eabaf3c82aa470c87ed9266c896f99a1ef858c10",
       "kind": "transparent"
     },
     {
-      "address": "0x039FF733aA9736D66bFA96aD61Fa635E97464D66",
-      "txHash": "0xba8a985fd5618230288732e864561667673042b04dd33118999f9b149863d68e",
+      "address": "0x81aaa59d7d1000A56326Bb577DEbc287Cbd351cC",
+      "txHash": "0x2e40569f3f18456efca62180037dfb98be4746ad9161cf77dc0107dc11c6fda3",
       "kind": "transparent"
     }
   ],
@@ -2552,9 +2552,9 @@
         }
       }
     },
-    "3ed406b186d307f07f9bddccd020038668a000ca60bf30e827cde815e0604f80": {
-      "address": "0x29c364B7e5D65e24F73d0c2468aA6B69bB5D024e",
-      "txHash": "0x1a2f667cd1c36987fb2480e44ab063a033d7f128da6fd2d2e64c343bb76262b1",
+    "d377dd09cee01cc34566867233cd0093a8d4210bca54a545b32d225e878fbefb": {
+      "address": "0x08a242f9734eC8180b547fC166F529f62649f5F5",
+      "txHash": "0x3691e04a55d3e4628de2974796ea405d36799a6862c1a0829938727492959771",
       "layout": {
         "storage": [
           {
@@ -2614,7 +2614,7 @@
           {
             "contract": "PoolValidators",
             "label": "validatorStatuses",
-            "type": "t_mapping(t_bytes32,t_enum(ValidatorStatus)6690)",
+            "type": "t_mapping(t_bytes32,t_enum(ValidatorStatus)6737)",
             "src": "contracts/pool/PoolValidators.sol:24"
           },
           {
@@ -2626,13 +2626,13 @@
           {
             "contract": "PoolValidators",
             "label": "operators",
-            "type": "t_mapping(t_address,t_struct(Operator)6674_storage)",
+            "type": "t_mapping(t_address,t_struct(Operator)6721_storage)",
             "src": "contracts/pool/PoolValidators.sol:30"
           },
           {
             "contract": "PoolValidators",
             "label": "pool",
-            "type": "t_contract(IPool)6604",
+            "type": "t_contract(IPool)6651",
             "src": "contracts/pool/PoolValidators.sol:33"
           },
           {
@@ -2643,13 +2643,13 @@
           }
         ],
         "types": {
-          "t_mapping(t_bytes32,t_enum(ValidatorStatus)6690)": {
+          "t_mapping(t_bytes32,t_enum(ValidatorStatus)6737)": {
             "label": "mapping(bytes32 => enum IPoolValidators.ValidatorStatus)"
           },
           "t_bytes32": {
             "label": "bytes32"
           },
-          "t_enum(ValidatorStatus)6690": {
+          "t_enum(ValidatorStatus)6737": {
             "label": "enum IPoolValidators.ValidatorStatus",
             "members": [
               "Uninitialized",
@@ -2667,10 +2667,10 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_mapping(t_address,t_struct(Operator)6674_storage)": {
+          "t_mapping(t_address,t_struct(Operator)6721_storage)": {
             "label": "mapping(address => struct IPoolValidators.Operator)"
           },
-          "t_struct(Operator)6674_storage": {
+          "t_struct(Operator)6721_storage": {
             "label": "struct IPoolValidators.Operator",
             "members": [
               {
@@ -2694,7 +2694,7 @@
           "t_bool": {
             "label": "bool"
           },
-          "t_contract(IPool)6604": {
+          "t_contract(IPool)6651": {
             "label": "contract IPool"
           },
           "t_array(t_uint256)49_storage": {
@@ -2750,9 +2750,9 @@
         }
       }
     },
-    "5224a7ce19b6cc5d5de4321bcd9e0c2db26f5238a019a580242aeb8cce83c586": {
-      "address": "0xE03B63730a917757c8BbC8Bbe8D0f7A57e7075d2",
-      "txHash": "0x7cfa36bc27d8a1c589fdae2fbcca07bab1f9b7c0d3d8d9c820f89c7e68d860de",
+    "80825b74c6a6f5cc9b67b8563f272012ebc5da55f88f626617229b6f56169c85": {
+      "address": "0x91b288E29feb04C9fD319f94e0ee75CE3f4DE17a",
+      "txHash": "0x3da45345456535f568dd7ee045d887557102a1666b404a866e48aef644de6d83",
       "layout": {
         "storage": [
           {
@@ -2801,37 +2801,37 @@
             "contract": "Oracles",
             "label": "rewardsNonce",
             "type": "t_struct(Counter)1781_storage",
-            "src": "contracts/Oracles.sol:49"
+            "src": "contracts/Oracles.sol:31"
           },
           {
             "contract": "Oracles",
             "label": "validatorsNonce",
             "type": "t_struct(Counter)1781_storage",
-            "src": "contracts/Oracles.sol:52"
+            "src": "contracts/Oracles.sol:34"
           },
           {
             "contract": "Oracles",
             "label": "rewardEthToken",
-            "type": "t_contract(IRewardEthToken)6987",
-            "src": "contracts/Oracles.sol:55"
+            "type": "t_contract(IRewardEthToken)7034",
+            "src": "contracts/Oracles.sol:37"
           },
           {
             "contract": "Oracles",
             "label": "pool",
-            "type": "t_contract(IPool)6604",
-            "src": "contracts/Oracles.sol:58"
+            "type": "t_contract(IPool)6651",
+            "src": "contracts/Oracles.sol:40"
           },
           {
             "contract": "Oracles",
             "label": "poolValidators",
-            "type": "t_contract(IPoolValidators)6831",
-            "src": "contracts/Oracles.sol:61"
+            "type": "t_contract(IPoolValidators)6878",
+            "src": "contracts/Oracles.sol:43"
           },
           {
             "contract": "Oracles",
             "label": "merkleDistributor",
-            "type": "t_contract(IMerkleDistributor)6059",
-            "src": "contracts/Oracles.sol:64"
+            "type": "t_contract(IMerkleDistributor)6095",
+            "src": "contracts/Oracles.sol:46"
           }
         ],
         "types": {
@@ -2847,16 +2847,16 @@
           "t_uint256": {
             "label": "uint256"
           },
-          "t_contract(IRewardEthToken)6987": {
+          "t_contract(IRewardEthToken)7034": {
             "label": "contract IRewardEthToken"
           },
-          "t_contract(IPool)6604": {
+          "t_contract(IPool)6651": {
             "label": "contract IPool"
           },
-          "t_contract(IPoolValidators)6831": {
+          "t_contract(IPoolValidators)6878": {
             "label": "contract IPoolValidators"
           },
-          "t_contract(IMerkleDistributor)6059": {
+          "t_contract(IMerkleDistributor)6095": {
             "label": "contract IMerkleDistributor"
           },
           "t_mapping(t_bytes32,t_struct(RoleData)39_storage)": {
@@ -2918,9 +2918,9 @@
         }
       }
     },
-    "94f527d3d9ee34ef4e4b50eb45fa61007d2ce4bb566d8cdc28b18e4a8b869038": {
-      "address": "0x906447B38C296311aCDb75Be36772F8Fd52D9275",
-      "txHash": "0x16badf54367972f9a9b26e5214afe873f82c2a4091a63038d21cb576eab8a2c1",
+    "c16e4b952994fa08e80e4e9254ad6dc7b05d9eb6dc641438f4281b10e5e5ad70": {
+      "address": "0xc20d2dD754496fA82Bfdd580863ca231a65C4A8A",
+      "txHash": "0xf2cc0ab1140c8aadba3fa79eaddca7b41b897c4c76cebd7712ec8106f3b623c5",
       "layout": {
         "storage": [
           {
