@@ -10,6 +10,11 @@
 - Implementation: [0xAB10021EA5d14156f52414C492bf81859d0b21F6](https://goerli.etherscan.io/address/0xAB10021EA5d14156f52414C492bf81859d0b21F6)
 - Transaction: [0xe71758c8df2927dac4f8c3854cbefd5fa73d95dcde38d68a91718d7a702b0dc5](https://goerli.etherscan.io/tx/0xe71758c8df2927dac4f8c3854cbefd5fa73d95dcde38d68a91718d7a702b0dc5)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0x6931a7A2B196386005a3E1F9752542227d4f4d64](https://goerli.etherscan.io/address/0x6931a7A2B196386005a3E1F9752542227d4f4d64)
+- Transaction: [0x228165334c43538905f2352b399181f2ae789672a80377a2af256d7142591553](https://goerli.etherscan.io/tx/0x228165334c43538905f2352b399181f2ae789672a80377a2af256d7142591553)
+
 ## Pool Escrow
 
 - Contract: [0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218](https://goerli.etherscan.io/address/0x040f15c6b5bfc5f324ecab5864c38d4e1eef4218)
@@ -29,6 +34,11 @@
 
 - Contract: [0x826f88d423440c305D9096cC1581Ae751eFCAfB0](https://goerli.etherscan.io/address/0x826f88d423440c305D9096cC1581Ae751eFCAfB0)
 - Transaction: [0xdf77776425e06f9d045c33315ed8223dd274abf807687158a39bd34556dd01a6](https://goerli.etherscan.io/tx/0xdf77776425e06f9d045c33315ed8223dd274abf807687158a39bd34556dd01a6)
+
+### Upgrade to v2.0.0
+
+- Implementation: [0x45E444930236De8548CAe187C2CD0BbDE73f5e13](https://goerli.etherscan.io/address/0x45E444930236De8548CAe187C2CD0BbDE73f5e13)
+- Transaction: [0xd380bc2b7825760baab9b63dbf79f21e58d1a2854189b725f3d8dd20c8a2073c](https://goerli.etherscan.io/tx/0xd380bc2b7825760baab9b63dbf79f21e58d1a2854189b725f3d8dd20c8a2073c)
 
 ## StakeWiseToken
 
@@ -69,6 +79,11 @@
 
 - Contract: [0x6Ef0172b79131C66c7012Db3545D637B116feb12](https://goerli.etherscan.io/address/0x6Ef0172b79131C66c7012Db3545D637B116feb12)
 - Transaction: [0x6f4a9d39776a4eb4cfd41738e0e8718aa240da00d2ceda44b1527b771a978535](https://goerli.etherscan.io/tx/0x6f4a9d39776a4eb4cfd41738e0e8718aa240da00d2ceda44b1527b771a978535)
+
+### Upgrade to v2.0.0
+
+- Implementation: [0x3022648376AfBf1f716111a256221043b7a03c1f](https://goerli.etherscan.io/address/0x3022648376AfBf1f716111a256221043b7a03c1f)
+- Transaction: [0xa015f12cee81675b2e1254084398ac43c8b799590a1748752daee6ab1d0bc1cb](https://goerli.etherscan.io/tx/0xa015f12cee81675b2e1254084398ac43c8b799590a1748752daee6ab1d0bc1cb)
 
 ## Roles
 

@@ -78,7 +78,9 @@ async function upgradeMerkleDistributor(oraclesContractAddress) {
   let merkleDistributor = MerkleDistributor.attach(contracts.merkleDistributor);
 
   // pause
-  await merkleDistributor.pause();
+  if (!(await merkleDistributor.paused())) {
+    await merkleDistributor.pause();
+  }
 
   // upgrade MerkleDistributor to new implementation
   const proxy = await upgrades.upgradeProxy(
@@ -103,7 +105,9 @@ async function upgradePool(
   let pool = await Pool.attach(contracts.pool);
 
   // pause
-  await pool.pause();
+  if (!(await pool.paused())) {
+    await pool.pause();
+  }
 
   // upgrade Pool to new implementation
   const proxy = await upgrades.upgradeProxy(contracts.pool, Pool);
@@ -125,7 +129,9 @@ async function upgradeRewardEthToken(oraclesContractAddress) {
   let rewardEthToken = await RewardEthToken.attach(contracts.rewardEthToken);
 
   // pause
-  await rewardEthToken.pause();
+  if (!(await rewardEthToken.paused())) {
+    await rewardEthToken.pause();
+  }
 
   // upgrade RewardEthToken to new implementation
   const proxy = await upgrades.upgradeProxy(
@@ -144,6 +150,29 @@ async function upgradeRewardEthToken(oraclesContractAddress) {
 }
 
 async function deployContracts() {
+  const Pool = await ethers.getContractFactory('Pool');
+  let impl = await upgrades.prepareUpgrade(contracts.pool, Pool);
+  log(white(`Deployed Pool implementation contract: ${green(impl)}`));
+
+  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
+  impl = await upgrades.prepareUpgrade(
+    contracts.rewardEthToken,
+    RewardEthToken,
+    { unsafeAllowRenames: true }
+  );
+  log(white(`Deployed RewardEthToken implementation contract: ${green(impl)}`));
+
+  const MerkleDistributor = await ethers.getContractFactory(
+    'MerkleDistributor'
+  );
+  impl = await upgrades.prepareUpgrade(
+    contracts.merkleDistributor,
+    MerkleDistributor
+  );
+  log(
+    white(`Deployed MerkleDistributor implementation contract: ${green(impl)}`)
+  );
+
   const poolValidators = await deployPoolValidators();
   log(white(`Deployed Pool Validators contract: ${green(poolValidators)}`));
 
