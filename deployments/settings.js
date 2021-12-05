@@ -3,7 +3,6 @@ const hre = require('hardhat');
 let contracts, contractSettings;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contracts = {
-    validators: '0xE2F13059454b626e42e04845815E9Ed2E9774bF3',
     oracles: '0x06b0C9476315634dCc59AA3F3f7d5Df6feCbAa90',
     pool: '0x8c1EfEcFb5c4F1099AB0460b5659342943764Df7',
     poolValidators: '0x0d92156861a0BC7037cC21470327Bd3Bc750EB1D',
@@ -35,6 +34,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     vestingEscrowFactory: '0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5',
     merkleDrop: '0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5',
     merkleDistributor: '0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20',
+    contractChecker: '0xFC1fC7257AEA7C7c08A498594DCA97CE5A72fdCB',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
   };
 

@@ -101,6 +101,11 @@
 - Contract: [0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5](https://etherscan.io/address/0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5)
 - Transaction: [0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87](https://etherscan.io/tx/0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87)
 
+## Contract Checker
+
+- Contract: [0x85ee326f839Bc430655A3fad447837072ef52C2F](https://etherscan.io/address/0xfc1fc7257aea7c7c08a498594dca97ce5a72fdcb)
+- Transaction: [0xedd8ba44e04a766a79a0ce50a16343e7635483633eac7169cbf4e52f50961ce1](https://etherscan.io/tx/0xedd8ba44e04a766a79a0ce50a16343e7635483633eac7169cbf4e52f50961ce1)
+
 ## Proxy Admin
 
 - Contract: [0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22](https://etherscan.io/address/0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22)
