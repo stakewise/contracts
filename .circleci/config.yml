@@ -87,8 +87,8 @@ jobs:
       - run:
           name: Report gas changes
           command: |
-            npx hardhat gas-reporter:merge gasReporterOutput-*.json
-            npx codechecks codechecks.unit.yml
+            npx hardhat gas-reporter:merge /tmp/workspace/gasReporterOutput-*.json
+            npx codechecks
       - store_artifacts:
           path: gasReporterOutput.json
       - run:
@@ -129,7 +129,7 @@ workflows:
       - test:
           requires:
             - compile
-      - test-gas-report:
+      - report-gas:
           requires:
             - test
 #      - coverage:
