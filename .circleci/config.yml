@@ -58,17 +58,47 @@ jobs:
   test:
     executor: default
     resource_class: large
-    parallelism: 4
+    parallelism: 8
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/workspace
       - run:
           name: Run tests
-          command: yarn test:gas
+          command: |
+            circleci tests glob 'test/**/*.test.js' |
+            circleci tests split |
+            xargs yarn test:gas
+      - run:
+          name: Save gas report
+          command: |
+            mv gasReporterOutput.json /tmp/workspace/gasReporterOutput-$CIRCLE_NODE_INDEX.json
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - gasReporterOutput-*.json
+
+  report-gas:
+    executor: default
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
       - run:
           name: Report gas changes
-          command: npx codechecks
+          command: |
+            npx hardhat gas-reporter:merge gasReporterOutput-*.json
+            npx codechecks codechecks.unit.yml
+      - store_artifacts:
+          path: gasReporterOutput.json
+      - run:
+          name: Process test report
+          when: always
+          command: |
+            # Convert absolute paths to relative to support splitting tests by timing
+            if [ -e /tmp/workspace/log/test-results/mocha/test-results.xml ]; then
+              sed -i "s|`pwd`/||g" /tmp/workspace/log/test-results/mocha/test-results.xml
+            fi
 
 # FIXME: https://github.com/sc-forks/solidity-coverage/issues/574
 #  coverage:
@@ -99,6 +129,9 @@ workflows:
       - test:
           requires:
             - compile
+      - test-gas-report:
+          requires:
+            - test
 #      - coverage:
 #          requires:
 #            - compile
