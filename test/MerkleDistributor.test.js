@@ -432,27 +432,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
     });
 
-    it('cannot claim more eth rewards than allocated to the distributor', async () => {
-      await token.transfer(merkleDistributor.address, distributorTokenReward, {
-        from: admin,
-      });
-      await setMerkleRoot({
-        merkleDistributor,
-        merkleRoot,
-        merkleProofs,
-        oracles,
-        oracleAccounts,
-      });
-
-      const { index, amounts, tokens, proof } = merkleProofs[account1];
-      await expectRevert(
-        merkleDistributor.claim(index, account1, tokens, amounts, proof, {
-          from: anyone,
-        }),
-        'SafeMath: subtraction overflow'
-      );
-    });
-
     it('cannot claim twice', async () => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
@@ -691,23 +670,20 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
       it('can claim before total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await expectRevert(
-          multicallMock.claimAndUpdateTotalRewards(
-            {
-              totalRewards: totalRewards.toString(),
-              activatedValidators: activatedValidators.toString(),
-              signatures: rewardsSignatures,
-            },
-            index,
-            account1,
-            tokens,
-            amounts,
-            proof,
-            {
-              from: anyone,
-            }
-          ),
-          'SafeMath: subtraction overflow'
+        await multicallMock.claimAndUpdateTotalRewards(
+          {
+            totalRewards: totalRewards.toString(),
+            activatedValidators: activatedValidators.toString(),
+            signatures: rewardsSignatures,
+          },
+          index,
+          account1,
+          tokens,
+          amounts,
+          proof,
+          {
+            from: anyone,
+          }
         );
       });
 

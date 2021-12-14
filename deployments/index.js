@@ -202,23 +202,16 @@ async function deployContracts() {
 }
 
 async function upgradeContracts() {
-  const { poolValidators, oracles, roles } = await deployContracts();
-
-  await upgradeMerkleDistributor(oracles);
+  await upgradeMerkleDistributor(contracts.oracles);
   log(white('Upgraded MerkleDistributor contract'));
 
-  await upgradePool(poolValidators, oracles);
+  await upgradePool(contracts.poolValidators, contracts.oracles);
   log(white('Upgraded Pool contract'));
 
-  await upgradeRewardEthToken(oracles);
+  await upgradeRewardEthToken(contracts.oracles);
   log(white('Upgraded RewardEthToken contract'));
 
-  return {
-    ...contracts,
-    poolValidators,
-    oracles,
-    roles,
-  };
+  return contracts;
 }
 
 module.exports = {

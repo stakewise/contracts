@@ -26,7 +26,7 @@ contract('Oracles (upgrading)', ([anyone]) => {
   afterEach(async () => resetFork());
 
   it('initializes with values from previous contract', async () => {
-    let prevOracles = await PrevOracles.at(contracts.oracles);
+    let prevOracles = await PrevOracles.at(contracts.prevOracles);
     expect(await prevOracles.currentNonce()).to.bignumber.equal(
       (await oracles.currentRewardsNonce()).sub(new BN('1000'))
     );
