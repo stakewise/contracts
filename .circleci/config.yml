@@ -57,6 +57,7 @@ jobs:
 
   test:
     executor: default
+    resource_class: large
     steps:
       - checkout
       - attach_workspace:
