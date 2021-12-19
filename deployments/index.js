@@ -39,7 +39,7 @@ async function deployAndInitializeOracles(poolValidatorsContractAddress) {
     Oracles,
     [
       contractSettings.admin,
-      contracts.oracles,
+      contracts.prevOracles,
       contracts.rewardEthToken,
       contracts.pool,
       poolValidatorsContractAddress,
@@ -202,16 +202,23 @@ async function deployContracts() {
 }
 
 async function upgradeContracts() {
-  await upgradeMerkleDistributor(contracts.oracles);
+  const { poolValidators, oracles, roles } = await deployContracts();
+
+  await upgradeMerkleDistributor(oracles);
   log(white('Upgraded MerkleDistributor contract'));
 
-  await upgradePool(contracts.poolValidators, contracts.oracles);
+  await upgradePool(poolValidators, oracles);
   log(white('Upgraded Pool contract'));
 
-  await upgradeRewardEthToken(contracts.oracles);
+  await upgradeRewardEthToken(oracles);
   log(white('Upgraded RewardEthToken contract'));
 
-  return contracts;
+  return {
+    ...contracts,
+    poolValidators,
+    oracles,
+    roles,
+  };
 }
 
 module.exports = {

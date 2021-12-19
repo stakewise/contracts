@@ -31,7 +31,8 @@ contract('Oracles (upgrading)', ([anyone]) => {
       (await oracles.currentRewardsNonce()).sub(new BN('1000'))
     );
 
-    prevOracles = await Oracles.at(contracts.oracles);
+    // use Oracles abi for prevOracles contract
+    prevOracles = await Oracles.at(contracts.prevOracles);
     let oraclesRole = await oracles.ORACLE_ROLE();
     let totalOracles = await oracles.getRoleMemberCount(oraclesRole);
     expect(totalOracles).to.bignumber.equal(

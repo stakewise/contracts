@@ -5,6 +5,7 @@ const {
   expectRevert,
   expectEvent,
 } = require('@openzeppelin/test-helpers');
+const { keccak256 } = require('ethers/lib/utils');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
@@ -15,15 +16,17 @@ const {
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
+const { depositDataMerkleRoot } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const PoolValidators = artifacts.require('PoolValidators');
 const RewardEthToken = artifacts.require('RewardEthToken');
+const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
-  let pool, oracles, oracleAccounts, rewardEthToken, validators;
+  let pool, oracles, oracleAccounts, rewardEthToken, validatorsCount;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -32,9 +35,23 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     await send.ether(anyone, admin, ether('5'));
 
     let upgradedContracts = await upgradeContracts();
-
+    let validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    await validators.addOperator(
+      operator,
+      depositDataMerkleRoot,
+      'ipfs://QmSTP443zR6oKnYVRE23RARyuuzwhhaidUiSXyRTsw3pDs',
+      {
+        from: admin,
+      }
+    );
+    await validators.commitOperator({
+      from: operator,
+    });
     pool = await Pool.at(contracts.pool);
-    validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    let depositContract = await iDepositContract.at(
+      await pool.validatorRegistration()
+    );
+    validatorsCount = keccak256(await depositContract.get_deposit_count());
     oracles = await Oracles.at(upgradedContracts.oracles);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({
@@ -141,11 +158,10 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
         value: ether('32'),
       });
       await registerValidator({
-        admin,
-        validators,
         operator,
         oracles,
         oracleAccounts,
+        validatorsCount,
       });
 
       let activatedValidators = await pool.activatedValidators();

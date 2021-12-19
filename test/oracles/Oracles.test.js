@@ -16,16 +16,22 @@ const {
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
+const {
+  depositDataMerkleRoot,
+  depositData,
+} = require('../pool/depositDataMerkleRoot');
 
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 const MulticallMock = artifacts.require('MulticallMock');
 const MerkleDistributor = artifacts.require('MerkleDistributor');
+const PoolValidators = artifacts.require('PoolValidators');
+const iDepositContract = artifacts.require('IDepositContract');
 
-contract('Oracles', ([_, anyone, ...accounts]) => {
+contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles, rewardEthToken, pool, merkleDistributor;
+  let oracles, rewardEthToken, pool, merkleDistributor, poolValidators;
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -40,6 +46,7 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    poolValidators = await PoolValidators.at(upgradedContracts.poolValidators);
   });
 
   afterEach(async () => resetFork());
@@ -461,6 +468,138 @@ contract('Oracles', ([_, anyone, ...accounts]) => {
           }
         ),
         'Oracles: too early'
+      );
+    });
+  });
+
+  describe('validator voting', () => {
+    const depositDataMerkleProofs =
+      'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
+    let {
+      publicKey,
+      signature,
+      depositDataRoot,
+      withdrawalCredentials,
+      merkleProof,
+    } = depositData[0];
+    let currentNonce, oracleAccounts, candidateId, signatures, validatorsCount;
+    let validatorData = {
+      operator,
+      withdrawalCredentials,
+      depositDataRoot,
+      publicKey,
+      signature,
+    };
+
+    beforeEach(async () => {
+      await poolValidators.addOperator(
+        operator,
+        depositDataMerkleRoot,
+        depositDataMerkleProofs,
+        {
+          from: admin,
+        }
+      );
+      await poolValidators.commitOperator({
+        from: operator,
+      });
+      oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
+      currentNonce = await oracles.currentValidatorsNonce();
+
+      let depositContract = await iDepositContract.at(
+        await pool.validatorRegistration()
+      );
+      validatorsCount = keccak256(await depositContract.get_deposit_count());
+
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'bytes', 'address', 'bytes32'],
+        [currentNonce.toString(), publicKey, operator, validatorsCount]
+      );
+      candidateId = keccak256(encoded);
+
+      signatures = [];
+      for (const oracleAccount of oracleAccounts) {
+        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
+    });
+
+    it('fails to submit when contract is paused', async () => {
+      await oracles.pause({ from: admin });
+      expect(await oracles.paused()).equal(true);
+
+      await expectRevert(
+        oracles.registerValidator(
+          validatorData,
+          merkleProof,
+          validatorsCount,
+          signatures,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
+        'Pausable: paused'
+      );
+    });
+
+    it('fails to submit with not enough signatures', async () => {
+      await expectRevert(
+        oracles.registerValidator(
+          validatorData,
+          merkleProof,
+          validatorsCount,
+          signatures.slice(signatures.length - 1),
+          {
+            from: oracleAccounts[0],
+          }
+        ),
+        'Oracles: invalid number of signatures'
+      );
+    });
+
+    it('fails to submit with invalid signature', async () => {
+      signatures[0] = await web3.eth.sign(candidateId, anyone);
+      await expectRevert(
+        oracles.registerValidator(
+          validatorData,
+          merkleProof,
+          validatorsCount,
+          signatures,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
+        'Oracles: invalid signer'
+      );
+    });
+
+    it('fails to submit with repeated signature', async () => {
+      signatures.push(signatures[0]);
+      await expectRevert(
+        oracles.registerValidator(
+          validatorData,
+          merkleProof,
+          validatorsCount,
+          signatures,
+          {
+            from: oracleAccounts[0],
+          }
+        ),
+        'Oracles: repeated signature'
+      );
+    });
+
+    it('fails to submit without oracle role assigned', async () => {
+      await expectRevert(
+        oracles.registerValidator(
+          validatorData,
+          merkleProof,
+          validatorsCount,
+          signatures,
+          {
+            from: anyone,
+          }
+        ),
+        'Oracles: access denied'
       );
     });
   });

@@ -19,12 +19,17 @@ const {
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { checkStakedEthToken } = require('../utils');
-const { initializeData } = require('./initializeMerkleRoot');
+const {
+  depositData,
+  depositDataMerkleRoot,
+} = require('./depositDataMerkleRoot');
+const { keccak256 } = require('ethers/lib/utils');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const PoolValidators = artifacts.require('PoolValidators');
 const Oracles = artifacts.require('Oracles');
+const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Pool (stake)', (accounts) => {
   const admin = contractSettings.admin;
@@ -37,7 +42,9 @@ contract('Pool (stake)', (accounts) => {
     totalSupply,
     poolBalance,
     activatedValidators,
-    pendingValidators;
+    pendingValidators,
+    depositContract,
+    validatorsCount;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -54,6 +61,21 @@ contract('Pool (stake)', (accounts) => {
       admin,
       oracles,
       accounts: otherAccounts,
+    });
+    depositContract = await iDepositContract.at(
+      await pool.validatorRegistration()
+    );
+    validatorsCount = keccak256(await depositContract.get_deposit_count());
+    await validators.addOperator(
+      operator,
+      depositDataMerkleRoot,
+      'ipfs://QmSTP443zR6oKnYVRE23RARyuuzwhhaidUiSXyRTsw3pDs',
+      {
+        from: admin,
+      }
+    );
+    await validators.commitOperator({
+      from: operator,
     });
 
     totalSupply = await stakedEthToken.totalSupply();
@@ -398,6 +420,7 @@ contract('Pool (stake)', (accounts) => {
         oracles,
         oracleAccounts,
         operator,
+        validatorsCount,
       });
     });
 
@@ -510,7 +533,7 @@ contract('Pool (stake)', (accounts) => {
         oracles,
         oracleAccounts,
         operator,
-        depositDataIndex: 0,
+        validatorsCount,
       });
       await registerValidator({
         admin,
@@ -518,7 +541,12 @@ contract('Pool (stake)', (accounts) => {
         oracles,
         oracleAccounts,
         operator,
-        depositDataIndex: 1,
+        merkleProof: depositData[1].merkleProof,
+        signature: depositData[1].signature,
+        publicKey: depositData[1].publicKey,
+        withdrawalCredentials: depositData[1].withdrawalCredentials,
+        depositDataRoot: depositData[1].depositDataRoot,
+        validatorsCount: keccak256(await depositContract.get_deposit_count()),
       });
     });
 
@@ -617,31 +645,11 @@ contract('Pool (stake)', (accounts) => {
     });
   });
 
-  it('only PoolValidators contract can initialize new validators', async () => {
+  it('only PoolValidators contract can register new validators', async () => {
     const { publicKey, signature, withdrawalCredentials, depositDataRoot } =
-      initializeData[0];
+      depositData[0];
     await expectRevert(
-      pool.initializeValidator(
-        {
-          operator,
-          withdrawalCredentials,
-          depositDataRoot,
-          publicKey,
-          signature,
-        },
-        {
-          from: sender1,
-        }
-      ),
-      'Pool: access denied'
-    );
-  });
-
-  it('only PoolValidators contract can finalize new validators', async () => {
-    const { publicKey, signature, withdrawalCredentials, depositDataRoot } =
-      initializeData[0];
-    await expectRevert(
-      pool.finalizeValidator(
+      pool.registerValidator(
         {
           operator,
           withdrawalCredentials,

@@ -11,13 +11,6 @@ import "./IPoolValidators.sol";
  */
 interface IPool {
     /**
-    * @dev Event for tracking initialized validators.
-    * @param publicKey - validator public key.
-    * @param operator - address of the validator operator.
-    */
-    event ValidatorInitialized(bytes publicKey, address operator);
-
-    /**
     * @dev Event for tracking registered validators.
     * @param publicKey - validator public key.
     * @param operator - address of the validator operator.
@@ -97,12 +90,6 @@ interface IPool {
     */
     // solhint-disable-next-line func-name-mixedcase
     function VALIDATOR_TOTAL_DEPOSIT() external view returns (uint256);
-
-    /**
-    * @dev Function for getting the initial validator deposit.
-    */
-    // solhint-disable-next-line func-name-mixedcase
-    function VALIDATOR_INIT_DEPOSIT() external view returns (uint256);
 
     /**
     * @dev Function for retrieving the total amount of pending validators.
@@ -221,16 +208,10 @@ interface IPool {
     function activateMultiple(address account, uint256[] calldata validatorIndexes) external;
 
     /**
-    * @dev Function for initializing new pool validator.
+    * @dev Function for registering new pool validator registration.
     * @param depositData - the deposit data to submit for the validator.
     */
-    function initializeValidator(IPoolValidators.DepositData calldata depositData) external;
-
-    /**
-    * @dev Function for finalizing new pool validator registration.
-    * @param depositData - the deposit data to submit for the validator.
-    */
-    function finalizeValidator(IPoolValidators.DepositData calldata depositData) external;
+    function registerValidator(IPoolValidators.DepositData calldata depositData) external;
 
     /**
     * @dev Function for refunding to the pool.
