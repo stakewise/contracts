@@ -3,9 +3,10 @@ const hre = require('hardhat');
 let contracts, contractSettings;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contracts = {
-    oracles: '0x06b0C9476315634dCc59AA3F3f7d5Df6feCbAa90',
+    prevOracles: '0xE54486fa4eB45716c5725d7A46FDDe810B8E8914',
+    oracles: '0x4bBaA17eFd71683dCb9C769DD38E7674994FE38d',
     pool: '0x8c1EfEcFb5c4F1099AB0460b5659342943764Df7',
-    poolValidators: '0x0d92156861a0BC7037cC21470327Bd3Bc750EB1D',
+    poolValidators: '0x908C06aFfda0fFDbB4578629aA8cCff372e510b6',
     poolEscrow: '0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218',
     stakedEthToken: '0x221D9812823DBAb0F1fB40b0D294D9875980Ac19',
     rewardEthToken: '0x826f88d423440c305D9096cC1581Ae751eFCAfB0',
