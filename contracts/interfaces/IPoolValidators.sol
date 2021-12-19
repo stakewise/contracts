@@ -9,15 +9,11 @@ pragma abicoder v2;
 interface IPoolValidators {
     /**
     * @dev Structure for storing operator data.
-    * @param initializeMerkleRoot - validators registration initialization merkle root.
-    * @param finalizeMerkleRoot - validators registration finalization merkle root.
-    * @param locked - defines whether operator is currently locked.
+    * @param depositDataMerkleRoot - validators deposit data merkle root.
     * @param committed - defines whether operator has committed its readiness to host validators.
     */
     struct Operator {
-        bytes32 initializeMerkleRoot;
-        bytes32 finalizeMerkleRoot;
-        bool locked;
+        bytes32 depositDataMerkleRoot;
         bool committed;
     }
 
@@ -38,51 +34,22 @@ interface IPoolValidators {
     }
 
     /**
-    * @dev Enum to track status of the validator registration.
-    * @param Uninitialized - validator has not been initialized.
-    * @param Initialized - 1 ether deposit has been made to the ETH2 registration contract for the public key.
-    * @param Finalized - 31 ether deposit has been made to the ETH2 registration contract for the public key.
-    * @param Failed - 1 ether deposit has failed as it was assigned to the different from the protocol's withdrawal key.
-    */
-    enum ValidatorStatus { Uninitialized, Initialized, Finalized, Failed }
-
-    /**
     * @dev Event for tracking new operators.
     * @param operator - address of the operator.
-    * @param initializeMerkleRoot - validators initialization merkle root.
-    * @param initializeMerkleProofs - validators initialization merkle proofs.
-    * @param finalizeMerkleRoot - validators finalization merkle root.
-    * @param finalizeMerkleProofs - validators finalization merkle proofs.
+    * @param depositDataMerkleRoot - validators deposit data merkle root.
+    * @param depositDataMerkleProofs - validators deposit data merkle proofs.
     */
     event OperatorAdded(
         address indexed operator,
-        bytes32 indexed initializeMerkleRoot,
-        string initializeMerkleProofs,
-        bytes32 indexed finalizeMerkleRoot,
-        string finalizeMerkleProofs
+        bytes32 indexed depositDataMerkleRoot,
+        string depositDataMerkleProofs
     );
 
     /**
     * @dev Event for tracking operator's commitments.
     * @param operator - address of the operator that expressed its readiness to host validators.
-    * @param collateral - collateral amount deposited.
     */
-    event OperatorCommitted(
-        address indexed operator,
-        uint256 collateral
-    );
-
-    /**
-    * @dev Event for tracking operator's collateral withdrawals.
-    * @param operator - address of the operator.
-    * @param collateralRecipient - address of the collateral recipient.
-    * @param collateral - amount withdrawn.
-    */
-    event CollateralWithdrawn(
-        address indexed operator,
-        address indexed collateralRecipient,
-        uint256 collateral
-    );
+    event OperatorCommitted(address indexed operator);
 
     /**
     * @dev Event for tracking operators' removals.
@@ -92,18 +59,6 @@ interface IPoolValidators {
     event OperatorRemoved(
         address indexed sender,
         address indexed operator
-    );
-
-    /**
-    * @dev Event for tracking operators' slashes.
-    * @param operator - address of the operator.
-    * @param publicKey - public key of the slashed validator.
-    * @param refundedAmount - amount refunded to the pool.
-    */
-    event OperatorSlashed(
-        address indexed operator,
-        bytes publicKey,
-        uint256 refundedAmount
     );
 
     /**
@@ -118,48 +73,31 @@ interface IPoolValidators {
     * @dev Function for retrieving the operator.
     * @param _operator - address of the operator to retrieve the data for.
     */
-    function getOperator(address _operator) external view returns (bytes32, bytes32, bool);
+    function getOperator(address _operator) external view returns (bytes32, bool);
 
     /**
-    * @dev Function for retrieving the collateral of the operator.
-    * @param operator - address of the operator to retrieve the collateral for.
-    */
-    function collaterals(address operator) external view returns (uint256);
-
-    /**
-    * @dev Function for retrieving registration status of the validator.
+    * @dev Function for checking whether validator is registered.
     * @param validatorId - hash of the validator public key to receive the status for.
     */
-    function validatorStatuses(bytes32 validatorId) external view returns (ValidatorStatus);
+    function isValidatorRegistered(bytes32 validatorId) external view returns (bool);
 
     /**
     * @dev Function for adding new operator.
     * @param _operator - address of the operator to add or update.
-    * @param initializeMerkleRoot - validators initialization merkle root.
-    * @param initializeMerkleProofs - validators initialization merkle proofs.
-    * @param finalizeMerkleRoot - validators finalization merkle root.
-    * @param finalizeMerkleProofs - validators finalization merkle proofs.
+    * @param depositDataMerkleRoot - validators deposit data merkle root.
+    * @param depositDataMerkleProofs - validators deposit data merkle proofs.
     */
     function addOperator(
         address _operator,
-        bytes32 initializeMerkleRoot,
-        string calldata initializeMerkleProofs,
-        bytes32 finalizeMerkleRoot,
-        string calldata finalizeMerkleProofs
+        bytes32 depositDataMerkleRoot,
+        string calldata depositDataMerkleProofs
     ) external;
 
     /**
-    * @dev Function for committing operator. If 1 ETH collateral was not deposited yet,
-    * it must be sent together with the function call. Must be called by the operator address
+    * @dev Function for committing operator. Must be called by the operator address
     * specified through the `addOperator` function call.
     */
-    function commitOperator() external payable;
-
-    /**
-    * @dev Function for withdrawing operator's collateral. Can only be called when the operator was removed.
-    * @param collateralRecipient - address of the collateral recipient.
-    */
-    function withdrawCollateral(address payable collateralRecipient) external;
+    function commitOperator() external;
 
     /**
     * @dev Function for removing operator. Can be called either by operator or admin.
@@ -168,23 +106,9 @@ interface IPoolValidators {
     function removeOperator(address _operator) external;
 
     /**
-    * @dev Function for slashing the operator registration.
-    * @param depositData - deposit data of the validator to slash.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
+    * @dev Function for registering the validator.
+    * @param depositData - deposit data of the validator.
+    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the merkle root.
     */
-    function slashOperator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
-
-    /**
-    * @dev Function for initializing the operator.
-    * @param depositData - deposit data of the validator to initialize.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
-    */
-    function initializeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
-
-    /**
-    * @dev Function for finalizing the operator.
-    * @param depositData - deposit data of the validator to finalize.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the finalize merkle root.
-    */
-    function finalizeValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
+    function registerValidator(DepositData calldata depositData, bytes32[] calldata merkleProof) external;
 }

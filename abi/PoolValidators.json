@@ -10,51 +10,14 @@
       },
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "collateralRecipient",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
-      }
-    ],
-    "name": "CollateralWithdrawn",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "indexed": true,
         "internalType": "bytes32",
-        "name": "initializeMerkleRoot",
+        "name": "depositDataMerkleRoot",
         "type": "bytes32"
       },
       {
         "indexed": false,
         "internalType": "string",
-        "name": "initializeMerkleProofs",
-        "type": "string"
-      },
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "finalizeMerkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "finalizeMerkleProofs",
+        "name": "depositDataMerkleProofs",
         "type": "string"
       }
     ],
@@ -69,12 +32,6 @@
         "internalType": "address",
         "name": "operator",
         "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "collateral",
-        "type": "uint256"
       }
     ],
     "name": "OperatorCommitted",
@@ -97,31 +54,6 @@
       }
     ],
     "name": "OperatorRemoved",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "publicKey",
-        "type": "bytes"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "refundedAmount",
-        "type": "uint256"
-      }
-    ],
-    "name": "OperatorSlashed",
     "type": "event"
   },
   {
@@ -273,22 +205,12 @@
       },
       {
         "internalType": "bytes32",
-        "name": "initializeMerkleRoot",
+        "name": "depositDataMerkleRoot",
         "type": "bytes32"
       },
       {
         "internalType": "string",
-        "name": "initializeMerkleProofs",
-        "type": "string"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "finalizeMerkleRoot",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "string",
-        "name": "finalizeMerkleProofs",
+        "name": "depositDataMerkleProofs",
         "type": "string"
       }
     ],
@@ -311,72 +233,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "collaterals",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "commitOperator",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "operator",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "withdrawalCredentials",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "publicKey",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes",
-            "name": "signature",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct IPoolValidators.DepositData",
-        "name": "depositData",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "merkleProof",
-        "type": "bytes32[]"
-      }
-    ],
-    "name": "finalizeValidator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -391,11 +249,6 @@
     ],
     "name": "getOperator",
     "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      },
       {
         "internalType": "bytes32",
         "name": "",
@@ -540,6 +393,83 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      }
+    ],
+    "name": "isAdmin",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
+      }
+    ],
+    "name": "isPauser",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isValidatorRegistered",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "pause",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "paused",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "components": [
           {
             "internalType": "address",
@@ -577,67 +507,9 @@
         "type": "bytes32[]"
       }
     ],
-    "name": "initializeValidator",
+    "name": "registerValidator",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_account",
-        "type": "address"
-      }
-    ],
-    "name": "isAdmin",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_account",
-        "type": "address"
-      }
-    ],
-    "name": "isPauser",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -716,85 +588,8 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "operator",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "withdrawalCredentials",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "publicKey",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes",
-            "name": "signature",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct IPoolValidators.DepositData",
-        "name": "depositData",
-        "type": "tuple"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "merkleProof",
-        "type": "bytes32[]"
-      }
-    ],
-    "name": "slashOperator",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "validatorStatuses",
-    "outputs": [
-      {
-        "internalType": "enum IPoolValidators.ValidatorStatus",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address payable",
-        "name": "collateralRecipient",
-        "type": "address"
-      }
-    ],
-    "name": "withdrawCollateral",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

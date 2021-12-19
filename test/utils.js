@@ -1,20 +1,10 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const {
-  BN,
-  ether,
-  expectEvent,
-  constants,
-} = require('@openzeppelin/test-helpers');
-const {
-  initializeMerkleRoot,
-  initializeData,
-} = require('./pool/initializeMerkleRoot');
-const {
-  finalizeMerkleRoot,
-  finalizeData,
-} = require('./pool/finalizeMerkleRoot');
+const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
+const { depositData } = require('./pool/depositDataMerkleRoot');
+
+const iDepositContract = artifacts.require('IDepositContract');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -24,7 +14,6 @@ function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
 }
 
 async function checkValidatorRegistered({
-  vrc,
   transaction,
   pubKey,
   signature,
@@ -32,17 +21,22 @@ async function checkValidatorRegistered({
   validatorDepositAmount = ether('32'),
 }) {
   // Check VRC record created
-  await expectEvent.inTransaction(transaction, vrc, 'DepositEvent', {
-    pubkey: pubKey,
-    withdrawal_credentials: withdrawalCredentials,
-    amount: web3.utils.bytesToHex(
-      new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
-        'le',
-        8
-      )
-    ),
-    signature: signature,
-  });
+  await expectEvent.inTransaction(
+    transaction,
+    iDepositContract,
+    'DepositEvent',
+    {
+      pubkey: pubKey,
+      withdrawal_credentials: withdrawalCredentials,
+      amount: web3.utils.bytesToHex(
+        new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
+          'le',
+          8
+        )
+      ),
+      signature: signature,
+    }
+  );
 }
 
 async function checkStakedEthToken({
@@ -202,148 +196,42 @@ async function setMerkleRoot({
   });
 }
 
-async function initializeValidator({
-  operator,
-  merkleProof,
-  signature,
-  publicKey,
-  withdrawalCredentials,
-  depositDataRoot,
-  oracles,
-  oracleAccounts,
-}) {
-  let nonce = await oracles.currentValidatorsNonce();
-  let encoded = defaultAbiCoder.encode(
-    ['uint256', 'bytes', 'address'],
-    [nonce.toString(), publicKey, operator]
-  );
-  let candidateId = hexlify(keccak256(encoded));
-
-  // prepare signatures
-  let signatures = [];
-  for (let i = 0; i < oracleAccounts.length; i++) {
-    await impersonateAccount(oracleAccounts[i]);
-    let sig = await web3.eth.sign(candidateId, oracleAccounts[i]);
-    signatures.push(sig);
-  }
-
-  // initialize validator
-  return oracles.initializeValidator(
-    { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
-    merkleProof,
-    signatures,
-    {
-      from: oracleAccounts[0],
-    }
-  );
-}
-
-async function finalizeValidator({
-  operator,
-  merkleProof,
-  signature,
-  publicKey,
-  withdrawalCredentials,
-  depositDataRoot,
-  oracles,
-  oracleAccounts,
-}) {
-  let nonce = await oracles.currentValidatorsNonce();
-  let encoded = defaultAbiCoder.encode(
-    ['uint256', 'bytes', 'address'],
-    [nonce.toString(), publicKey, operator]
-  );
-  let candidateId = hexlify(keccak256(encoded));
-
-  // prepare signatures
-  let signatures = [];
-  for (let i = 0; i < oracleAccounts.length; i++) {
-    await impersonateAccount(oracleAccounts[i]);
-    let sig = await web3.eth.sign(candidateId, oracleAccounts[i]);
-    signatures.push(sig);
-  }
-
-  // finalize validator
-  return oracles.finalizeValidator(
-    { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
-    merkleProof,
-    signatures,
-    {
-      from: oracleAccounts[0],
-    }
-  );
-}
-
 async function registerValidator({
-  admin,
-  validators,
   operator,
+  merkleProof = depositData[0].merkleProof,
+  signature = depositData[0].signature,
+  publicKey = depositData[0].publicKey,
+  withdrawalCredentials = depositData[0].withdrawalCredentials,
+  depositDataRoot = depositData[0].depositDataRoot,
   oracles,
   oracleAccounts,
-  initializeMerkleProofs = 'ipfs://QmSYduvpsJp7bo3xenRK3qDdoLkzWcvVeU3U16v1n3Cb5d',
-  finalizeMerkleProofs = 'ipfs://QmSTP443zR6oKnYVRE23RARyuuzwhhaidUiSXyRTsw3pDs',
-  initAmount = ether('1'),
-  depositDataIndex = 0,
+  validatorsCount,
 }) {
-  if ((await validators.getOperator(operator))[0] === constants.ZERO_BYTES32) {
-    await validators.addOperator(
-      operator,
-      initializeMerkleRoot,
-      initializeMerkleProofs,
-      finalizeMerkleRoot,
-      finalizeMerkleProofs,
-      {
-        from: admin,
-      }
-    );
+  let nonce = await oracles.currentValidatorsNonce();
+  let encoded = defaultAbiCoder.encode(
+    ['uint256', 'bytes', 'address', 'bytes32'],
+    [nonce.toString(), publicKey, operator, validatorsCount]
+  );
+  let candidateId = hexlify(keccak256(encoded));
 
-    if ((await validators.collaterals(operator)).lt(initAmount)) {
-      await validators.commitOperator({
-        value: initAmount,
-        from: operator,
-      });
-    } else {
-      await validators.commitOperator({
-        from: operator,
-      });
-    }
+  // prepare signatures
+  let signatures = [];
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    await impersonateAccount(oracleAccounts[i]);
+    let sig = await web3.eth.sign(candidateId, oracleAccounts[i]);
+    signatures.push(sig);
   }
 
-  let {
-    publicKey,
-    signature,
-    withdrawalCredentials,
+  // register validator
+  return oracles.registerValidator(
+    { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
     merkleProof,
-    depositDataRoot,
-  } = initializeData[depositDataIndex];
-  await initializeValidator({
-    operator,
-    merkleProof,
-    signature,
-    publicKey,
-    depositDataRoot,
-    oracles,
-    oracleAccounts,
-    withdrawalCredentials,
-  });
-
-  ({
-    publicKey,
-    signature,
-    withdrawalCredentials,
-    merkleProof,
-    depositDataRoot,
-  } = finalizeData[depositDataIndex]);
-  await finalizeValidator({
-    operator,
-    merkleProof,
-    signature,
-    publicKey,
-    depositDataRoot,
-    oracles,
-    oracleAccounts,
-    withdrawalCredentials,
-  });
+    validatorsCount,
+    signatures,
+    {
+      from: oracleAccounts[0],
+    }
+  );
 }
 
 async function impersonateAccount(account) {
@@ -411,7 +299,5 @@ module.exports = {
   setTotalRewards,
   setMerkleRoot,
   setupOracleAccounts,
-  initializeValidator,
-  finalizeValidator,
   registerValidator,
 };

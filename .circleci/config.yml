@@ -58,7 +58,7 @@ jobs:
   test:
     executor: default
     resource_class: large
-    parallelism: 8
+    parallelism: 16
     steps:
       - checkout
       - attach_workspace:

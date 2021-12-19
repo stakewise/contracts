@@ -77,7 +77,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         // migrate data from previous Oracles contract
         rewardsNonce._value = IOraclesV1(oraclesV1).currentNonce().add(1000);
         uint256 oraclesCount = AccessControlUpgradeable(oraclesV1).getRoleMemberCount(ORACLE_ROLE);
-        for(uint256 i = 0; i < oraclesCount; i++) {
+        for (uint256 i = 0; i < oraclesCount; i++) {
             address oracle = AccessControlUpgradeable(oraclesV1).getRoleMember(ORACLE_ROLE, i);
             _setupRole(ORACLE_ROLE, oracle);
             emit OracleAdded(oracle);
@@ -228,21 +228,26 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-initializeValidator}.
+     * @dev See {IOracles-registerValidator}.
      */
-    function initializeValidator(
+    function registerValidator(
         IPoolValidators.DepositData calldata depositData,
         bytes32[] calldata merkleProof,
+        bytes32 validatorsDepositCount,
         bytes[] calldata signatures
     )
-        external override whenNotPaused
+        external override onlyOracle whenNotPaused
     {
+        require(
+            keccak256(pool.validatorRegistration().get_deposit_count()) == validatorsDepositCount,
+            "Oracles: invalid validators deposit count"
+        );
         require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator))
+            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator, validatorsDepositCount))
         );
 
         // check signatures and calculate number of submitted oracle votes
@@ -256,52 +261,19 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit InitializeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, nonce);
+            emit RegisterValidatorVoteSubmitted(
+                msg.sender,
+                signer,
+                depositData.operator,
+                depositData.publicKey,
+                nonce
+            );
         }
 
         // increment nonce for future signatures
         validatorsNonce.increment();
 
-        // initialize validator
-        poolValidators.initializeValidator(depositData, merkleProof);
-    }
-
-    /**
-     * @dev See {IOracles-finalizeValidator}.
-     */
-    function finalizeValidator(
-        IPoolValidators.DepositData calldata depositData,
-        bytes32[] calldata merkleProof,
-        bytes[] calldata signatures
-    )
-        external override whenNotPaused
-    {
-        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
-
-        // calculate candidate ID hash
-        uint256 nonce = validatorsNonce.current();
-        bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator))
-        );
-
-        // check signatures and calculate number of submitted oracle votes
-        address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
-            bytes memory signature = signatures[i];
-            address signer = ECDSAUpgradeable.recover(candidateId, signature);
-            require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
-
-            for (uint256 j = 0; j < i; j++) {
-                require(signedOracles[j] != signer, "Oracles: repeated signature");
-            }
-            signedOracles[i] = signer;
-            emit FinalizeValidatorVoteSubmitted(msg.sender, signer, depositData.operator, depositData.publicKey, nonce);
-        }
-
-        // increment nonce for future signatures
-        validatorsNonce.increment();
-
-        // finalize validator
-        poolValidators.finalizeValidator(depositData, merkleProof);
+        // register validator
+        poolValidators.registerValidator(depositData, merkleProof);
     }
 }

@@ -48,30 +48,14 @@ interface IOracles {
     );
 
     /**
-    * @dev Event for tracking validator initialization votes.
+    * @dev Event for tracking validator registration votes.
     * @param sender - address of the transaction sender.
     * @param oracle - address of the signed oracle.
     * @param operator - address of the operator the vote was sent for.
     * @param publicKey - public key of the validator the vote was sent for.
-    * @param nonce - validator initialization nonce.
+    * @param nonce - validator registration nonce.
     */
-    event InitializeValidatorVoteSubmitted(
-        address indexed sender,
-        address indexed oracle,
-        address indexed operator,
-        bytes publicKey,
-        uint256 nonce
-    );
-
-    /**
-    * @dev Event for tracking validator finalization votes.
-    * @param sender - address of the transaction sender.
-    * @param oracle - address of the signed oracle.
-    * @param operator - address of the operator the vote was sent for.
-    * @param publicKey - public key of the validator the vote was sent for.
-    * @param nonce - validator finalization nonce.
-    */
-    event FinalizeValidatorVoteSubmitted(
+    event RegisterValidatorVoteSubmitted(
         address indexed sender,
         address indexed oracle,
         address indexed operator,
@@ -171,28 +155,17 @@ interface IOracles {
     ) external;
 
     /**
-    * @dev Function for submitting initialization of the new validator.
-    * The quorum of signatures over the same data is required to initialize.
-    * @param depositData - the deposit data for the initialization.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the initialize merkle root.
+    * @dev Function for submitting registration of the new validator.
+    * The quorum of signatures over the same data is required to register.
+    * @param depositData - the deposit data for the registration.
+    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the deposit data merkle root.
+    * @param validatorsDepositCount - validators deposit count to protect from malicious operators.
     * @param signatures - oracles' signatures.
     */
-    function initializeValidator(
+    function registerValidator(
         IPoolValidators.DepositData calldata depositData,
         bytes32[] calldata merkleProof,
-        bytes[] calldata signatures
-    ) external;
-
-    /**
-    * @dev Function for submitting finalization of the new validator.
-    * The quorum of signatures over the same data is required to finalize.
-    * @param depositData - the deposit data for the finalization.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the finalize merkle root.
-    * @param signatures - oracles' signatures.
-    */
-    function finalizeValidator(
-        IPoolValidators.DepositData calldata depositData,
-        bytes32[] calldata merkleProof,
+        bytes32 validatorsDepositCount,
         bytes[] calldata signatures
     ) external;
 }

@@ -22,9 +22,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Validator deposit amount.
     uint256 public constant override VALIDATOR_TOTAL_DEPOSIT = 32 ether;
 
-    // @dev Validator initialization amount.
-    uint256 public constant override VALIDATOR_INIT_DEPOSIT = 1 ether;
-
     // @dev Total activated validators.
     uint256 public override activatedValidators;
 
@@ -192,7 +189,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-activate}.
      */
-    function activate(address account, uint256 validatorIndex) external override {
+    function activate(address account, uint256 validatorIndex) external override whenNotPaused {
         uint256 activatedAmount = _activateAmount(
             account,
             validatorIndex,
@@ -205,7 +202,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-activateMultiple}.
      */
-    function activateMultiple(address account, uint256[] calldata validatorIndexes) external override {
+    function activateMultiple(address account, uint256[] calldata validatorIndexes) external override whenNotPaused {
         uint256 toMint;
         uint256 maxValidatorIndex = activatedValidators.mul(pendingValidatorsLimit.add(1e4));
         for (uint256 i = 0; i < validatorIndexes.length; i++) {
@@ -220,7 +217,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         uint256 validatorIndex,
         uint256 maxValidatorIndex
     )
-        internal whenNotPaused returns (uint256 amount)
+        internal returns (uint256 amount)
     {
         require(validatorIndex.mul(1e4) <= maxValidatorIndex, "Pool: validator is not active yet");
 
@@ -232,27 +229,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-initializeValidator}.
+     * @dev See {IPool-registerValidator}.
      */
-    function initializeValidator(IPoolValidators.DepositData calldata depositData) external override whenNotPaused {
-        require(msg.sender == address(validators), "Pool: access denied");
-        require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
-
-        emit ValidatorInitialized(depositData.publicKey, depositData.operator);
-
-        // initiate validator registration
-        validatorRegistration.deposit{value : VALIDATOR_INIT_DEPOSIT}(
-            depositData.publicKey,
-            abi.encodePacked(depositData.withdrawalCredentials),
-            depositData.signature,
-            depositData.depositDataRoot
-        );
-    }
-
-    /**
-     * @dev See {IPool-finalizeValidator}.
-     */
-    function finalizeValidator(IPoolValidators.DepositData calldata depositData) external override whenNotPaused {
+    function registerValidator(IPoolValidators.DepositData calldata depositData) external override whenNotPaused {
         require(msg.sender == address(validators), "Pool: access denied");
         require(depositData.withdrawalCredentials == withdrawalCredentials, "Pool: invalid withdrawal credentials");
 
@@ -260,8 +239,8 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         pendingValidators = pendingValidators.add(1);
         emit ValidatorRegistered(depositData.publicKey, depositData.operator);
 
-        // finalize validator registration
-        validatorRegistration.deposit{value : VALIDATOR_TOTAL_DEPOSIT.sub(VALIDATOR_INIT_DEPOSIT)}(
+        // register validator
+        validatorRegistration.deposit{value : VALIDATOR_TOTAL_DEPOSIT}(
             depositData.publicKey,
             abi.encodePacked(depositData.withdrawalCredentials),
             depositData.signature,
