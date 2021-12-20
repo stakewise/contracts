@@ -50,7 +50,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     let depositContract = await iDepositContract.at(
       await pool.validatorRegistration()
     );
-    validatorsDepositRoot = depositContract.get_deposit_root();
+    validatorsDepositRoot = await depositContract.get_deposit_root();
     oracles = await Oracles.at(upgradedContracts.oracles);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({

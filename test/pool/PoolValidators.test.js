@@ -414,7 +414,7 @@ contract('Pool Validators', (accounts) => {
           oracles,
           oracleAccounts,
           withdrawalCredentials,
-          validatorsDepositRoot: keccak256('1'),
+          validatorsDepositRoot: keccak256('0x6be4000000000000'),
         }),
         'Oracles: invalid validators deposit root'
       );
