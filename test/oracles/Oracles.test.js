@@ -482,7 +482,11 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       withdrawalCredentials,
       merkleProof,
     } = depositData[0];
-    let currentNonce, oracleAccounts, candidateId, signatures, validatorsCount;
+    let currentNonce,
+      oracleAccounts,
+      candidateId,
+      signatures,
+      validatorsDepositRoot;
     let validatorData = {
       operator,
       withdrawalCredentials,
@@ -509,11 +513,11 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       let depositContract = await iDepositContract.at(
         await pool.validatorRegistration()
       );
-      validatorsCount = keccak256(await depositContract.get_deposit_count());
+      validatorsDepositRoot = await depositContract.get_deposit_root();
 
       let encoded = defaultAbiCoder.encode(
         ['uint256', 'bytes', 'address', 'bytes32'],
-        [currentNonce.toString(), publicKey, operator, validatorsCount]
+        [currentNonce.toString(), publicKey, operator, validatorsDepositRoot]
       );
       candidateId = keccak256(encoded);
 
@@ -531,7 +535,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         oracles.registerValidator(
           validatorData,
           merkleProof,
-          validatorsCount,
+          validatorsDepositRoot,
           signatures,
           {
             from: oracleAccounts[0],
@@ -546,7 +550,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         oracles.registerValidator(
           validatorData,
           merkleProof,
-          validatorsCount,
+          validatorsDepositRoot,
           signatures.slice(signatures.length - 1),
           {
             from: oracleAccounts[0],
@@ -562,7 +566,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         oracles.registerValidator(
           validatorData,
           merkleProof,
-          validatorsCount,
+          validatorsDepositRoot,
           signatures,
           {
             from: oracleAccounts[0],
@@ -578,7 +582,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         oracles.registerValidator(
           validatorData,
           merkleProof,
-          validatorsCount,
+          validatorsDepositRoot,
           signatures,
           {
             from: oracleAccounts[0],
@@ -593,7 +597,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         oracles.registerValidator(
           validatorData,
           merkleProof,
-          validatorsCount,
+          validatorsDepositRoot,
           signatures,
           {
             from: anyone,

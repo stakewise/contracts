@@ -38,7 +38,7 @@ contract('Pool Validators', (accounts) => {
     oracleAccounts,
     oracles,
     depositContract,
-    validatorsCount;
+    validatorsDepositRoot;
   let [operator, anyone, ...otherAccounts] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -53,7 +53,7 @@ contract('Pool Validators', (accounts) => {
       await pool.validatorRegistration()
     );
     validatorDepositAmount = await pool.VALIDATOR_TOTAL_DEPOSIT();
-    validatorsCount = keccak256(await depositContract.get_deposit_count());
+    validatorsDepositRoot = await depositContract.get_deposit_root();
 
     validators = await PoolValidators.at(upgradedContracts.poolValidators);
 
@@ -322,7 +322,7 @@ contract('Pool Validators', (accounts) => {
           oracles,
           oracleAccounts,
           withdrawalCredentials,
-          validatorsCount,
+          validatorsDepositRoot,
         }),
         'PoolValidators: invalid operator'
       );
@@ -341,7 +341,7 @@ contract('Pool Validators', (accounts) => {
         depositDataRoot,
         oracles,
         oracleAccounts,
-        validatorsCount,
+        validatorsDepositRoot,
       });
 
       await expectRevert(
@@ -354,7 +354,7 @@ contract('Pool Validators', (accounts) => {
           depositDataRoot,
           oracles,
           oracleAccounts,
-          validatorsCount: keccak256(await depositContract.get_deposit_count()),
+          validatorsDepositRoot: await depositContract.get_deposit_root(),
         }),
         'PoolValidators: validator already registered'
       );
@@ -374,7 +374,7 @@ contract('Pool Validators', (accounts) => {
           depositDataRoot,
           oracles,
           oracleAccounts,
-          validatorsCount,
+          validatorsDepositRoot,
         }),
         'PoolValidators: invalid operator'
       );
@@ -394,13 +394,13 @@ contract('Pool Validators', (accounts) => {
           oracles,
           oracleAccounts,
           withdrawalCredentials,
-          validatorsCount,
+          validatorsDepositRoot,
         }),
         'PoolValidators: invalid merkle proof'
       );
     });
 
-    it('fails to register with invalid validators count', async () => {
+    it('fails to register with invalid validators deposit root', async () => {
       await validators.commitOperator({
         from: operator,
       });
@@ -414,9 +414,9 @@ contract('Pool Validators', (accounts) => {
           oracles,
           oracleAccounts,
           withdrawalCredentials,
-          validatorsCount: keccak256('0x6be4000000000000'),
+          validatorsDepositRoot: keccak256('1'),
         }),
-        'Oracles: invalid validators deposit count'
+        'Oracles: invalid validators deposit root'
       );
     });
 
@@ -435,7 +435,7 @@ contract('Pool Validators', (accounts) => {
         oracles,
         oracleAccounts,
         withdrawalCredentials,
-        validatorsCount,
+        validatorsDepositRoot,
       });
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'ValidatorRegistered', {

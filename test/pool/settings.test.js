@@ -5,7 +5,6 @@ const {
   expectRevert,
   expectEvent,
 } = require('@openzeppelin/test-helpers');
-const { keccak256 } = require('ethers/lib/utils');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
@@ -26,7 +25,7 @@ const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
-  let pool, oracles, oracleAccounts, rewardEthToken, validatorsCount;
+  let pool, oracles, oracleAccounts, rewardEthToken, validatorsDepositRoot;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -51,7 +50,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     let depositContract = await iDepositContract.at(
       await pool.validatorRegistration()
     );
-    validatorsCount = keccak256(await depositContract.get_deposit_count());
+    validatorsDepositRoot = depositContract.get_deposit_root();
     oracles = await Oracles.at(upgradedContracts.oracles);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({
@@ -161,7 +160,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
         operator,
         oracles,
         oracleAccounts,
-        validatorsCount,
+        validatorsDepositRoot,
       });
 
       let activatedValidators = await pool.activatedValidators();

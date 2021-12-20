@@ -233,21 +233,21 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     function registerValidator(
         IPoolValidators.DepositData calldata depositData,
         bytes32[] calldata merkleProof,
-        bytes32 validatorsDepositCount,
+        bytes32 validatorsDepositRoot,
         bytes[] calldata signatures
     )
         external override onlyOracle whenNotPaused
     {
         require(
-            keccak256(pool.validatorRegistration().get_deposit_count()) == validatorsDepositCount,
-            "Oracles: invalid validators deposit count"
+            pool.validatorRegistration().get_deposit_root() == validatorsDepositRoot,
+            "Oracles: invalid validators deposit root"
         );
         require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
 
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator, validatorsDepositCount))
+            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator, validatorsDepositRoot))
         );
 
         // check signatures and calculate number of submitted oracle votes
