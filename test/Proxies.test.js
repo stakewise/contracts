@@ -10,6 +10,7 @@ let proxies = [
   contracts.stakeWiseToken,
   contracts.vestingEscrowFactory,
   contracts.merkleDistributor,
+  contracts.roles,
 ];
 
 let implementations = [
@@ -21,6 +22,7 @@ let implementations = [
   '0xA28C2d79f0c5B78CeC699DAB0303008179815396',
   '0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf',
   '0x459beef3c5Bd5D1E66de93AC908E278ee2488F14',
+  '0x584E5D4bD0AE1EEF838796aEe8fb805BbB82439C',
 ];
 
 contract('Proxies', () => {
