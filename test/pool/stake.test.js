@@ -23,7 +23,6 @@ const {
   depositData,
   depositDataMerkleRoot,
 } = require('./depositDataMerkleRoot');
-const { keccak256 } = require('ethers/lib/utils');
 
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
@@ -44,7 +43,7 @@ contract('Pool (stake)', (accounts) => {
     activatedValidators,
     pendingValidators,
     depositContract,
-    validatorsCount;
+    validatorsDepositRoot;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -65,7 +64,7 @@ contract('Pool (stake)', (accounts) => {
     depositContract = await iDepositContract.at(
       await pool.validatorRegistration()
     );
-    validatorsCount = keccak256(await depositContract.get_deposit_count());
+    validatorsDepositRoot = await depositContract.get_deposit_root();
     await validators.addOperator(
       operator,
       depositDataMerkleRoot,
@@ -420,7 +419,7 @@ contract('Pool (stake)', (accounts) => {
         oracles,
         oracleAccounts,
         operator,
-        validatorsCount,
+        validatorsDepositRoot,
       });
     });
 
@@ -533,7 +532,7 @@ contract('Pool (stake)', (accounts) => {
         oracles,
         oracleAccounts,
         operator,
-        validatorsCount,
+        validatorsDepositRoot,
       });
       await registerValidator({
         admin,
@@ -546,7 +545,7 @@ contract('Pool (stake)', (accounts) => {
         publicKey: depositData[1].publicKey,
         withdrawalCredentials: depositData[1].withdrawalCredentials,
         depositDataRoot: depositData[1].depositDataRoot,
-        validatorsCount: keccak256(await depositContract.get_deposit_count()),
+        validatorsDepositRoot: await depositContract.get_deposit_root(),
       });
     });
 

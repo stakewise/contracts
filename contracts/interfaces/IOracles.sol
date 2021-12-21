@@ -159,13 +159,13 @@ interface IOracles {
     * The quorum of signatures over the same data is required to register.
     * @param depositData - the deposit data for the registration.
     * @param merkleProof - an array of hashes to verify whether the deposit data is part of the deposit data merkle root.
-    * @param validatorsDepositCount - validators deposit count to protect from malicious operators.
+    * @param validatorsDepositRoot - validators deposit root to protect from malicious operators.
     * @param signatures - oracles' signatures.
     */
     function registerValidator(
         IPoolValidators.DepositData calldata depositData,
         bytes32[] calldata merkleProof,
-        bytes32 validatorsDepositCount,
+        bytes32 validatorsDepositRoot,
         bytes[] calldata signatures
     ) external;
 }

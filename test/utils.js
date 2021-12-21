@@ -205,12 +205,12 @@ async function registerValidator({
   depositDataRoot = depositData[0].depositDataRoot,
   oracles,
   oracleAccounts,
-  validatorsCount,
+  validatorsDepositRoot,
 }) {
   let nonce = await oracles.currentValidatorsNonce();
   let encoded = defaultAbiCoder.encode(
     ['uint256', 'bytes', 'address', 'bytes32'],
-    [nonce.toString(), publicKey, operator, validatorsCount]
+    [nonce.toString(), publicKey, operator, validatorsDepositRoot]
   );
   let candidateId = hexlify(keccak256(encoded));
 
@@ -226,7 +226,7 @@ async function registerValidator({
   return oracles.registerValidator(
     { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
     merkleProof,
-    validatorsCount,
+    validatorsDepositRoot,
     signatures,
     {
       from: oracleAccounts[0],

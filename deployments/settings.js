@@ -4,9 +4,9 @@ let contracts, contractSettings;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contracts = {
     prevOracles: '0xE54486fa4eB45716c5725d7A46FDDe810B8E8914',
-    oracles: '0x4bBaA17eFd71683dCb9C769DD38E7674994FE38d',
+    oracles: '0x531b9D9cb268E88D53A87890699bbe31326A6f08',
     pool: '0x8c1EfEcFb5c4F1099AB0460b5659342943764Df7',
-    poolValidators: '0x908C06aFfda0fFDbB4578629aA8cCff372e510b6',
+    poolValidators: '0x3A2A4c01BC8595E168A90bA6F04BB8A9FEac2acb',
     poolEscrow: '0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218',
     stakedEthToken: '0x221D9812823DBAb0F1fB40b0D294D9875980Ac19',
     rewardEthToken: '0x826f88d423440c305D9096cC1581Ae751eFCAfB0',
@@ -26,7 +26,9 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
 } else {
   contracts = {
     prevOracles: '0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514',
+    oracles: '0x8a887282E67ff41d36C0b7537eAB035291461AcD',
     pool: '0xC874b064f465bdD6411D45734b56fac750Cda29A',
+    poolValidators: '0x002932e11E95DC84C17ed5f94a0439645D8a97BC',
     poolEscrow: '0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079',
     stakedEthToken: '0xFe2e637202056d30016725477c5da089Ab0A043A',
     rewardEthToken: '0x20BC832ca081b91433ff6c17f85701B6e92486c5',
@@ -34,6 +36,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     vestingEscrowFactory: '0x7B910cc3D4B42FEFF056218bD56d7700E4ea7dD5',
     merkleDrop: '0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5',
     merkleDistributor: '0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20',
+    roles: '0xC486c10e3611565F5b38b50ad68277b11C889623',
     contractChecker: '0xFC1fC7257AEA7C7c08A498594DCA97CE5A72fdCB',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
   };
