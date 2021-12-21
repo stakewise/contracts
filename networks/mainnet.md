@@ -17,8 +17,8 @@
 
 ## Pool Validators
 
-- Contract: [0x0e75786cB831bEE6d4484031Af12490Ab528c770](https://etherscan.io/address/0x0e75786cB831bEE6d4484031Af12490Ab528c770)
-- Transaction: [0xe7135d26f8c388d29d2a29c19ecd69c8e69de6ce2aa5014e6ba1cbcc389e9def](https://etherscan.io/tx/0xe7135d26f8c388d29d2a29c19ecd69c8e69de6ce2aa5014e6ba1cbcc389e9def)
+- Contract: [0x002932e11E95DC84C17ed5f94a0439645D8a97BC](https://etherscan.io/address/0x002932e11E95DC84C17ed5f94a0439645D8a97BC)
+- Transaction: [0xc2620ea4a161fe391020b42f03e2ff4c0a29cda6538c8a56212dbf9a9107522e](https://etherscan.io/tx/0xc2620ea4a161fe391020b42f03e2ff4c0a29cda6538c8a56212dbf9a9107522e)
 
 ## StakedEthToken
 
@@ -47,8 +47,8 @@
 
 ## Oracles
 
-- Contract: [0xE949060ACE386D5e277De217703B17A2547f24C0](https://etherscan.io/address/0xE949060ACE386D5e277De217703B17A2547f24C0)
-- Transaction: [0x2e2dafc452302b358f11bc4c2dd7631438b1a1284082d4fccadbdd9041ee43f5](https://etherscan.io/tx/0x2e2dafc452302b358f11bc4c2dd7631438b1a1284082d4fccadbdd9041ee43f5)
+- Contract: [0x8a887282E67ff41d36C0b7537eAB035291461AcD](https://etherscan.io/address/0x8a887282E67ff41d36C0b7537eAB035291461AcD)
+- Transaction: [0x2eb5e24c36d9cb509472f992afa14521f8ad58a21fae500f633f85e07535f506](https://etherscan.io/tx/0x2eb5e24c36d9cb509472f992afa14521f8ad58a21fae500f633f85e07535f506)
 
 ## Vesting Escrow
 

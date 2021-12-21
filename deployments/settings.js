@@ -26,7 +26,9 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
 } else {
   contracts = {
     prevOracles: '0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514',
+    oracles: '0x8a887282E67ff41d36C0b7537eAB035291461AcD',
     pool: '0xC874b064f465bdD6411D45734b56fac750Cda29A',
+    poolValidators: '0x002932e11E95DC84C17ed5f94a0439645D8a97BC',
     poolEscrow: '0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079',
     stakedEthToken: '0xFe2e637202056d30016725477c5da089Ab0A043A',
     rewardEthToken: '0x20BC832ca081b91433ff6c17f85701B6e92486c5',
