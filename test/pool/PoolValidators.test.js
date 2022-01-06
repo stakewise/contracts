@@ -59,7 +59,7 @@ contract('Pool Validators', (accounts) => {
 
     // collect validator deposit
     let poolBalance = await balance.current(pool.address);
-    let depositAmount = validatorDeposit.sub(poolBalance);
+    let depositAmount = validatorDeposit.sub(poolBalance.mod(validatorDeposit));
     await pool.stake({
       from: anyone,
       value: depositAmount,
