@@ -170,7 +170,7 @@ contract('Pool (stake)', (accounts) => {
       poolBalance = poolBalance.add(depositAmount);
       let validatorIndex = activatedValidators
         .add(pendingValidators)
-        .add(new BN(2));
+        .add(poolBalance.div(ether('32')));
 
       // check deposit amount placed in activation queue
       let receipt = await pool.stake({
@@ -409,18 +409,27 @@ contract('Pool (stake)', (accounts) => {
         from: sender1,
         value: depositAmount,
       });
+      poolBalance = poolBalance.add(depositAmount);
       validatorIndex = activatedValidators
         .add(pendingValidators)
-        .add(new BN(1));
+        .add(poolBalance.div(ether('32')));
 
-      await registerValidator({
-        admin,
-        validators,
-        oracles,
-        oracleAccounts,
-        operator,
-        validatorsDepositRoot,
-      });
+      for (let i = 0; i < validatorIndex.sub(activatedValidators); i++) {
+        validatorsDepositRoot = await depositContract.get_deposit_root();
+        await registerValidator({
+          admin,
+          validators,
+          oracles,
+          oracleAccounts,
+          operator,
+          validatorsDepositRoot,
+          merkleProof: depositData[i].merkleProof,
+          signature: depositData[i].signature,
+          publicKey: depositData[i].publicKey,
+          withdrawalCredentials: depositData[i].withdrawalCredentials,
+          depositDataRoot: depositData[i].depositDataRoot,
+        });
+      }
     });
 
     it('fails to activate with invalid validator index', async () => {
@@ -494,11 +503,6 @@ contract('Pool (stake)', (accounts) => {
         account: sender1,
         balance: depositAmount,
       });
-
-      // check contract balance
-      expect(await balance.current(pool.address)).to.be.bignumber.equal(
-        poolBalance
-      );
     });
   });
 
@@ -514,39 +518,36 @@ contract('Pool (stake)', (accounts) => {
         from: sender3,
         value: depositAmount,
       });
+      poolBalance = poolBalance.add(depositAmount);
       validatorIndex1 = activatedValidators
         .add(pendingValidators)
-        .add(new BN(1));
+        .add(poolBalance.div(ether('32')));
 
       await pool.stake({
         from: sender3,
         value: depositAmount,
       });
+      poolBalance = poolBalance.add(depositAmount);
       validatorIndex2 = activatedValidators
         .add(pendingValidators)
-        .add(new BN(2));
+        .add(poolBalance.div(ether('32')));
 
-      await registerValidator({
-        admin,
-        validators,
-        oracles,
-        oracleAccounts,
-        operator,
-        validatorsDepositRoot,
-      });
-      await registerValidator({
-        admin,
-        validators,
-        oracles,
-        oracleAccounts,
-        operator,
-        merkleProof: depositData[1].merkleProof,
-        signature: depositData[1].signature,
-        publicKey: depositData[1].publicKey,
-        withdrawalCredentials: depositData[1].withdrawalCredentials,
-        depositDataRoot: depositData[1].depositDataRoot,
-        validatorsDepositRoot: await depositContract.get_deposit_root(),
-      });
+      for (let i = 0; i < validatorIndex2.sub(activatedValidators); i++) {
+        validatorsDepositRoot = await depositContract.get_deposit_root();
+        await registerValidator({
+          admin,
+          validators,
+          oracles,
+          oracleAccounts,
+          operator,
+          validatorsDepositRoot,
+          merkleProof: depositData[i].merkleProof,
+          signature: depositData[i].signature,
+          publicKey: depositData[i].publicKey,
+          withdrawalCredentials: depositData[i].withdrawalCredentials,
+          depositDataRoot: depositData[i].depositDataRoot,
+        });
+      }
     });
 
     it('fails to activate with invalid validator indexes', async () => {
@@ -636,11 +637,6 @@ contract('Pool (stake)', (accounts) => {
         value: depositAmount,
         sender: sender3,
       });
-
-      // check contract balance
-      expect(await balance.current(pool.address)).to.be.bignumber.equal(
-        poolBalance
-      );
     });
   });
 
