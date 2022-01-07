@@ -1,7 +1,10 @@
-const hre = require('hardhat');
-const { expectEvent, constants, time } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
-const { BN, ether, balance } = require('@openzeppelin/test-helpers');
+const hre = require('hardhat');
+const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
+const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
+const { depositData } = require('./pool/depositDataMerkleRoot');
+
+const iDepositContract = artifacts.require('IDepositContract');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -10,57 +13,7 @@ function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
     .add(min);
 }
 
-async function checkSolo({
-  solos,
-  soloId,
-  withdrawalCredentials = constants.ZERO_BYTES32,
-  amount = new BN(0),
-} = {}) {
-  let solo = await solos.solos(soloId);
-  expect(solo.amount).to.bignumber.equal(amount);
-  expect(solo.withdrawalCredentials).equal(withdrawalCredentials);
-}
-
-async function checkCollectorBalance(
-  collectorContract,
-  correctBalance = new BN(0)
-) {
-  expect(
-    await balance.current(collectorContract.address)
-  ).to.be.bignumber.equal(correctBalance);
-}
-
-async function checkSoloDepositAdded({
-  receipt,
-  solos,
-  sender,
-  withdrawalCredentials,
-  addedAmount,
-  totalAmount,
-}) {
-  let soloId = web3.utils.soliditySha3(
-    solos.address,
-    sender,
-    withdrawalCredentials
-  );
-
-  expectEvent(receipt, 'DepositAdded', {
-    soloId,
-    sender: sender,
-    amount: addedAmount,
-    withdrawalCredentials,
-  });
-
-  await checkSolo({
-    solos,
-    soloId,
-    withdrawalCredentials,
-    amount: totalAmount,
-  });
-}
-
 async function checkValidatorRegistered({
-  vrc,
   transaction,
   pubKey,
   signature,
@@ -68,17 +21,22 @@ async function checkValidatorRegistered({
   validatorDepositAmount = ether('32'),
 }) {
   // Check VRC record created
-  await expectEvent.inTransaction(transaction, vrc, 'DepositEvent', {
-    pubkey: pubKey,
-    withdrawal_credentials: withdrawalCredentials,
-    amount: web3.utils.bytesToHex(
-      new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
-        'le',
-        8
-      )
-    ),
-    signature: signature,
-  });
+  await expectEvent.inTransaction(
+    transaction,
+    iDepositContract,
+    'DepositEvent',
+    {
+      pubkey: pubKey,
+      withdrawal_credentials: withdrawalCredentials,
+      amount: web3.utils.bytesToHex(
+        new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
+          'le',
+          8
+        )
+      ),
+      signature: signature,
+    }
+  );
 }
 
 async function checkStakedEthToken({
@@ -119,19 +77,7 @@ async function checkRewardEthToken({
   }
 }
 
-async function getOracleAccounts({ oracles }) {
-  let oracleAccounts = [];
-  let oracleRole = await oracles.ORACLE_ROLE();
-  for (let i = 0; i < (await oracles.getRoleMemberCount(oracleRole)); i++) {
-    let oracle = await oracles.getRoleMember(oracleRole, i);
-    await impersonateAccount(oracle);
-    oracleAccounts.push(oracle);
-  }
-  return oracleAccounts;
-}
-
 async function setActivatedValidators({
-  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -143,33 +89,41 @@ async function setActivatedValidators({
     return;
   }
 
-  let newSyncPeriod = new BN('700');
-  await oracles.setSyncPeriod(newSyncPeriod, {
-    from: admin,
-  });
-  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
-
   let totalRewards = await rewardEthToken.totalRewards();
-  let nonce = await oracles.currentNonce();
-  let receipt;
+  let nonce = await oracles.currentRewardsNonce();
+
+  let encoded = defaultAbiCoder.encode(
+    ['uint256', 'uint256', 'uint256'],
+    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
+  );
+  let candidateId = hexlify(keccak256(encoded));
+
+  // prepare signatures
+  let signatures = [];
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForRewards(
-      nonce,
-      totalRewards,
-      activatedValidators,
-      {
-        from: oracleAccounts[i],
-      }
-    );
-    if ((await pool.activatedValidators()).eq(activatedValidators)) {
-      return receipt;
-    }
+    await impersonateAccount(oracleAccounts[i]);
+    let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
+    signatures.push(signature);
   }
+
+  // update activated validators
+  let receipt = await oracles.submitRewards(
+    totalRewards,
+    activatedValidators,
+    signatures,
+    {
+      from: oracleAccounts[0],
+    }
+  );
+
+  expect(await pool.activatedValidators()).to.bignumber.equal(
+    activatedValidators
+  );
+
+  return receipt;
 }
 
 async function setTotalRewards({
-  admin,
   rewardEthToken,
   oracles,
   oracleAccounts,
@@ -179,30 +133,35 @@ async function setTotalRewards({
   if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
     return;
   }
-
-  let newSyncPeriod = new BN('700');
-  await oracles.setSyncPeriod(newSyncPeriod, {
-    from: admin,
-  });
-  let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-  await time.advanceBlockTo(lastUpdateBlockNumber.add(new BN(newSyncPeriod)));
-
+  // calculate candidate ID
   let activatedValidators = await pool.activatedValidators();
-  let nonce = await oracles.currentNonce();
-  let receipt;
+  let nonce = await oracles.currentRewardsNonce();
+  let encoded = defaultAbiCoder.encode(
+    ['uint256', 'uint256', 'uint256'],
+    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
+  );
+  let candidateId = hexlify(keccak256(encoded));
+
+  // prepare signatures
+  let signatures = [];
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForRewards(
-      nonce,
-      totalRewards,
-      activatedValidators,
-      {
-        from: oracleAccounts[i],
-      }
-    );
-    if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
-      return receipt;
-    }
+    await impersonateAccount(oracleAccounts[i]);
+    let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
+    signatures.push(signature);
   }
+
+  // update total rewards
+  let receipt = await oracles.submitRewards(
+    totalRewards,
+    activatedValidators,
+    signatures,
+    {
+      from: oracleAccounts[0],
+    }
+  );
+  expect(await rewardEthToken.totalSupply()).to.bignumber.equal(totalRewards);
+
+  return receipt;
 }
 
 async function setMerkleRoot({
@@ -216,16 +175,63 @@ async function setMerkleRoot({
     return;
   }
 
-  let nonce = await oracles.currentNonce();
-  let receipt;
+  let nonce = await oracles.currentRewardsNonce();
+  let encoded = defaultAbiCoder.encode(
+    ['uint256', 'string', 'bytes32'],
+    [nonce.toString(), merkleProofs, merkleRoot]
+  );
+  let candidateId = hexlify(keccak256(encoded));
+
+  // prepare signatures
+  let signatures = [];
   for (let i = 0; i < oracleAccounts.length; i++) {
-    receipt = await oracles.voteForMerkleRoot(nonce, merkleRoot, merkleProofs, {
-      from: oracleAccounts[i],
-    });
-    if ((await merkleDistributor.merkleRoot()) === merkleRoot) {
-      return receipt;
-    }
+    await impersonateAccount(oracleAccounts[i]);
+    let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
+    signatures.push(signature);
   }
+
+  // update merkle root
+  return oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
+    from: oracleAccounts[0],
+  });
+}
+
+async function registerValidator({
+  operator,
+  merkleProof = depositData[0].merkleProof,
+  signature = depositData[0].signature,
+  publicKey = depositData[0].publicKey,
+  withdrawalCredentials = depositData[0].withdrawalCredentials,
+  depositDataRoot = depositData[0].depositDataRoot,
+  oracles,
+  oracleAccounts,
+  validatorsDepositRoot,
+}) {
+  let nonce = await oracles.currentValidatorsNonce();
+  let encoded = defaultAbiCoder.encode(
+    ['uint256', 'bytes', 'address', 'bytes32'],
+    [nonce.toString(), publicKey, operator, validatorsDepositRoot]
+  );
+  let candidateId = hexlify(keccak256(encoded));
+
+  // prepare signatures
+  let signatures = [];
+  for (let i = 0; i < oracleAccounts.length; i++) {
+    await impersonateAccount(oracleAccounts[i]);
+    let sig = await web3.eth.sign(candidateId, oracleAccounts[i]);
+    signatures.push(sig);
+  }
+
+  // register validator
+  return oracles.registerValidator(
+    { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
+    merkleProof,
+    validatorsDepositRoot,
+    signatures,
+    {
+      from: oracleAccounts[0],
+    }
+  );
 }
 
 async function impersonateAccount(account) {
@@ -256,10 +262,32 @@ async function resetFork() {
   });
 }
 
+async function setupOracleAccounts({ admin, oracles, accounts }) {
+  let oracleRole = await oracles.ORACLE_ROLE();
+  const totalOracles = (
+    await oracles.getRoleMemberCount(oracleRole)
+  ).toNumber();
+
+  // remove oracles
+  for (let i = 0; i < totalOracles; i++) {
+    let oldOracle = await oracles.getRoleMember(oracleRole, 0);
+    await oracles.removeOracle(oldOracle, { from: admin });
+  }
+
+  // add oracles
+  let oracleAccounts = [];
+  for (let i = 0; i < totalOracles; i++) {
+    let newOracle = accounts[i];
+    await oracles.addOracle(newOracle, {
+      from: admin,
+    });
+    oracleAccounts.push(newOracle);
+  }
+
+  return oracleAccounts;
+}
+
 module.exports = {
-  checkCollectorBalance,
-  checkSolo,
-  checkSoloDepositAdded,
   checkValidatorRegistered,
   getDepositAmount,
   checkStakedEthToken,
@@ -270,5 +298,6 @@ module.exports = {
   setActivatedValidators,
   setTotalRewards,
   setMerkleRoot,
-  getOracleAccounts,
+  setupOracleAccounts,
+  registerValidator,
 };

@@ -1,10 +1,5 @@
 # Mainnet Contracts
 
-## Validators
-
-- Contract: [0xaAc73D4A26Ae6906aa115118b7840b1F19fcd3A5](https://etherscan.io/address/0xaAc73D4A26Ae6906aa115118b7840b1F19fcd3A5)
-- Transaction: [0xdf4df05f116f81e505766f972142acc16479ade3961b7920ce5b434f4023f289](https://etherscan.io/tx/0xdf4df05f116f81e505766f972142acc16479ade3961b7920ce5b434f4023f289)
-
 ## Pool
 
 - Contract: [0xC874b064f465bdD6411D45734b56fac750Cda29A](https://etherscan.io/address/0xC874b064f465bdD6411D45734b56fac750Cda29A)
@@ -15,15 +10,20 @@
 - Implementation: [0xc8970E7C07c251625F9F93cE510b1D9c1a08d299](https://etherscan.io/address/0xc8970E7C07c251625F9F93cE510b1D9c1a08d299)
 - Transaction: [0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2](https://etherscan.io/tx/0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0xe68E649862F7036094f1E4eD5d69a738aCDE666f](https://etherscan.io/address/0xe68E649862F7036094f1E4eD5d69a738aCDE666f)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
+
 ## Pool Escrow
 
 - Contract: [0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079](https://etherscan.io/address/0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079)
 - Transaction: [0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155](https://etherscan.io/tx/0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155)
 
-## Solos
+## Pool Validators
 
-- Contract: [0xEadCBA8BF9ACA93F627F31fB05470F5A0686CEca](https://etherscan.io/address/0xEadCBA8BF9ACA93F627F31fB05470F5A0686CEca)
-- Transaction: [0xb06d6b7288424b04fab9136388c68cb9083e392bae00816c36e062dac3666dc2](https://etherscan.io/tx/0xb06d6b7288424b04fab9136388c68cb9083e392bae00816c36e062dac3666dc2)
+- Contract: [0x002932e11E95DC84C17ed5f94a0439645D8a97BC](https://etherscan.io/address/0x002932e11E95DC84C17ed5f94a0439645D8a97BC)
+- Transaction: [0xc2620ea4a161fe391020b42f03e2ff4c0a29cda6538c8a56212dbf9a9107522e](https://etherscan.io/tx/0xc2620ea4a161fe391020b42f03e2ff4c0a29cda6538c8a56212dbf9a9107522e)
 
 ## StakedEthToken
 
@@ -45,6 +45,11 @@
 - Implementation: [0x610B58583642610967727fe4fadd125a92D6F678](https://etherscan.io/address/0x610B58583642610967727fe4fadd125a92D6F678)
 - Transaction: [0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399](https://etherscan.io/tx/0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09](https://etherscan.io/address/0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
+
 ## StakeWiseToken
 
 - Contract: [0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2](https://etherscan.io/address/0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2)
@@ -52,18 +57,8 @@
 
 ## Oracles
 
-- Contract: [0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514](https://etherscan.io/address/0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514)
-- Transaction: [0x28ad7e3db8e157ef24f2aa6da7ad00cc1d55e0b2c0d161488a71e298a9cee21d](https://etherscan.io/tx/0x28ad7e3db8e157ef24f2aa6da7ad00cc1d55e0b2c0d161488a71e298a9cee21d)
-
-### Upgrade to v1.1.0
-
-- Implementation: [0x749dCCE12E8337dfb44635082519E656d44A2672](https://etherscan.io/address/0x749dCCE12E8337dfb44635082519E656d44A2672)
-- Transaction: [0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f](https://etherscan.io/tx/0xf7667e029d07c1ee47a46235bb1e90082142d982a10fa94d95fa919594f07c2f)
-
-### Upgrade to v1.3.0
-
-- Implementation: [0xd3ea5BF3bB42542B5b64358C12F06233704e9b99](https://etherscan.io/address/0xd3ea5BF3bB42542B5b64358C12F06233704e9b99)
-- Transaction: [0xd03b2316cb5cde5f52272deaf96640fd7f6d50556d798fd7818887a1f7ac2b73](https://etherscan.io/tx/0xd03b2316cb5cde5f52272deaf96640fd7f6d50556d798fd7818887a1f7ac2b73)
+- Contract: [0x8a887282E67ff41d36C0b7537eAB035291461AcD](https://etherscan.io/address/0x8a887282E67ff41d36C0b7537eAB035291461AcD)
+- Transaction: [0x2eb5e24c36d9cb509472f992afa14521f8ad58a21fae500f633f85e07535f506](https://etherscan.io/tx/0x2eb5e24c36d9cb509472f992afa14521f8ad58a21fae500f633f85e07535f506)
 
 ## Vesting Escrow
 
@@ -96,10 +91,25 @@
 - Contract: [0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20](https://etherscan.io/address/0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20)
 - Transaction: [0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a](https://etherscan.io/tx/0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC](https://etherscan.io/address/0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
+
+## Roles
+
+- Contract: [0xC486c10e3611565F5b38b50ad68277b11C889623](https://etherscan.io/address/0xC486c10e3611565F5b38b50ad68277b11C889623)
+- Transaction: [0x3add6dc8ba0e0bf8ffb7301fb049cf9953461951f63d304681d70cdc8c45cec2](https://etherscan.io/tx/0x3add6dc8ba0e0bf8ffb7301fb049cf9953461951f63d304681d70cdc8c45cec2)
+
 ## Early Adopters Campaign (Merkle Drop)
 
 - Contract: [0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5](https://etherscan.io/address/0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5)
 - Transaction: [0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87](https://etherscan.io/tx/0x4912a5f2c61be471dc5200ae7a4d08cdb61d32e13d3071e226807346ac9a1c87)
+
+## Contract Checker
+
+- Contract: [0x85ee326f839Bc430655A3fad447837072ef52C2F](https://etherscan.io/address/0xfc1fc7257aea7c7c08a498594dca97ce5a72fdcb)
+- Transaction: [0xedd8ba44e04a766a79a0ce50a16343e7635483633eac7169cbf4e52f50961ce1](https://etherscan.io/tx/0xedd8ba44e04a766a79a0ce50a16343e7635483633eac7169cbf4e52f50961ce1)
 
 ## Proxy Admin
 

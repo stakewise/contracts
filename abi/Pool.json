@@ -130,6 +130,25 @@
     "inputs": [
       {
         "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "Refunded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
         "internalType": "bytes32",
         "name": "role",
         "type": "bytes32"
@@ -204,6 +223,44 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "partner",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "StakedWithPartner",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "StakedWithReferrer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -230,19 +287,6 @@
       }
     ],
     "name": "ValidatorRegistered",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "bytes32",
-        "name": "withdrawalCredentials",
-        "type": "bytes32"
-      }
-    ],
-    "name": "WithdrawalCredentialsUpdated",
     "type": "event"
   },
   {
@@ -273,7 +317,7 @@
   },
   {
     "inputs": [],
-    "name": "VALIDATOR_DEPOSIT",
+    "name": "VALIDATOR_TOTAL_DEPOSIT",
     "outputs": [
       {
         "internalType": "uint256",
@@ -288,12 +332,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
       },
       {
         "internalType": "uint256",
-        "name": "_validatorIndex",
+        "name": "validatorIndex",
         "type": "uint256"
       }
     ],
@@ -306,12 +350,12 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
       },
       {
         "internalType": "uint256[]",
-        "name": "_validatorIndexes",
+        "name": "validatorIndexes",
         "type": "uint256[]"
       }
     ],
@@ -371,13 +415,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "addDeposit",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -394,7 +431,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_validatorIndex",
+        "name": "validatorIndex",
         "type": "uint256"
       }
     ],
@@ -611,9 +648,31 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "refund",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "components": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
           {
             "internalType": "bytes",
             "name": "publicKey",
@@ -623,15 +682,10 @@
             "internalType": "bytes",
             "name": "signature",
             "type": "bytes"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
           }
         ],
-        "internalType": "struct IPool.Validator",
-        "name": "_validator",
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
         "type": "tuple"
       }
     ],
@@ -719,7 +773,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_minActivatingDeposit",
+        "name": "newMinActivatingDeposit",
         "type": "uint256"
       }
     ],
@@ -732,7 +786,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_pendingValidatorsLimit",
+        "name": "newPendingValidatorsLimit",
         "type": "uint256"
       }
     ],
@@ -742,16 +796,85 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "stake",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_withdrawalCredentials",
-        "type": "bytes32"
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
       }
     ],
-    "name": "setWithdrawalCredentials",
+    "name": "stakeOnBehalf",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "partner",
+        "type": "address"
+      }
+    ],
+    "name": "stakeWithPartner",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "partner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
+    "name": "stakeWithPartnerOnBehalf",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      }
+    ],
+    "name": "stakeWithReferrer",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "referrer",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "recipient",
+        "type": "address"
+      }
+    ],
+    "name": "stakeWithReferrerOnBehalf",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -765,28 +888,13 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_oracles",
+        "name": "_poolValidators",
         "type": "address"
       },
       {
-        "internalType": "uint256",
-        "name": "_activatedValidators",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_pendingValidators",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_minActivatingDeposit",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_pendingValidatorsLimit",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "_oracles",
+        "type": "address"
       }
     ],
     "name": "upgrade",
@@ -819,5 +927,9 @@
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
   }
 ]

@@ -36,11 +36,13 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     mapping (bytes32 => mapping (uint256 => uint256)) private _claimedBitMap;
 
     /**
-     * @dev See {IMerkleDistributor-initialize}.
+     * @dev See {IMerkleDistributor-upgrade}.
      */
-    function initialize(address _admin, address _rewardEthToken, address _oracles) external override initializer {
-        __OwnablePausableUpgradeable_init(_admin);
-        rewardEthToken = _rewardEthToken;
+    function upgrade(address _oracles) external override onlyAdmin whenPaused {
+        require(
+            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
+            "MerkleDistributor: invalid Oracles address"
+        );
         oracles = IOracles(_oracles);
     }
 
@@ -56,23 +58,22 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
      */
     function setMerkleRoot(bytes32 newMerkleRoot, string calldata newMerkleProofs) external override {
         require(msg.sender == address(oracles), "MerkleDistributor: access denied");
-        if (newMerkleRoot != merkleRoot) {
-            merkleRoot = newMerkleRoot;
-            emit MerkleRootUpdated(msg.sender, newMerkleRoot, newMerkleProofs);
-        }
+        merkleRoot = newMerkleRoot;
         lastUpdateBlockNumber = block.number;
+        emit MerkleRootUpdated(msg.sender, newMerkleRoot, newMerkleProofs);
     }
 
     /**
-     * @dev See {IMerkleDistributor-distribute}.
+     * @dev See {IMerkleDistributor-distributePeriodically}.
      */
-    function distribute(
+    function distributePeriodically(
+        address from,
         address token,
         address beneficiary,
         uint256 amount,
         uint256 durationInBlocks
     )
-        external override onlyAdmin
+        external override onlyAdmin whenNotPaused
     {
         require(amount > 0, "MerkleDistributor: invalid amount");
 
@@ -80,8 +81,26 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         uint256 endBlock = startBlock + durationInBlocks;
         require(endBlock > startBlock, "MerkleDistributor: invalid blocks duration");
 
-        IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
-        emit DistributionAdded(msg.sender, token, beneficiary, amount, startBlock, endBlock);
+        IERC20Upgradeable(token).safeTransferFrom(from, address(this), amount);
+        emit PeriodicDistributionAdded(from, token, beneficiary, amount, startBlock, endBlock);
+    }
+
+    /**
+     * @dev See {IMerkleDistributor-distributeOneTime}.
+     */
+    function distributeOneTime(
+        address from,
+        address origin,
+        address token,
+        uint256 amount,
+        string calldata rewardsLink
+    )
+        external override onlyAdmin whenNotPaused
+    {
+        require(amount > 0, "MerkleDistributor: invalid amount");
+
+        IERC20Upgradeable(token).safeTransferFrom(from, address(this), amount);
+        emit OneTimeDistributionAdded(from, origin, token, amount, rewardsLink);
     }
 
     /**
@@ -116,6 +135,7 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     )
         external override whenNotPaused
     {
+        require(account != address(0), "MerkleDistributor: invalid account");
         address _rewardEthToken = rewardEthToken; // gas savings
         require(
             IRewardEthToken(_rewardEthToken).lastUpdateBlockNumber() < lastUpdateBlockNumber,

@@ -23,21 +23,37 @@ interface IMerkleDistributor {
     );
 
     /**
-    * @dev Event for tracking SWISE token distributions.
-    * @param sender - address of the new transaction sender.
+    * @dev Event for tracking periodic tokens distributions.
+    * @param from - address to transfer the tokens from.
     * @param token - address of the token.
-    * @param beneficiary - address of the beneficiary, the SWISE allocation is added to.
-    * @param amount - amount of tokens distributed.
+    * @param beneficiary - address of the beneficiary, the allocation is added to.
+    * @param amount - amount of tokens to distribute.
     * @param startBlock - start block of the tokens distribution.
     * @param endBlock - end block of the tokens distribution.
     */
-    event DistributionAdded(
-        address indexed sender,
+    event PeriodicDistributionAdded(
+        address indexed from,
         address indexed token,
         address indexed beneficiary,
         uint256 amount,
         uint256 startBlock,
         uint256 endBlock
+    );
+
+    /**
+    * @dev Event for tracking one time tokens distributions.
+    * @param from - address to transfer the tokens from.
+    * @param origin - predefined origin address to label the distribution.
+    * @param token - address of the token.
+    * @param amount - amount of tokens to distribute.
+    * @param rewardsLink - link to the file where rewards are stored.
+    */
+    event OneTimeDistributionAdded(
+        address indexed from,
+        address indexed origin,
+        address indexed token,
+        uint256 amount,
+        string rewardsLink
     );
 
     /**
@@ -70,12 +86,11 @@ interface IMerkleDistributor {
     function lastUpdateBlockNumber() external view returns (uint256);
 
     /**
-    * @dev Constructor for initializing the MerkleDistributor contract.
-    * @param _admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @dev Function for upgrading the MerkleDistributor contract. The `initialize` function must be defined
+    * if deploying contract for the first time that will initialize the state variables above.
     * @param _oracles - address of the Oracles contract.
     */
-    function initialize(address _admin, address _rewardEthToken, address _oracles) external;
+    function upgrade(address _oracles) external;
 
     /**
     * @dev Function for checking the claimed bit map.
@@ -92,17 +107,35 @@ interface IMerkleDistributor {
     function setMerkleRoot(bytes32 newMerkleRoot, string calldata merkleProofs) external;
 
     /**
-    * @dev Function for adding tokens distribution.
+    * @dev Function for distributing tokens periodically for the number of blocks.
+    * @param from - address of the account to transfer the tokens from.
     * @param token - address of the token.
     * @param beneficiary - address of the beneficiary.
     * @param amount - amount of tokens to distribute.
     * @param durationInBlocks - duration in blocks when the token distribution should be stopped.
     */
-    function distribute(
+    function distributePeriodically(
+        address from,
         address token,
         address beneficiary,
         uint256 amount,
         uint256 durationInBlocks
+    ) external;
+
+    /**
+    * @dev Function for distributing tokens one time.
+    * @param from - address of the account to transfer the tokens from.
+    * @param origin - predefined origin address to label the distribution.
+    * @param token - address of the token.
+    * @param amount - amount of tokens to distribute.
+    * @param rewardsLink - link to the file where rewards for the accounts are stored.
+    */
+    function distributeOneTime(
+        address from,
+        address origin,
+        address token,
+        uint256 amount,
+        string calldata rewardsLink
     ) external;
 
     /**

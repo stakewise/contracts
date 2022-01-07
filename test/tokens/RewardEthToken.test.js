@@ -1,3 +1,4 @@
+const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { expect } = require('chai');
 const {
   expectRevert,
@@ -6,31 +7,29 @@ const {
   ether,
   constants,
   send,
-  time,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
   checkRewardEthToken,
   setTotalRewards,
-  getOracleAccounts,
+  setupOracleAccounts,
 } = require('../utils');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
-const OracleMock = artifacts.require('OracleMock');
-const maintainerFee = new BN(1000);
+const MulticallMock = artifacts.require('MulticallMock');
+const protocolFee = new BN(1000);
 
 contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   const admin = contractSettings.admin;
   let stakedEthToken,
     rewardEthToken,
-    maintainer,
     totalSupply,
     pool,
     oracles,
@@ -42,75 +41,78 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(sender, admin, ether('5'));
 
-    await upgradeContracts();
+    let contracts = await upgradeContracts();
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await getOracleAccounts({ oracles });
-    maintainer = await rewardEthToken.maintainer();
+    oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     totalSupply = await rewardEthToken.totalSupply();
-    await rewardEthToken.setMaintainer(maintainer, { from: admin });
-    await rewardEthToken.setMaintainerFee(maintainerFee, { from: admin });
+    await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
   });
 
   afterEach(async () => resetFork());
 
   describe('restricted actions', () => {
-    it('not admin fails to update maintainer address', async () => {
+    it('not admin fails to update protocol fee recipient address', async () => {
       await expectRevert(
-        rewardEthToken.setMaintainer(sender, {
+        rewardEthToken.setProtocolFeeRecipient(sender, {
           from: sender,
         }),
         'OwnablePausable: access denied'
       );
     });
 
-    it('fails to set zero address for the maintainer', async () => {
-      await expectRevert(
-        rewardEthToken.setMaintainer(constants.ZERO_ADDRESS, {
+    it('can set zero address for the protocol fee recipient', async () => {
+      let receipt = await rewardEthToken.setProtocolFeeRecipient(
+        constants.ZERO_ADDRESS,
+        {
           from: admin,
-        }),
-        'RewardEthToken: invalid address'
+        }
       );
+
+      await expectEvent(receipt, 'ProtocolFeeRecipientUpdated', {
+        recipient: constants.ZERO_ADDRESS,
+      });
     });
 
-    it('admin can update maintainer address', async () => {
-      let receipt = await rewardEthToken.setMaintainer(sender, {
+    it('admin can update protocol fee recipient address', async () => {
+      let receipt = await rewardEthToken.setProtocolFeeRecipient(sender, {
         from: admin,
       });
 
-      await expectEvent(receipt, 'MaintainerUpdated', {
-        maintainer: sender,
+      await expectEvent(receipt, 'ProtocolFeeRecipientUpdated', {
+        recipient: sender,
       });
     });
 
-    it('not admin fails to update maintainer fee', async () => {
+    it('not admin fails to update protocol fee', async () => {
       await expectRevert(
-        rewardEthToken.setMaintainerFee(9999, {
+        rewardEthToken.setProtocolFee(9999, {
           from: sender,
         }),
         'OwnablePausable: access denied'
       );
     });
 
-    it('admin can update maintainer fee', async () => {
-      let receipt = await rewardEthToken.setMaintainerFee(9999, {
+    it('admin can update protocol fee', async () => {
+      let receipt = await rewardEthToken.setProtocolFee(9999, {
         from: admin,
       });
 
-      await expectEvent(receipt, 'MaintainerFeeUpdated', {
-        maintainerFee: '9999',
+      await expectEvent(receipt, 'ProtocolFeeUpdated', {
+        protocolFee: '9999',
       });
     });
 
-    it('fails to set invalid maintainer fee', async () => {
+    it('fails to set invalid protocol fee', async () => {
       await expectRevert(
-        rewardEthToken.setMaintainerFee(10000, {
+        rewardEthToken.setProtocolFee(10000, {
           from: admin,
         }),
-        'RewardEthToken: invalid fee'
+        'RewardEthToken: invalid protocol fee'
       );
     });
 
@@ -144,12 +146,11 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
-        admin,
-        totalRewards: newTotalRewards,
         rewardEthToken,
         oracles,
-        oracleAccounts,
         pool,
+        totalRewards: newTotalRewards,
+        oracleAccounts,
       });
       await expectEvent.inTransaction(
         receipt.tx,
@@ -158,6 +159,72 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
+        }
+      );
+    });
+
+    it('anyone cannot update rewards', async () => {
+      await expectRevert(
+        rewardEthToken.updateTotalRewards(ether('10'), {
+          from: sender,
+        }),
+        'RewardEthToken: access denied'
+      );
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply,
+        account: sender,
+        balance: new BN(0),
+      });
+    });
+
+    it('oracles can update rewards', async () => {
+      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let newTotalRewards = prevTotalRewards.add(ether('10'));
+      let receipt = await setTotalRewards({
+        rewardEthToken,
+        oracles,
+        pool,
+        totalRewards: newTotalRewards,
+        oracleAccounts,
+      });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          totalRewards: newTotalRewards,
+          protocolReward: new BN(0),
+        }
+      );
+    });
+
+    it('assigns protocol fee to distributor', async () => {
+      await rewardEthToken.setProtocolFeeRecipient(constants.ZERO_ADDRESS, {
+        from: admin,
+      });
+
+      let periodReward = ether('10');
+      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let newTotalRewards = prevTotalRewards.add(periodReward);
+      let receipt = await setTotalRewards({
+        rewardEthToken,
+        oracles,
+        pool,
+        totalRewards: newTotalRewards,
+        oracleAccounts,
+      });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          totalRewards: newTotalRewards,
+          protocolReward: periodReward
+            .mul(await rewardEthToken.protocolFee())
+            .div(new BN(10000)),
         }
       );
     });
@@ -173,18 +240,17 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
         from: admin,
       });
-      await pool.addDeposit({
+      await pool.stake({
         from: sender1,
         value: stakedAmount1,
       });
-      await pool.addDeposit({
+      await pool.stake({
         from: sender2,
         value: stakedAmount2,
       });
 
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
-        admin,
         totalRewards: totalSupply,
         rewardEthToken,
         pool,
@@ -316,46 +382,44 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('cannot transfer rewards after total rewards update in the same block', async () => {
-      // clean up oracles
-      for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
       // deploy mocked oracle
-      let mockedOracle = await OracleMock.new(
-        contracts.oracles,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+      let multicallMock = await MulticallMock.new(
+        oracles.address,
+        stakedEthToken.address,
+        rewardEthToken.address,
         merkleDistributor
       );
-      await oracles.addOracle(mockedOracle.address, {
+      await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await rewardEthToken.approve(mockedOracle.address, rewardAmount1, {
+      await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      let currentNonce = await oracles.currentRewardsNonce();
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
+      let signatures = [];
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'uint256'],
+        [
+          currentNonce.toString(),
+          activatedValidators.toString(),
+          totalRewards.toString(),
+        ]
+      );
+      let candidateId = hexlify(keccak256(encoded));
+      for (const oracleAccount of oracleAccounts) {
+        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
 
       await expectRevert(
-        mockedOracle.updateTotalRewardsAndTransferRewards(
+        multicallMock.updateTotalRewardsAndTransferRewards(
           totalRewards,
           activatedValidators,
           sender2,
+          signatures,
           {
             from: sender1,
           }
@@ -365,45 +429,43 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('can transfer rewards before total rewards update in the same block', async () => {
-      // clean up oracles
-      for (let i = 0; i < oracleAccounts.length; i++) {
-        await oracles.removeOracle(oracleAccounts[i], {
-          from: admin,
-        });
-      }
-
-      // deploy mocked oracle
-      let mockedOracle = await OracleMock.new(
-        contracts.oracles,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+      // deploy mocked multicall
+      let multicallMock = await MulticallMock.new(
+        oracles.address,
+        stakedEthToken.address,
+        rewardEthToken.address,
         merkleDistributor
       );
-      await oracles.addOracle(mockedOracle.address, {
+      await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await rewardEthToken.approve(mockedOracle.address, rewardAmount1, {
+      await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
-      // wait for rewards voting time
-      let newSyncPeriod = new BN('700');
-      await oracles.setSyncPeriod(newSyncPeriod, {
-        from: admin,
-      });
-      let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-      await time.advanceBlockTo(
-        lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-      );
-
+      let currentNonce = await oracles.currentRewardsNonce();
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
+      let signatures = [];
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'uint256', 'uint256'],
+        [
+          currentNonce.toString(),
+          activatedValidators.toString(),
+          totalRewards.toString(),
+        ]
+      );
+      let candidateId = hexlify(keccak256(encoded));
+      for (const oracleAccount of oracleAccounts) {
+        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
+      }
 
-      let receipt = await mockedOracle.transferRewardsAndUpdateTotalRewards(
+      let receipt = await multicallMock.transferRewardsAndUpdateTotalRewards(
         totalRewards,
         activatedValidators,
         sender2,
+        signatures,
         {
           from: sender1,
         }

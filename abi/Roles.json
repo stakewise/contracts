@@ -1,46 +1,15 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_validatorRegistration",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_validators",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_validatorPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_cancelLockDuration",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "cancelLockDuration",
-        "type": "uint256"
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
       }
     ],
-    "name": "CancelLockDurationUpdated",
+    "name": "OperatorRemoved",
     "type": "event"
   },
   {
@@ -48,30 +17,18 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "soloId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "operator",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "revenueShare",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes32",
-        "name": "withdrawalCredentials",
-        "type": "bytes32"
       }
     ],
-    "name": "DepositAdded",
+    "name": "OperatorUpdated",
     "type": "event"
   },
   {
@@ -79,30 +36,31 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "soloId",
-        "type": "bytes32"
-      },
+        "internalType": "address",
+        "name": "partner",
+        "type": "address"
+      }
+    ],
+    "name": "PartnerRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
       {
         "indexed": true,
         "internalType": "address",
-        "name": "sender",
+        "name": "partner",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "amount",
+        "name": "revenueShare",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes32",
-        "name": "withdrawalCredentials",
-        "type": "bytes32"
       }
     ],
-    "name": "DepositCanceled",
+    "name": "PartnerUpdated",
     "type": "event"
   },
   {
@@ -207,50 +165,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "validatorPrice",
-        "type": "uint256"
-      }
-    ],
-    "name": "ValidatorPriceUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "bytes32",
-        "name": "soloId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "publicKey",
-        "type": "bytes"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      }
-    ],
-    "name": "ValidatorRegistered",
-    "type": "event"
-  },
-  {
     "inputs": [],
     "name": "DEFAULT_ADMIN_ROLE",
     "outputs": [
@@ -265,12 +179,12 @@
   },
   {
     "inputs": [],
-    "name": "PAUSER_ROLE",
+    "name": "MAX_PERCENT",
     "outputs": [
       {
-        "internalType": "bytes32",
+        "internalType": "uint256",
         "name": "",
-        "type": "bytes32"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -278,12 +192,12 @@
   },
   {
     "inputs": [],
-    "name": "VALIDATOR_DEPOSIT",
+    "name": "PAUSER_ROLE",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "bytes32",
         "name": "",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -305,19 +219,6 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "_withdrawalCredentials",
-        "type": "bytes32"
-      }
-    ],
-    "name": "addDeposit",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "_account",
         "type": "address"
@@ -326,37 +227,6 @@
     "name": "addPauser",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "_withdrawalCredentials",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "cancelDeposit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "cancelLockDuration",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -467,6 +337,19 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "admin",
+        "type": "address"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -524,34 +407,12 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "bytes",
-            "name": "publicKey",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes",
-            "name": "signature",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "soloId",
-            "type": "bytes32"
-          }
-        ],
-        "internalType": "struct ISolos.Validator",
-        "name": "_validator",
-        "type": "tuple"
+        "internalType": "address",
+        "name": "_account",
+        "type": "address"
       }
     ],
-    "name": "registerValidator",
+    "name": "removeAdmin",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -560,11 +421,24 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "account",
         "type": "address"
       }
     ],
-    "name": "removeAdmin",
+    "name": "removeOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "removePartner",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -621,12 +495,17 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "_cancelLockDuration",
+        "name": "revenueShare",
         "type": "uint256"
       }
     ],
-    "name": "setCancelLockDuration",
+    "name": "setOperator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -634,43 +513,19 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
-        "name": "_validatorPrice",
+        "name": "revenueShare",
         "type": "uint256"
       }
     ],
-    "name": "setValidatorPrice",
+    "name": "setPartner",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "solos",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "withdrawalCredentials",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "uint256",
-        "name": "releaseTime",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -678,32 +533,6 @@
     "name": "unpause",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "validatorPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "validatorRegistration",
-    "outputs": [
-      {
-        "internalType": "contract IDepositContract",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
     "type": "function"
   }
 ]

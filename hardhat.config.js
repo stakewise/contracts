@@ -10,8 +10,7 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const GAS_PRICE = 20e9; // 20 Gwei
-const BLOCK_NUMBER = 12660565;
+const BLOCK_NUMBER = 13952000;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
@@ -102,9 +101,6 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      blockGasLimit: 0x1fffffffffffff,
-      gasPrice: GAS_PRICE,
-      allowUnlimitedContractSize: true,
       forking: {
         url: process.env.HARDHAT_FORK_API_URL,
         blockNumber: BLOCK_NUMBER,
@@ -112,9 +108,6 @@ module.exports = {
     },
     local: {
       url: 'http://localhost:8545',
-      blockGasLimit: 0x1fffffffffffff,
-      gasPrice: GAS_PRICE,
-      allowUnlimitedContractSize: true,
     },
   },
   throwOnTransactionFailures: true,
@@ -133,21 +126,25 @@ module.exports = {
       'IDepositContract',
       'IERC20Upgradeable',
       'Pool',
+      'PoolEscrow',
+      'PoolValidators',
       'RewardEthToken',
-      'Solos',
       'StakedEthToken',
       'StakeWiseToken',
-      'Validators',
       'VestingEscrow',
       'VestingEscrowFactory',
-      'PoolEscrow',
       'MerkleDrop',
       'MerkleDistributor',
+      'ContractChecker',
+      'Roles',
     ],
     clear: true,
     flat: true,
   },
   etherscan: {
     apiKey: 'api key goes here',
+  },
+  mocha: {
+    timeout: 20000,
   },
 };

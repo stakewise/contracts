@@ -2,18 +2,29 @@
 
 pragma solidity 0.7.5;
 
+import "./IPoolValidators.sol";
+pragma abicoder v2;
+
 /**
  * @dev Interface of the Oracles contract.
  */
 interface IOracles {
     /**
+    * @dev Event for tracking the Oracles contract initialization.
+    * @param rewardsNonce - rewards nonce the contract was initialized with.
+    */
+    event Initialized(uint256 rewardsNonce);
+
+    /**
     * @dev Event for tracking oracle rewards votes.
+    * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
     * @param nonce - current nonce.
     * @param totalRewards - submitted value of total rewards.
     * @param activatedValidators - submitted amount of activated validators.
     */
     event RewardsVoteSubmitted(
+        address indexed sender,
         address indexed oracle,
         uint256 nonce,
         uint256 totalRewards,
@@ -22,12 +33,14 @@ interface IOracles {
 
     /**
     * @dev Event for tracking oracle merkle root votes.
+    * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
     * @param nonce - current nonce.
     * @param merkleRoot - new merkle root.
     * @param merkleProofs - link to the merkle proofs.
     */
     event MerkleRootVoteSubmitted(
+        address indexed sender,
         address indexed oracle,
         uint256 nonce,
         bytes32 indexed merkleRoot,
@@ -35,49 +48,56 @@ interface IOracles {
     );
 
     /**
-    * @dev Event for tracking changes of oracles' sync periods.
-    * @param syncPeriod - new sync period in blocks.
+    * @dev Event for tracking validator registration votes.
     * @param sender - address of the transaction sender.
+    * @param oracle - address of the signed oracle.
+    * @param operator - address of the operator the vote was sent for.
+    * @param publicKey - public key of the validator the vote was sent for.
+    * @param nonce - validator registration nonce.
     */
-    event SyncPeriodUpdated(uint256 syncPeriod, address indexed sender);
+    event RegisterValidatorVoteSubmitted(
+        address indexed sender,
+        address indexed oracle,
+        address indexed operator,
+        bytes publicKey,
+        uint256 nonce
+    );
 
     /**
-    * @dev Function for retrieving number of votes of the submission candidate.
-    * @param _candidateId - ID of the candidate to retrieve number of votes for.
+    * @dev Event for tracking new or updates oracles.
+    * @param oracle - address of new or updated oracle.
     */
-    function candidates(bytes32 _candidateId) external view returns (uint256);
+    event OracleAdded(address indexed oracle);
 
     /**
-    * @dev Function for retrieving oracles sync period (in blocks).
+    * @dev Event for tracking removed oracles.
+    * @param oracle - address of removed oracle.
     */
-    function syncPeriod() external view returns (uint256);
+    event OracleRemoved(address indexed oracle);
 
     /**
-    * @dev Function for upgrading the Oracles contract.
-    * If deploying contract for the first time, the upgrade function should be replaced with `initialize`
-    * and contain initializations from all the previous versions.
+    * @dev Constructor for initializing the Oracles contract.
+    * @param admin - address of the contract admin.
+    * @param oraclesV1 - address of the Oracles V1 contract.
+    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _pool - address of the Pool contract.
+    * @param _poolValidators - address of the PoolValidators contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
-    * @param _syncPeriod - number of blocks to wait before the next sync.
     */
-    function upgrade(address _merkleDistributor, uint256 _syncPeriod) external;
+    function initialize(
+        address admin,
+        address oraclesV1,
+        address _rewardEthToken,
+        address _pool,
+        address _poolValidators,
+        address _merkleDistributor
+    ) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
-    * @param _account - account to check.
+    * @param account - account to check.
     */
-    function isOracle(address _account) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether an oracle has voted.
-    * @param oracle - oracle address to check.
-    * @param candidateId - hash of nonce and vote parameters.
-    */
-    function hasVote(address oracle, bytes32 candidateId) external view returns (bool);
-
-    /**
-    * @dev Function for checking whether the oracles are currently voting for new total rewards.
-    */
-    function isRewardsVoting() external view returns (bool);
+    function isOracle(address account) external view returns (bool);
 
     /**
     * @dev Function for checking whether the oracles are currently voting for new merkle root.
@@ -85,46 +105,67 @@ interface IOracles {
     function isMerkleRootVoting() external view returns (bool);
 
     /**
-    * @dev Function for retrieving current nonce.
+    * @dev Function for retrieving current rewards nonce.
     */
-    function currentNonce() external view returns (uint256);
+    function currentRewardsNonce() external view returns (uint256);
+
+    /**
+    * @dev Function for retrieving current validators nonce.
+    */
+    function currentValidatorsNonce() external view returns (uint256);
 
     /**
     * @dev Function for adding an oracle role to the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to assign an oracle role to.
+    * @param account - account to assign an oracle role to.
     */
-    function addOracle(address _account) external;
+    function addOracle(address account) external;
 
     /**
     * @dev Function for removing an oracle role from the account.
     * Can only be called by an account with an admin role.
-    * @param _account - account to remove an oracle role from.
+    * @param account - account to remove an oracle role from.
     */
-    function removeOracle(address _account) external;
+    function removeOracle(address account) external;
 
     /**
-    * @dev Function for updating oracles sync period. The number of blocks after they will submit the off-chain data.
-    * Can only be called by an account with an admin role.
-    * @param _syncPeriod - new sync period.
+    * @dev Function for submitting oracle vote for total rewards.
+    * The quorum of signatures over the same data is required to submit the new value.
+    * @param totalRewards - voted total rewards.
+    * @param activatedValidators - voted amount of activated validators.
+    * @param signatures - oracles' signatures.
     */
-    function setSyncPeriod(uint256 _syncPeriod) external;
+    function submitRewards(
+        uint256 totalRewards,
+        uint256 activatedValidators,
+        bytes[] calldata signatures
+    ) external;
 
     /**
-    * @dev Function for submitting oracle vote for total rewards. The last vote required for quorum will update the values.
-    * Can only be called by an account with an oracle role.
-    * @param _nonce - current nonce.
-    * @param _totalRewards - voted total rewards.
-    * @param _activatedValidators - voted amount of activated validators.
+    * @dev Function for submitting new merkle root.
+    * The quorum of signatures over the same data is required to submit the new value.
+    * @param merkleRoot - hash of the new merkle root.
+    * @param merkleProofs - link to the merkle proofs.
+    * @param signatures - oracles' signatures.
     */
-    function voteForRewards(uint256 _nonce, uint256 _totalRewards, uint256 _activatedValidators) external;
+    function submitMerkleRoot(
+        bytes32 merkleRoot,
+        string calldata merkleProofs,
+        bytes[] calldata signatures
+    ) external;
 
     /**
-    * @dev Function for submitting oracle vote for merkle root. The last vote required for quorum will update the values.
-    * Can only be called by an account with an oracle role.
-    * @param _nonce - current nonce.
-    * @param _merkleRoot - hash of the new merkle root.
-    * @param _merkleProofs - link to the merkle proofs.
+    * @dev Function for submitting registration of the new validator.
+    * The quorum of signatures over the same data is required to register.
+    * @param depositData - the deposit data for the registration.
+    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the deposit data merkle root.
+    * @param validatorsDepositRoot - validators deposit root to protect from malicious operators.
+    * @param signatures - oracles' signatures.
     */
-    function voteForMerkleRoot(uint256 _nonce, bytes32 _merkleRoot, string calldata _merkleProofs) external;
+    function registerValidator(
+        IPoolValidators.DepositData calldata depositData,
+        bytes32[] calldata merkleProof,
+        bytes32 validatorsDepositRoot,
+        bytes[] calldata signatures
+    ) external;
 }

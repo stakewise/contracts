@@ -1,3 +1,4 @@
+const { defaultAbiCoder, hexlify, keccak256 } = require('ethers/lib/utils');
 const {
   expectRevert,
   expectEvent,
@@ -5,7 +6,6 @@ const {
   send,
   BN,
   constants,
-  time,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../deployments');
 const { contractSettings, contracts } = require('../deployments/settings');
@@ -13,7 +13,7 @@ const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
-  getOracleAccounts,
+  setupOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
 } = require('./utils');
@@ -22,7 +22,7 @@ const MerkleDistributor = artifacts.require('MerkleDistributor');
 const StakeWiseToken = artifacts.require('StakeWiseToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const StakedEthToken = artifacts.require('StakedEthToken');
-const OracleMock = artifacts.require('OracleMock');
+const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
@@ -63,7 +63,7 @@ const merkleProofs = {
   },
 };
 
-contract('Merkle Distributor', ([beneficiary, anyone]) => {
+contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
   let merkleDistributor,
     amount,
@@ -73,6 +73,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     stakedEthToken,
     oracles,
     oracleAccounts,
+    prevDistributorBalance,
     pool;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -91,12 +92,15 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    merkleDistributor = await MerkleDistributor.at(
-      upgradedContracts.merkleDistributor
-    );
-    oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await getOracleAccounts({ oracles });
+    merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    oracles = await Oracles.at(upgradedContracts.oracles);
+    oracleAccounts = await setupOracleAccounts({
+      admin,
+      oracles,
+      accounts: otherAccounts,
+    });
     pool = await Pool.at(contracts.pool);
+    prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
   });
 
   afterEach(async () => resetFork());
@@ -110,10 +114,11 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     );
   });
 
-  describe('distribute', () => {
+  describe('periodically distribute', () => {
     it('not admin fails to distribute tokens', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -128,7 +133,8 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
     it('fails to distribute tokens with zero amount', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           new BN(0),
@@ -141,9 +147,26 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       );
     });
 
+    it('fails to distribute tokens from zero address', async () => {
+      await expectRevert(
+        merkleDistributor.distributePeriodically(
+          constants.ZERO_ADDRESS,
+          token.address,
+          beneficiary,
+          amount,
+          durationInBlocks,
+          {
+            from: admin,
+          }
+        ),
+        'ERC20: transfer from the zero address'
+      );
+    });
+
     it('fails to distribute tokens with max uint duration', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -158,7 +181,8 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
     it('fails to distribute tokens with zero duration', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -173,7 +197,8 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
     it('fails to distribute tokens without allowance', async () => {
       await expectRevert(
-        merkleDistributor.distribute(
+        merkleDistributor.distributePeriodically(
+          admin,
           token.address,
           beneficiary,
           amount,
@@ -186,12 +211,30 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       );
     });
 
+    it('fails to distribute when paused', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.distributePeriodically(
+          admin,
+          token.address,
+          beneficiary,
+          amount,
+          durationInBlocks,
+          {
+            from: admin,
+          }
+        ),
+        'Pausable: paused'
+      );
+    });
+
     it('admin can distribute tokens', async () => {
       await token.approve(merkleDistributor.address, amount, {
         from: admin,
       });
 
-      let receipt = await merkleDistributor.distribute(
+      let receipt = await merkleDistributor.distributePeriodically(
+        admin,
         token.address,
         beneficiary,
         amount,
@@ -202,8 +245,8 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       );
 
       let startBlock = new BN(receipt.receipt.blockNumber);
-      await expectEvent(receipt, 'DistributionAdded', {
-        sender: admin,
+      await expectEvent(receipt, 'PeriodicDistributionAdded', {
+        from: admin,
         token: token.address,
         beneficiary,
         amount,
@@ -212,11 +255,137 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       });
       expect(
         await token.balanceOf(merkleDistributor.address)
-      ).to.bignumber.equal(amount);
+      ).to.bignumber.equal(prevDistributorBalance.add(amount));
+    });
+  });
+
+  describe('one time distribute', () => {
+    const origin = '0x1111111111111111111111111111111111111111';
+    const rewardsLink = 'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
+
+    it('not admin fails to distribute tokens', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: anyone,
+          }
+        ),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('fails to distribute tokens with zero amount', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          new BN(0),
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'MerkleDistributor: invalid amount'
+      );
+    });
+
+    it('fails to distribute tokens from zero address', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          constants.ZERO_ADDRESS,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'ERC20: transfer from the zero address'
+      );
+    });
+
+    it('fails to distribute tokens without allowance', async () => {
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'SafeMath: subtraction overflow'
+      );
+    });
+
+    it('fails to distribute when paused', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.distributeOneTime(
+          admin,
+          origin,
+          token.address,
+          amount,
+          rewardsLink,
+          {
+            from: admin,
+          }
+        ),
+        'Pausable: paused'
+      );
+    });
+
+    it('admin can distribute tokens', async () => {
+      await token.approve(merkleDistributor.address, amount, {
+        from: admin,
+      });
+
+      let receipt = await merkleDistributor.distributeOneTime(
+        admin,
+        origin,
+        token.address,
+        amount,
+        rewardsLink,
+        {
+          from: admin,
+        }
+      );
+
+      await expectEvent(receipt, 'OneTimeDistributionAdded', {
+        from: admin,
+        origin,
+        token: token.address,
+        amount,
+        rewardsLink,
+      });
+      expect(
+        await token.balanceOf(merkleDistributor.address)
+      ).to.bignumber.equal(prevDistributorBalance.add(amount));
     });
   });
 
   describe('claim', () => {
+    beforeEach(async () => {
+      // new rewards arrive
+      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      await setTotalRewards({
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards,
+      });
+    });
+
     it('cannot claim when contract paused', async () => {
       const { index, proof, amounts, tokens } = merkleProofs[account1];
       await merkleDistributor.pause({ from: admin });
@@ -229,17 +398,6 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     });
 
     it('cannot claim when merkle root updating', async () => {
-      // new rewards arrive
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-      await setTotalRewards({
-        admin,
-        rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
-        totalRewards,
-      });
-
       // try to claim before merkle root update
       const { index, proof, amounts, tokens } = merkleProofs[account1];
       await expectRevert(
@@ -274,32 +432,11 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       );
     });
 
-    it('cannot claim more eth rewards than allocated to the distributor', async () => {
-      await token.transfer(merkleDistributor.address, distributorTokenReward, {
-        from: admin,
-      });
-      await setMerkleRoot({
-        merkleDistributor,
-        merkleRoot,
-        merkleProofs,
-        oracles,
-        oracleAccounts,
-      });
-
-      const { index, amounts, tokens, proof } = merkleProofs[account1];
-      await expectRevert(
-        merkleDistributor.claim(index, account1, tokens, amounts, proof, {
-          from: anyone,
-        }),
-        'SafeMath: subtraction overflow'
-      );
-    });
-
     it('cannot claim twice', async () => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.addDeposit({
+      await pool.stake({
         from: anyone,
         value: ether('1000'),
       });
@@ -311,14 +448,13 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       let periodReward = distributorEthReward
         .mul(totalDeposits)
         .div(ether('1000'));
-      let maintainerFee = await rewardEthToken.maintainerFee();
+      let protocolFee = await rewardEthToken.protocolFee();
       totalRewards = totalRewards.add(periodReward);
       totalRewards = totalRewards.add(
-        periodReward.mul(maintainerFee).div(new BN(10000))
+        periodReward.mul(protocolFee).div(new BN(10000))
       );
 
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -354,7 +490,7 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.addDeposit({
+      await pool.stake({
         from: anyone,
         value: ether('1000'),
       });
@@ -362,7 +498,6 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
         from: admin,
       });
       await setTotalRewards({
-        admin,
         rewardEthToken,
         oracles,
         oracleAccounts,
@@ -436,7 +571,12 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
     });
 
     describe('claiming within the same block', () => {
-      let mockedOracle, totalRewards, activatedValidators;
+      let multicallMock,
+        totalRewards,
+        activatedValidators,
+        rewardsSignatures,
+        merkleRootSignatures;
+
       beforeEach(async () => {
         await setMerkleRoot({
           merkleDistributor,
@@ -446,35 +586,18 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           oracleAccounts,
         });
 
-        // clean up oracles
-        for (let i = 0; i < oracleAccounts.length; i++) {
-          await oracles.removeOracle(oracleAccounts[i], {
-            from: admin,
-          });
-        }
-
         // deploy mocked oracle
-        mockedOracle = await OracleMock.new(
-          contracts.oracles,
-          contracts.stakedEthToken,
-          contracts.rewardEthToken,
+        multicallMock = await MulticallMock.new(
+          oracles.address,
+          stakedEthToken.address,
+          rewardEthToken.address,
           merkleDistributor.address
         );
-        await oracles.addOracle(mockedOracle.address, {
+        await oracles.addOracle(multicallMock.address, {
           from: admin,
         });
 
-        // wait for rewards voting time
-        let newSyncPeriod = new BN('700');
-        await oracles.setSyncPeriod(newSyncPeriod, {
-          from: admin,
-        });
-        let lastUpdateBlockNumber = await rewardEthToken.lastUpdateBlockNumber();
-        await time.advanceBlockTo(
-          lastUpdateBlockNumber.add(new BN(newSyncPeriod))
-        );
-
-        await pool.addDeposit({
+        await pool.stake({
           from: anyone,
           value: ether('1000'),
         });
@@ -482,22 +605,56 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
           from: admin,
         });
         let totalDeposits = await stakedEthToken.totalDeposits();
-        let maintainerFee = await rewardEthToken.maintainerFee();
+        let protocolFee = await rewardEthToken.protocolFee();
         totalRewards = distributorEthReward
           .mul(totalDeposits)
           .div(ether('1000'));
         totalRewards = totalRewards.add(
-          totalRewards.add(maintainerFee.div(new BN(10000)))
+          totalRewards.add(protocolFee.div(new BN(10000)))
         );
         activatedValidators = await pool.activatedValidators();
+
+        // create rewards signature
+        let currentNonce = await oracles.currentRewardsNonce();
+        let encoded = defaultAbiCoder.encode(
+          ['uint256', 'uint256', 'uint256'],
+          [
+            currentNonce.toString(),
+            activatedValidators.toString(),
+            totalRewards.toString(),
+          ]
+        );
+        let candidateId = hexlify(keccak256(encoded));
+        rewardsSignatures = [];
+        for (const oracleAccount of oracleAccounts) {
+          rewardsSignatures.push(
+            await web3.eth.sign(candidateId, oracleAccount)
+          );
+        }
+
+        // create merkle root signature
+        encoded = defaultAbiCoder.encode(
+          ['uint256', 'string', 'bytes32'],
+          [currentNonce.add(new BN(1)).toString(), merkleProofs, merkleRoot]
+        );
+        candidateId = hexlify(keccak256(encoded));
+        merkleRootSignatures = [];
+        for (const oracleAccount of oracleAccounts) {
+          merkleRootSignatures.push(
+            await web3.eth.sign(candidateId, oracleAccount)
+          );
+        }
       });
 
       it('cannot claim after total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await expectRevert(
-          mockedOracle.updateTotalRewardsAndClaim(
-            totalRewards,
-            activatedValidators,
+          multicallMock.updateTotalRewardsAndClaim(
+            {
+              totalRewards: totalRewards.toString(),
+              activatedValidators: activatedValidators.toString(),
+              signatures: rewardsSignatures,
+            },
             index,
             account1,
             tokens,
@@ -513,33 +670,36 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
 
       it('can claim before total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await expectRevert(
-          mockedOracle.claimAndUpdateTotalRewards(
-            totalRewards,
-            activatedValidators,
-            index,
-            account1,
-            tokens,
-            amounts,
-            proof,
-            {
-              from: anyone,
-            }
-          ),
-          'SafeMath: subtraction overflow'
+        await multicallMock.claimAndUpdateTotalRewards(
+          {
+            totalRewards: totalRewards.toString(),
+            activatedValidators: activatedValidators.toString(),
+            signatures: rewardsSignatures,
+          },
+          index,
+          account1,
+          tokens,
+          amounts,
+          proof,
+          {
+            from: anyone,
+          }
         );
       });
 
       it('cannot claim before merkle root update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await mockedOracle.updateTotalRewards(
+        await oracles.submitRewards(
           totalRewards,
-          activatedValidators
+          activatedValidators,
+          rewardsSignatures,
+          {
+            from: oracleAccounts[0],
+          }
         );
         await expectRevert(
-          mockedOracle.claimAndUpdateMerkleRoot(
-            merkleRoot,
-            merkleProofs,
+          multicallMock.claimAndUpdateMerkleRoot(
+            { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
             index,
             account1,
             tokens,
@@ -554,27 +714,57 @@ contract('Merkle Distributor', ([beneficiary, anyone]) => {
       });
 
       it('can claim after merkle root update in the same block', async () => {
-        await mockedOracle.updateTotalRewards(
+        await oracles.submitRewards(
           totalRewards,
-          activatedValidators
+          activatedValidators,
+          rewardsSignatures,
+          {
+            from: oracleAccounts[0],
+          }
         );
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await expectRevert(
-          mockedOracle.updateMerkleRootAndClaim(
-            merkleRoot,
-            merkleProofs,
-            index,
-            account1,
-            tokens,
-            amounts,
-            proof,
-            {
-              from: anyone,
-            }
-          ),
-          'SafeMath: subtraction overflow'
+        await multicallMock.updateMerkleRootAndClaim(
+          { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
+          index,
+          account1,
+          tokens,
+          amounts,
+          proof,
+          {
+            from: anyone,
+          }
         );
       });
+    });
+  });
+
+  describe('upgrading', () => {
+    it('fails to upgrade with not admin privilege', async () => {
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: anyone,
+        }),
+        'OwnablePausable: access denied'
+      );
+    });
+
+    it('fails to upgrade when not paused', async () => {
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: admin,
+        }),
+        'Pausable: not paused'
+      );
+    });
+
+    it('fails to upgrade twice', async () => {
+      await merkleDistributor.pause({ from: admin });
+      await expectRevert(
+        merkleDistributor.upgrade(oracles.address, {
+          from: admin,
+        }),
+        'MerkleDistributor: invalid Oracles address'
+      );
     });
   });
 });

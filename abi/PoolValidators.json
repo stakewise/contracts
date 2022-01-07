@@ -3,6 +3,63 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "depositDataMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "depositDataMerkleProofs",
+        "type": "string"
+      }
+    ],
+    "name": "OperatorAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "OperatorCommitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "operator",
+        "type": "address"
+      }
+    ],
+    "name": "OperatorRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -115,19 +172,6 @@
   },
   {
     "inputs": [],
-    "name": "OPERATOR_ROLE",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "PAUSER_ROLE",
     "outputs": [
       {
@@ -156,8 +200,18 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "_operator",
         "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "depositDataMerkleRoot",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "depositDataMerkleProofs",
+        "type": "string"
       }
     ],
     "name": "addOperator",
@@ -176,6 +230,37 @@
     "name": "addPauser",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "commitOperator",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_operator",
+        "type": "address"
+      }
+    ],
+    "name": "getOperator",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -296,7 +381,7 @@
       },
       {
         "internalType": "address",
-        "name": "_solos",
+        "name": "_oracles",
         "type": "address"
       }
     ],
@@ -332,7 +417,7 @@
         "type": "address"
       }
     ],
-    "name": "isOperator",
+    "name": "isPauser",
     "outputs": [
       {
         "internalType": "bool",
@@ -346,12 +431,12 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_account",
-        "type": "address"
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
-    "name": "isPauser",
+    "name": "isValidatorRegistered",
     "outputs": [
       {
         "internalType": "bool",
@@ -385,31 +470,44 @@
   {
     "inputs": [
       {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "publicKeys",
-    "outputs": [
+        "components": [
+          {
+            "internalType": "address",
+            "name": "operator",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "withdrawalCredentials",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "depositDataRoot",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes",
+            "name": "publicKey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "bytes",
+            "name": "signature",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IPoolValidators.DepositData",
+        "name": "depositData",
+        "type": "tuple"
+      },
       {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
+        "internalType": "bytes32[]",
+        "name": "merkleProof",
+        "type": "bytes32[]"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "_validatorId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "register",
+    "name": "registerValidator",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -431,7 +529,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_account",
+        "name": "_operator",
         "type": "address"
       }
     ],

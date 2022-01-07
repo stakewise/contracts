@@ -9,25 +9,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  */
 interface IRewardEthToken is IERC20Upgradeable {
     /**
-    * @dev Event for tracking updated maintainer.
-    * @param maintainer - address of the new maintainer, where the fee will be paid.
-    */
-    event MaintainerUpdated(address maintainer);
-
-    /**
-    * @dev Event for tracking updated maintainer fee.
-    * @param maintainerFee - new maintainer fee.
-    */
-    event MaintainerFeeUpdated(uint256 maintainerFee);
-
-    /**
-    * @dev Event for tracking whether rewards distribution through merkle distributor is enabled/disabled.
-    * @param account - address of the account.
-    * @param isDisabled - whether rewards distribution is disabled.
-    */
-    event RewardsToggled(address indexed account, bool isDisabled);
-
-    /**
     * @dev Structure for storing information about user reward checkpoint.
     * @param rewardPerToken - user reward per token.
     * @param reward - user reward checkpoint.
@@ -38,25 +19,46 @@ interface IRewardEthToken is IERC20Upgradeable {
     }
 
     /**
+    * @dev Event for tracking updated protocol fee recipient.
+    * @param recipient - address of the new fee recipient.
+    */
+    event ProtocolFeeRecipientUpdated(address recipient);
+
+    /**
+    * @dev Event for tracking updated protocol fee.
+    * @param protocolFee - new protocol fee.
+    */
+    event ProtocolFeeUpdated(uint256 protocolFee);
+
+    /**
+    * @dev Event for tracking whether rewards distribution through merkle distributor is enabled/disabled.
+    * @param account - address of the account.
+    * @param isDisabled - whether rewards distribution is disabled.
+    */
+    event RewardsToggled(address indexed account, bool isDisabled);
+
+    /**
     * @dev Event for tracking rewards update by oracles.
     * @param periodRewards - rewards since the last update.
     * @param totalRewards - total amount of rewards.
     * @param rewardPerToken - calculated reward per token for account reward calculation.
+    * @param distributorReward - distributor reward.
+    * @param protocolReward - protocol reward.
     */
     event RewardsUpdated(
         uint256 periodRewards,
         uint256 totalRewards,
-        uint256 rewardPerToken
+        uint256 rewardPerToken,
+        uint256 distributorReward,
+        uint256 protocolReward
     );
 
     /**
-    * @dev Function for upgrading the RewardEthToken contract.
-    * If deploying contract for the first time, the upgrade function should be replaced with `initialize` and
-    * contain initializations from the previous versions.
-    * @param _merkleDistributor - address of the MerkleDistributor contract.
-    * @param _lastUpdateBlockNumber - block number of the last rewards update.
+    * @dev Function for upgrading the RewardEthToken contract. The `initialize` function must be defined
+    * if deploying contract for the first time that will initialize the state variables above.
+    * @param _oracles - address of the Oracles contract.
     */
-    function upgrade(address _merkleDistributor, uint256 _lastUpdateBlockNumber) external;
+    function upgrade(address _oracles) external;
 
     /**
     * @dev Function for getting the address of the merkle distributor.
@@ -64,26 +66,26 @@ interface IRewardEthToken is IERC20Upgradeable {
     function merkleDistributor() external view returns (address);
 
     /**
-    * @dev Function for getting the address of the maintainer, where the fee will be paid.
+    * @dev Function for getting the address of the protocol fee recipient.
     */
-    function maintainer() external view returns (address);
+    function protocolFeeRecipient() external view returns (address);
 
     /**
-    * @dev Function for changing the maintainer's address.
-    * @param _newMaintainer - new maintainer's address.
+    * @dev Function for changing the protocol fee recipient's address.
+    * @param recipient - new protocol fee recipient's address.
     */
-    function setMaintainer(address _newMaintainer) external;
+    function setProtocolFeeRecipient(address recipient) external;
 
     /**
-    * @dev Function for getting maintainer fee. The percentage fee users pay from their reward for using the pool service.
+    * @dev Function for getting protocol fee. The percentage fee users pay from their reward for using the pool service.
     */
-    function maintainerFee() external view returns (uint256);
+    function protocolFee() external view returns (uint256);
 
     /**
-    * @dev Function for changing the maintainer's fee.
-    * @param _newMaintainerFee - new maintainer's fee. Must be less than 10000 (100.00%).
+    * @dev Function for changing the protocol fee.
+    * @param _protocolFee - new protocol fee. Must be less than 10000 (100.00%).
     */
-    function setMaintainerFee(uint256 _newMaintainerFee) external;
+    function setProtocolFee(uint256 _protocolFee) external;
 
     /**
     * @dev Function for retrieving the total rewards amount.

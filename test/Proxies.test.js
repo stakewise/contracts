@@ -3,24 +3,26 @@ const { contractSettings, contracts } = require('../deployments/settings');
 
 let proxies = [
   contracts.pool,
-  contracts.validators,
+  contracts.poolValidators,
+  contracts.oracles,
   contracts.stakedEthToken,
   contracts.rewardEthToken,
   contracts.stakeWiseToken,
-  contracts.oracles,
   contracts.vestingEscrowFactory,
   contracts.merkleDistributor,
+  contracts.roles,
 ];
 
 let implementations = [
-  '0xc8970E7C07c251625F9F93cE510b1D9c1a08d299',
-  '0xa34E1010E2b76abdf7399E6C88147D0FAfE28e90',
+  '0xe68E649862F7036094f1E4eD5d69a738aCDE666f',
+  '0xfa00515082fe90430C80DA9B299f353929653d7B',
+  '0xDb123d84CdB055fdbFa9058f64A460BB0fBF8eAE',
   '0x41bcac23e4db058d8D7aAbE2Fccdae5F01FE647A',
-  '0x610B58583642610967727fe4fadd125a92D6F678',
+  '0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09',
   '0xA28C2d79f0c5B78CeC699DAB0303008179815396',
-  '0xd3ea5BF3bB42542B5b64358C12F06233704e9b99',
   '0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf',
-  '0x459beef3c5Bd5D1E66de93AC908E278ee2488F14',
+  '0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC',
+  '0x584E5D4bD0AE1EEF838796aEe8fb805BbB82439C',
 ];
 
 contract('Proxies', () => {
@@ -46,7 +48,7 @@ contract('Proxies', () => {
     }
   });
 
-  it('proxy admin admin owner is DAO', async () => {
+  it('proxy admin owner is DAO', async () => {
     expect(await proxyAdmin.owner()).to.equal(contractSettings.admin);
   });
 });
