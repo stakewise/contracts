@@ -10,6 +10,11 @@
 - Implementation: [0xc8970E7C07c251625F9F93cE510b1D9c1a08d299](https://etherscan.io/address/0xc8970E7C07c251625F9F93cE510b1D9c1a08d299)
 - Transaction: [0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2](https://etherscan.io/tx/0x32c727ebb5dbbc1bd89a3a21cf15d9e74dbc688b404b60a286a9ae858c4967e2)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0xe68E649862F7036094f1E4eD5d69a738aCDE666f](https://etherscan.io/address/0xe68E649862F7036094f1E4eD5d69a738aCDE666f)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
+
 ## Pool Escrow
 
 - Contract: [0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079](https://etherscan.io/address/0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079)
@@ -39,6 +44,11 @@
 
 - Implementation: [0x610B58583642610967727fe4fadd125a92D6F678](https://etherscan.io/address/0x610B58583642610967727fe4fadd125a92D6F678)
 - Transaction: [0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399](https://etherscan.io/tx/0x647087d8fc2f729e03a0a4e18729e0ae20bdd77f3454e32cd190d0d271255399)
+
+### Upgrade to v2.0.0
+
+- Implementation: [0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09](https://etherscan.io/address/0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
 
 ## StakeWiseToken
 
@@ -80,6 +90,11 @@
 
 - Contract: [0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20](https://etherscan.io/address/0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20)
 - Transaction: [0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a](https://etherscan.io/tx/0xbf974737b21c38bb1b95c7b0dc57fe54ab8fcf040fe9ffceac7d920b7e72587a)
+
+### Upgrade to v2.0.0
+
+- Implementation: [0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC](https://etherscan.io/address/0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC)
+- Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
 
 ## Roles
 
