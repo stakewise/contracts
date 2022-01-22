@@ -8,7 +8,7 @@ const {
 } = require('@openzeppelin/test-helpers');
 const { keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const {
   registerValidator,
   setupOracleAccounts,
@@ -48,7 +48,7 @@ contract('Pool Validators', (accounts) => {
     await send.ether(anyone, admin, ether('5'));
 
     let upgradedContracts = await upgradeContracts();
-    pool = await Pool.at(contracts.pool);
+    pool = await Pool.at(upgradedContracts.pool);
     depositContract = await iDepositContract.at(
       await pool.validatorRegistration()
     );

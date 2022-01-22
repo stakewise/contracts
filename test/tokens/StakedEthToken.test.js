@@ -17,7 +17,7 @@ const {
   setTotalRewards,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
@@ -44,15 +44,15 @@ contract('StakedEthToken', (accounts) => {
 
     let upgradedContracts = await upgradeContracts();
 
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    pool = await Pool.at(contracts.pool);
+    stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
+    pool = await Pool.at(upgradedContracts.pool);
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({
       oracles,
       admin,
       accounts: otherAccounts,
     });
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
 
     totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
     let currentNonce = await oracles.currentRewardsNonce();

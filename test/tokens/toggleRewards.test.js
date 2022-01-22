@@ -13,7 +13,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 
 const RewardEthToken = artifacts.require('RewardEthToken');
@@ -40,9 +40,9 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
 
     let upgradedContracts = await upgradeContracts();
     oracles = await Oracles.at(upgradedContracts.oracles);
-    pool = await Pool.at(contracts.pool);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    pool = await Pool.at(upgradeContracts.pool);
+    rewardEthToken = await RewardEthToken.at(upgradeContracts.rewardEthToken);
+    stakedEthToken = await StakedEthToken.at(upgradeContracts.stakedEthToken);
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     distributorPrincipal = await stakedEthToken.distributorPrincipal();
     distributorReward = await rewardEthToken.balanceOf(constants.ZERO_ADDRESS);

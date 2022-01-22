@@ -17,7 +17,7 @@ const {
   setupOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { checkStakedEthToken } = require('../utils');
 const {
   depositData,
@@ -52,8 +52,8 @@ contract('Pool (stake)', (accounts) => {
     await send.ether(sender3, admin, ether('5'));
     let upgradedContracts = await upgradeContracts();
 
-    pool = await Pool.at(contracts.pool);
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    pool = await Pool.at(upgradedContracts.pool);
+    stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
     validators = await PoolValidators.at(upgradedContracts.poolValidators);
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({

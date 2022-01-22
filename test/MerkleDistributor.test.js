@@ -19,7 +19,7 @@ const {
 } = require('./utils');
 
 const MerkleDistributor = artifacts.require('MerkleDistributor');
-const StakeWiseToken = artifacts.require('StakeWiseToken');
+const StakeWiseToken = artifacts.require('IERC20Upgradeable');
 const RewardEthToken = artifacts.require('RewardEthToken');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const MulticallMock = artifacts.require('MulticallMock');
@@ -34,34 +34,6 @@ const account3 = '0xd1b91Ac5eb55f30D742751f4Ae4437F738eB8F6b';
 
 const distributorEthReward = ether('25.1777');
 const distributorTokenReward = ether('14.86062535');
-const merkleProofs = {
-  [account1]: {
-    index: '0',
-    amounts: ['12177700000000000000', '987000000000000000'],
-    tokens: [contracts.rewardEthToken, contracts.stakeWiseToken],
-    proof: [
-      '0x6459080d2a203338fd3f49809e85985c5ade49f1b98a007373abb8267bc6920c',
-      '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
-    ],
-  },
-  [account2]: {
-    index: '1',
-    amounts: ['3000000000000000000', '12312312000000000000'],
-    tokens: [contracts.rewardEthToken, contracts.stakeWiseToken],
-    proof: [
-      '0x11383f5cf0bc5f9a2bf86e40f2205e4e5a78aaec00eb068e8e48162dabf72d5b',
-    ],
-  },
-  [account3]: {
-    index: '2',
-    amounts: ['10000000000000000000', '1561313350000000000'],
-    tokens: [contracts.rewardEthToken, contracts.stakeWiseToken],
-    proof: [
-      '0x77dcc78b86eef2e4ff7fdace198260bd0bc405f03d78ca9dc920f255f270d316',
-      '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
-    ],
-  },
-};
 
 contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
@@ -74,7 +46,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     oracles,
     oracleAccounts,
     prevDistributorBalance,
-    pool;
+    pool,
+    merkleProofs;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -101,6 +74,44 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     });
     pool = await Pool.at(contracts.pool);
     prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
+
+    merkleProofs = {
+      [account1]: {
+        index: '0',
+        amounts: ['12177700000000000000', '987000000000000000'],
+        tokens: [
+          upgradedContracts.rewardEthToken,
+          upgradedContracts.stakeWiseToken,
+        ],
+        proof: [
+          '0x6459080d2a203338fd3f49809e85985c5ade49f1b98a007373abb8267bc6920c',
+          '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
+        ],
+      },
+      [account2]: {
+        index: '1',
+        amounts: ['3000000000000000000', '12312312000000000000'],
+        tokens: [
+          upgradedContracts.rewardEthToken,
+          upgradedContracts.stakeWiseToken,
+        ],
+        proof: [
+          '0x11383f5cf0bc5f9a2bf86e40f2205e4e5a78aaec00eb068e8e48162dabf72d5b',
+        ],
+      },
+      [account3]: {
+        index: '2',
+        amounts: ['10000000000000000000', '1561313350000000000'],
+        tokens: [
+          upgradedContracts.rewardEthToken,
+          upgradedContracts.stakeWiseToken,
+        ],
+        proof: [
+          '0x77dcc78b86eef2e4ff7fdace198260bd0bc405f03d78ca9dc920f255f270d316',
+          '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
+        ],
+      },
+    };
   });
 
   afterEach(async () => resetFork());

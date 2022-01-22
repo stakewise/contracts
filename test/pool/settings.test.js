@@ -14,7 +14,7 @@ const {
   registerValidator,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { depositDataMerkleRoot } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
@@ -46,13 +46,13 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     await validators.commitOperator({
       from: operator,
     });
-    pool = await Pool.at(contracts.pool);
+    pool = await Pool.at(upgradedContracts.pool);
     let depositContract = await iDepositContract.at(
       await pool.validatorRegistration()
     );
     validatorsDepositRoot = await depositContract.get_deposit_root();
     oracles = await Oracles.at(upgradedContracts.oracles);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({
       admin,
       oracles,
