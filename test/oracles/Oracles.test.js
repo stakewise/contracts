@@ -14,7 +14,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
   depositDataMerkleRoot,
@@ -43,10 +43,17 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     let upgradedContracts = await upgradeContracts();
 
     oracles = await Oracles.at(upgradedContracts.oracles);
-    pool = await Pool.at(contracts.pool);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    pool = await Pool.at(upgradedContracts.pool);
+    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
+    merkleDistributor = await MerkleDistributor.at(
+      upgradedContracts.merkleDistributor
+    );
     poolValidators = await PoolValidators.at(upgradedContracts.poolValidators);
+
+    await pool.stake({
+      from: anyone,
+      value: ether('1'),
+    });
   });
 
   afterEach(async () => resetFork());
