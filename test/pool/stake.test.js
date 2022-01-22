@@ -22,6 +22,7 @@ const { checkStakedEthToken } = require('../utils');
 const {
   depositData,
   depositDataMerkleRoot,
+  withdrawalCredentials,
 } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
@@ -50,7 +51,7 @@ contract('Pool (stake)', (accounts) => {
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
-    let upgradedContracts = await upgradeContracts();
+    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
 
     pool = await Pool.at(upgradedContracts.pool);
     stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);

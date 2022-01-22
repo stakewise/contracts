@@ -387,6 +387,12 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     beforeEach(async () => {
       // new rewards arrive
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+
+      await pool.stake({
+        from: anyone,
+        value: ether('1'),
+      });
+
       await setTotalRewards({
         rewardEthToken,
         oracles,
@@ -745,36 +751,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           }
         );
       });
-    });
-  });
-
-  describe('upgrading', () => {
-    it('fails to upgrade with not admin privilege', async () => {
-      await expectRevert(
-        merkleDistributor.upgrade(oracles.address, {
-          from: anyone,
-        }),
-        'OwnablePausable: access denied'
-      );
-    });
-
-    it('fails to upgrade when not paused', async () => {
-      await expectRevert(
-        merkleDistributor.upgrade(oracles.address, {
-          from: admin,
-        }),
-        'Pausable: not paused'
-      );
-    });
-
-    it('fails to upgrade twice', async () => {
-      await merkleDistributor.pause({ from: admin });
-      await expectRevert(
-        merkleDistributor.upgrade(oracles.address, {
-          from: admin,
-        }),
-        'MerkleDistributor: invalid Oracles address'
-      );
     });
   });
 });

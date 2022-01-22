@@ -36,7 +36,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     pool,
     merkleDistributor,
     poolValidators,
-    upgradedContracts;
+    contracts;
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -45,15 +45,13 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    upgradedContracts = await upgradeContracts();
+    contracts = await upgradeContracts();
 
-    oracles = await Oracles.at(upgradedContracts.oracles);
-    pool = await Pool.at(upgradedContracts.pool);
-    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
-    merkleDistributor = await MerkleDistributor.at(
-      upgradedContracts.merkleDistributor
-    );
-    poolValidators = await PoolValidators.at(upgradedContracts.poolValidators);
+    oracles = await Oracles.at(contracts.oracles);
+    pool = await Pool.at(contracts.pool);
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    poolValidators = await PoolValidators.at(contracts.poolValidators);
 
     await pool.stake({
       from: anyone,
@@ -422,8 +420,8 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       // deploy mocked oracle
       let mockedOracle = await MulticallMock.new(
         oracles.address,
-        upgradedContracts.stakedEthToken,
-        upgradedContracts.rewardEthToken,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken,
         merkleDistributor.address
       );
       await oracles.addOracle(mockedOracle.address, {

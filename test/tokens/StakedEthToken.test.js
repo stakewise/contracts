@@ -36,23 +36,23 @@ contract('StakedEthToken', (accounts) => {
     oracleAccounts,
     activatedValidators,
     totalRewards,
-    signatures;
+    signatures,
+    contracts;
 
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender1, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
-
-    stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
-    pool = await Pool.at(upgradedContracts.pool);
-    oracles = await Oracles.at(upgradedContracts.oracles);
+    contracts = await upgradeContracts();
+    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    pool = await Pool.at(contracts.pool);
+    oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await setupOracleAccounts({
       oracles,
       admin,
       accounts: otherAccounts,
     });
-    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
 
     totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
     let currentNonce = await oracles.currentRewardsNonce();

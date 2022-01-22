@@ -48,21 +48,23 @@ async function initializePool(
   poolEscrowAddress,
   stakedEthTokenAddress,
   validatorsAddress,
-  oraclesAddress
+  oraclesAddress,
+  withdrawalCredentials = null
 ) {
   const Pool = await ethers.getContractFactory('Pool');
-  const withdrawalCreds = ethers.utils.hexConcat([
-    '0x01',
-    '0x' + '00'.repeat(11),
-    poolEscrowAddress,
-  ]);
-
+  if (!withdrawalCredentials) {
+    withdrawalCredentials = ethers.utils.hexConcat([
+      '0x01',
+      '0x' + '00'.repeat(11),
+      poolEscrowAddress,
+    ]);
+  }
   let pool = Pool.attach(poolAddress);
 
   // call initialize
   return pool.initialize(
     contractSettings.admin,
-    withdrawalCreds,
+    withdrawalCredentials,
     contractSettings.validatorRegistration,
     stakedEthTokenAddress,
     validatorsAddress,
@@ -163,7 +165,7 @@ async function initializeOracles(
   );
 }
 
-async function deployContracts() {
+async function deployContracts(withdrawalCredentials = null) {
   const poolEscrowAddress = await deployPoolEscrow();
   log(white(`Deployed Pool Escrow contract: ${green(poolEscrowAddress)}`));
 
@@ -207,7 +209,8 @@ async function deployContracts() {
     poolEscrowAddress,
     stakedEthTokenAddress,
     poolValidatorsAddress,
-    oraclesAddress
+    oraclesAddress,
+    withdrawalCredentials
   );
   log(white('Initialized Pool contract'));
 
@@ -255,8 +258,8 @@ async function deployContracts() {
   };
 }
 
-async function upgradeContracts() {
-  return deployContracts();
+async function upgradeContracts(withdrawalCredentials = null) {
+  return deployContracts(withdrawalCredentials);
 }
 
 module.exports = {

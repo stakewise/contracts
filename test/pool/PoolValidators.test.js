@@ -20,6 +20,7 @@ const {
 const {
   depositData,
   depositDataMerkleRoot,
+  withdrawalCredentials,
 } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
@@ -47,7 +48,7 @@ contract('Pool Validators', (accounts) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
     pool = await Pool.at(upgradedContracts.pool);
     depositContract = await iDepositContract.at(
       await pool.validatorRegistration()

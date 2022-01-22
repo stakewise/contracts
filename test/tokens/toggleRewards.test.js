@@ -38,11 +38,11 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
-    oracles = await Oracles.at(upgradedContracts.oracles);
-    pool = await Pool.at(upgradeContracts.pool);
-    rewardEthToken = await RewardEthToken.at(upgradeContracts.rewardEthToken);
-    stakedEthToken = await StakedEthToken.at(upgradeContracts.stakedEthToken);
+    let contracts = await upgradeContracts();
+    oracles = await Oracles.at(contracts.oracles);
+    pool = await Pool.at(contracts.pool);
+    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     distributorPrincipal = await stakedEthToken.distributorPrincipal();
     distributorReward = await rewardEthToken.balanceOf(constants.ZERO_ADDRESS);

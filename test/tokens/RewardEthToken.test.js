@@ -51,6 +51,11 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     totalSupply = await rewardEthToken.totalSupply();
     await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
+
+    await pool.stake({
+      from: sender,
+      value: ether('1'),
+    });
   });
 
   afterEach(async () => resetFork());
