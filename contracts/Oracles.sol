@@ -13,7 +13,6 @@ import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 import "./interfaces/IMerkleDistributor.sol";
 import "./interfaces/IPoolValidators.sol";
-import "./interfaces/IOraclesV1.sol";
 
 /**
  * @title Oracles
@@ -58,7 +57,6 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      */
     function initialize(
         address admin,
-        address oraclesV1,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,
@@ -74,20 +72,10 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         __OwnablePausableUpgradeable_init(admin);
 
-        // migrate data from previous Oracles contract
-        rewardsNonce._value = IOraclesV1(oraclesV1).currentNonce().add(1000);
-        uint256 oraclesCount = AccessControlUpgradeable(oraclesV1).getRoleMemberCount(ORACLE_ROLE);
-        for (uint256 i = 0; i < oraclesCount; i++) {
-            address oracle = AccessControlUpgradeable(oraclesV1).getRoleMember(ORACLE_ROLE, i);
-            _setupRole(ORACLE_ROLE, oracle);
-            emit OracleAdded(oracle);
-        }
-
         rewardEthToken = IRewardEthToken(_rewardEthToken);
         pool = IPool(_pool);
         poolValidators = IPoolValidators(_poolValidators);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
-        emit Initialized(rewardsNonce.current());
     }
 
     /**

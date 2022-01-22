@@ -53,21 +53,37 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     uint256 public override pendingValidatorsLimit;
 
     /**
-     * @dev See {IPool-upgrade}.
+     * @dev See {IPool-initialize}.
      */
-    function upgrade(address _poolValidators, address _oracles) external override onlyAdmin whenPaused {
-        require(
-            _poolValidators != address(0) && address(validators) == 0xaAc73D4A26Ae6906aa115118b7840b1F19fcd3A5,
-            "Pool: invalid PoolValidators address"
-        );
-        require(
-            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
-            "Pool: invalid Oracles address"
-        );
+    function initialize(
+        address admin,
+        bytes32 _withdrawalCredentials,
+        address _validatorRegistration,
+        address _stakedEthToken,
+        address _validators,
+        address _oracles,
+        uint256 _minActivatingDeposit,
+        uint256 _pendingValidatorsLimit
+    )
+        external override initializer
+    {
+        require(admin != address(0), "Pool: invalid admin address");
+        require(_withdrawalCredentials != "", "Pool: invalid withdrawal credentials");
+        require(_validatorRegistration != address(0), "Pool: invalid ValidatorRegistration address");
+        require(_stakedEthToken != address(0), "Pool: invalid StakedEthToken address");
+        require(_validators != address(0), "Pool: invalid Validators address");
+        require(_oracles != address(0), "Pool: invalid Oracles address");
+        require(_pendingValidatorsLimit < 1e4, "Pool: invalid limit");
 
-        // set contract addresses
-        validators = IPoolValidators(_poolValidators);
+        __OwnablePausableUpgradeable_init(admin);
+
+        withdrawalCredentials = _withdrawalCredentials;
+        validatorRegistration = IDepositContract(_validatorRegistration);
+        stakedEthToken = IStakedEthToken(_stakedEthToken);
+        validators = IPoolValidators(_validators);
         oracles = _oracles;
+        minActivatingDeposit = _minActivatingDeposit;
+        pendingValidatorsLimit = _pendingValidatorsLimit;
     }
 
     /**

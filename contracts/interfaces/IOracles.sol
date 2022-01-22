@@ -10,12 +10,6 @@ pragma abicoder v2;
  */
 interface IOracles {
     /**
-    * @dev Event for tracking the Oracles contract initialization.
-    * @param rewardsNonce - rewards nonce the contract was initialized with.
-    */
-    event Initialized(uint256 rewardsNonce);
-
-    /**
     * @dev Event for tracking oracle rewards votes.
     * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
@@ -78,7 +72,6 @@ interface IOracles {
     /**
     * @dev Constructor for initializing the Oracles contract.
     * @param admin - address of the contract admin.
-    * @param oraclesV1 - address of the Oracles V1 contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
     * @param _pool - address of the Pool contract.
     * @param _poolValidators - address of the PoolValidators contract.
@@ -86,7 +79,6 @@ interface IOracles {
     */
     function initialize(
         address admin,
-        address oraclesV1,
         address _rewardEthToken,
         address _pool,
         address _poolValidators,

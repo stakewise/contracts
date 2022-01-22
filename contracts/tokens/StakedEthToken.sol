@@ -32,6 +32,28 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     uint256 public override distributorPrincipal;
 
     /**
+    * @dev See {IStakedEthToken-initialize}.
+     */
+    function initialize(
+        address admin,
+        address _pool,
+        address _rewardEthToken
+    )
+        external override initializer
+    {
+        require(admin != address(0), "StakedEthToken: invalid admin address");
+        require(_pool != address(0), "StakedEthToken: invalid Pool address");
+        require(_rewardEthToken != address(0), "StakedEthToken: invalid RewardEthToken address");
+
+        __OwnablePausableUpgradeable_init(admin);
+        __ERC20_init("Perm Staked ETH2", "psETH2");
+        __ERC20Permit_init("Perm Staked ETH2");
+
+        pool = _pool;
+        rewardEthToken = IRewardEthToken(_rewardEthToken);
+    }
+
+    /**
      * @dev See {IERC20-totalSupply}.
      */
     function totalSupply() public view override returns (uint256) {

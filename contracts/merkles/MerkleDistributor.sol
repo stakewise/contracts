@@ -36,13 +36,21 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     mapping (bytes32 => mapping (uint256 => uint256)) private _claimedBitMap;
 
     /**
-     * @dev See {IMerkleDistributor-upgrade}.
+     * @dev See {IMerkleDistributor-initialize}.
      */
-    function upgrade(address _oracles) external override onlyAdmin whenPaused {
-        require(
-            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
-            "MerkleDistributor: invalid Oracles address"
-        );
+    function initialize(
+        address admin,
+        address _rewardEthToken,
+        address _oracles
+    )
+        external override initializer
+    {
+        require(admin != address(0), "MerkleDistributor: invalid admin address");
+        require(_rewardEthToken != address(0), "MerkleDistributor: invalid RewardEthToken address");
+        require(_oracles != address(0), "MerkleDistributor: invalid Oracles address");
+
+        __OwnablePausableUpgradeable_init(admin);
+        rewardEthToken = _rewardEthToken;
         oracles = IOracles(_oracles);
     }
 

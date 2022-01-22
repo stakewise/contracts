@@ -52,14 +52,34 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     mapping(address => bool) public override rewardsDisabled;
 
     /**
-     * @dev See {IRewardEthToken-upgrade}.
+     * @dev See {IRewardEthToken-initialize}.
      */
-    function upgrade(address _oracles) external override onlyAdmin whenPaused {
-        require(
-            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
-            "Pool: invalid Oracles address"
-        );
+    function initialize(
+        address admin,
+        address _stakedEthToken,
+        address _oracles,
+        address _protocolFeeRecipient,
+        uint256 _protocolFee,
+        address _merkleDistributor
+    )
+        external override initializer
+    {
+        require(admin != address(0), "RewardEthToken: invalid admin address");
+        require(_stakedEthToken != address(0), "RewardEthToken: invalid StakedEthToken address");
+        require(_oracles != address(0), "RewardEthToken: invalid Oracles address");
+        require(_protocolFeeRecipient != address(0), "RewardEthToken: invalid protocol fee recipient address");
+        require(_protocolFee < 1e4, "RewardEthToken: invalid protocol fee");
+        require(_merkleDistributor != address(0), "RewardEthToken: invalid MerkleDistributor address");
+
+        __OwnablePausableUpgradeable_init(admin);
+        __ERC20_init("Perm Reward ETH2", "prETH2");
+        __ERC20Permit_init("Perm Reward ETH2");
+
+        stakedEthToken = IStakedEthToken(_stakedEthToken);
         oracles = _oracles;
+        protocolFeeRecipient = _protocolFeeRecipient;
+        protocolFee = _protocolFee;
+        merkleDistributor = _merkleDistributor;
     }
 
     /**

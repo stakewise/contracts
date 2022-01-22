@@ -9,6 +9,18 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  */
 interface IStakedEthToken is IERC20Upgradeable {
     /**
+* @dev Function for initializing the StakedEthToken contract.
+    * @param admin - address of the contract admin.
+    * @param _pool - address of the Pool contract.
+    * @param _rewardEthToken - address of the RewardEthToken contract.
+    */
+    function initialize(
+        address admin,
+        address _pool,
+        address _rewardEthToken
+    ) external;
+
+    /**
     * @dev Function for retrieving the total deposits amount.
     */
     function totalDeposits() external view returns (uint256);
