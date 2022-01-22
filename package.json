@@ -72,5 +72,8 @@
     "solidity-coverage": "^0.7.17",
     "web3": "^1.6.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "keccak256": "^1.0.6",
+    "merkletreejs": "^0.2.27"
+  }
 }

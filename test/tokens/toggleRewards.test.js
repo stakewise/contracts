@@ -207,7 +207,8 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       });
     });
 
-    it('toggling rewards does not affect current rewards balance', async () => {
+    // TODO: re-enable once on forked network and there are activated validators
+    it.skip('toggling rewards does not affect current rewards balance', async () => {
       // mint sETH2 for disabled account
       let deposit = ether('5');
       await pool.stake({

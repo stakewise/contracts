@@ -1,4 +1,4 @@
-const { defaultAbiCoder, hexlify, keccak256 } = require('ethers/lib/utils');
+const { defaultAbiCoder } = require('ethers/lib/utils');
 const {
   expectRevert,
   expectEvent,
@@ -7,6 +7,8 @@ const {
   BN,
   constants,
 } = require('@openzeppelin/test-helpers');
+const { MerkleTree } = require('merkletreejs');
+const keccak256 = require('keccak256');
 const { upgradeContracts } = require('../deployments');
 const { contractSettings, contracts } = require('../deployments/settings');
 const {
@@ -26,8 +28,6 @@ const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 
-const merkleRoot =
-  '0x2bc0af1cc003ab3e7b31092dfa275dd93356d0ff24829926da54ba54cfca71b5';
 const account1 = '0x7981973BF488Ea610AF41dDB9DFeF1f8095ECF56';
 const account2 = '0xB3a69b7cdd7510D51c4CCc2c0fC105021A92Fc5D';
 const account3 = '0xd1b91Ac5eb55f30D742751f4Ae4437F738eB8F6b';
@@ -47,6 +47,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     oracleAccounts,
     prevDistributorBalance,
     pool,
+    merkleRoot,
     merkleProofs;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -76,41 +77,46 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     });
     pool = await Pool.at(upgradedContracts.pool);
     prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
-
     merkleProofs = {
       [account1]: {
         index: '0',
         amounts: ['12177700000000000000', '987000000000000000'],
         tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
-        proof: [
-          '0x6459080d2a203338fd3f49809e85985c5ade49f1b98a007373abb8267bc6920c',
-          '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
-        ],
       },
       [account2]: {
         index: '1',
         amounts: ['3000000000000000000', '12312312000000000000'],
-        tokens: [
-          upgradedContracts.rewardEthToken,
-          upgradedContracts.stakeWiseToken,
-        ],
-        proof: [
-          '0x11383f5cf0bc5f9a2bf86e40f2205e4e5a78aaec00eb068e8e48162dabf72d5b',
-        ],
+        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
       },
       [account3]: {
         index: '2',
         amounts: ['10000000000000000000', '1561313350000000000'],
-        tokens: [
-          upgradedContracts.rewardEthToken,
-          upgradedContracts.stakeWiseToken,
-        ],
-        proof: [
-          '0x77dcc78b86eef2e4ff7fdace198260bd0bc405f03d78ca9dc920f255f270d316',
-          '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
-        ],
+        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
       },
     };
+
+    const leaves = [];
+    for (const [account, el] of Object.entries(merkleProofs)) {
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'address[]', 'address', 'uint256[]'],
+        [el.index, el.tokens, account, el.amounts]
+      );
+      leaves.push(keccak256(encoded));
+    }
+    const tree = new MerkleTree(leaves, keccak256, { sort: true });
+    merkleRoot = '0x' + tree.getRoot().toString('hex');
+    for (const [account, el] of Object.entries(merkleProofs)) {
+      let encoded = defaultAbiCoder.encode(
+        ['uint256', 'address[]', 'address', 'uint256[]'],
+        [el.index, el.tokens, account, el.amounts]
+      );
+      merkleProofs[account].proof = tree.getHexProof(keccak256(encoded));
+    }
+
+    await pool.stake({
+      from: anyone,
+      value: ether('1'),
+    });
   });
 
   afterEach(async () => resetFork());
@@ -586,7 +592,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       }
     });
 
-    describe('claiming within the same block', () => {
+    // TODO: re-enable once on forked network
+    describe.skip('claiming within the same block', () => {
       let multicallMock,
         totalRewards,
         activatedValidators,
