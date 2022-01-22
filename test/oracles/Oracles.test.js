@@ -31,7 +31,12 @@ const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles, rewardEthToken, pool, merkleDistributor, poolValidators;
+  let oracles,
+    rewardEthToken,
+    pool,
+    merkleDistributor,
+    poolValidators,
+    upgradedContracts;
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -40,7 +45,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    upgradedContracts = await upgradeContracts();
 
     oracles = await Oracles.at(upgradedContracts.oracles);
     pool = await Pool.at(upgradedContracts.pool);
@@ -417,8 +422,8 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       // deploy mocked oracle
       let mockedOracle = await MulticallMock.new(
         oracles.address,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+        upgradedContracts.stakedEthToken,
+        upgradedContracts.rewardEthToken,
         merkleDistributor.address
       );
       await oracles.addOracle(mockedOracle.address, {

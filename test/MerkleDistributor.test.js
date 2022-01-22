@@ -63,26 +63,25 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       upgradedContracts.merkleDistributor
     );
 
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
+    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
+    stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
+    merkleDistributor = await MerkleDistributor.at(
+      upgradedContracts.merkleDistributor
+    );
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({
       admin,
       oracles,
       accounts: otherAccounts,
     });
-    pool = await Pool.at(contracts.pool);
+    pool = await Pool.at(upgradedContracts.pool);
     prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
 
     merkleProofs = {
       [account1]: {
         index: '0',
         amounts: ['12177700000000000000', '987000000000000000'],
-        tokens: [
-          upgradedContracts.rewardEthToken,
-          upgradedContracts.stakeWiseToken,
-        ],
+        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
         proof: [
           '0x6459080d2a203338fd3f49809e85985c5ade49f1b98a007373abb8267bc6920c',
           '0x95bc581b9fcfea7831e010e615c7e519868a75bff5de541be47e2d29d6608d69',
