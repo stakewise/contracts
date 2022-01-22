@@ -554,6 +554,54 @@
     "inputs": [
       {
         "internalType": "address",
+        "name": "admin",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_withdrawalCredentials",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "_validatorRegistration",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_stakedEthToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_validators",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_oracles",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_minActivatingDeposit",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_pendingValidatorsLimit",
+        "type": "uint256"
+      }
+    ],
+    "name": "initialize",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -880,24 +928,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_poolValidators",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      }
-    ],
-    "name": "upgrade",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

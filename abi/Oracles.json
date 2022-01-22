@@ -3,19 +3,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "rewardsNonce",
-        "type": "uint256"
-      }
-    ],
-    "name": "Initialized",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": true,
         "internalType": "address",
         "name": "sender",
@@ -463,11 +450,6 @@
       {
         "internalType": "address",
         "name": "admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "oraclesV1",
         "type": "address"
       },
       {
