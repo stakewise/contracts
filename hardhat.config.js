@@ -133,6 +133,7 @@ module.exports = {
       'MerkleDistributor',
       'ContractChecker',
       'Roles',
+      'WhiteListManager',
     ],
     clear: true,
     flat: true,

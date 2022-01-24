@@ -13,11 +13,13 @@ interface IStakedEthToken is IERC20Upgradeable {
     * @param admin - address of the contract admin.
     * @param _pool - address of the Pool contract.
     * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _whiteListManager - address of the WhiteListManager contract.
     */
     function initialize(
         address admin,
         address _pool,
-        address _rewardEthToken
+        address _rewardEthToken,
+        address _whiteListManager
     ) external;
 
     /**

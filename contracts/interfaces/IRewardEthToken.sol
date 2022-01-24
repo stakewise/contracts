@@ -61,6 +61,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param _protocolFeeRecipient - address of the protocol fee recipient.
     * @param _protocolFee - protocol fee.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
+    * @param _whiteListManager - address of the WhiteListManager contract.
     */
     function initialize(
         address admin,
@@ -68,7 +69,8 @@ interface IRewardEthToken is IERC20Upgradeable {
         address _oracles,
         address _protocolFeeRecipient,
         uint256 _protocolFee,
-        address _merkleDistributor
+        address _merkleDistributor,
+        address _whiteListManager
     ) external;
 
     /**

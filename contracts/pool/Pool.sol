@@ -10,6 +10,7 @@ import "../interfaces/IDepositContract.sol";
 import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IPool.sol";
 import "../interfaces/IPoolValidators.sol";
+import "../interfaces/IWhiteListManager.sol";
 
 /**
  * @title Pool
@@ -40,6 +41,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Address of the Oracles contract.
     address private oracles;
 
+    // @dev Address of the WhiteListManager contract.
+    IWhiteListManager private whiteListManager;
+
     // @dev Maps senders to the validator index that it will be activated in.
     mapping(address => mapping(uint256 => uint256)) public override activations;
 
@@ -62,6 +66,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         address _stakedEthToken,
         address _validators,
         address _oracles,
+        address _whiteListManager,
         uint256 _minActivatingDeposit,
         uint256 _pendingValidatorsLimit
     )
@@ -82,6 +87,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         validators = IPoolValidators(_validators);
         oracles = _oracles;
+        whiteListManager = IWhiteListManager(_whiteListManager);
         minActivatingDeposit = _minActivatingDeposit;
         pendingValidatorsLimit = _pendingValidatorsLimit;
     }
@@ -173,7 +179,10 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     function _stake(address recipient, uint256 value) internal whenNotPaused {
-        require(recipient != address(0), "Pool: invalid recipient");
+        require(whiteListManager.whitelistedAccounts(recipient), "Pool: invalid recipient address");
+        if (recipient != msg.sender) {
+            require(whiteListManager.whitelistedAccounts(msg.sender), "Pool: invalid sender address");
+        }
         require(value > 0, "Pool: invalid deposit amount");
 
         // mint tokens for small deposits immediately
@@ -268,7 +277,10 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      * @dev See {IPool-refund}.
      */
     function refund() external override payable {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == address(validators), "Pool: access denied");
+        require(
+            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) && whiteListManager.whitelistedAccounts(msg.sender),
+            "Pool: access denied"
+        );
         require(msg.value > 0, "Pool: invalid refund amount");
         emit Refunded(msg.sender, msg.value);
     }

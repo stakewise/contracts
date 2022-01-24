@@ -85,6 +85,7 @@ interface IPool {
     * @param _stakedEthToken - address of the StakedEthToken contract.
     * @param _validators - address of the Validators contract.
     * @param _oracles - address of the Oracles contract.
+    * @param _whiteListManager - address of the WhiteListManager contract.
     * @param _minActivatingDeposit - minimal deposit amount considered for the activation.
     * @param _pendingValidatorsLimit - pending validators limit. When it's exceeded, the deposits will be set for the activation.
     */
@@ -95,6 +96,7 @@ interface IPool {
         address _stakedEthToken,
         address _validators,
         address _oracles,
+        address _whiteListManager,
         uint256 _minActivatingDeposit,
         uint256 _pendingValidatorsLimit
     ) external;

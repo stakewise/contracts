@@ -35,6 +35,19 @@ async function deployRoles() {
   return proxy.address;
 }
 
+async function deployWhiteListManager() {
+  const WhiteListManager = await ethers.getContractFactory('WhiteListManager');
+  const proxy = await upgrades.deployProxy(
+    WhiteListManager,
+    [contractSettings.admin],
+    {
+      kind: 'transparent',
+    }
+  );
+  await proxy.deployed();
+  return proxy.address;
+}
+
 async function deployContractChecker() {
   const ContractChecker = await ethers.getContractFactory('ContractChecker');
   const contractChecker = await ContractChecker.deploy();
@@ -49,6 +62,7 @@ async function initializePool(
   stakedEthTokenAddress,
   validatorsAddress,
   oraclesAddress,
+  whiteListManagerAddress,
   withdrawalCredentials = null
 ) {
   const Pool = await ethers.getContractFactory('Pool');
@@ -69,6 +83,7 @@ async function initializePool(
     stakedEthTokenAddress,
     validatorsAddress,
     oraclesAddress,
+    whiteListManagerAddress,
     contractSettings.minActivatingDeposit,
     contractSettings.pendingValidatorsLimit
   );
@@ -113,7 +128,8 @@ async function initializeRewardEthToken(
   rewardEthTokenAddress,
   stakedEthTokenAddress,
   oraclesAddress,
-  merkleDistributorAddress
+  merkleDistributorAddress,
+  whiteListManagerAddress
 ) {
   const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   let rewardEthToken = RewardEthToken.attach(rewardEthTokenAddress);
@@ -125,14 +141,16 @@ async function initializeRewardEthToken(
     oraclesAddress,
     contractSettings.protocolFeeRecipient,
     contractSettings.protocolFee,
-    merkleDistributorAddress
+    merkleDistributorAddress,
+    whiteListManagerAddress
   );
 }
 
 async function initializeStakedEthToken(
   stakedEthTokenAddress,
   poolAddress,
-  rewardEthTokenAddress
+  rewardEthTokenAddress,
+  whiteListManagerAddress
 ) {
   const StakedEthToken = await ethers.getContractFactory('StakedEthToken');
   let stakedEthToken = StakedEthToken.attach(stakedEthTokenAddress);
@@ -141,7 +159,8 @@ async function initializeStakedEthToken(
   return stakedEthToken.initialize(
     contractSettings.admin,
     poolAddress,
-    rewardEthTokenAddress
+    rewardEthTokenAddress,
+    whiteListManagerAddress
   );
 }
 
@@ -172,6 +191,13 @@ async function deployContracts(withdrawalCredentials = null) {
   const contractCheckerAddress = await deployContractChecker();
   log(
     white(`Deployed ContractChecker contract: ${green(contractCheckerAddress)}`)
+  );
+
+  const whiteListManagerAddress = await deployWhiteListManager();
+  log(
+    white(
+      `Deployed WhiteListManager contract: ${green(whiteListManagerAddress)}`
+    )
   );
 
   const rolesAddress = await deployRoles();
@@ -210,6 +236,7 @@ async function deployContracts(withdrawalCredentials = null) {
     stakedEthTokenAddress,
     poolValidatorsAddress,
     oraclesAddress,
+    whiteListManagerAddress,
     withdrawalCredentials
   );
   log(white('Initialized Pool contract'));
@@ -225,14 +252,16 @@ async function deployContracts(withdrawalCredentials = null) {
     rewardEthTokenAddress,
     stakedEthTokenAddress,
     oraclesAddress,
-    merkleDistributorAddress
+    merkleDistributorAddress,
+    whiteListManagerAddress
   );
   log(white('Initialized RewardEthToken contract'));
 
   await initializeStakedEthToken(
     stakedEthTokenAddress,
     poolAddress,
-    rewardEthTokenAddress
+    rewardEthTokenAddress,
+    whiteListManagerAddress
   );
   log(white('Initialized StakedEthToken contract'));
 
@@ -255,6 +284,7 @@ async function deployContracts(withdrawalCredentials = null) {
     merkleDistributor: merkleDistributorAddress,
     roles: rolesAddress,
     contractChecker: contractCheckerAddress,
+    whiteListManager: whiteListManagerAddress,
   };
 }
 

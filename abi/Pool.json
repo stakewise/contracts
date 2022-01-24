@@ -583,6 +583,11 @@
         "type": "address"
       },
       {
+        "internalType": "address",
+        "name": "_whiteListManager",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "_minActivatingDeposit",
         "type": "uint256"

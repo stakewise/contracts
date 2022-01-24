@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
+import "../interfaces/IWhiteListManager.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -31,13 +32,17 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev The principal amount of the distributor.
     uint256 public override distributorPrincipal;
 
+    // @dev Address of the WhiteListManager contract.
+    IWhiteListManager private whiteListManager;
+
     /**
     * @dev See {IStakedEthToken-initialize}.
      */
     function initialize(
         address admin,
         address _pool,
-        address _rewardEthToken
+        address _rewardEthToken,
+        address _whiteListManager
     )
         external override initializer
     {
@@ -51,6 +56,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
 
         pool = _pool;
         rewardEthToken = IRewardEthToken(_rewardEthToken);
+        whiteListManager = IWhiteListManager(_whiteListManager);
     }
 
     /**
@@ -89,8 +95,8 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "StakedEthToken: invalid sender");
-        require(recipient != address(0), "StakedEthToken: invalid receiver");
+        require(whiteListManager.whitelistedAccounts(sender), "StakedEthToken: invalid sender");
+        require(whiteListManager.whitelistedAccounts(recipient), "StakedEthToken: invalid receiver");
         require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
 
         // start calculating sender and recipient rewards with updated deposit amounts

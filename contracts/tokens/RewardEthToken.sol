@@ -9,6 +9,7 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
+import "../interfaces/IWhiteListManager.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -51,6 +52,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
+    // @dev Address of the WhiteListManager contract.
+    IWhiteListManager private whiteListManager;
+
     /**
      * @dev See {IRewardEthToken-initialize}.
      */
@@ -60,7 +64,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         address _oracles,
         address _protocolFeeRecipient,
         uint256 _protocolFee,
-        address _merkleDistributor
+        address _merkleDistributor,
+        address _whiteListManager
     )
         external override initializer
     {
@@ -80,6 +85,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
         merkleDistributor = _merkleDistributor;
+        whiteListManager = IWhiteListManager(_whiteListManager);
     }
 
     /**
@@ -154,8 +160,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "RewardEthToken: invalid sender");
-        require(recipient != address(0), "RewardEthToken: invalid receiver");
+        require(whiteListManager.whitelistedAccounts(sender), "RewardEthToken: invalid sender");
+        require(whiteListManager.whitelistedAccounts(recipient), "RewardEthToken: invalid receiver");
         require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot transfer during rewards update");
 
         uint128 _rewardPerToken = rewardPerToken; // gas savings

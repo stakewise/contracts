@@ -602,6 +602,11 @@
         "internalType": "address",
         "name": "_merkleDistributor",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_whiteListManager",
+        "type": "address"
       }
     ],
     "name": "initialize",
