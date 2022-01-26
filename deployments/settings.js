@@ -10,8 +10,7 @@ let contracts = {
   MGNOWrapper: '0x647507A70Ff598F386CB96ae5046486389368C66',
   MGNOToken: '0x722fc4DAABFEaff81b97894fC623f91814a1BF68',
   GNOToken: '0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb',
-  // TODO: replace with bridged stakewise token
-  stakeWiseToken: '0xDDAfbb505ad214D7b80b1f830fcCc89B60fb7A83',
+  stakeWiseToken: '0xfdA94F056346d2320d4B5E468D6Ad099b2277746',
 };
 
 module.exports = {
