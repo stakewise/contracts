@@ -3,13 +3,18 @@
 pragma solidity 0.7.5;
 pragma abicoder v2;
 
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
-import "../interfaces/IStakedEthToken.sol";
+import "../interfaces/IStakedToken.sol";
 import "../interfaces/IDepositContract.sol";
 import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IPool.sol";
+import "../interfaces/IStakedToken.sol";
 import "../interfaces/IPoolValidators.sol";
+import "../interfaces/IGNOToken.sol";
+import "../interfaces/IMGNOWrapper.sol";
 
 /**
  * @title Pool
@@ -17,10 +22,23 @@ import "../interfaces/IPoolValidators.sol";
  * @dev Pool contract accumulates deposits from the users, mints tokens and registers validators.
  */
 contract Pool is IPool, OwnablePausableUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     using SafeMathUpgradeable for uint256;
 
     // @dev Validator deposit amount.
     uint256 public constant override VALIDATOR_TOTAL_DEPOSIT = 32 ether;
+
+    // @dev Address of the GNO <-> mGNO wrapper.
+    address public constant override MGNO_WRAPPER = 0x647507A70Ff598F386CB96ae5046486389368C66;
+
+    // @dev Address of the GNO token.
+    address public constant override GNO_TOKEN = 0x9C58BAcC331c9aa871AFD802DB6379a98e80CEdb;
+
+    // @dev Address of the mGNO token.
+    address public constant override MGNO_TOKEN = 0x722fc4DAABFEaff81b97894fC623f91814a1BF68;
+
+    // @dev base unit.
+    uint256 internal constant WAD = 1e18;
 
     // @dev Total activated validators.
     uint256 public override activatedValidators;
@@ -28,11 +46,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Pool validator withdrawal credentials.
     bytes32 public override withdrawalCredentials;
 
-    // @dev Address of the ETH2 Deposit Contract (deployed by Ethereum).
+    // @dev Address of the GBC Deposit Contract.
     IDepositContract public override validatorRegistration;
 
-    // @dev Address of the StakedEthToken contract.
-    IStakedEthToken private stakedEthToken;
+    // @dev Address of the StakedToken contract.
+    IStakedToken private stakedToken;
 
     // @dev Address of the PoolValidators contract.
     IPoolValidators private validators;
@@ -46,7 +64,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     // @dev Total pending validators.
     uint256 public override pendingValidators;
 
-    // @dev Amount of deposited ETH that is not considered for the activation period.
+    // @dev Amount of deposited mGNO that is not considered for the activation period.
     uint256 public override minActivatingDeposit;
 
     // @dev Pending validators percent limit. If it's not exceeded tokens can be minted immediately.
@@ -59,7 +77,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         address admin,
         bytes32 _withdrawalCredentials,
         address _validatorRegistration,
-        address _stakedEthToken,
+        address _stakedToken,
         address _validators,
         address _oracles,
         uint256 _minActivatingDeposit,
@@ -70,20 +88,24 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         require(admin != address(0), "Pool: invalid admin address");
         require(_withdrawalCredentials != "", "Pool: invalid withdrawal credentials");
         require(_validatorRegistration != address(0), "Pool: invalid ValidatorRegistration address");
-        require(_stakedEthToken != address(0), "Pool: invalid StakedEthToken address");
+        require(_stakedToken != address(0), "Pool: invalid StakedToken address");
         require(_validators != address(0), "Pool: invalid Validators address");
         require(_oracles != address(0), "Pool: invalid Oracles address");
         require(_pendingValidatorsLimit < 1e4, "Pool: invalid limit");
 
+        // initialize admin user
         __OwnablePausableUpgradeable_init(admin);
 
         withdrawalCredentials = _withdrawalCredentials;
         validatorRegistration = IDepositContract(_validatorRegistration);
-        stakedEthToken = IStakedEthToken(_stakedEthToken);
+        stakedToken = IStakedToken(_stakedToken);
         validators = IPoolValidators(_validators);
         oracles = _oracles;
         minActivatingDeposit = _minActivatingDeposit;
         pendingValidatorsLimit = _pendingValidatorsLimit;
+
+        // approve transfers to the validator registration contract
+        IERC20Upgradeable(MGNO_TOKEN).safeApprove(_validatorRegistration, type(uint256).max);
     }
 
     /**
@@ -116,60 +138,138 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-stake}.
+     * @dev See {IPool-calculateMGNO}.
      */
-    function stake() external payable override {
-        _stake(msg.sender, msg.value);
+    function calculateMGNO(uint256 amountIn) public view override returns (uint256) {
+        // fetch MGNO <-> GNO conversion rate
+        uint256 rate = IMGNOWrapper(MGNO_WRAPPER).tokenRate(GNO_TOKEN);
+        return amountIn.mul(rate).div(WAD);
     }
 
     /**
-     * @dev See {IPool-stakeOnBehalf}.
+     * @dev See {IPool-stakeGNO}.
      */
-    function stakeOnBehalf(address recipient) external payable override {
-        _stake(recipient, msg.value);
+    function stakeGNO(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare
+    )
+        external override
+    {
+        // convert GNO amount to mGNO
+        uint256 convertedAmount = calculateMGNO(amount);
+        require(convertedAmount > 0, "Pool: invalid amount");
+
+        // mint staked tokens
+        if (recipient != address(0)) {
+            _stake(recipient, convertedAmount);
+        } else {
+            _stake(msg.sender, convertedAmount);
+        }
+
+        // withdraw GNO tokens from the user
+        IERC20Upgradeable(GNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+
+        // convert GNO tokens to mGNO
+        bool success = IGNOToken(GNO_TOKEN).transferAndCall(MGNO_WRAPPER, amount, "");
+        require(success, "Pool: failed to convert tokens");
+
+        // emit events for tracking referrers or partners
+        if (referredBy != address(0)) {
+            if (hasRevenueShare) {
+                emit StakedWithPartner(referredBy, convertedAmount);
+            } else {
+                emit StakedWithReferrer(referredBy, convertedAmount);
+            }
+        }
     }
 
     /**
-    * @dev Function for staking ETH using transfer.
-    */
-    receive() external payable {
-        _stake(msg.sender, msg.value);
+     * @dev See {IPool-stakeGNOWithPermit}.
+     */
+    function stakeGNOWithPermit(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    )
+        external override
+    {
+        // convert GNO amount to mGNO
+        uint256 convertedAmount = calculateMGNO(amount);
+        require(convertedAmount > 0, "Pool: invalid amount");
+
+        // mint staked tokens
+        if (recipient != address(0)) {
+            _stake(recipient, convertedAmount);
+        } else {
+            _stake(msg.sender, convertedAmount);
+        }
+
+        // permit transfer
+        IGNOToken(GNO_TOKEN).permit(
+            msg.sender,
+            address(this),
+            nonce,
+            expiry,
+            true,
+            v,
+            r,
+            s
+        );
+
+        // withdraw GNO tokens from the user
+        IERC20Upgradeable(GNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+
+        // convert GNO tokens to mGNO
+        bool success = IGNOToken(GNO_TOKEN).transferAndCall(MGNO_WRAPPER, amount, "");
+        require(success, "Pool: failed to convert tokens");
+
+        // emit events for tracking referrers or partners
+        if (referredBy != address(0)) {
+            if (hasRevenueShare) {
+                emit StakedWithPartner(referredBy, convertedAmount);
+            } else {
+                emit StakedWithReferrer(referredBy, convertedAmount);
+            }
+        }
     }
 
     /**
-     * @dev See {IPool-stakeWithPartner}.
+     * @dev See {IPool-stakeMGNO}.
      */
-    function stakeWithPartner(address partner) external payable override {
-        // stake amount
-        _stake(msg.sender, msg.value);
-        emit StakedWithPartner(partner, msg.value);
-    }
+    function stakeMGNO(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare
+    )
+        external override
+    {
+        // mint staked tokens
+        if (recipient != address(0)) {
+            _stake(recipient, amount);
+        } else {
+            _stake(msg.sender, amount);
+        }
 
-    /**
-     * @dev See {IPool-stakeWithPartnerOnBehalf}.
-     */
-    function stakeWithPartnerOnBehalf(address partner, address recipient) external payable override {
-        // stake amount
-        _stake(recipient, msg.value);
-        emit StakedWithPartner(partner, msg.value);
-    }
+        // transfer mGNO tokens from the user
+        IERC20Upgradeable(MGNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
 
-    /**
-     * @dev See {IPool-stakeWithReferrer}.
-     */
-    function stakeWithReferrer(address referrer) external payable override {
-        // stake amount
-        _stake(msg.sender, msg.value);
-        emit StakedWithReferrer(referrer, msg.value);
-    }
-
-    /**
-     * @dev See {IPool-stakeWithReferrerOnBehalf}.
-     */
-    function stakeWithReferrerOnBehalf(address referrer, address recipient) external payable override {
-        // stake amount
-        _stake(recipient, msg.value);
-        emit StakedWithReferrer(referrer, msg.value);
+        // emit events for tracking referrers or partners
+        if (referredBy != address(0)) {
+            if (hasRevenueShare) {
+                emit StakedWithPartner(referredBy, amount);
+            } else {
+                emit StakedWithReferrer(referredBy, amount);
+            }
+        }
     }
 
     function _stake(address recipient, uint256 value) internal whenNotPaused {
@@ -178,16 +278,17 @@ contract Pool is IPool, OwnablePausableUpgradeable {
 
         // mint tokens for small deposits immediately
         if (value <= minActivatingDeposit) {
-            stakedEthToken.mint(recipient, value);
+            stakedToken.mint(recipient, value);
             return;
         }
 
         // mint tokens if current pending validators limit is not exceed
-        uint256 _pendingValidators = pendingValidators.add((address(this).balance).div(VALIDATOR_TOTAL_DEPOSIT));
+        uint256 poolBalance = IERC20Upgradeable(MGNO_TOKEN).balanceOf(address(this)).add(value);
+        uint256 _pendingValidators = pendingValidators.add((poolBalance).div(VALIDATOR_TOTAL_DEPOSIT));
         uint256 _activatedValidators = activatedValidators; // gas savings
         uint256 validatorIndex = _activatedValidators.add(_pendingValidators);
         if (validatorIndex.mul(1e4) <= _activatedValidators.mul(pendingValidatorsLimit.add(1e4))) {
-            stakedEthToken.mint(recipient, value);
+            stakedToken.mint(recipient, value);
         } else {
             // lock deposit amount until validator activated
             activations[recipient][validatorIndex] = activations[recipient][validatorIndex].add(value);
@@ -212,7 +313,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             activatedValidators.mul(pendingValidatorsLimit.add(1e4))
         );
 
-        stakedEthToken.mint(account, activatedAmount);
+        stakedToken.mint(account, activatedAmount);
     }
 
     /**
@@ -225,7 +326,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             uint256 activatedAmount = _activateAmount(account, validatorIndexes[i], maxValidatorIndex);
             toMint = toMint.add(activatedAmount);
         }
-        stakedEthToken.mint(account, toMint);
+        stakedToken.mint(account, toMint);
     }
 
     function _activateAmount(
@@ -256,20 +357,21 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         emit ValidatorRegistered(depositData.publicKey, depositData.operator);
 
         // register validator
-        validatorRegistration.deposit{value : VALIDATOR_TOTAL_DEPOSIT}(
+        validatorRegistration.deposit(
             depositData.publicKey,
             abi.encodePacked(depositData.withdrawalCredentials),
             depositData.signature,
-            depositData.depositDataRoot
+            depositData.depositDataRoot,
+            VALIDATOR_TOTAL_DEPOSIT
         );
     }
 
     /**
      * @dev See {IPool-refund}.
      */
-    function refund() external override payable {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == address(validators), "Pool: access denied");
-        require(msg.value > 0, "Pool: invalid refund amount");
-        emit Refunded(msg.sender, msg.value);
+    function refund(uint256 amount) external override {
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
+        IERC20Upgradeable(MGNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
+        emit Refunded(msg.sender, amount);
     }
 }

@@ -1,11 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: CC0-1.0
+// https://github.com/gnosischain/deposit-contract/blob/develop/contracts/interfaces/IDepositContract.sol
 
 pragma solidity 0.7.5;
 
-// This interface is designed to be compatible with the Vyper version.
-/// @notice This is the Ethereum 2.0 deposit contract interface.
-/// For more information see the Phase 0 specification under https://github.com/ethereum/eth2.0-specs
-/// https://github.com/ethereum/eth2.0-specs/blob/dev/solidity_deposit_contract/deposit_contract.sol
 interface IDepositContract {
     /// @notice A processed deposit event.
     event DepositEvent(
@@ -23,11 +20,12 @@ interface IDepositContract {
     /// @param deposit_data_root The SHA-256 hash of the SSZ-encoded DepositData object.
     /// Used as a protection against malformed input.
     function deposit(
-        bytes calldata pubkey,
-        bytes calldata withdrawal_credentials,
-        bytes calldata signature,
-        bytes32 deposit_data_root
-    ) external payable;
+        bytes memory pubkey,
+        bytes memory withdrawal_credentials,
+        bytes memory signature,
+        bytes32 deposit_data_root,
+        uint256 stake_amount
+    ) external;
 
     /// @notice Query the current deposit root hash.
     /// @return The deposit root hash.

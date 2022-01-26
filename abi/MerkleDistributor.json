@@ -524,7 +524,7 @@
       },
       {
         "internalType": "address",
-        "name": "_rewardEthToken",
+        "name": "_rewardToken",
         "type": "address"
       },
       {
@@ -718,7 +718,7 @@
   },
   {
     "inputs": [],
-    "name": "rewardEthToken",
+    "name": "rewardToken",
     "outputs": [
       {
         "internalType": "address",

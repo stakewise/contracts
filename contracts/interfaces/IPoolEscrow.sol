@@ -7,10 +7,10 @@ pragma solidity 0.7.5;
  */
 interface IPoolEscrow {
     /**
-    * @dev Event for tracking withdrawn ether.
+    * @dev Event for tracking withdrawals.
     * @param sender - the address of the transaction sender.
     * @param payee - the address where the funds were transferred to.
-    * @param amount - the amount of ether transferred to payee.
+    * @param amount - the amount transferred to payee.
     */
     event Withdrawn(address indexed sender, address indexed payee, uint256 amount);
 
@@ -51,6 +51,14 @@ interface IPoolEscrow {
     function applyOwnershipTransfer() external;
 
     /**
+     * @dev Withdraw tokens from the escrow. Can only be called by the current owner.
+     * @param token - the address of the token to transfer.
+     * @param payee - the address where the funds will be transferred to.
+     * @param amount - the amount of tokens to transfer to payee.
+     */
+    function withdrawTokens(address token, address payee, uint256 amount) external;
+
+    /**
      * @dev Withdraw balance for a payee, forwarding all gas to the
      * recipient. Can only be called by the current owner.
      *
@@ -59,7 +67,7 @@ interface IPoolEscrow {
      * checks-effects-interactions pattern or using {ReentrancyGuard}.
      *
      * @param payee - the address where the funds will be transferred to.
-     * @param amount - the amount of ether to transfer to payee.
+     * @param amount - the amount of xDAI to transfer to payee.
      */
     function withdraw(address payable payee, uint256 amount) external;
 }

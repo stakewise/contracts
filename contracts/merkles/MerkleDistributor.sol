@@ -9,13 +9,13 @@ import "@openzeppelin/contracts-upgradeable/drafts/IERC20PermitUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
-import "../interfaces/IRewardEthToken.sol";
+import "../interfaces/IRewardToken.sol";
 
 
 /**
  * @title MerkleDistributor
  *
- * @dev MerkleDistributor contract distributes rETH2 and other tokens calculated by oracles.
+ * @dev MerkleDistributor contract distributes rmGNO and other tokens calculated by oracles.
  */
 contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -23,8 +23,8 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
     // @dev Merkle Root for proving rewards ownership.
     bytes32 public override merkleRoot;
 
-    // @dev Address of the RewardEthToken contract.
-    address public override rewardEthToken;
+    // @dev Address of the RewardToken contract.
+    address public override rewardToken;
 
     // @dev Address of the Oracles contract.
     IOracles public override oracles;
@@ -40,17 +40,17 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
      */
     function initialize(
         address admin,
-        address _rewardEthToken,
+        address _rewardToken,
         address _oracles
     )
         external override initializer
     {
         require(admin != address(0), "MerkleDistributor: invalid admin address");
-        require(_rewardEthToken != address(0), "MerkleDistributor: invalid RewardEthToken address");
+        require(_rewardToken != address(0), "MerkleDistributor: invalid RewardToken address");
         require(_oracles != address(0), "MerkleDistributor: invalid Oracles address");
 
         __OwnablePausableUpgradeable_init(admin);
-        rewardEthToken = _rewardEthToken;
+        rewardToken = _rewardToken;
         oracles = IOracles(_oracles);
     }
 
@@ -144,9 +144,9 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         external override whenNotPaused
     {
         require(account != address(0), "MerkleDistributor: invalid account");
-        address _rewardEthToken = rewardEthToken; // gas savings
+        address _rewardToken = rewardToken; // gas savings
         require(
-            IRewardEthToken(_rewardEthToken).lastUpdateBlockNumber() < lastUpdateBlockNumber,
+            IRewardToken(_rewardToken).lastUpdateBlockNumber() < lastUpdateBlockNumber,
             "MerkleDistributor: merkle root updating"
         );
 
@@ -163,8 +163,8 @@ contract MerkleDistributor is IMerkleDistributor, OwnablePausableUpgradeable {
         for (uint256 i = 0; i < tokensCount; i++) {
             address token = tokens[i];
             uint256 amount = amounts[i];
-            if (token == _rewardEthToken) {
-                IRewardEthToken(_rewardEthToken).claim(account, amount);
+            if (token == _rewardToken) {
+                IRewardToken(_rewardToken).claim(account, amount);
             } else {
                 IERC20Upgradeable(token).safeTransfer(account, amount);
             }

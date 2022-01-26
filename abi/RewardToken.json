@@ -580,7 +580,7 @@
       },
       {
         "internalType": "address",
-        "name": "_stakedEthToken",
+        "name": "_stakedToken",
         "type": "address"
       },
       {

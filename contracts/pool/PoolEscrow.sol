@@ -3,17 +3,20 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts/utils/Address.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "../interfaces/IPoolEscrow.sol";
 
 /**
  * @title PoolEscrow
  *
- * @dev PoolEscrow contract is used to receive transfers from ETH2 system contract for the pool validators.
+ * @dev PoolEscrow contract is used to receive transfers from system contract for the pool validators.
  * The withdrawal credentials of the Pool must be set to
  * https://github.com/ethereum/eth2.0-specs/blob/v1.1.0-alpha.2/specs/phase0/validator.md#eth1_address_withdrawal_prefix
  * using the address of this contract as a destination.
  */
 contract PoolEscrow is IPoolEscrow {
+    using SafeERC20 for IERC20;
     using Address for address payable;
 
     // @dev The address of the current contract owner.
@@ -60,6 +63,16 @@ contract PoolEscrow is IPoolEscrow {
     }
 
     /**
+     * @dev See {IPoolEscrow-withdrawTokens}.
+     */
+    function withdrawTokens(address token, address payee, uint256 amount) external override onlyOwner {
+        require(payee != address(0), "PoolEscrow: payee is the zero address");
+        require(token != address(0), "PoolEscrow: token is the zero address");
+        emit Withdrawn(msg.sender, payee, amount);
+        IERC20(token).safeTransfer(payee, amount);
+    }
+
+    /**
      * @dev See {IPoolEscrow-withdraw}.
      */
     function withdraw(address payable payee, uint256 amount) external override onlyOwner {
@@ -69,7 +82,7 @@ contract PoolEscrow is IPoolEscrow {
     }
 
     /**
-    * @dev Function for receiving withdrawals from ETH2 system contract.
+    * @dev Function for receiving withdrawals from the system contract.
     */
     receive() external payable { }
 }

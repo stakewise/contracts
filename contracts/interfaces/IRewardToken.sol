@@ -5,9 +5,9 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
- * @dev Interface of the RewardEthToken contract.
+ * @dev Interface of the RewardToken contract.
  */
-interface IRewardEthToken is IERC20Upgradeable {
+interface IRewardToken is IERC20Upgradeable {
     /**
     * @dev Structure for storing information about user reward checkpoint.
     * @param rewardPerToken - user reward per token.
@@ -54,9 +54,9 @@ interface IRewardEthToken is IERC20Upgradeable {
     );
 
     /**
-    * @dev Function for initializing the RewardEthToken contract.
+    * @dev Function for initializing the RewardToken contract.
     * @param admin - address of the contract admin.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
+    * @param _stakedToken - address of the StakedToken contract.
     * @param _oracles - address of the Oracles contract.
     * @param _protocolFeeRecipient - address of the protocol fee recipient.
     * @param _protocolFee - protocol fee.
@@ -64,7 +64,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     */
     function initialize(
         address admin,
-        address _stakedEthToken,
+        address _stakedToken,
         address _oracles,
         address _protocolFeeRecipient,
         uint256 _protocolFee,
@@ -115,7 +115,7 @@ interface IRewardEthToken is IERC20Upgradeable {
 
     /**
     * @dev Function for setting whether rewards are disabled for the account.
-    * Can only be called by the `StakedEthToken` contract.
+    * Can only be called by the `StakedToken` contract.
     * @param account - address of the account to disable rewards for.
     * @param isDisabled - whether the rewards will be disabled.
     */
@@ -154,7 +154,7 @@ interface IRewardEthToken is IERC20Upgradeable {
     function updateTotalRewards(uint256 newTotalRewards) external;
 
     /**
-    * @dev Function for claiming rETH2 from the merkle distribution.
+    * @dev Function for claiming reward tokens from the merkle distribution.
     * Can only be called by MerkleDistributor contract.
     * @param account - address of the account the tokens will be assigned to.
     * @param amount - amount of tokens to assign to the account.

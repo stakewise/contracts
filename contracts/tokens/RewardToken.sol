@@ -5,24 +5,24 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
-import "../interfaces/IStakedEthToken.sol";
-import "../interfaces/IRewardEthToken.sol";
+import "../interfaces/IStakedToken.sol";
+import "../interfaces/IRewardToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
- * @title RewardEthToken
+ * @title RewardToken
  *
- * @dev RewardEthToken contract stores pool reward tokens.
+ * @dev RewardToken contract stores pool reward tokens.
  * If deploying contract for the first time, the `initialize` function should replace the `upgrade` function.
  */
-contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
+contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeCastUpgradeable for uint256;
 
-    // @dev Address of the StakedEthToken contract.
-    IStakedEthToken private stakedEthToken;
+    // @dev Address of the StakedToken contract.
+    IStakedToken private stakedToken;
 
     // @dev Address of the Oracles contract.
     address private oracles;
@@ -52,11 +52,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     mapping(address => bool) public override rewardsDisabled;
 
     /**
-     * @dev See {IRewardEthToken-initialize}.
+     * @dev See {IRewardToken-initialize}.
      */
     function initialize(
         address admin,
-        address _stakedEthToken,
+        address _stakedToken,
         address _oracles,
         address _protocolFeeRecipient,
         uint256 _protocolFee,
@@ -64,18 +64,18 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     )
         external override initializer
     {
-        require(admin != address(0), "RewardEthToken: invalid admin address");
-        require(_stakedEthToken != address(0), "RewardEthToken: invalid StakedEthToken address");
-        require(_oracles != address(0), "RewardEthToken: invalid Oracles address");
-        require(_protocolFeeRecipient != address(0), "RewardEthToken: invalid protocol fee recipient address");
-        require(_protocolFee < 1e4, "RewardEthToken: invalid protocol fee");
-        require(_merkleDistributor != address(0), "RewardEthToken: invalid MerkleDistributor address");
+        require(admin != address(0), "RewardToken: invalid admin address");
+        require(_stakedToken != address(0), "RewardToken: invalid StakedToken address");
+        require(_oracles != address(0), "RewardToken: invalid Oracles address");
+        require(_protocolFeeRecipient != address(0), "RewardToken: invalid protocol fee recipient address");
+        require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
+        require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("Perm Reward ETH2", "prETH2");
-        __ERC20Permit_init("Perm Reward ETH2");
+        __ERC20_init("SW Reward mGNO", "rmGNO");
+        __ERC20Permit_init("SW Reward mGNO");
 
-        stakedEthToken = IStakedEthToken(_stakedEthToken);
+        stakedToken = IStakedToken(_stakedToken);
         oracles = _oracles;
         protocolFeeRecipient = _protocolFeeRecipient;
         protocolFee = _protocolFee;
@@ -83,11 +83,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-setRewardsDisabled}.
+     * @dev See {IRewardToken-setRewardsDisabled}.
      */
     function setRewardsDisabled(address account, bool isDisabled) external override {
-        require(msg.sender == address(stakedEthToken), "RewardEthToken: access denied");
-        require(rewardsDisabled[account] != isDisabled, "RewardEthToken: value did not change");
+        require(msg.sender == address(stakedToken), "RewardToken: access denied");
+        require(rewardsDisabled[account] != isDisabled, "RewardToken: value did not change");
 
         uint128 _rewardPerToken = rewardPerToken;
         checkpoints[account] = Checkpoint({
@@ -100,7 +100,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-setProtocolFeeRecipient}.
+     * @dev See {IRewardToken-setProtocolFeeRecipient}.
      */
     function setProtocolFeeRecipient(address recipient) external override onlyAdmin {
         // can be address(0) to distribute fee through the Merkle Distributor
@@ -109,10 +109,10 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-setProtocolFee}.
+     * @dev See {IRewardToken-setProtocolFee}.
      */
     function setProtocolFee(uint256 _protocolFee) external override onlyAdmin {
-        require(_protocolFee < 1e4, "RewardEthToken: invalid protocol fee");
+        require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
         protocolFee = _protocolFee;
         emit ProtocolFeeUpdated(_protocolFee);
     }
@@ -137,26 +137,26 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         // skip calculating period reward when it has not changed or when the rewards are disabled
         if (_rewardPerToken == cp.rewardPerToken || rewardsDisabled[account]) return cp.reward;
 
-        uint256 stakedEthAmount;
+        uint256 stakedAmount;
         if (account == address(0)) {
             // fetch merkle distributor current principal
-            stakedEthAmount = stakedEthToken.distributorPrincipal();
+            stakedAmount = stakedToken.distributorPrincipal();
         } else {
-            stakedEthAmount = stakedEthToken.balanceOf(account);
+            stakedAmount = stakedToken.balanceOf(account);
         }
-        if (stakedEthAmount == 0) return cp.reward;
+        if (stakedAmount == 0) return cp.reward;
 
         // return checkpoint reward + current reward
-        return _calculateNewReward(cp.reward, stakedEthAmount, _rewardPerToken.sub(cp.rewardPerToken));
+        return _calculateNewReward(cp.reward, stakedAmount, _rewardPerToken.sub(cp.rewardPerToken));
     }
 
     /**
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "RewardEthToken: invalid sender");
-        require(recipient != address(0), "RewardEthToken: invalid receiver");
-        require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot transfer during rewards update");
+        require(sender != address(0), "RewardToken: invalid sender");
+        require(recipient != address(0), "RewardToken: invalid receiver");
+        require(block.number > lastUpdateBlockNumber, "RewardToken: cannot transfer during rewards update");
 
         uint128 _rewardPerToken = rewardPerToken; // gas savings
         checkpoints[sender] = Checkpoint({
@@ -172,7 +172,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-updateRewardCheckpoint}.
+     * @dev See {IRewardToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) public override returns (bool accRewardsDisabled) {
         accRewardsDisabled = rewardsDisabled[account];
@@ -183,14 +183,14 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         Checkpoint memory cp = checkpoints[account];
         if (newRewardPerToken == cp.rewardPerToken) return;
 
-        uint256 stakedEthAmount;
+        uint256 stakedAmount;
         if (account == address(0)) {
             // fetch merkle distributor current principal
-            stakedEthAmount = stakedEthToken.distributorPrincipal();
+            stakedAmount = stakedToken.distributorPrincipal();
         } else {
-            stakedEthAmount = stakedEthToken.balanceOf(account);
+            stakedAmount = stakedToken.balanceOf(account);
         }
-        if (stakedEthAmount == 0) {
+        if (stakedAmount == 0) {
             checkpoints[account] = Checkpoint({
                 reward: cp.reward,
                 rewardPerToken: newRewardPerToken
@@ -198,7 +198,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         } else {
             uint256 periodRewardPerToken = uint256(newRewardPerToken).sub(cp.rewardPerToken);
             checkpoints[account] = Checkpoint({
-                reward: _calculateNewReward(cp.reward, stakedEthAmount, periodRewardPerToken).toUint128(),
+                reward: _calculateNewReward(cp.reward, stakedAmount, periodRewardPerToken).toUint128(),
                 rewardPerToken: newRewardPerToken
             });
         }
@@ -206,16 +206,16 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
 
     function _calculateNewReward(
         uint256 currentReward,
-        uint256 stakedEthAmount,
+        uint256 stakedAmount,
         uint256 periodRewardPerToken
     )
         internal pure returns (uint256)
     {
-        return currentReward.add(stakedEthAmount.mul(periodRewardPerToken).div(1e18));
+        return currentReward.add(stakedAmount.mul(periodRewardPerToken).div(1e18));
     }
 
     /**
-     * @dev See {IRewardEthToken-updateRewardCheckpoints}.
+     * @dev See {IRewardToken-updateRewardCheckpoints}.
      */
     function updateRewardCheckpoints(address account1, address account2) public override returns (bool rewardsDisabled1, bool rewardsDisabled2) {
         rewardsDisabled1 = rewardsDisabled[account1];
@@ -228,10 +228,10 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-updateTotalRewards}.
+     * @dev See {IRewardToken-updateTotalRewards}.
      */
     function updateTotalRewards(uint256 newTotalRewards) external override {
-        require(msg.sender == oracles, "RewardEthToken: access denied");
+        require(msg.sender == oracles, "RewardToken: access denied");
 
         uint256 periodRewards = newTotalRewards.sub(totalRewards);
         if (periodRewards == 0) {
@@ -243,7 +243,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         // calculate protocol reward and new reward per token amount
         uint256 protocolReward = periodRewards.mul(protocolFee).div(1e4);
         uint256 prevRewardPerToken = rewardPerToken;
-        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(stakedEthToken.totalDeposits()));
+        uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(stakedToken.totalDeposits()));
         uint128 newRewardPerToken128 = newRewardPerToken.toUint128();
 
         // store previous distributor rewards for period reward calculation
@@ -284,11 +284,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IRewardEthToken-claim}.
+     * @dev See {IRewardToken-claim}.
      */
     function claim(address account, uint256 amount) external override {
-        require(msg.sender == merkleDistributor, "RewardEthToken: access denied");
-        require(account != address(0), "RewardEthToken: invalid account");
+        require(msg.sender == merkleDistributor, "RewardToken: access denied");
+        require(account != address(0), "RewardToken: invalid account");
 
         // update checkpoints, transfer amount from distributor to account
         uint128 _rewardPerToken = rewardPerToken;

@@ -4,16 +4,16 @@ pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
-import "../interfaces/IStakedEthToken.sol";
-import "../interfaces/IRewardEthToken.sol";
+import "../interfaces/IStakedToken.sol";
+import "../interfaces/IRewardToken.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
- * @title StakedEthToken
+ * @title StakedToken
  *
- * @dev StakedEthToken contract stores pool staked tokens.
+ * @dev StakedToken contract stores pool staked tokens.
  */
-contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
+contract StakedToken is IStakedToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
 
     // @dev Total amount of deposits.
@@ -25,32 +25,32 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Address of the Pool contract.
     address private pool;
 
-    // @dev Address of the RewardEthToken contract.
-    IRewardEthToken private rewardEthToken;
+    // @dev Address of the RewardToken contract.
+    IRewardToken private rewardToken;
 
     // @dev The principal amount of the distributor.
     uint256 public override distributorPrincipal;
 
     /**
-    * @dev See {IStakedEthToken-initialize}.
+    * @dev See {IStakedToken-initialize}.
      */
     function initialize(
         address admin,
         address _pool,
-        address _rewardEthToken
+        address _rewardToken
     )
         external override initializer
     {
-        require(admin != address(0), "StakedEthToken: invalid admin address");
-        require(_pool != address(0), "StakedEthToken: invalid Pool address");
-        require(_rewardEthToken != address(0), "StakedEthToken: invalid RewardEthToken address");
+        require(admin != address(0), "StakedToken: invalid admin address");
+        require(_pool != address(0), "StakedToken: invalid Pool address");
+        require(_rewardToken != address(0), "StakedToken: invalid RewardToken address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("Perm Staked ETH2", "psETH2");
-        __ERC20Permit_init("Perm Staked ETH2");
+        __ERC20_init("SW Staked mGNO", "smGNO");
+        __ERC20Permit_init("SW Staked mGNO");
 
         pool = _pool;
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
+        rewardToken = IRewardToken(_rewardToken);
     }
 
     /**
@@ -68,13 +68,13 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IStakedEthToken-toggleRewards}.
+     * @dev See {IStakedToken-toggleRewards}.
      */
     function toggleRewards(address account, bool isDisabled) external override onlyAdmin {
-        require(account != address(0), "StakedEthToken: invalid account");
+        require(account != address(0), "StakedToken: invalid account");
 
         // toggle rewards
-        rewardEthToken.setRewardsDisabled(account, isDisabled);
+        rewardToken.setRewardsDisabled(account, isDisabled);
 
         // update distributor principal
         uint256 accountBalance = deposits[account];
@@ -89,12 +89,12 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "StakedEthToken: invalid sender");
-        require(recipient != address(0), "StakedEthToken: invalid receiver");
-        require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
+        require(sender != address(0), "StakedToken: invalid sender");
+        require(recipient != address(0), "StakedToken: invalid receiver");
+        require(block.number > rewardToken.lastUpdateBlockNumber(), "StakedToken: cannot transfer during rewards update");
 
         // start calculating sender and recipient rewards with updated deposit amounts
-        (bool senderRewardsDisabled, bool recipientRewardsDisabled) = rewardEthToken.updateRewardCheckpoints(sender, recipient);
+        (bool senderRewardsDisabled, bool recipientRewardsDisabled) = rewardToken.updateRewardCheckpoints(sender, recipient);
         if ((senderRewardsDisabled || recipientRewardsDisabled) && !(senderRewardsDisabled && recipientRewardsDisabled)) {
             // update merkle distributor principal if any of the addresses has disabled rewards
             uint256 _distributorPrincipal = distributorPrincipal; // gas savings
@@ -113,13 +113,13 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IStakedEthToken-mint}.
+     * @dev See {IStakedToken-mint}.
      */
     function mint(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakedEthToken: access denied");
+        require(msg.sender == pool, "StakedToken: access denied");
 
         // start calculating account rewards with updated deposit amount
-        bool rewardsDisabled = rewardEthToken.updateRewardCheckpoint(account);
+        bool rewardsDisabled = rewardToken.updateRewardCheckpoint(account);
         if (rewardsDisabled) {
             // update merkle distributor principal if account has disabled rewards
             distributorPrincipal = distributorPrincipal.add(amount);

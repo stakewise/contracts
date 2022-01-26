@@ -71,9 +71,9 @@ interface IMerkleDistributor {
     function merkleRoot() external view returns (bytes32);
 
     /**
-    * @dev Function for getting the RewardEthToken contract address.
+    * @dev Function for getting the RewardToken contract address.
     */
-    function rewardEthToken() external view returns (address);
+    function rewardToken() external view returns (address);
 
     /**
     * @dev Function for getting the Oracles contract address.
@@ -88,12 +88,12 @@ interface IMerkleDistributor {
     /**
     * @dev Constructor for initializing the MerkleDistributor contract.
     * @param admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _rewardToken - address of the RewardToken contract.
     * @param _oracles - address of the Oracles contract.
     */
     function initialize(
         address admin,
-        address _rewardEthToken,
+        address _rewardToken,
         address _oracles
     ) external;
 
