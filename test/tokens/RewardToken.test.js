@@ -14,26 +14,22 @@ const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
-  checkRewardEthToken,
+  checkRewardToken,
   setTotalRewards,
   setupOracleAccounts,
+  stakeMGNO,
 } = require('../utils');
 
-const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
+const StakedToken = artifacts.require('StakedToken');
+const RewardToken = artifacts.require('RewardToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
 const protocolFee = new BN(1000);
 
-contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
+contract('RewardToken', ([sender, merkleDistributor, ...accounts]) => {
   const admin = contractSettings.admin;
-  let stakedEthToken,
-    rewardEthToken,
-    totalSupply,
-    pool,
-    oracles,
-    oracleAccounts;
+  let stakedToken, rewardToken, totalSupply, pool, oracles, oracleAccounts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -43,19 +39,16 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     let contracts = await upgradeContracts();
 
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    stakedToken = await StakedToken.at(contracts.stakedToken);
+    rewardToken = await RewardToken.at(contracts.rewardToken);
 
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
-    totalSupply = await rewardEthToken.totalSupply();
-    await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
+    totalSupply = await rewardToken.totalSupply();
+    await rewardToken.setProtocolFee(protocolFee, { from: admin });
 
-    await pool.stake({
-      from: sender,
-      value: ether('1'),
-    });
+    await stakeMGNO({ account: sender, amount: ether('1'), pool });
   });
 
   afterEach(async () => resetFork());
@@ -63,7 +56,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   describe('restricted actions', () => {
     it('not admin fails to update protocol fee recipient address', async () => {
       await expectRevert(
-        rewardEthToken.setProtocolFeeRecipient(sender, {
+        rewardToken.setProtocolFeeRecipient(sender, {
           from: sender,
         }),
         'OwnablePausable: access denied'
@@ -71,7 +64,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('can set zero address for the protocol fee recipient', async () => {
-      let receipt = await rewardEthToken.setProtocolFeeRecipient(
+      let receipt = await rewardToken.setProtocolFeeRecipient(
         constants.ZERO_ADDRESS,
         {
           from: admin,
@@ -84,7 +77,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('admin can update protocol fee recipient address', async () => {
-      let receipt = await rewardEthToken.setProtocolFeeRecipient(sender, {
+      let receipt = await rewardToken.setProtocolFeeRecipient(sender, {
         from: admin,
       });
 
@@ -95,7 +88,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     it('not admin fails to update protocol fee', async () => {
       await expectRevert(
-        rewardEthToken.setProtocolFee(9999, {
+        rewardToken.setProtocolFee(9999, {
           from: sender,
         }),
         'OwnablePausable: access denied'
@@ -103,7 +96,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('admin can update protocol fee', async () => {
-      let receipt = await rewardEthToken.setProtocolFee(9999, {
+      let receipt = await rewardToken.setProtocolFee(9999, {
         from: admin,
       });
 
@@ -114,19 +107,19 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     it('fails to set invalid protocol fee', async () => {
       await expectRevert(
-        rewardEthToken.setProtocolFee(10000, {
+        rewardToken.setProtocolFee(10000, {
           from: admin,
         }),
-        'RewardEthToken: invalid protocol fee'
+        'RewardToken: invalid protocol fee'
       );
     });
 
-    it('only StakedEthToken contract can disable rewards', async () => {
+    it('only StakedToken contract can disable rewards', async () => {
       await expectRevert(
-        rewardEthToken.setRewardsDisabled(sender, true, {
+        rewardToken.setRewardsDisabled(sender, true, {
           from: admin,
         }),
-        'RewardEthToken: access denied'
+        'RewardToken: access denied'
       );
     });
   });
@@ -134,13 +127,13 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   describe('updateTotalRewards', () => {
     it('anyone cannot update rewards', async () => {
       await expectRevert(
-        rewardEthToken.updateTotalRewards(ether('10'), {
+        rewardToken.updateTotalRewards(ether('10'), {
           from: sender,
         }),
-        'RewardEthToken: access denied'
+        'RewardToken: access denied'
       );
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender,
         balance: new BN(0),
@@ -148,10 +141,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('oracles can update rewards', async () => {
-      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let prevTotalRewards = await rewardToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         pool,
         totalRewards: newTotalRewards,
@@ -159,7 +152,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        RewardEthToken,
+        RewardToken,
         'RewardsUpdated',
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
@@ -170,13 +163,13 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     it('anyone cannot update rewards', async () => {
       await expectRevert(
-        rewardEthToken.updateTotalRewards(ether('10'), {
+        rewardToken.updateTotalRewards(ether('10'), {
           from: sender,
         }),
-        'RewardEthToken: access denied'
+        'RewardToken: access denied'
       );
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender,
         balance: new BN(0),
@@ -184,10 +177,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('oracles can update rewards', async () => {
-      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let prevTotalRewards = await rewardToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         pool,
         totalRewards: newTotalRewards,
@@ -195,7 +188,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        RewardEthToken,
+        RewardToken,
         'RewardsUpdated',
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
@@ -206,15 +199,15 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('assigns protocol fee to distributor', async () => {
-      await rewardEthToken.setProtocolFeeRecipient(constants.ZERO_ADDRESS, {
+      await rewardToken.setProtocolFeeRecipient(constants.ZERO_ADDRESS, {
         from: admin,
       });
 
       let periodReward = ether('10');
-      let prevTotalRewards = await rewardEthToken.totalRewards();
+      let prevTotalRewards = await rewardToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(periodReward);
       let receipt = await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         pool,
         totalRewards: newTotalRewards,
@@ -222,13 +215,13 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
       await expectEvent.inTransaction(
         receipt.tx,
-        RewardEthToken,
+        RewardToken,
         'RewardsUpdated',
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
           protocolReward: periodReward
-            .mul(await rewardEthToken.protocolFee())
+            .mul(await rewardToken.protocolFee())
             .div(new BN(10000)),
         }
       );
@@ -245,39 +238,33 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
         from: admin,
       });
-      await pool.stake({
-        from: sender1,
-        value: stakedAmount1,
-      });
-      await pool.stake({
-        from: sender2,
-        value: stakedAmount2,
-      });
+      await stakeMGNO({ account: sender1, amount: stakedAmount1, pool });
+      await stakeMGNO({ account: sender2, amount: stakedAmount2, pool });
 
-      totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
+      totalSupply = (await rewardToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards: totalSupply,
-        rewardEthToken,
+        rewardToken,
         pool,
         oracles,
         oracleAccounts,
       });
 
-      rewardAmount1 = await rewardEthToken.balanceOf(sender1);
-      rewardAmount2 = await rewardEthToken.balanceOf(sender2);
+      rewardAmount1 = await rewardToken.balanceOf(sender1);
+      rewardAmount2 = await rewardToken.balanceOf(sender2);
       expect(rewardAmount2.gt(rewardAmount1)).to.equal(true);
     });
 
     it('cannot transfer to zero address', async () => {
       await expectRevert(
-        rewardEthToken.transfer(constants.ZERO_ADDRESS, stakedAmount1, {
+        rewardToken.transfer(constants.ZERO_ADDRESS, stakedAmount1, {
           from: sender1,
         }),
-        'RewardEthToken: invalid receiver'
+        'RewardToken: invalid receiver'
       );
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: rewardAmount1,
@@ -286,7 +273,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     it('cannot transfer from zero address', async () => {
       await expectRevert(
-        rewardEthToken.transferFrom(
+        rewardToken.transferFrom(
           constants.ZERO_ADDRESS,
           sender2,
           rewardAmount1,
@@ -294,11 +281,11 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
             from: sender1,
           }
         ),
-        'RewardEthToken: invalid sender'
+        'RewardToken: invalid sender'
       );
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: rewardAmount1,
@@ -306,7 +293,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('can transfer zero amount', async () => {
-      let receipt = await stakedEthToken.transfer(sender2, ether('0'), {
+      let receipt = await stakedToken.transfer(sender2, ether('0'), {
         from: sender1,
       });
 
@@ -316,8 +303,8 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         value: ether('0'),
       });
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: rewardAmount1,
@@ -325,43 +312,43 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await rewardEthToken.pause({ from: admin });
-      expect(await rewardEthToken.paused()).equal(true);
+      await rewardToken.pause({ from: admin });
+      expect(await rewardToken.paused()).equal(true);
 
       await expectRevert(
-        rewardEthToken.transfer(sender2, rewardAmount1, {
+        rewardToken.transfer(sender2, rewardAmount1, {
           from: sender1,
         }),
         'Pausable: paused'
       );
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: rewardAmount1,
       });
-      await rewardEthToken.unpause({ from: admin });
+      await rewardToken.unpause({ from: admin });
     });
 
     it('cannot transfer amount bigger than balance', async () => {
       await expectRevert(
-        rewardEthToken.transfer(sender2, stakedAmount1.add(ether('1')), {
+        rewardToken.transfer(sender2, stakedAmount1.add(ether('1')), {
           from: sender1,
         }),
         'SafeMath: subtraction overflow'
       );
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: rewardAmount1,
       });
     });
 
-    it('can transfer rETH2 tokens to different account', async () => {
-      let receipt = await rewardEthToken.transfer(sender2, rewardAmount1, {
+    it('can transfer reward tokens to different account', async () => {
+      let receipt = await rewardToken.transfer(sender2, rewardAmount1, {
         from: sender1,
       });
 
@@ -371,15 +358,15 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         value: rewardAmount1,
       });
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkRewardEthToken({
-        rewardEthToken,
+      await checkRewardToken({
+        rewardToken,
         totalSupply,
         account: sender2,
         balance: rewardAmount1.add(rewardAmount2),
@@ -390,20 +377,20 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       // deploy mocked oracle
       let multicallMock = await MulticallMock.new(
         oracles.address,
-        stakedEthToken.address,
-        rewardEthToken.address,
+        stakedToken.address,
+        rewardToken.address,
         merkleDistributor
       );
       await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
+      await rewardToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
       let currentNonce = await oracles.currentRewardsNonce();
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
       let signatures = [];
       let encoded = defaultAbiCoder.encode(
@@ -429,7 +416,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
             from: sender1,
           }
         ),
-        'RewardEthToken: cannot transfer during rewards update'
+        'RewardToken: cannot transfer during rewards update'
       );
     });
 
@@ -437,20 +424,20 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       // deploy mocked multicall
       let multicallMock = await MulticallMock.new(
         oracles.address,
-        stakedEthToken.address,
-        rewardEthToken.address,
+        stakedToken.address,
+        rewardToken.address,
         merkleDistributor
       );
       await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
+      await rewardToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
       let currentNonce = await oracles.currentRewardsNonce();
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
       let signatures = [];
       let encoded = defaultAbiCoder.encode(
@@ -476,7 +463,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         }
       );
 
-      await expectEvent.inTransaction(receipt.tx, RewardEthToken, 'Transfer', {
+      await expectEvent.inTransaction(receipt.tx, RewardToken, 'Transfer', {
         from: sender1,
         to: sender2,
         value: rewardAmount1,

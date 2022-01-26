@@ -1,10 +1,20 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
+const { fromRpcSig } = require('ethereumjs-util');
+const ethSigUtil = require('eth-sig-util');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
+const {
+  BN,
+  ether,
+  expectEvent,
+  constants,
+  send,
+} = require('@openzeppelin/test-helpers');
 const { depositData } = require('./pool/depositDataMerkleRoot');
+const { contracts } = require('../deployments/settings');
 
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const IGCToken = artifacts.require('IGCToken');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -23,7 +33,7 @@ async function checkValidatorRegistered({
   // Check VRC record created
   await expectEvent.inTransaction(
     transaction,
-    iDepositContract,
+    IDepositContract,
     'DepositEvent',
     {
       pubkey: pubKey,
@@ -39,46 +49,38 @@ async function checkValidatorRegistered({
   );
 }
 
-async function checkStakedEthToken({
-  stakedEthToken,
+async function checkStakedToken({
+  stakedToken,
   totalSupply,
   account,
   balance,
 }) {
   if (totalSupply != null) {
-    expect(await stakedEthToken.totalSupply()).to.be.bignumber.equal(
-      totalSupply
-    );
+    expect(await stakedToken.totalSupply()).to.be.bignumber.equal(totalSupply);
   }
 
   if (account != null && balance != null) {
-    expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
-      balance
-    );
+    expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(balance);
   }
 }
 
-async function checkRewardEthToken({
-  rewardEthToken,
+async function checkRewardToken({
+  rewardToken,
   totalSupply,
   account,
   balance,
 }) {
   if (totalSupply != null) {
-    expect(await rewardEthToken.totalSupply()).to.be.bignumber.equal(
-      totalSupply
-    );
+    expect(await rewardToken.totalSupply()).to.be.bignumber.equal(totalSupply);
   }
 
   if (account != null && balance != null) {
-    expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
-      balance
-    );
+    expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(balance);
   }
 }
 
 async function setActivatedValidators({
-  rewardEthToken,
+  rewardToken,
   oracles,
   oracleAccounts,
   pool,
@@ -89,7 +91,7 @@ async function setActivatedValidators({
     return;
   }
 
-  let totalRewards = await rewardEthToken.totalRewards();
+  let totalRewards = await rewardToken.totalRewards();
   let nonce = await oracles.currentRewardsNonce();
 
   let encoded = defaultAbiCoder.encode(
@@ -124,13 +126,13 @@ async function setActivatedValidators({
 }
 
 async function setTotalRewards({
-  rewardEthToken,
+  rewardToken,
   oracles,
   oracleAccounts,
   pool,
   totalRewards,
 }) {
-  if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
+  if ((await rewardToken.totalSupply()).eq(totalRewards)) {
     return;
   }
   // calculate candidate ID
@@ -159,7 +161,7 @@ async function setTotalRewards({
       from: oracleAccounts[0],
     }
   );
-  expect(await rewardEthToken.totalSupply()).to.bignumber.equal(totalRewards);
+  expect(await rewardToken.totalSupply()).to.bignumber.equal(totalRewards);
 
   return receipt;
 }
@@ -235,6 +237,16 @@ async function registerValidator({
 }
 
 async function impersonateAccount(account) {
+  // remove code if it's a contract
+  await hre.network.provider.send('hardhat_setCode', [account, '0x']);
+
+  // set balance to 1000 xDAI
+  await hre.network.provider.send('hardhat_setBalance', [
+    account,
+    '0x3635c9adc5dea00000',
+  ]);
+
+  // impersonate account
   return hre.network.provider.request({
     method: 'hardhat_impersonateAccount',
     params: [account],
@@ -287,11 +299,169 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
   return oracleAccounts;
 }
 
+async function mintTokens(token, to, amount) {
+  let owner = await token.owner();
+  await impersonateAccount(owner);
+  await send.ether(to, owner, ether('1'));
+  await token.mint(to, amount, {
+    from: owner,
+  });
+}
+
+async function mintMGNOTokens(to, amount) {
+  let gnoToken = await IGCToken.at(contracts.GNOToken);
+  await mintTokens(gnoToken, to, amount);
+
+  return gnoToken.transferAndCall(contracts.MGNOWrapper, amount, '0x', {
+    from: to,
+  });
+}
+
+async function stakeGNO({
+  account,
+  amount,
+  pool,
+  recipient = constants.ZERO_ADDRESS,
+  referrer = constants.ZERO_ADDRESS,
+  hasRevenueShare = false,
+  noAllowance = false,
+}) {
+  let gnoToken = await IGCToken.at(contracts.GNOToken);
+  await mintTokens(gnoToken, account, amount);
+
+  if (!noAllowance) {
+    await gnoToken.approve(pool.address, amount, { from: account });
+  }
+  return pool.stakeGNO(amount, recipient, referrer, hasRevenueShare, {
+    from: account,
+  });
+}
+
+const buildPermitData = ({
+  verifyingContract,
+  holder,
+  spender,
+  name,
+  expiry = constants.MAX_UINT256,
+  allowed = true,
+  version = '1',
+  chainId = '100',
+  nonce = 0,
+}) => ({
+  primaryType: 'Permit',
+  types: {
+    EIP712Domain: [
+      { name: 'name', type: 'string' },
+      { name: 'version', type: 'string' },
+      { name: 'chainId', type: 'uint256' },
+      { name: 'verifyingContract', type: 'address' },
+    ],
+    Permit: [
+      { name: 'holder', type: 'address' },
+      { name: 'spender', type: 'address' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'expiry', type: 'uint256' },
+      { name: 'allowed', type: 'bool' },
+    ],
+  },
+  domain: { name, version, chainId, verifyingContract },
+  message: { holder, spender, nonce, expiry, allowed },
+});
+
+async function stakeGNOWithPermit({
+  account,
+  amount,
+  pool,
+  minter,
+  recipient = constants.ZERO_ADDRESS,
+  referrer = constants.ZERO_ADDRESS,
+  hasRevenueShare = false,
+  invalidHolder = false,
+}) {
+  let gnoToken = await IGCToken.at(contracts.GNOToken);
+
+  // generate signature
+  let nonce = await gnoToken.nonces(account.address);
+  let expiry = constants.MAX_UINT256;
+  const data = buildPermitData({
+    nonce,
+    verifyingContract: gnoToken.address,
+    holder: invalidHolder ? constants.ZERO_ADDRESS : account.address,
+    spender: pool.address,
+    name: await gnoToken.name(),
+    expiry,
+  });
+  const signature = ethSigUtil.signTypedMessage(
+    Buffer.from(account.privateKey.substring(2), 'hex'),
+    { data }
+  );
+  let { v, r, s } = fromRpcSig(signature);
+
+  // mint tokens
+  let owner = await gnoToken.owner();
+  await impersonateAccount(owner);
+  await send.ether(minter, owner, ether('1'));
+  await gnoToken.mint(account.address, amount, {
+    from: owner,
+  });
+
+  let encodedData = pool.contract.methods
+    .stakeGNOWithPermit(
+      amount,
+      recipient,
+      referrer,
+      hasRevenueShare,
+      nonce,
+      expiry,
+      v,
+      r,
+      s
+    )
+    .encodeABI();
+
+  const tx = {
+    from: account.address,
+    to: pool.address,
+    data: encodedData,
+    gas: 1000000,
+  };
+
+  let signedTx = await web3.eth.accounts.signTransaction(
+    tx,
+    account.privateKey
+  );
+  return web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+}
+
+async function stakeMGNO({
+  account,
+  amount,
+  pool,
+  recipient = constants.ZERO_ADDRESS,
+  referrer = constants.ZERO_ADDRESS,
+  hasRevenueShare = false,
+  noAllowance = false,
+}) {
+  await mintMGNOTokens(account, amount);
+  let mgnoToken = await IGCToken.at(contracts.MGNOToken);
+  if (!noAllowance) {
+    await mgnoToken.approve(pool.address, amount, { from: account });
+  }
+  return pool.stakeMGNO(amount, recipient, referrer, hasRevenueShare, {
+    from: account,
+  });
+}
+
 module.exports = {
   checkValidatorRegistered,
   getDepositAmount,
-  checkStakedEthToken,
-  checkRewardEthToken,
+  checkStakedToken,
+  checkRewardToken,
+  mintMGNOTokens,
+  mintTokens,
+  stakeGNO,
+  stakeGNOWithPermit,
+  stakeMGNO,
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,

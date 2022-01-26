@@ -46,7 +46,7 @@ async function deployContractChecker() {
 async function initializePool(
   poolAddress,
   poolEscrowAddress,
-  stakedEthTokenAddress,
+  stakedTokenAddress,
   validatorsAddress,
   oraclesAddress,
   withdrawalCredentials = null
@@ -66,7 +66,7 @@ async function initializePool(
     contractSettings.admin,
     withdrawalCredentials,
     contractSettings.validatorRegistration,
-    stakedEthTokenAddress,
+    stakedTokenAddress,
     validatorsAddress,
     oraclesAddress,
     contractSettings.minActivatingDeposit,
@@ -92,7 +92,7 @@ async function initializePoolValidators(
 
 async function initializeMerkleDistributor(
   merkleDistributorAddress,
-  rewardEthTokenAddress,
+  rewardTokenAddress,
   oraclesAddress
 ) {
   const MerkleDistributor = await ethers.getContractFactory(
@@ -104,24 +104,24 @@ async function initializeMerkleDistributor(
   // call initialize
   return merkleDistributor.initialize(
     contractSettings.admin,
-    rewardEthTokenAddress,
+    rewardTokenAddress,
     oraclesAddress
   );
 }
 
-async function initializeRewardEthToken(
-  rewardEthTokenAddress,
-  stakedEthTokenAddress,
+async function initializeRewardToken(
+  rewardTokenAddress,
+  stakedTokenAddress,
   oraclesAddress,
   merkleDistributorAddress
 ) {
-  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
-  let rewardEthToken = RewardEthToken.attach(rewardEthTokenAddress);
+  const RewardToken = await ethers.getContractFactory('RewardToken');
+  let rewardEthToken = RewardToken.attach(rewardTokenAddress);
 
   // call initialize
   return rewardEthToken.initialize(
     contractSettings.admin,
-    stakedEthTokenAddress,
+    stakedTokenAddress,
     oraclesAddress,
     contractSettings.protocolFeeRecipient,
     contractSettings.protocolFee,
@@ -129,25 +129,25 @@ async function initializeRewardEthToken(
   );
 }
 
-async function initializeStakedEthToken(
-  stakedEthTokenAddress,
+async function initializeStakedToken(
+  stakedTokenAddress,
   poolAddress,
-  rewardEthTokenAddress
+  rewardTokenAddress
 ) {
-  const StakedEthToken = await ethers.getContractFactory('StakedEthToken');
-  let stakedEthToken = StakedEthToken.attach(stakedEthTokenAddress);
+  const StakedToken = await ethers.getContractFactory('StakedToken');
+  let stakedToken = StakedToken.attach(stakedTokenAddress);
 
   // call initialize
-  return stakedEthToken.initialize(
+  return stakedToken.initialize(
     contractSettings.admin,
     poolAddress,
-    rewardEthTokenAddress
+    rewardTokenAddress
   );
 }
 
 async function initializeOracles(
   oraclesAddress,
-  rewardEthTokenAddress,
+  rewardTokenAddress,
   poolAddress,
   poolValidatorsAddress,
   merkleDistributorAddress
@@ -158,7 +158,7 @@ async function initializeOracles(
   // call initialize
   return oracles.initialize(
     contractSettings.admin,
-    rewardEthTokenAddress,
+    rewardTokenAddress,
     poolAddress,
     poolValidatorsAddress,
     merkleDistributorAddress
@@ -183,11 +183,11 @@ async function deployContracts(withdrawalCredentials = null) {
   const poolValidatorsAddress = await deployProxy('PoolValidators');
   log(`Deployed PoolValidators contract: ${green(poolValidatorsAddress)}`);
 
-  const rewardEthTokenAddress = await deployProxy('RewardEthToken');
-  log(`Deployed RewardEthToken contract: ${green(rewardEthTokenAddress)}`);
+  const rewardTokenAddress = await deployProxy('RewardToken');
+  log(`Deployed RewardToken contract: ${green(rewardTokenAddress)}`);
 
-  const stakedEthTokenAddress = await deployProxy('StakedEthToken');
-  log(`Deployed StakedEthToken contract: ${green(stakedEthTokenAddress)}`);
+  const stakedTokenAddress = await deployProxy('StakedToken');
+  log(`Deployed StakedToken contract: ${green(stakedTokenAddress)}`);
 
   const merkleDistributorAddress = await deployProxy('MerkleDistributor');
   log(
@@ -199,7 +199,7 @@ async function deployContracts(withdrawalCredentials = null) {
 
   await initializeMerkleDistributor(
     merkleDistributorAddress,
-    rewardEthTokenAddress,
+    rewardTokenAddress,
     oraclesAddress
   );
   log(white('Initialized MerkleDistributor contract'));
@@ -207,7 +207,7 @@ async function deployContracts(withdrawalCredentials = null) {
   await initializePool(
     poolAddress,
     poolEscrowAddress,
-    stakedEthTokenAddress,
+    stakedTokenAddress,
     poolValidatorsAddress,
     oraclesAddress,
     withdrawalCredentials
@@ -221,24 +221,24 @@ async function deployContracts(withdrawalCredentials = null) {
   );
   log(white('Initialized PoolValidators contract'));
 
-  await initializeRewardEthToken(
-    rewardEthTokenAddress,
-    stakedEthTokenAddress,
+  await initializeRewardToken(
+    rewardTokenAddress,
+    stakedTokenAddress,
     oraclesAddress,
     merkleDistributorAddress
   );
-  log(white('Initialized RewardEthToken contract'));
+  log(white('Initialized RewardToken contract'));
 
-  await initializeStakedEthToken(
-    stakedEthTokenAddress,
+  await initializeStakedToken(
+    stakedTokenAddress,
     poolAddress,
-    rewardEthTokenAddress
+    rewardTokenAddress
   );
-  log(white('Initialized StakedEthToken contract'));
+  log(white('Initialized StakedToken contract'));
 
   await initializeOracles(
     oraclesAddress,
-    rewardEthTokenAddress,
+    rewardTokenAddress,
     poolAddress,
     poolValidatorsAddress,
     merkleDistributorAddress
@@ -250,8 +250,8 @@ async function deployContracts(withdrawalCredentials = null) {
     pool: poolAddress,
     poolValidators: poolValidatorsAddress,
     poolEscrow: poolEscrowAddress,
-    stakedEthToken: stakedEthTokenAddress,
-    rewardEthToken: rewardEthTokenAddress,
+    stakedToken: stakedTokenAddress,
+    rewardToken: rewardTokenAddress,
     merkleDistributor: merkleDistributorAddress,
     roles: rolesAddress,
     contractChecker: contractCheckerAddress,

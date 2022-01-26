@@ -9,18 +9,21 @@ const {
   balance,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
+  mintTokens,
+  mintMGNOTokens,
 } = require('../utils');
 
 const PoolEscrow = artifacts.require('PoolEscrow');
+const IGCToken = artifacts.require('IGCToken');
 
 contract('PoolEscrow', ([anyone, newOwner, payee]) => {
   const owner = contractSettings.admin;
-  let poolEscrow;
+  let poolEscrow, mgnoToken, gnoToken;
 
   after(async () => stopImpersonatingAccount(owner));
 
@@ -28,8 +31,10 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     await impersonateAccount(owner);
     await send.ether(anyone, owner, ether('5'));
 
-    let contracts = await upgradeContracts();
-    poolEscrow = await PoolEscrow.at(contracts.poolEscrow);
+    let upgradedContracts = await upgradeContracts();
+    poolEscrow = await PoolEscrow.at(upgradedContracts.poolEscrow);
+    mgnoToken = await IGCToken.at(contracts.MGNOToken);
+    gnoToken = await IGCToken.at(contracts.GNOToken);
   });
 
   afterEach(async () => resetFork());
@@ -38,10 +43,29 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     expect(await poolEscrow.owner()).to.equal(owner);
   });
 
-  it('can receive ETH transfers', async () => {
-    await send.ether(anyone, poolEscrow.address, ether('5'));
+  it('can receive xDAI transfers', async () => {
+    let amount = ether('5');
+    await send.ether(anyone, poolEscrow.address, amount);
     expect(await balance.current(poolEscrow.address)).to.bignumber.equal(
-      ether('5')
+      amount
+    );
+  });
+
+  it('can receive mGNO transfers', async () => {
+    let amount = ether('5');
+    await mintMGNOTokens(anyone, amount);
+    await mgnoToken.transfer(poolEscrow.address, amount, { from: anyone });
+    expect(await mgnoToken.balanceOf(poolEscrow.address)).to.bignumber.equal(
+      amount
+    );
+  });
+
+  it('can receive GNO transfers', async () => {
+    let amount = ether('5');
+    await mintTokens(gnoToken, anyone, amount);
+    await gnoToken.transfer(poolEscrow.address, amount, { from: anyone });
+    expect(await gnoToken.balanceOf(poolEscrow.address)).to.bignumber.equal(
+      amount
     );
   });
 
@@ -131,8 +155,8 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     });
   });
 
-  describe('withdraw ether', () => {
-    it('owner can withdraw ether from the escrow', async () => {
+  describe('withdraw xDAI', () => {
+    it('owner can withdraw xDAI from the escrow', async () => {
       let amount = ether('5');
       await send.ether(anyone, poolEscrow.address, amount);
 
@@ -153,7 +177,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
       );
     });
 
-    it('fails to withdraw ether without admin role', async () => {
+    it('fails to withdraw xDAI without admin role', async () => {
       let amount = ether('5');
       await send.ether(anyone, poolEscrow.address, amount);
       await expectRevert(
@@ -164,7 +188,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
       );
     });
 
-    it('fails to withdraw ether with invalid payee address', async () => {
+    it('fails to withdraw xDAI with invalid payee address', async () => {
       let amount = ether('5');
       await send.ether(anyone, poolEscrow.address, amount);
       await expectRevert(
@@ -175,13 +199,101 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
       );
     });
 
-    it('fails to withdraw ether when not enough balance', async () => {
+    it('fails to withdraw xDAI when not enough balance', async () => {
       let amount = ether('5');
       await expectRevert(
         poolEscrow.withdraw(payee, amount, {
           from: owner,
         }),
         'Address: insufficient balance'
+      );
+    });
+  });
+
+  describe('withdraw tokens', () => {
+    it('owner can withdraw tokens from the escrow', async () => {
+      let amount = ether('5');
+      await mintMGNOTokens(anyone, amount);
+      await mgnoToken.transfer(poolEscrow.address, amount);
+
+      let payeeBalance = await mgnoToken.balanceOf(payee);
+      let receipt = await poolEscrow.withdrawTokens(
+        mgnoToken.address,
+        payee,
+        amount,
+        {
+          from: owner,
+        }
+      );
+      expectEvent(receipt, 'Withdrawn', {
+        sender: owner,
+        payee,
+        amount,
+      });
+      expect(await mgnoToken.balanceOf(poolEscrow.address)).to.bignumber.equal(
+        new BN(0)
+      );
+      expect(await mgnoToken.balanceOf(payee)).to.bignumber.equal(
+        payeeBalance.add(amount)
+      );
+    });
+
+    it('fails to withdraw tokens without admin role', async () => {
+      let amount = ether('5');
+      await mintMGNOTokens(anyone, amount);
+      await mgnoToken.transfer(poolEscrow.address, amount);
+
+      await expectRevert(
+        poolEscrow.withdrawTokens(mgnoToken.address, payee, amount, {
+          from: newOwner,
+        }),
+        'PoolEscrow: caller is not the owner'
+      );
+    });
+
+    it('fails to withdraw tokens with invalid payee address', async () => {
+      let amount = ether('5');
+      await mintMGNOTokens(anyone, amount);
+      await mgnoToken.transfer(poolEscrow.address, amount);
+
+      await expectRevert(
+        poolEscrow.withdrawTokens(
+          mgnoToken.address,
+          constants.ZERO_ADDRESS,
+          amount,
+          {
+            from: owner,
+          }
+        ),
+        'PoolEscrow: payee is the zero address'
+      );
+    });
+
+    it('fails to withdraw with invalid token address', async () => {
+      let amount = ether('5');
+      await mintMGNOTokens(anyone, amount);
+      await mgnoToken.transfer(poolEscrow.address, amount);
+
+      await expectRevert(
+        poolEscrow.withdrawTokens(
+          constants.ZERO_ADDRESS,
+          constants.ZERO_ADDRESS,
+          amount,
+          {
+            from: owner,
+          }
+        ),
+        'PoolEscrow: payee is the zero address'
+      );
+    });
+
+    it('fails to withdraw tokens when not enough balance', async () => {
+      let amount = ether('5');
+      await expectRevert(
+        poolEscrow.withdrawTokens(mgnoToken.address, payee, amount, {
+          from: owner,
+        }),
+        'ERC20: transfer amount exceeds balance'
       );
     });
   });
