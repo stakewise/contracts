@@ -535,7 +535,7 @@ contract('Pool (stake)', (accounts) => {
       await checkStakedToken({
         stakedToken,
         totalSupply,
-        account: sender1,
+        account: account.address,
         balance: mgnoAmount,
       });
     });
