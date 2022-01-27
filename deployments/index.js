@@ -116,10 +116,10 @@ async function initializeRewardToken(
   merkleDistributorAddress
 ) {
   const RewardToken = await ethers.getContractFactory('RewardToken');
-  let rewardEthToken = RewardToken.attach(rewardTokenAddress);
+  let rewardToken = RewardToken.attach(rewardTokenAddress);
 
   // call initialize
-  return rewardEthToken.initialize(
+  return rewardToken.initialize(
     contractSettings.admin,
     stakedTokenAddress,
     oraclesAddress,
