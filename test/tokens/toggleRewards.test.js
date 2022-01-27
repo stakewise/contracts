@@ -20,6 +20,7 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
   let admin = contractSettings.admin;
@@ -29,6 +30,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     distributorReward,
     pool,
     oracleAccounts,
+    whiteListManager,
     distributorPrincipal;
   let [account, anyone] = accounts;
 
@@ -43,9 +45,13 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    whiteListManager = await WhiteListManager.at(contracts.whiteListManager);
     oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     distributorPrincipal = await stakedEthToken.distributorPrincipal();
     distributorReward = await rewardEthToken.balanceOf(constants.ZERO_ADDRESS);
+
+    await whiteListManager.updateWhiteList(account, true, { from: admin });
+    await whiteListManager.updateWhiteList(anyone, true, { from: admin });
   });
 
   afterEach(async () => resetFork());
@@ -72,6 +78,16 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     it('fails to toggle rewards with invalid account', async () => {
       await expectRevert(
         stakedEthToken.toggleRewards(constants.ZERO_ADDRESS, true, {
+          from: admin,
+        }),
+        'StakedEthToken: invalid account'
+      );
+    });
+
+    it('fails to toggle rewards with invalid account', async () => {
+      await whiteListManager.updateWhiteList(anyone, false, { from: admin });
+      await expectRevert(
+        stakedEthToken.toggleRewards(anyone, true, {
           from: admin,
         }),
         'StakedEthToken: invalid account'

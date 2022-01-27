@@ -21,6 +21,7 @@ const { contractSettings } = require('../../deployments/settings');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
+const WhiteListManager = artifacts.require('WhiteListManager');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
@@ -35,6 +36,7 @@ contract('StakedEthToken', (accounts) => {
     oracles,
     oracleAccounts,
     activatedValidators,
+    whiteListManager,
     totalRewards,
     signatures,
     contracts;
@@ -45,6 +47,7 @@ contract('StakedEthToken', (accounts) => {
 
     contracts = await upgradeContracts();
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    whiteListManager = await WhiteListManager.at(contracts.whiteListManager);
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await setupOracleAccounts({
@@ -71,6 +74,8 @@ contract('StakedEthToken', (accounts) => {
       signatures.push(await web3.eth.sign(candidateId, oracleAccount));
     }
 
+    await whiteListManager.updateWhiteList(sender1, true, { from: admin });
+    await whiteListManager.updateWhiteList(sender2, true, { from: admin });
     totalSupply = await stakedEthToken.totalSupply();
   });
 
@@ -158,6 +163,23 @@ contract('StakedEthToken', (accounts) => {
         stakedEthToken,
         totalSupply,
         account: sender1,
+        balance: value,
+      });
+    });
+
+    it('cannot transfer to not whitelisted account', async () => {
+      await whiteListManager.updateWhiteList(sender1, false, { from: admin });
+      await expectRevert(
+        stakedEthToken.transferFrom(sender2, sender1, value, {
+          from: sender1,
+        }),
+        'StakedEthToken: invalid receiver'
+      );
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender2,
         balance: value,
       });
     });

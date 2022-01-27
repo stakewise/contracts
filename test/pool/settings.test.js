@@ -24,11 +24,17 @@ const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const PoolValidators = artifacts.require('PoolValidators');
 const RewardEthToken = artifacts.require('RewardEthToken');
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
-  let pool, oracles, oracleAccounts, rewardEthToken, validatorsDepositRoot;
+  let pool,
+    oracles,
+    oracleAccounts,
+    rewardEthToken,
+    validatorsDepositRoot,
+    whiteListManager;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -50,12 +56,15 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
       from: operator,
     });
     pool = await Pool.at(upgradedContracts.pool);
-    let depositContract = await iDepositContract.at(
+    let depositContract = await IDepositContract.at(
       await pool.validatorRegistration()
     );
     validatorsDepositRoot = await depositContract.get_deposit_root();
     oracles = await Oracles.at(upgradedContracts.oracles);
     rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
+    whiteListManager = await WhiteListManager.at(
+      upgradedContracts.whiteListManager
+    );
     oracleAccounts = await setupOracleAccounts({
       admin,
       oracles,
@@ -155,6 +164,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     });
 
     it('oracles contract can set activated validators', async () => {
+      await whiteListManager.updateWhiteList(anyone, true, { from: admin });
       await pool.stake({
         from: anyone,
         value: ether('32'),

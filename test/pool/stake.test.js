@@ -29,7 +29,8 @@ const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
 const PoolValidators = artifacts.require('PoolValidators');
 const Oracles = artifacts.require('Oracles');
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 contract('Pool (stake)', (accounts) => {
   const admin = contractSettings.admin;
@@ -44,6 +45,7 @@ contract('Pool (stake)', (accounts) => {
     activatedValidators,
     pendingValidators,
     depositContract,
+    whiteListManager,
     validatorsDepositRoot;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -62,8 +64,11 @@ contract('Pool (stake)', (accounts) => {
       oracles,
       accounts: otherAccounts,
     });
-    depositContract = await iDepositContract.at(
+    depositContract = await IDepositContract.at(
       await pool.validatorRegistration()
+    );
+    whiteListManager = await WhiteListManager.at(
+      upgradedContracts.whiteListManager
     );
     validatorsDepositRoot = await depositContract.get_deposit_root();
     await validators.addOperator(
@@ -77,6 +82,10 @@ contract('Pool (stake)', (accounts) => {
     await validators.commitOperator({
       from: operator,
     });
+
+    await whiteListManager.updateWhiteList(sender1, true, { from: admin });
+    await whiteListManager.updateWhiteList(sender2, true, { from: admin });
+    await whiteListManager.updateWhiteList(sender3, true, { from: admin });
 
     totalSupply = await stakedEthToken.totalSupply();
     poolBalance = await balance.current(pool.address);
@@ -114,6 +123,17 @@ contract('Pool (stake)', (accounts) => {
           value: ether('1'),
         }),
         'Pausable: paused'
+      );
+    });
+
+    it('fails to stake with not whitelisted address', async () => {
+      await whiteListManager.updateWhiteList(sender1, false, { from: admin });
+      await expectRevert(
+        pool.stake({
+          from: sender1,
+          value: ether('1'),
+        }),
+        'Pool: invalid recipient address'
       );
     });
 
@@ -662,12 +682,24 @@ contract('Pool (stake)', (accounts) => {
     );
   });
 
-  it('only PoolValidators contract can refund', async () => {
+  it('not admin cannot refund', async () => {
     await expectRevert(
       pool.refund({
         from: sender1,
       }),
       'Pool: access denied'
     );
+  });
+
+  it('admin can refund', async () => {
+    await whiteListManager.updateWhiteList(admin, true, { from: admin });
+    let receipt = await pool.refund({
+      from: admin,
+      value: ether('1'),
+    });
+    await expectEvent(receipt, 'Refunded', {
+      sender: admin,
+      amount: ether('1'),
+    });
   });
 });

@@ -24,6 +24,7 @@ const RewardEthToken = artifacts.require('RewardEthToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
+const WhiteListManager = artifacts.require('WhiteListManager');
 const protocolFee = new BN(1000);
 
 contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
@@ -33,6 +34,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     totalSupply,
     pool,
     oracles,
+    whiteListManager,
     oracleAccounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -45,6 +47,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    whiteListManager = await WhiteListManager.at(contracts.whiteListManager);
 
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
@@ -52,6 +55,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     totalSupply = await rewardEthToken.totalSupply();
     await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
 
+    await whiteListManager.updateWhiteList(sender, true, { from: admin });
     await pool.stake({
       from: sender,
       value: ether('1'),
@@ -242,6 +246,9 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     let rewardAmount1, rewardAmount2;
 
     beforeEach(async () => {
+      await whiteListManager.updateWhiteList(sender1, true, { from: admin });
+      await whiteListManager.updateWhiteList(sender2, true, { from: admin });
+
       await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
         from: admin,
       });
@@ -270,7 +277,24 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
 
     it('cannot transfer to zero address', async () => {
       await expectRevert(
-        rewardEthToken.transfer(constants.ZERO_ADDRESS, stakedAmount1, {
+        rewardEthToken.transfer(constants.ZERO_ADDRESS, rewardAmount1, {
+          from: sender1,
+        }),
+        'RewardEthToken: invalid receiver'
+      );
+
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply,
+        account: sender1,
+        balance: rewardAmount1,
+      });
+    });
+
+    it('cannot transfer to not whitelisted account', async () => {
+      await whiteListManager.updateWhiteList(sender2, false, { from: admin });
+      await expectRevert(
+        rewardEthToken.transfer(sender2, rewardAmount1, {
           from: sender1,
         }),
         'RewardEthToken: invalid receiver'

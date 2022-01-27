@@ -27,6 +27,7 @@ const StakedEthToken = artifacts.require('StakedEthToken');
 const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 const account1 = '0x7981973BF488Ea610AF41dDB9DFeF1f8095ECF56';
 const account2 = '0xB3a69b7cdd7510D51c4CCc2c0fC105021A92Fc5D';
@@ -48,7 +49,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     prevDistributorBalance,
     pool,
     merkleRoot,
-    merkleProofs;
+    merkleProofs,
+    whitelistManager;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -76,6 +78,9 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       accounts: otherAccounts,
     });
     pool = await Pool.at(upgradedContracts.pool);
+    whitelistManager = await WhiteListManager.at(
+      upgradedContracts.whiteListManager
+    );
     prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
     merkleProofs = {
       [account1]: {
@@ -94,6 +99,10 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
       },
     };
+    await whitelistManager.updateWhiteList(account1, true, { from: admin });
+    await whitelistManager.updateWhiteList(account2, true, { from: admin });
+    await whitelistManager.updateWhiteList(account3, true, { from: admin });
+    await whitelistManager.updateWhiteList(anyone, true, { from: admin });
 
     const leaves = [];
     for (const [account, el] of Object.entries(merkleProofs)) {
@@ -505,6 +514,57 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           from: anyone,
         }),
         'MerkleDistributor: already claimed'
+      );
+    });
+
+    it('cannot claim from not whitelisted address', async () => {
+      await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
+        from: admin,
+      });
+      await pool.stake({
+        from: anyone,
+        value: ether('1000'),
+      });
+      await stakedEthToken.toggleRewards(anyone, true, {
+        from: admin,
+      });
+      let totalDeposits = await stakedEthToken.totalDeposits();
+      let totalRewards = await rewardEthToken.totalSupply();
+      let periodReward = distributorEthReward
+        .mul(totalDeposits)
+        .div(ether('1000'));
+      let protocolFee = await rewardEthToken.protocolFee();
+      totalRewards = totalRewards.add(periodReward);
+      totalRewards = totalRewards.add(
+        periodReward.mul(protocolFee).div(new BN(10000))
+      );
+
+      await setTotalRewards({
+        rewardEthToken,
+        oracles,
+        oracleAccounts,
+        pool,
+        totalRewards,
+      });
+
+      await token.transfer(merkleDistributor.address, distributorTokenReward, {
+        from: admin,
+      });
+      await setMerkleRoot({
+        merkleDistributor,
+        merkleRoot,
+        merkleProofs,
+        oracles,
+        oracleAccounts,
+      });
+
+      const { index, amounts, tokens, proof } = merkleProofs[account1];
+      await whitelistManager.updateWhiteList(account1, false, { from: admin });
+      await expectRevert(
+        merkleDistributor.claim(index, account1, tokens, amounts, proof, {
+          from: anyone,
+        }),
+        'RewardEthToken: invalid account'
       );
     });
 

@@ -27,7 +27,8 @@ const Pool = artifacts.require('Pool');
 const MulticallMock = artifacts.require('MulticallMock');
 const MerkleDistributor = artifacts.require('MerkleDistributor');
 const PoolValidators = artifacts.require('PoolValidators');
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   let admin = contractSettings.admin;
@@ -36,7 +37,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     pool,
     merkleDistributor,
     poolValidators,
-    contracts;
+    contracts,
+    whitelistManager;
+
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -52,7 +55,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
     poolValidators = await PoolValidators.at(contracts.poolValidators);
+    whitelistManager = await WhiteListManager.at(contracts.whiteListManager);
 
+    await whitelistManager.updateWhiteList(anyone, true, { from: admin });
     await pool.stake({
       from: anyone,
       value: ether('1'),
@@ -520,7 +525,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       currentNonce = await oracles.currentValidatorsNonce();
 
-      let depositContract = await iDepositContract.at(
+      let depositContract = await IDepositContract.at(
         await pool.validatorRegistration()
       );
       validatorsDepositRoot = await depositContract.get_deposit_root();

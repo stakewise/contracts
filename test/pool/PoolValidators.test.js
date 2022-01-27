@@ -26,7 +26,8 @@ const {
 const Pool = artifacts.require('Pool');
 const PoolValidators = artifacts.require('PoolValidators');
 const Oracles = artifacts.require('Oracles');
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const WhiteListManager = artifacts.require('WhiteListManager');
 
 contract('Pool Validators', (accounts) => {
   const admin = contractSettings.admin;
@@ -50,17 +51,21 @@ contract('Pool Validators', (accounts) => {
 
     let upgradedContracts = await upgradeContracts(withdrawalCredentials);
     pool = await Pool.at(upgradedContracts.pool);
-    depositContract = await iDepositContract.at(
+    depositContract = await IDepositContract.at(
       await pool.validatorRegistration()
     );
     validatorDepositAmount = await pool.VALIDATOR_TOTAL_DEPOSIT();
     validatorsDepositRoot = await depositContract.get_deposit_root();
 
     validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    let whitelistManager = await WhiteListManager.at(
+      upgradedContracts.whiteListManager
+    );
 
     // collect validator deposit
     let poolBalance = await balance.current(pool.address);
     let depositAmount = validatorDeposit.sub(poolBalance.mod(validatorDeposit));
+    await whitelistManager.updateWhiteList(anyone, true, { from: admin });
     await pool.stake({
       from: anyone,
       value: depositAmount,
