@@ -72,14 +72,14 @@ interface IOracles {
     /**
     * @dev Constructor for initializing the Oracles contract.
     * @param admin - address of the contract admin.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _rewardToken - address of the RewardToken contract.
     * @param _pool - address of the Pool contract.
     * @param _poolValidators - address of the PoolValidators contract.
     * @param _merkleDistributor - address of the MerkleDistributor contract.
     */
     function initialize(
         address admin,
-        address _rewardEthToken,
+        address _rewardToken,
         address _pool,
         address _poolValidators,
         address _merkleDistributor

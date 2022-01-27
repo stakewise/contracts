@@ -22,14 +22,14 @@ contract MulticallMock {
     }
 
     IOracles private oracles;
-    IERC20Upgradeable private stakedEthToken;
-    IERC20Upgradeable private rewardEthToken;
+    IERC20Upgradeable private stakedToken;
+    IERC20Upgradeable private rewardToken;
     IMerkleDistributor private merkleDistributor;
 
-    constructor(address _oracles, address _stakedEthToken, address _rewardEthToken, address _merkleDistributor) {
+    constructor(address _oracles, address _stakedToken, address _rewardToken, address _merkleDistributor) {
         oracles = IOracles(_oracles);
-        stakedEthToken = IERC20Upgradeable(_stakedEthToken);
-        rewardEthToken = IERC20Upgradeable(_rewardEthToken);
+        stakedToken = IERC20Upgradeable(_stakedToken);
+        rewardToken = IERC20Upgradeable(_rewardToken);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
     }
 
@@ -41,7 +41,7 @@ contract MulticallMock {
     )
         external
     {
-        rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
+        rewardToken.transferFrom(msg.sender, payee, rewardToken.balanceOf(msg.sender));
         oracles.submitRewards(totalRewards, activatedValidators, signatures);
     }
 
@@ -54,7 +54,7 @@ contract MulticallMock {
         external
     {
         oracles.submitRewards(totalRewards, activatedValidators, signatures);
-        rewardEthToken.transferFrom(msg.sender, payee, rewardEthToken.balanceOf(msg.sender));
+        rewardToken.transferFrom(msg.sender, payee, rewardToken.balanceOf(msg.sender));
     }
 
     function updateTotalRewardsAndClaim(
@@ -113,7 +113,7 @@ contract MulticallMock {
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
     }
 
-    function updateTotalRewardsAndTransferStakedEth(
+    function updateTotalRewardsAndTransferStakedTokens(
         uint256 totalRewards,
         uint256 activatedValidators,
         address payee,
@@ -122,10 +122,10 @@ contract MulticallMock {
         external
     {
         oracles.submitRewards(totalRewards, activatedValidators, signatures);
-        stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
+        stakedToken.transferFrom(msg.sender, payee, stakedToken.balanceOf(msg.sender));
     }
 
-    function transferStakedEthAndUpdateTotalRewards(
+    function transferStakedTokensAndUpdateTotalRewards(
         uint256 totalRewards,
         uint256 activatedValidators,
         address payee,
@@ -133,7 +133,7 @@ contract MulticallMock {
     )
         external
     {
-        stakedEthToken.transferFrom(msg.sender, payee, stakedEthToken.balanceOf(msg.sender));
+        stakedToken.transferFrom(msg.sender, payee, stakedToken.balanceOf(msg.sender));
         oracles.submitRewards(totalRewards, activatedValidators, signatures);
     }
 

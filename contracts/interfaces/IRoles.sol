@@ -54,7 +54,7 @@ interface IRoles {
     /**
     * @dev Function for setting the partner. Can only be called by account with `admin` privilege.
     * @param account - address of the account to update.
-    * @param revenueShare - the share of the protocol's revenue to distribute to the partner based on its contributed ETH amount.
+    * @param revenueShare - the share of the protocol's revenue to distribute to the partner based on its contributed GNO amount.
     */
     function setPartner(address account, uint256 revenueShare) external;
 

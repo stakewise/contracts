@@ -5,19 +5,19 @@ pragma solidity 0.7.5;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 /**
- * @dev Interface of the StakedEthToken contract.
+ * @dev Interface of the StakedToken contract.
  */
-interface IStakedEthToken is IERC20Upgradeable {
+interface IStakedToken is IERC20Upgradeable {
     /**
-* @dev Function for initializing the StakedEthToken contract.
+* @dev Function for initializing the StakedToken contract.
     * @param admin - address of the contract admin.
     * @param _pool - address of the Pool contract.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
+    * @param _rewardToken - address of the RewardToken contract.
     */
     function initialize(
         address admin,
         address _pool,
-        address _rewardEthToken
+        address _rewardToken
     ) external;
 
     /**

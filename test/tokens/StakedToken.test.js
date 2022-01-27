@@ -12,24 +12,25 @@ const {
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
-  checkStakedEthToken,
+  checkStakedToken,
   setupOracleAccounts,
   setTotalRewards,
+  stakeMGNO,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
 
-const StakedEthToken = artifacts.require('StakedEthToken');
-const RewardEthToken = artifacts.require('RewardEthToken');
+const StakedToken = artifacts.require('StakedToken');
+const RewardToken = artifacts.require('RewardToken');
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
 
-contract('StakedEthToken', (accounts) => {
+contract('StakedToken', (accounts) => {
   const admin = contractSettings.admin;
   const [merkleDistributor, sender1, sender2, ...otherAccounts] = accounts;
-  let stakedEthToken,
-    rewardEthToken,
+  let stakedToken,
+    rewardToken,
     pool,
     totalSupply,
     oracles,
@@ -44,7 +45,7 @@ contract('StakedEthToken', (accounts) => {
     await send.ether(sender1, admin, ether('5'));
 
     contracts = await upgradeContracts();
-    stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
+    stakedToken = await StakedToken.at(contracts.stakedToken);
     pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
     oracleAccounts = await setupOracleAccounts({
@@ -52,9 +53,9 @@ contract('StakedEthToken', (accounts) => {
       admin,
       accounts: otherAccounts,
     });
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    rewardToken = await RewardToken.at(contracts.rewardToken);
 
-    totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+    totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
     let currentNonce = await oracles.currentRewardsNonce();
     activatedValidators = await pool.activatedValidators();
     let encoded = defaultAbiCoder.encode(
@@ -71,7 +72,7 @@ contract('StakedEthToken', (accounts) => {
       signatures.push(await web3.eth.sign(candidateId, oracleAccount));
     }
 
-    totalSupply = await stakedEthToken.totalSupply();
+    totalSupply = await stakedToken.totalSupply();
   });
 
   after(async () => stopImpersonatingAccount(admin));
@@ -79,15 +80,15 @@ contract('StakedEthToken', (accounts) => {
   afterEach(async () => resetFork());
 
   describe('mint', () => {
-    it('anyone cannot mint sETH2 tokens', async () => {
+    it('anyone cannot mint smGNO tokens', async () => {
       await expectRevert(
-        stakedEthToken.mint(sender1, ether('10'), {
+        stakedToken.mint(sender1, ether('10'), {
           from: sender1,
         }),
-        'StakedEthToken: access denied'
+        'StakedToken: access denied'
       );
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
@@ -96,19 +97,16 @@ contract('StakedEthToken', (accounts) => {
 
     it('updates distributor principal when deposited by account with disabled rewards', async () => {
       // disable rewards
-      let prevPrincipal = await stakedEthToken.distributorPrincipal();
-      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
+      let prevPrincipal = await stakedToken.distributorPrincipal();
+      await stakedToken.toggleRewards(sender1, true, { from: admin });
       let amount = ether('10');
-      let receipt = await pool.stake({
-        from: sender1,
-        value: amount,
-      });
-      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+      let receipt = await stakeMGNO({ account: sender1, amount, pool });
+      await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: constants.ZERO_ADDRESS,
         to: sender1,
         value: amount,
       });
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+      expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
         prevPrincipal.add(amount)
       );
     });
@@ -122,24 +120,21 @@ contract('StakedEthToken', (accounts) => {
       await pool.setMinActivatingDeposit(value.add(ether('1')), {
         from: admin,
       });
-      await pool.stake({
-        from: sender1,
-        value,
-      });
+      await stakeMGNO({ account: sender1, amount: value, pool });
       totalSupply = totalSupply.add(value);
-      distributorPrincipal = await stakedEthToken.distributorPrincipal();
+      distributorPrincipal = await stakedToken.distributorPrincipal();
     });
 
     it('cannot transfer to zero address', async () => {
       await expectRevert(
-        stakedEthToken.transfer(constants.ZERO_ADDRESS, value, {
+        stakedToken.transfer(constants.ZERO_ADDRESS, value, {
           from: sender1,
         }),
-        'StakedEthToken: invalid receiver'
+        'StakedToken: invalid receiver'
       );
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: value,
@@ -148,14 +143,14 @@ contract('StakedEthToken', (accounts) => {
 
     it('cannot transfer from zero address', async () => {
       await expectRevert(
-        stakedEthToken.transferFrom(constants.ZERO_ADDRESS, sender2, value, {
+        stakedToken.transferFrom(constants.ZERO_ADDRESS, sender2, value, {
           from: sender1,
         }),
-        'StakedEthToken: invalid sender'
+        'StakedToken: invalid sender'
       );
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: value,
@@ -163,7 +158,7 @@ contract('StakedEthToken', (accounts) => {
     });
 
     it('can transfer zero amount', async () => {
-      let receipt = await stakedEthToken.transfer(sender2, ether('0'), {
+      let receipt = await stakedToken.transfer(sender2, ether('0'), {
         from: sender1,
       });
 
@@ -173,8 +168,8 @@ contract('StakedEthToken', (accounts) => {
         value: ether('0'),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: value,
@@ -182,43 +177,43 @@ contract('StakedEthToken', (accounts) => {
     });
 
     it('cannot transfer with paused contract', async () => {
-      await stakedEthToken.pause({ from: admin });
-      expect(await stakedEthToken.paused()).equal(true);
+      await stakedToken.pause({ from: admin });
+      expect(await stakedToken.paused()).equal(true);
 
       await expectRevert(
-        stakedEthToken.transfer(sender2, value, {
+        stakedToken.transfer(sender2, value, {
           from: sender1,
         }),
         'Pausable: paused'
       );
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: value,
       });
-      await stakedEthToken.unpause({ from: admin });
+      await stakedToken.unpause({ from: admin });
     });
 
     it('cannot transfer amount bigger than balance', async () => {
       await expectRevert(
-        stakedEthToken.transfer(sender2, value.add(ether('1')), {
+        stakedToken.transfer(sender2, value.add(ether('1')), {
           from: sender1,
         }),
         'SafeMath: subtraction overflow'
       );
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: value,
       });
     });
 
-    it('can transfer sETH2 tokens to different account', async () => {
-      let receipt = await stakedEthToken.transfer(sender2, value, {
+    it('can transfer smGNO tokens to different account', async () => {
+      let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -228,33 +223,33 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender2,
         balance: value,
       });
     });
 
-    it('preserves rewards during sETH2 transfer', async () => {
-      let totalRewards = (await rewardEthToken.totalSupply()).add(ether('10'));
+    it('preserves rewards during smGNO transfer', async () => {
+      let totalRewards = (await rewardToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards,
-        rewardEthToken,
+        rewardToken,
         pool,
         oracles,
         oracleAccounts,
       });
 
-      let rewardAmount = await rewardEthToken.balanceOf(sender1);
-      let receipt = await stakedEthToken.transfer(sender2, value, {
+      let rewardAmount = await rewardToken.balanceOf(sender1);
+      let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -264,28 +259,28 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender2,
         balance: value,
       });
 
-      expect(await rewardEthToken.balanceOf(sender1)).bignumber.equal(
+      expect(await rewardToken.balanceOf(sender1)).bignumber.equal(
         rewardAmount
       );
     });
 
     it('updates distributor principal when transferring to account with disabled rewards', async () => {
-      await stakedEthToken.toggleRewards(sender2, true, { from: admin });
-      let receipt = await stakedEthToken.transfer(sender2, value, {
+      await stakedToken.toggleRewards(sender2, true, { from: admin });
+      let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -295,27 +290,27 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender2,
         balance: value,
       });
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+      expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
         distributorPrincipal.add(value)
       );
     });
 
     it('updates distributor principal when transferring from account with disabled rewards', async () => {
-      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
-      let receipt = await stakedEthToken.transfer(sender2, value, {
+      await stakedToken.toggleRewards(sender1, true, { from: admin });
+      let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -325,28 +320,28 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender2,
         balance: value,
       });
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+      expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
         distributorPrincipal
       );
     });
 
     it('does not update distributor principal when transferring between accounts with disabled rewards', async () => {
-      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
-      await stakedEthToken.toggleRewards(sender2, true, { from: admin });
-      let receipt = await stakedEthToken.transfer(sender2, value, {
+      await stakedToken.toggleRewards(sender1, true, { from: admin });
+      await stakedToken.toggleRewards(sender2, true, { from: admin });
+      let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
 
@@ -356,20 +351,20 @@ contract('StakedEthToken', (accounts) => {
         value,
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender1,
         balance: new BN(0),
       });
 
-      await checkStakedEthToken({
-        stakedEthToken,
+      await checkStakedToken({
+        stakedToken,
         totalSupply,
         account: sender2,
         balance: value,
       });
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
+      expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
         distributorPrincipal.add(value)
       );
     });
@@ -378,20 +373,20 @@ contract('StakedEthToken', (accounts) => {
       // deploy mocked multicall
       let multicallMock = await MulticallMock.new(
         oracles.address,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+        contracts.stakedToken,
+        contracts.rewardToken,
         merkleDistributor
       );
       await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await stakedEthToken.approve(multicallMock.address, value, {
+      await stakedToken.approve(multicallMock.address, value, {
         from: sender1,
       });
 
       await expectRevert(
-        multicallMock.updateTotalRewardsAndTransferStakedEth(
+        multicallMock.updateTotalRewardsAndTransferStakedTokens(
           totalRewards,
           activatedValidators,
           sender2,
@@ -400,7 +395,7 @@ contract('StakedEthToken', (accounts) => {
             from: sender1,
           }
         ),
-        'StakedEthToken: cannot transfer during rewards update'
+        'StakedToken: cannot transfer during rewards update'
       );
     });
 
@@ -408,29 +403,30 @@ contract('StakedEthToken', (accounts) => {
       // deploy mocked multicall
       let multicallMock = await MulticallMock.new(
         oracles.address,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+        contracts.stakedToken,
+        contracts.rewardToken,
         merkleDistributor
       );
       await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
 
-      await stakedEthToken.approve(multicallMock.address, value, {
+      await stakedToken.approve(multicallMock.address, value, {
         from: sender1,
       });
 
-      let receipt = await multicallMock.transferStakedEthAndUpdateTotalRewards(
-        totalRewards,
-        activatedValidators,
-        sender2,
-        signatures,
-        {
-          from: sender1,
-        }
-      );
+      let receipt =
+        await multicallMock.transferStakedTokensAndUpdateTotalRewards(
+          totalRewards,
+          activatedValidators,
+          sender2,
+          signatures,
+          {
+            from: sender1,
+          }
+        );
 
-      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+      await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: sender1,
         to: sender2,
         value,

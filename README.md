@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/stakewise/contracts.svg?style=svg)](https://circleci.com/gh/stakewise/contracts)
 [![Discord](https://user-images.githubusercontent.com/7288322/34471967-1df7808a-efbb-11e7-9088-ed0b04151291.png)](https://discord.gg/2BSdr2g)
 
-The StakeWise smart contracts for liquid non-custodial ETH2 staking.
+The StakeWise smart contracts for liquid non-custodial GNO staking.
 
 ## Documentation
 
@@ -33,7 +33,7 @@ The documentation is also available on the [official documentation page](https:/
 5. Deploy StakeWise contracts to the selected network:
 
    ```shell script
-   yarn deploy-contracts --network rinkeby
+   yarn deploy-contracts --network gnosis
    ```
 
 ## Contributing

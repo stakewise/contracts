@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/cryptography/ECDSAUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./presets/OwnablePausableUpgradeable.sol";
-import "./interfaces/IRewardEthToken.sol";
+import "./interfaces/IRewardToken.sol";
 import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 import "./interfaces/IMerkleDistributor.sol";
@@ -32,8 +32,8 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     // @dev Validators nonce is used to protect from submitting the same validator vote several times.
     CountersUpgradeable.Counter private validatorsNonce;
 
-    // @dev Address of the RewardEthToken contract.
-    IRewardEthToken private rewardEthToken;
+    // @dev Address of the RewardToken contract.
+    IRewardToken private rewardToken;
 
     // @dev Address of the Pool contract.
     IPool private pool;
@@ -57,7 +57,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      */
     function initialize(
         address admin,
-        address _rewardEthToken,
+        address _rewardToken,
         address _pool,
         address _poolValidators,
         address _merkleDistributor
@@ -65,14 +65,14 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         external override initializer
     {
         require(admin != address(0), "Pool: invalid admin address");
-        require(_rewardEthToken != address(0), "Pool: invalid RewardEthToken address");
+        require(_rewardToken != address(0), "Pool: invalid RewardToken address");
         require(_pool != address(0), "Pool: invalid Pool address");
         require(_poolValidators != address(0), "Pool: invalid PoolValidators address");
         require(_merkleDistributor != address(0), "Pool: invalid MerkleDistributor address");
 
         __OwnablePausableUpgradeable_init(admin);
 
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
+        rewardToken = IRewardToken(_rewardToken);
         pool = IPool(_pool);
         poolValidators = IPoolValidators(_poolValidators);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
@@ -119,7 +119,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-isMerkleRootVoting}.
      */
     function isMerkleRootVoting() public override view returns (bool) {
-        uint256 lastRewardBlockNumber = rewardEthToken.lastUpdateBlockNumber();
+        uint256 lastRewardBlockNumber = rewardToken.lastUpdateBlockNumber();
         return merkleDistributor.lastUpdateBlockNumber() < lastRewardBlockNumber && lastRewardBlockNumber != block.number;
     }
 
@@ -167,7 +167,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         rewardsNonce.increment();
 
         // update total rewards
-        rewardEthToken.updateTotalRewards(totalRewards);
+        rewardToken.updateTotalRewards(totalRewards);
 
         // update activated validators
         if (activatedValidators != pool.activatedValidators()) {

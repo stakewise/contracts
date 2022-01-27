@@ -2,13 +2,12 @@ const {
   expectRevert,
   expectEvent,
   ether,
-  balance,
   send,
   constants,
 } = require('@openzeppelin/test-helpers');
 const { keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   registerValidator,
   setupOracleAccounts,
@@ -16,6 +15,7 @@ const {
   impersonateAccount,
   resetFork,
   checkValidatorRegistered,
+  stakeMGNO,
 } = require('../utils');
 const {
   depositData,
@@ -26,7 +26,8 @@ const {
 const Pool = artifacts.require('Pool');
 const PoolValidators = artifacts.require('PoolValidators');
 const Oracles = artifacts.require('Oracles');
-const iDepositContract = artifacts.require('IDepositContract');
+const IDepositContract = artifacts.require('IDepositContract');
+const IGCToken = artifacts.require('IGCToken');
 
 contract('Pool Validators', (accounts) => {
   const admin = contractSettings.admin;
@@ -39,7 +40,8 @@ contract('Pool Validators', (accounts) => {
     oracleAccounts,
     oracles,
     depositContract,
-    validatorsDepositRoot;
+    validatorsDepositRoot,
+    mgnoToken;
   let [operator, anyone, ...otherAccounts] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -50,21 +52,19 @@ contract('Pool Validators', (accounts) => {
 
     let upgradedContracts = await upgradeContracts(withdrawalCredentials);
     pool = await Pool.at(upgradedContracts.pool);
-    depositContract = await iDepositContract.at(
+    depositContract = await IDepositContract.at(
       await pool.validatorRegistration()
     );
     validatorDepositAmount = await pool.VALIDATOR_TOTAL_DEPOSIT();
     validatorsDepositRoot = await depositContract.get_deposit_root();
 
     validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    mgnoToken = await IGCToken.at(contracts.MGNOToken);
 
     // collect validator deposit
-    let poolBalance = await balance.current(pool.address);
+    let poolBalance = await mgnoToken.balanceOf(pool.address);
     let depositAmount = validatorDeposit.sub(poolBalance.mod(validatorDeposit));
-    await pool.stake({
-      from: anyone,
-      value: depositAmount,
-    });
+    await stakeMGNO({ account: anyone, amount: depositAmount, pool });
 
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({
@@ -426,7 +426,7 @@ contract('Pool Validators', (accounts) => {
         from: operator,
       });
 
-      let poolBalance = await balance.current(pool.address);
+      let poolBalance = await mgnoToken.balanceOf(pool.address);
       let receipt = await registerValidator({
         operator,
         merkleProof,
@@ -450,7 +450,7 @@ contract('Pool Validators', (accounts) => {
       ).to.equal(true);
       let _operator = await validators.getOperator(operator);
       expect(_operator[1]).to.equal(true);
-      expect(await balance.current(pool.address)).to.bignumber.equal(
+      expect(await mgnoToken.balanceOf(pool.address)).to.bignumber.equal(
         poolBalance.sub(validatorDepositAmount)
       );
       await checkValidatorRegistered({

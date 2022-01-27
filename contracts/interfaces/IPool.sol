@@ -82,7 +82,7 @@ interface IPool {
     * @param admin - address of the contract admin.
     * @param _withdrawalCredentials - withdrawal credentials for the pool validators.
     * @param _validatorRegistration - address of the ValidatorRegistration contract.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
+    * @param _stakedToken - address of the StakedToken contract.
     * @param _validators - address of the Validators contract.
     * @param _oracles - address of the Oracles contract.
     * @param _minActivatingDeposit - minimal deposit amount considered for the activation.
@@ -92,7 +92,7 @@ interface IPool {
         address admin,
         bytes32 _withdrawalCredentials,
         address _validatorRegistration,
-        address _stakedEthToken,
+        address _stakedToken,
         address _validators,
         address _oracles,
         uint256 _minActivatingDeposit,
@@ -104,6 +104,24 @@ interface IPool {
     */
     // solhint-disable-next-line func-name-mixedcase
     function VALIDATOR_TOTAL_DEPOSIT() external view returns (uint256);
+
+    /**
+    * @dev Function for getting the address of mGNO <-> GNO wrapper.
+    */
+    // solhint-disable-next-line func-name-mixedcase
+    function MGNO_WRAPPER() external view returns (address);
+
+    /**
+    * @dev Function for getting the address of GNO token.
+    */
+    // solhint-disable-next-line func-name-mixedcase
+    function GNO_TOKEN() external view returns (address);
+
+    /**
+    * @dev Function for getting the address of mGNO token.
+    */
+    // solhint-disable-next-line func-name-mixedcase
+    function MGNO_TOKEN() external view returns (address);
 
     /**
     * @dev Function for retrieving the total amount of pending validators.
@@ -158,6 +176,12 @@ interface IPool {
     function setPendingValidatorsLimit(uint256 newPendingValidatorsLimit) external;
 
     /**
+    * @dev Function for calculating mGNO amount for the GNO input.
+    * @param amountIn - GNO tokens amount.
+    */
+    function calculateMGNO(uint256 amountIn) external view returns (uint256);
+
+    /**
     * @dev Function for checking whether validator index can be activated.
     * @param validatorIndex - index of the validator to check.
     */
@@ -169,43 +193,56 @@ interface IPool {
     function validatorRegistration() external view returns (IDepositContract);
 
     /**
-    * @dev Function for staking ether to the pool to the different tokens' recipient.
-    * @param recipient - address of the tokens recipient.
+    * @dev Function for staking GNO tokens to the pool. The tokens will be converted to mGNO and then staked.
+    * @param amount - the amount of tokens to stake.
+    * @param recipient - address of the staked mGNO tokens recipient. Can be zero if should be the sender.
+    * @param referredBy - address of the referrer. Can be zero if not referred by anyone.
+    * @param hasRevenueShare - defines whether referrer participates in revenue sharing.
     */
-    function stakeOnBehalf(address recipient) external payable;
+    function stakeGNO(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare
+    ) external;
 
     /**
-    * @dev Function for staking ether to the pool.
+    * @dev Function for staking GNO tokens to the pool with permit call. The tokens will be converted to mGNO and then staked.
+    * @param amount - the amount of tokens to stake.
+    * @param recipient - address of the staked mGNO tokens recipient. Can be zero if should be the sender.
+    * @param referredBy - address of the referrer. Can be zero if not referred by anyone.
+    * @param hasRevenueShare - defines whether referrer participates in revenue sharing.
+    * @param nonce - The nonce taken from `nonces(_holder)` public getter.
+    * @param expiry - The allowance expiration date (unix timestamp in UTC). Can be zero for no expiration.
+    * @param v - A final byte of signature (ECDSA component).
+    * @param r - The first 32 bytes of signature (ECDSA component).
+    * @param s - The second 32 bytes of signature (ECDSA component).
     */
-    function stake() external payable;
+    function stakeGNOWithPermit(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 
     /**
-    * @dev Function for staking ether with the partner that will receive the revenue share from the protocol fee.
-    * @param partner - address of partner who will get the revenue share.
+    * @dev Function for staking mGNO tokens to the pool.
+    * @param amount - the amount of tokens to stake.
+    * @param recipient - address of the staked mGNO tokens recipient. Can be zero if should be the sender.
+    * @param referredBy - address of the referrer. Can be zero if not referred by anyone.
+    * @param hasRevenueShare - defines whether referrer participates in revenue sharing.
     */
-    function stakeWithPartner(address partner) external payable;
-
-    /**
-    * @dev Function for staking ether with the partner that will receive the revenue share from the protocol fee
-    * and the different tokens' recipient.
-    * @param partner - address of partner who will get the revenue share.
-    * @param recipient - address of the tokens recipient.
-    */
-    function stakeWithPartnerOnBehalf(address partner, address recipient) external payable;
-
-    /**
-    * @dev Function for staking ether with the referrer who will receive the one time bonus.
-    * @param referrer - address of referrer who will get its referral bonus.
-    */
-    function stakeWithReferrer(address referrer) external payable;
-
-    /**
-    * @dev Function for staking ether with the referrer who will receive the one time bonus
-    * and the different tokens' recipient.
-    * @param referrer - address of referrer who will get its referral bonus.
-    * @param recipient - address of the tokens recipient.
-    */
-    function stakeWithReferrerOnBehalf(address referrer, address recipient) external payable;
+    function stakeMGNO(
+        uint256 amount,
+        address recipient,
+        address referredBy,
+        bool hasRevenueShare
+    ) external;
 
     /**
     * @dev Function for minting account's tokens for the specific validator index.
@@ -230,6 +267,7 @@ interface IPool {
     /**
     * @dev Function for refunding to the pool.
     * Can only be executed by the account with admin role.
+    * @param amount - the amount of mGNO tokens to refund.
     */
-    function refund() external payable;
+    function refund(uint256 amount) external;
 }

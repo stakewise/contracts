@@ -454,7 +454,7 @@
       },
       {
         "internalType": "address",
-        "name": "_rewardEthToken",
+        "name": "_rewardToken",
         "type": "address"
       },
       {

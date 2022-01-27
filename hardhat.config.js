@@ -10,7 +10,6 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const BLOCK_NUMBER = 13952000;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
@@ -64,8 +63,11 @@ task('test')
       hre.config.mocha.grep = grep;
     }
 
+    const latestBlock = await hre.ethers.provider.getBlock('latest');
+    const forkBlockNumber = latestBlock.number - 39;
+    hre.config.networks.hardhat.forking.blockNumber = forkBlockNumber;
     log(
-      gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString()))
+      gray('Mainnet fork with block number', yellow(forkBlockNumber.toString()))
     );
 
     if (gas) {
@@ -83,7 +85,12 @@ task('test')
   });
 
 task('coverage').setAction(async (taskArguments, hre, runSuper) => {
-  log(gray('Mainnet fork with block number', yellow(BLOCK_NUMBER.toString())));
+  const latestBlock = await hre.ethers.provider.getBlock('latest');
+  const forkBlockNumber = latestBlock.number - 39;
+  hre.config.networks.hardhat.forking.blockNumber = forkBlockNumber;
+  log(
+    gray('Mainnet fork with block number', yellow(forkBlockNumber.toString()))
+  );
 
   await runSuper(taskArguments);
 });
@@ -102,8 +109,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: process.env.HARDHAT_FORK_API_URL,
-        blockNumber: BLOCK_NUMBER,
+        url: 'https://rpc.xdaichain.com/oe-only/',
+        chainId: 100,
       },
     },
     local: {
@@ -128,8 +135,8 @@ module.exports = {
       'Pool',
       'PoolEscrow',
       'PoolValidators',
-      'RewardEthToken',
-      'StakedEthToken',
+      'RewardToken',
+      'StakedToken',
       'MerkleDistributor',
       'ContractChecker',
       'Roles',

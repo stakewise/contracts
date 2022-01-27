@@ -13,6 +13,7 @@ const {
   resetFork,
   setupOracleAccounts,
   setTotalRewards,
+  stakeGNO,
 } = require('../utils');
 const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
@@ -21,7 +22,7 @@ const {
   depositData,
 } = require('../pool/depositDataMerkleRoot');
 
-const RewardEthToken = artifacts.require('RewardEthToken');
+const RewardToken = artifacts.require('RewardToken');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
 const MulticallMock = artifacts.require('MulticallMock');
@@ -31,12 +32,7 @@ const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles,
-    rewardEthToken,
-    pool,
-    merkleDistributor,
-    poolValidators,
-    contracts;
+  let oracles, rewardToken, pool, merkleDistributor, poolValidators, contracts;
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -49,14 +45,11 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
     oracles = await Oracles.at(contracts.oracles);
     pool = await Pool.at(contracts.pool);
-    rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
+    rewardToken = await RewardToken.at(contracts.rewardToken);
     merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
     poolValidators = await PoolValidators.at(contracts.poolValidators);
 
-    await pool.stake({
-      from: anyone,
-      value: ether('1'),
-    });
+    await stakeGNO({ account: anyone, amount: ether('1'), pool });
   });
 
   afterEach(async () => resetFork());
@@ -154,7 +147,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
     beforeEach(async () => {
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
-      prevTotalRewards = await rewardEthToken.totalRewards();
+      prevTotalRewards = await rewardToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
       currentNonce = await oracles.currentRewardsNonce();
       newActivatedValidators = (await pool.activatedValidators()).add(
@@ -273,12 +266,12 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       }
 
       // check values updates
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
+      expect(await rewardToken.totalRewards()).to.bignumber.equal(
         newTotalRewards
       );
 
       // update submitted
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
+      expect(await rewardToken.totalRewards()).to.bignumber.equal(
         newTotalRewards
       );
       expect(await pool.activatedValidators()).to.bignumber.equal(
@@ -296,10 +289,10 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     let currentNonce, oracleAccounts, candidateId, signatures;
 
     beforeEach(async () => {
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         oracleAccounts,
         pool,
@@ -420,15 +413,15 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       // deploy mocked oracle
       let mockedOracle = await MulticallMock.new(
         oracles.address,
-        contracts.stakedEthToken,
-        contracts.rewardEthToken,
+        contracts.stakedToken,
+        contracts.rewardToken,
         merkleDistributor.address
       );
       await oracles.addOracle(mockedOracle.address, {
         from: admin,
       });
 
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       let activatedValidators = await pool.activatedValidators();
 
       // create rewards signatures

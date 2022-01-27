@@ -1,4 +1,4 @@
-const { defaultAbiCoder } = require('ethers/lib/utils');
+const { defaultAbiCoder, hexlify } = require('ethers/lib/utils');
 const {
   expectRevert,
   expectEvent,
@@ -18,12 +18,14 @@ const {
   setupOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
+  stakeGNO,
+  mintTokens,
 } = require('./utils');
 
 const MerkleDistributor = artifacts.require('MerkleDistributor');
-const StakeWiseToken = artifacts.require('IERC20Upgradeable');
-const RewardEthToken = artifacts.require('RewardEthToken');
-const StakedEthToken = artifacts.require('StakedEthToken');
+const IGCToken = artifacts.require('IGCToken');
+const RewardToken = artifacts.require('RewardToken');
+const StakedToken = artifacts.require('StakedToken');
 const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
 const Pool = artifacts.require('Pool');
@@ -32,7 +34,7 @@ const account1 = '0x7981973BF488Ea610AF41dDB9DFeF1f8095ECF56';
 const account2 = '0xB3a69b7cdd7510D51c4CCc2c0fC105021A92Fc5D';
 const account3 = '0xd1b91Ac5eb55f30D742751f4Ae4437F738eB8F6b';
 
-const distributorEthReward = ether('25.1777');
+const distributorGNOReward = ether('25.1777');
 const distributorTokenReward = ether('14.86062535');
 
 contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
@@ -41,8 +43,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     amount,
     durationInBlocks,
     token,
-    rewardEthToken,
-    stakedEthToken,
+    rewardToken,
+    stakedToken,
     oracles,
     oracleAccounts,
     prevDistributorBalance,
@@ -59,13 +61,13 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     let upgradedContracts = await upgradeContracts();
     amount = ether('10');
     durationInBlocks = new BN(1000);
-    token = await StakeWiseToken.at(contracts.stakeWiseToken);
+    token = await IGCToken.at(contracts.stakeWiseToken);
     merkleDistributor = await MerkleDistributor.at(
       upgradedContracts.merkleDistributor
     );
 
-    rewardEthToken = await RewardEthToken.at(upgradedContracts.rewardEthToken);
-    stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
+    rewardToken = await RewardToken.at(upgradedContracts.rewardToken);
+    stakedToken = await StakedToken.at(upgradedContracts.stakedToken);
     merkleDistributor = await MerkleDistributor.at(
       upgradedContracts.merkleDistributor
     );
@@ -81,17 +83,17 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       [account1]: {
         index: '0',
         amounts: ['12177700000000000000', '987000000000000000'],
-        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
+        tokens: [upgradedContracts.rewardToken, contracts.stakeWiseToken],
       },
       [account2]: {
         index: '1',
         amounts: ['3000000000000000000', '12312312000000000000'],
-        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
+        tokens: [upgradedContracts.rewardToken, contracts.stakeWiseToken],
       },
       [account3]: {
         index: '2',
         amounts: ['10000000000000000000', '1561313350000000000'],
-        tokens: [upgradedContracts.rewardEthToken, contracts.stakeWiseToken],
+        tokens: [upgradedContracts.rewardToken, contracts.stakeWiseToken],
       },
     };
 
@@ -113,10 +115,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       merkleProofs[account].proof = tree.getHexProof(keccak256(encoded));
     }
 
-    await pool.stake({
-      from: anyone,
-      value: ether('1'),
-    });
+    await stakeGNO({ account: anyone, pool, amount: ether('1') });
+    await mintTokens(token, admin, amount);
   });
 
   afterEach(async () => resetFork());
@@ -175,7 +175,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
             from: admin,
           }
         ),
-        'ERC20: transfer from the zero address'
+        'SafeERC20: low-level call failed'
       );
     });
 
@@ -223,7 +223,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
             from: admin,
           }
         ),
-        'SafeMath: subtraction overflow'
+        'SafeERC20: low-level call failed'
       );
     });
 
@@ -323,7 +323,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
             from: admin,
           }
         ),
-        'ERC20: transfer from the zero address'
+        'SafeERC20: low-level call failed'
       );
     });
 
@@ -339,7 +339,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
             from: admin,
           }
         ),
-        'SafeMath: subtraction overflow'
+        'SafeERC20: low-level call failed'
       );
     });
 
@@ -392,15 +392,12 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
   describe('claim', () => {
     beforeEach(async () => {
       // new rewards arrive
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
+      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
 
-      await pool.stake({
-        from: anyone,
-        value: ether('1'),
-      });
-
+      await mintTokens(token, admin, amount);
+      await stakeGNO({ account: anyone, pool, amount: ether('1') });
       await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         oracleAccounts,
         pool,
@@ -458,26 +455,23 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.stake({
-        from: anyone,
-        value: ether('1000'),
-      });
-      await stakedEthToken.toggleRewards(anyone, true, {
+      await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+      await stakedToken.toggleRewards(anyone, true, {
         from: admin,
       });
-      let totalDeposits = await stakedEthToken.totalDeposits();
-      let totalRewards = await rewardEthToken.totalSupply();
-      let periodReward = distributorEthReward
+      let totalDeposits = await stakedToken.totalDeposits();
+      let totalRewards = await rewardToken.totalSupply();
+      let periodReward = distributorGNOReward
         .mul(totalDeposits)
         .div(ether('1000'));
-      let protocolFee = await rewardEthToken.protocolFee();
+      let protocolFee = await rewardToken.protocolFee();
       totalRewards = totalRewards.add(periodReward);
       totalRewards = totalRewards.add(
         periodReward.mul(protocolFee).div(new BN(10000))
       );
 
       await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         oracleAccounts,
         pool,
@@ -512,15 +506,12 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
         from: admin,
       });
-      await pool.stake({
-        from: anyone,
-        value: ether('1000'),
-      });
-      await stakedEthToken.toggleRewards(anyone, true, {
+      await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+      await stakedToken.toggleRewards(anyone, true, {
         from: admin,
       });
       await setTotalRewards({
-        rewardEthToken,
+        rewardToken,
         oracles,
         oracleAccounts,
         pool,
@@ -537,16 +528,16 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         oracles,
         oracleAccounts,
       });
-      let distributorEthRewards = await rewardEthToken.balanceOf(
+      let distributorGNORewards = await rewardToken.balanceOf(
         constants.ZERO_ADDRESS
       );
-      expect(distributorEthRewards).to.bignumber.greaterThan(new BN(0));
+      expect(distributorGNORewards).to.bignumber.greaterThan(new BN(0));
 
       let totalTransferredEthReward = new BN(0);
       for (const [account, { index, proof, tokens, amounts }] of Object.entries(
         merkleProofs
       )) {
-        let balance1 = await rewardEthToken.balanceOf(account);
+        let balance1 = await rewardToken.balanceOf(account);
         let balance2 = await token.balanceOf(account);
 
         const receipt = await merkleDistributor.claim(
@@ -564,27 +555,22 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           index,
           tokens,
         });
-        await expectEvent.inTransaction(
-          receipt.tx,
-          RewardEthToken,
-          'Transfer',
-          {
-            from: constants.ZERO_ADDRESS,
-            to: account,
-            value: new BN(amounts[0]),
-          }
-        );
+        await expectEvent.inTransaction(receipt.tx, RewardToken, 'Transfer', {
+          from: constants.ZERO_ADDRESS,
+          to: account,
+          value: new BN(amounts[0]),
+        });
         expect(await merkleDistributor.isClaimed(index)).to.be.equal(true);
-        expect(await rewardEthToken.balanceOf(account)).to.be.bignumber.equal(
+        expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(
           balance1.add(new BN(amounts[0]))
         );
         totalTransferredEthReward = totalTransferredEthReward.add(
           new BN(amounts[0])
         );
         expect(
-          await rewardEthToken.balanceOf(constants.ZERO_ADDRESS)
+          await rewardToken.balanceOf(constants.ZERO_ADDRESS)
         ).to.bignumber.equal(
-          distributorEthRewards.sub(totalTransferredEthReward)
+          distributorGNORewards.sub(totalTransferredEthReward)
         );
         expect(await token.balanceOf(account)).to.be.bignumber.equal(
           balance2.add(new BN(amounts[1]))
@@ -612,24 +598,21 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         // deploy mocked oracle
         multicallMock = await MulticallMock.new(
           oracles.address,
-          stakedEthToken.address,
-          rewardEthToken.address,
+          stakedToken.address,
+          rewardToken.address,
           merkleDistributor.address
         );
         await oracles.addOracle(multicallMock.address, {
           from: admin,
         });
 
-        await pool.stake({
-          from: anyone,
-          value: ether('1000'),
-        });
-        await stakedEthToken.toggleRewards(anyone, true, {
+        await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+        await stakedToken.toggleRewards(anyone, true, {
           from: admin,
         });
-        let totalDeposits = await stakedEthToken.totalDeposits();
-        let protocolFee = await rewardEthToken.protocolFee();
-        totalRewards = distributorEthReward
+        let totalDeposits = await stakedToken.totalDeposits();
+        let protocolFee = await rewardToken.protocolFee();
+        totalRewards = distributorGNOReward
           .mul(totalDeposits)
           .div(ether('1000'));
         totalRewards = totalRewards.add(

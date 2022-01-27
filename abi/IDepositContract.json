@@ -57,11 +57,16 @@
         "internalType": "bytes32",
         "name": "deposit_data_root",
         "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "stake_amount",
+        "type": "uint256"
       }
     ],
     "name": "deposit",
     "outputs": [],
-    "stateMutability": "payable",
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
