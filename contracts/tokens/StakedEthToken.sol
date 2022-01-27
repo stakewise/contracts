@@ -77,7 +77,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {IStakedEthToken-toggleRewards}.
      */
     function toggleRewards(address account, bool isDisabled) external override onlyAdmin {
-        require(account != address(0), "StakedEthToken: invalid account");
+        require(whiteListManager.whitelistedAccounts(account), "StakedEthToken: invalid account");
 
         // toggle rewards
         rewardEthToken.setRewardsDisabled(account, isDisabled);
@@ -95,7 +95,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(whiteListManager.whitelistedAccounts(sender), "StakedEthToken: invalid sender");
+        require(sender != address(0), "StakedEthToken: invalid sender");
         require(whiteListManager.whitelistedAccounts(recipient), "StakedEthToken: invalid receiver");
         require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
 

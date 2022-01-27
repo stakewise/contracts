@@ -43,7 +43,7 @@ contract WhiteListManager is IWhiteListManager, OwnablePausableUpgradeable  {
     /**
      * @dev See {IWhiteListManager-updateWhiteList}.
      */
-    function updateWhiteList(address account, bool approved) external override onlyManager {
+    function updateWhiteList(address account, bool approved) external override onlyManager whenNotPaused {
         require(account != address(0), "WhiteListManager: invalid account address");
         whitelistedAccounts[account] = approved;
         emit WhiteListUpdated(account, approved);

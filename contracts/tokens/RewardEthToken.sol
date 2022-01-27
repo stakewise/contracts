@@ -160,7 +160,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(whiteListManager.whitelistedAccounts(sender), "RewardEthToken: invalid sender");
+        require(sender != address(0), "RewardEthToken: invalid sender");
         require(whiteListManager.whitelistedAccounts(recipient), "RewardEthToken: invalid receiver");
         require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot transfer during rewards update");
 
@@ -294,7 +294,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      */
     function claim(address account, uint256 amount) external override {
         require(msg.sender == merkleDistributor, "RewardEthToken: access denied");
-        require(account != address(0), "RewardEthToken: invalid account");
+        require(whiteListManager.whitelistedAccounts(account), "RewardEthToken: invalid account");
 
         // update checkpoints, transfer amount from distributor to account
         uint128 _rewardPerToken = rewardPerToken;
