@@ -827,7 +827,7 @@ contract('Pool (stake)', (accounts) => {
       pool.refund(amount, {
         from: sender1,
       }),
-      'Pool: access denied'
+      'OwnablePausable: access denied'
     );
   });
 

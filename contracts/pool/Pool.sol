@@ -369,8 +369,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     /**
      * @dev See {IPool-refund}.
      */
-    function refund(uint256 amount) external override {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender), "Pool: access denied");
+    function refund(uint256 amount) external override onlyAdmin {
         IERC20Upgradeable(MGNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
         emit Refunded(msg.sender, amount);
     }
