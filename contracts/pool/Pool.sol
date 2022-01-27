@@ -212,7 +212,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             _stake(msg.sender, convertedAmount);
         }
 
-        // permit transfer
+        // approve transfers
         IGNOToken(GNO_TOKEN).permit(
             msg.sender,
             address(this),
