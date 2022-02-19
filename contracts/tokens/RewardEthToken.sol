@@ -180,7 +180,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     /**
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
-    function updateRewardCheckpoint(address account) public override returns (bool accRewardsDisabled) {
+    function updateRewardCheckpoint(address account) external override returns (bool accRewardsDisabled) {
         accRewardsDisabled = rewardsDisabled[account];
         if (!accRewardsDisabled) _updateRewardCheckpoint(account, rewardPerToken);
     }
@@ -223,7 +223,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     /**
      * @dev See {IRewardEthToken-updateRewardCheckpoints}.
      */
-    function updateRewardCheckpoints(address account1, address account2) public override returns (bool rewardsDisabled1, bool rewardsDisabled2) {
+    function updateRewardCheckpoints(address account1, address account2) external override returns (bool rewardsDisabled1, bool rewardsDisabled2) {
         rewardsDisabled1 = rewardsDisabled[account1];
         rewardsDisabled2 = rewardsDisabled[account2];
         if (!rewardsDisabled1 || !rewardsDisabled2) {
