@@ -1,12 +1,13 @@
 const hre = require('hardhat');
+const { constants } = require('@openzeppelin/test-helpers');
 
 let contractSettings, contracts;
 if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
   contractSettings = {
-    admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
+    admin: '0x66D6c253084d8d51c7CFfDb3C188A0b53D998a3d',
     validatorRegistration: '0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b',
-    protocolFeeRecipient: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
-    minActivatingDeposit: '32000000000000000000',
+    protocolFeeRecipient: '0x66D6c253084d8d51c7CFfDb3C188A0b53D998a3d',
+    minActivatingDeposit: constants.MAX_UINT256.toString(),
     pendingValidatorsLimit: '500',
     protocolFee: '1000',
   };
