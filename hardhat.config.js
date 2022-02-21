@@ -109,7 +109,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://rpc.xdaichain.com/oe-only/',
+        url: 'https://dai.poa.network/',
         chainId: 100,
       },
     },
