@@ -46,8 +46,8 @@ contract StakedToken is IStakedToken, OwnablePausableUpgradeable, ERC20PermitUpg
         require(_rewardToken != address(0), "StakedToken: invalid RewardToken address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("SW Staked mGNO", "smGNO");
-        __ERC20Permit_init("SW Staked mGNO");
+        __ERC20_init("StakeWise Staked GNO", "sGNO");
+        __ERC20Permit_init("StakeWise Staked GNO");
 
         pool = _pool;
         rewardToken = IRewardToken(_rewardToken);

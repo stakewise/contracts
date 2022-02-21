@@ -72,8 +72,8 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
         require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("SW Reward mGNO", "rmGNO");
-        __ERC20Permit_init("SW Reward mGNO");
+        __ERC20_init("StakeWise Reward GNO", "rGNO");
+        __ERC20Permit_init("StakeWise Reward GNO");
 
         stakedToken = IStakedToken(_stakedToken);
         oracles = _oracles;
