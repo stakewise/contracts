@@ -6,7 +6,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0x164b97b4f8431e0a70c28114a3b50cfe2d796dade8e06730addbddb2c2e7db8e',
-    proof: [
+    merkleProof: [
       '0x5a5fbc27ffa1f5074b2326ca04b13d7b12175d975f96a24dd929383f914db6eb',
       '0xf5598a1a8b47ab538aaf9000fee21eed694862606ec911185b806295240a0c42',
       '0x635d4f13359386157141e0966a7f722bc4f224577abac7feb2091405736cf2b5',
@@ -23,7 +23,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0xa6d46b0323174df02642274cf2fd1b1a0e4193f3cf14f3c57fa0fd827f22d6cc',
-    proof: [
+    merkleProof: [
       '0x5856404fdfa3935cc5b0c6680defa791a4cdfc53e656a7607a4f54e3eaf31189',
       '0xf5598a1a8b47ab538aaf9000fee21eed694862606ec911185b806295240a0c42',
       '0x635d4f13359386157141e0966a7f722bc4f224577abac7feb2091405736cf2b5',
@@ -40,7 +40,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0xeee3f92de226ca66e7fde46edb606bcac615fc3d9533c741f41fc4cd3bbbc515',
-    proof: [
+    merkleProof: [
       '0x5e15cf20abf0167f6479fc944cc51bbd90c76afd0e4390a493df05eae515244c',
       '0xa94f99af32d6e96c48a139710c671e1f384c1e03f65b1723bdd93541b229ccab',
       '0x441b9c09cd111bd7b16607813c5d49326689616292d6ce4ca11fce427c58c7c2',
@@ -57,7 +57,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0x09f2437ab35d96ecfc74eb2ab443e5062e73e0287610f4c225b800ac0bf0ed62',
-    proof: [
+    merkleProof: [
       '0x56d8db82704108bb2522315fe34d45c70fcb18c5f1b10d3230eaddba1fe69a33',
       '0x9092dabbd7eba60cba4ff09e25d40dd8e1b879d36120fe321bb5d73d37f2f36f',
       '0x635d4f13359386157141e0966a7f722bc4f224577abac7feb2091405736cf2b5',
@@ -74,7 +74,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0x0d6d5f91f17ea1194d957ca833122db29f1db9b3eb51c55b4c31ef04b37a6618',
-    proof: [
+    merkleProof: [
       '0x8b1aa4722975c62ddc3742e8ef5f39747f7e87f1b79f4e8bd3a3ee96b1a3ab5b',
       '0x680a3c96cc3d926333fbfe817d582d638a785c9662ee73a3e06364ef21de8c73',
       '0x441b9c09cd111bd7b16607813c5d49326689616292d6ce4ca11fce427c58c7c2',
@@ -91,7 +91,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0xd459cee3f8be040b5bcd396245970c22f16ccb85e94f8eca8b3680e1ce3a0bcc',
-    proof: [
+    merkleProof: [
       '0x46d2e33d33cca8b5f6d46cbb5878267e755d4673ea6ce7618ec22de3fcd097fc',
       '0x9092dabbd7eba60cba4ff09e25d40dd8e1b879d36120fe321bb5d73d37f2f36f',
       '0x635d4f13359386157141e0966a7f722bc4f224577abac7feb2091405736cf2b5',
@@ -108,7 +108,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0x804514eba43b08e64922faef4eaf5f6c47abcb96ab84d09b596886a082186a0b',
-    proof: [
+    merkleProof: [
       '0x6c2b30227eef4217152de3ac558ec2f5a074f932c803a0599c5b32ffb0d14b23',
       '0xa94f99af32d6e96c48a139710c671e1f384c1e03f65b1723bdd93541b229ccab',
       '0x441b9c09cd111bd7b16607813c5d49326689616292d6ce4ca11fce427c58c7c2',
@@ -125,7 +125,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0xb53c70280d791d92b093d059e02de7fc5d6ae9234ec3831871b1c22c75dcb9b6',
-    proof: [
+    merkleProof: [
       '0xe233109cb8607d43f40124a865c5b1b308832da9d4eded75491058fb3ea0c7d0',
       '0x9eb4684a1a66ead297b715ef719f53ea8a25d585872033e9c71cd46ac1877f7b',
     ],
@@ -140,7 +140,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0xb373ec04b452abe4fdd91c7306b22edc0f9f256ec2591e4b43caf7f272299c5c',
-    proof: [
+    merkleProof: [
       '0xd3fe5669e510eb84f565db64656b9b8d15bd3efc92064d7d9d7de6926a0ea4bb',
       '0x9eb4684a1a66ead297b715ef719f53ea8a25d585872033e9c71cd46ac1877f7b',
     ],
@@ -155,7 +155,7 @@ const depositData = [
     amount: '32000000000000000000',
     depositDataRoot:
       '0x1d51c2c03c543dbc5c22c42803b4153eab18c429eeabe15c91e9ad7fb4346bb5',
-    proof: [
+    merkleProof: [
       '0x8e75b1f2a18afdc09a9cee083b02c9bd1fae5abefa2b3a3f7ce1077af1f64dc7',
       '0x680a3c96cc3d926333fbfe817d582d638a785c9662ee73a3e06364ef21de8c73',
       '0x441b9c09cd111bd7b16607813c5d49326689616292d6ce4ca11fce427c58c7c2',
