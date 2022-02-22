@@ -1,5 +1,5 @@
 const depositDataMerkleRoot =
-  '0x29d7fc50216bc4cba49c0d8b31a1051a2d7cb48382d785009c7da0ea2702cc8e';
+  '0x9e1460f59d0b4a580d0f5eb0e34c89a8ba5d81538eddbe397c65e29b1ef10904';
 
 const depositData = [
   {
