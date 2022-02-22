@@ -113,6 +113,9 @@ module.exports = {
         chainId: 100,
       },
     },
+    gnosis: {
+      url: 'https://dai.poa.network/',
+    },
     local: {
       url: 'http://localhost:8545',
     },
@@ -145,7 +148,9 @@ module.exports = {
     flat: true,
   },
   etherscan: {
-    apiKey: 'api key goes here',
+    apiKey: {
+      xdai: 'api-key',
+    },
   },
   mocha: {
     timeout: 20000,
