@@ -336,7 +336,7 @@ contract('Pool (stake)', (accounts) => {
             from: sender1,
           }
         ),
-        'Pool: invalid amount'
+        'Pool: invalid deposit amount'
       );
     });
 
@@ -422,7 +422,7 @@ contract('Pool (stake)', (accounts) => {
         stakedToken,
         totalSupply,
         account: sender1,
-        balance,
+        balance: amount,
       });
     });
   });
@@ -444,7 +444,7 @@ contract('Pool (stake)', (accounts) => {
           recipient: sender2,
           pool,
         }),
-        'Pool: invalid amount'
+        'Pool: invalid deposit amount'
       );
     });
 

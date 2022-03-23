@@ -204,7 +204,6 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     it('toggling rewards does not affect current rewards balance', async () => {
       // mint sGNO for disabled account
       let deposit = ether('32');
-      let mintedAmount = ether('1');
       await stakeGNO({ account, amount: deposit, pool });
 
       // manual checkpoints update
@@ -234,7 +233,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check account's balance and reward arrived as usual
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
-        mintedAmount
+        deposit
       );
       let periodReward = await rewardToken.balanceOf(account);
       expect(periodReward).to.be.bignumber.greaterThan(new BN(0));
@@ -263,7 +262,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check account's balance and reward didn't change
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
-        mintedAmount
+        deposit
       );
       expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(
         periodReward
@@ -271,7 +270,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance updated, reward didn't change
       expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
-        distributorPrincipal.add(mintedAmount)
+        distributorPrincipal.add(deposit)
       );
       expect(
         await rewardToken.balanceOf(constants.ZERO_ADDRESS)
@@ -297,7 +296,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check user's balance and reward didn't change
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
-        mintedAmount
+        deposit
       );
       expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(
         periodReward
@@ -305,7 +304,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check distributor balance didn't change, reward updated
       expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
-        distributorPrincipal.add(mintedAmount)
+        distributorPrincipal.add(deposit)
       );
       expect(
         await rewardToken.balanceOf(constants.ZERO_ADDRESS)
@@ -329,7 +328,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
 
       // check user's balance and reward didn't change
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
-        mintedAmount
+        deposit
       );
       expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(
         periodReward

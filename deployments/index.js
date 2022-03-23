@@ -214,6 +214,7 @@ async function deployContracts(withdrawalCredentials = null) {
     stakedToken: stakedTokenAddress,
     rewardToken: rewardTokenAddress,
     merkleDistributor: merkleDistributorAddress,
+    poolEscrow: contracts.poolEscrow,
     roles: contracts.roles,
     contractChecker: contracts.contractChecker,
   };
