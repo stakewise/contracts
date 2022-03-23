@@ -470,11 +470,11 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amountIn",
+        "name": "mgnoIn",
         "type": "uint256"
       }
     ],
-    "name": "calculateMGNO",
+    "name": "calculateGNO",
     "outputs": [
       {
         "internalType": "uint256",
