@@ -124,6 +124,7 @@ contract('Pool (stake)', (accounts) => {
 
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
+      await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
       let maxAmount = await pool.minActivatingDeposit();
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
@@ -185,7 +186,7 @@ contract('Pool (stake)', (accounts) => {
         .add(poolBalance.div(ether('32')));
 
       // check deposit amount placed in activation queue
-      let receipt = await stakeMGNO({
+      let receipt = await stakeGNO({
         account: sender1,
         amount: depositAmount,
         pool,
