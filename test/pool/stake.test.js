@@ -128,8 +128,9 @@ contract('Pool (stake)', (accounts) => {
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
       });
-      totalSupply = totalSupply.add(depositAmount1);
-      poolBalance = poolBalance.add(depositAmount1);
+      let gnoAmount1 = await pool.calculateGNO(depositAmount1);
+      totalSupply = totalSupply.add(gnoAmount1);
+      poolBalance = poolBalance.add(gnoAmount1);
 
       await stakeMGNO({
         account: sender1,
@@ -140,7 +141,7 @@ contract('Pool (stake)', (accounts) => {
         stakedToken,
         totalSupply,
         account: sender1,
-        balance: depositAmount1,
+        balance: gnoAmount1,
       });
 
       // User 2 creates a deposit
@@ -148,8 +149,9 @@ contract('Pool (stake)', (accounts) => {
       let depositAmount2 = getDepositAmount({
         max: maxAmount,
       });
-      totalSupply = totalSupply.add(depositAmount2);
-      poolBalance = poolBalance.add(depositAmount2);
+      let gnoAmount2 = await pool.calculateGNO(depositAmount1);
+      totalSupply = totalSupply.add(gnoAmount2);
+      poolBalance = poolBalance.add(gnoAmount2);
 
       await stakeMGNO({
         account: sender2,
@@ -160,7 +162,7 @@ contract('Pool (stake)', (accounts) => {
         stakedToken,
         totalSupply,
         account: sender2,
-        balance: depositAmount2,
+        balance: gnoAmount2,
       });
 
       // check contract balance
@@ -175,7 +177,9 @@ contract('Pool (stake)', (accounts) => {
 
       // deposit more than 0.01 %
       let depositAmount = ether('32').mul(new BN(2));
-      poolBalance = poolBalance.add(depositAmount);
+      let gnoAmount = await pool.calculateGNO(depositAmount);
+
+      poolBalance = poolBalance.add(gnoAmount);
       let validatorIndex = activatedValidators
         .add(pendingValidators)
         .add(poolBalance.div(ether('32')));
@@ -189,11 +193,11 @@ contract('Pool (stake)', (accounts) => {
       await expectEvent(receipt, 'ActivationScheduled', {
         sender: sender1,
         validatorIndex,
-        value: depositAmount,
+        value: gnoAmount,
       });
       expect(
         await pool.activations(sender1, validatorIndex)
-      ).to.bignumber.equal(depositAmount);
+      ).to.bignumber.equal(gnoAmount);
 
       // check contract balance
       expect(await mgnoToken.balanceOf(pool.address)).to.be.bignumber.equal(
@@ -239,7 +243,9 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
-      totalSupply = totalSupply.add(amount);
+      let gnoAmount = await pool.calculateGNO(amount);
+
+      totalSupply = totalSupply.add(gnoAmount);
 
       let receipt = await stakeMGNO({
         account: sender1,
@@ -250,13 +256,13 @@ contract('Pool (stake)', (accounts) => {
       await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: constants.ZERO_ADDRESS,
         to: sender2,
-        value: amount,
+        value: gnoAmount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender2,
-        balance: amount,
+        balance: gnoAmount,
       });
       await checkStakedToken({
         stakedToken,
@@ -268,8 +274,10 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake with partner', async () => {
       let amount = ether('1');
+      let gnoAmount = await pool.calculateGNO(amount);
+
       const partner = otherAccounts[0];
-      totalSupply = totalSupply.add(amount);
+      totalSupply = totalSupply.add(gnoAmount);
 
       let receipt = await stakeMGNO({
         referrer: partner,
@@ -280,20 +288,22 @@ contract('Pool (stake)', (accounts) => {
       });
       await expectEvent(receipt, 'StakedWithPartner', {
         partner,
-        amount,
+        amount: gnoAmount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender1,
-        balance: amount,
+        balance: gnoAmount,
       });
     });
 
     it('can stake with referrer', async () => {
       const referrer = otherAccounts[0];
       let amount = ether('1');
-      totalSupply = totalSupply.add(amount);
+      let gnoAmount = await pool.calculateGNO(amount);
+
+      totalSupply = totalSupply.add(gnoAmount);
 
       let receipt = await stakeMGNO({
         referrer: referrer,
@@ -303,13 +313,13 @@ contract('Pool (stake)', (accounts) => {
       });
       await expectEvent(receipt, 'StakedWithReferrer', {
         referrer,
-        amount,
+        amount: gnoAmount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender1,
-        balance: amount,
+        balance: gnoAmount,
       });
     });
   });
@@ -344,9 +354,6 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
-      totalSupply = totalSupply.add(mgnoAmount);
-
       let receipt = await stakeGNO({
         account: sender1,
         amount: amount,
@@ -356,13 +363,13 @@ contract('Pool (stake)', (accounts) => {
       await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: constants.ZERO_ADDRESS,
         to: sender2,
-        value: mgnoAmount,
+        value: amount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender2,
-        balance: mgnoAmount,
+        balance: amount,
       });
       await checkStakedToken({
         stakedToken,
@@ -374,9 +381,8 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake with partner', async () => {
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
       const partner = otherAccounts[0];
-      totalSupply = totalSupply.add(mgnoAmount);
+      totalSupply = totalSupply.add(amount);
 
       let receipt = await stakeGNO({
         referrer: partner,
@@ -387,37 +393,36 @@ contract('Pool (stake)', (accounts) => {
       });
       await expectEvent(receipt, 'StakedWithPartner', {
         partner,
-        amount: mgnoAmount,
+        amount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender1,
-        balance: mgnoAmount,
+        balance: amount,
       });
     });
 
     it('can stake with referrer', async () => {
       const referrer = otherAccounts[0];
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
-      totalSupply = totalSupply.add(mgnoAmount);
+      totalSupply = totalSupply.add(amount);
 
       let receipt = await stakeGNO({
         referrer: referrer,
         account: sender1,
-        amount: amount,
+        amount,
         pool,
       });
       await expectEvent(receipt, 'StakedWithReferrer', {
         referrer,
-        amount: mgnoAmount,
+        amount,
       });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender1,
-        balance: mgnoAmount,
+        balance,
       });
     });
   });
@@ -445,8 +450,7 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
-      totalSupply = totalSupply.add(mgnoAmount);
+      totalSupply = totalSupply.add(amount);
 
       let receipt = await stakeGNOWithPermit({
         account,
@@ -462,14 +466,14 @@ contract('Pool (stake)', (accounts) => {
         {
           from: constants.ZERO_ADDRESS,
           to: sender2,
-          value: mgnoAmount,
+          value: amount,
         }
       );
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender2,
-        balance: mgnoAmount,
+        balance: amount,
       });
       await checkStakedToken({
         stakedToken,
@@ -481,15 +485,14 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake with partner', async () => {
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
       const partner = otherAccounts[0];
-      totalSupply = totalSupply.add(mgnoAmount);
+      totalSupply = totalSupply.add(amount);
 
       let receipt = await stakeGNOWithPermit({
         account,
         minter: sender1,
         referrer: partner,
-        amount: amount,
+        amount,
         hasRevenueShare: true,
         pool,
       });
@@ -499,28 +502,27 @@ contract('Pool (stake)', (accounts) => {
         'StakedWithPartner',
         {
           partner,
-          amount: mgnoAmount,
+          amount,
         }
       );
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: account.address,
-        balance: mgnoAmount,
+        balance: amount,
       });
     });
 
     it('can stake with referrer', async () => {
       const referrer = otherAccounts[0];
       let amount = ether('1');
-      let mgnoAmount = await pool.calculateMGNO(amount);
-      totalSupply = totalSupply.add(mgnoAmount);
+      totalSupply = totalSupply.add(amount);
 
       let receipt = await stakeGNOWithPermit({
         account,
         minter: sender1,
         referrer,
-        amount: amount,
+        amount,
         pool,
       });
       await expectEvent.inTransaction(
@@ -529,14 +531,14 @@ contract('Pool (stake)', (accounts) => {
         'StakedWithReferrer',
         {
           referrer,
-          amount: mgnoAmount,
+          amount,
         }
       );
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: account.address,
-        balance: mgnoAmount,
+        balance: amount,
       });
     });
 

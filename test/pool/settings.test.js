@@ -12,7 +12,7 @@ const {
   setActivatedValidators,
   setupOracleAccounts,
   registerValidator,
-  stakeMGNO,
+  stakeGNO,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
@@ -156,7 +156,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     });
 
     it('oracles contract can set activated validators', async () => {
-      await stakeMGNO({ account: anyone, amount: ether('32'), pool });
+      await stakeGNO({ account: anyone, amount: ether('32'), pool });
       await registerValidator({
         operator,
         oracles,

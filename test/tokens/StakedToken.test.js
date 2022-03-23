@@ -15,7 +15,7 @@ const {
   checkStakedToken,
   setupOracleAccounts,
   setTotalRewards,
-  stakeMGNO,
+  stakeGNO,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
@@ -80,7 +80,7 @@ contract('StakedToken', (accounts) => {
   afterEach(async () => resetFork());
 
   describe('mint', () => {
-    it('anyone cannot mint smGNO tokens', async () => {
+    it('anyone cannot mint sGNO tokens', async () => {
       await expectRevert(
         stakedToken.mint(sender1, ether('10'), {
           from: sender1,
@@ -100,7 +100,7 @@ contract('StakedToken', (accounts) => {
       let prevPrincipal = await stakedToken.distributorPrincipal();
       await stakedToken.toggleRewards(sender1, true, { from: admin });
       let amount = ether('10');
-      let receipt = await stakeMGNO({ account: sender1, amount, pool });
+      let receipt = await stakeGNO({ account: sender1, amount, pool });
       await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: constants.ZERO_ADDRESS,
         to: sender1,
@@ -120,7 +120,7 @@ contract('StakedToken', (accounts) => {
       await pool.setMinActivatingDeposit(value.add(ether('1')), {
         from: admin,
       });
-      await stakeMGNO({ account: sender1, amount: value, pool });
+      await stakeGNO({ account: sender1, amount: value, pool });
       totalSupply = totalSupply.add(value);
       distributorPrincipal = await stakedToken.distributorPrincipal();
     });
@@ -212,7 +212,7 @@ contract('StakedToken', (accounts) => {
       });
     });
 
-    it('can transfer smGNO tokens to different account', async () => {
+    it('can transfer sGNO tokens to different account', async () => {
       let receipt = await stakedToken.transfer(sender2, value, {
         from: sender1,
       });
@@ -238,7 +238,7 @@ contract('StakedToken', (accounts) => {
       });
     });
 
-    it('preserves rewards during smGNO transfer', async () => {
+    it('preserves rewards during sGNO transfer', async () => {
       let totalRewards = (await rewardToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards,
