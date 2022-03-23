@@ -124,8 +124,8 @@ contract('Pool (stake)', (accounts) => {
 
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
-      await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
-      let maxAmount = await pool.minActivatingDeposit();
+      let maxAmount = ether('0.01');
+      await pool.setMinActivatingDeposit(maxAmount, { from: admin });
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
       });
@@ -146,11 +146,10 @@ contract('Pool (stake)', (accounts) => {
       });
 
       // User 2 creates a deposit
-      maxAmount = await pool.minActivatingDeposit();
       let depositAmount2 = getDepositAmount({
         max: maxAmount,
       });
-      let gnoAmount2 = await pool.calculateGNO(depositAmount1);
+      let gnoAmount2 = await pool.calculateGNO(depositAmount2);
       totalSupply = totalSupply.add(gnoAmount2);
       poolBalance = poolBalance.add(gnoAmount2);
 
@@ -180,13 +179,13 @@ contract('Pool (stake)', (accounts) => {
       let depositAmount = ether('32').mul(new BN(2));
       let gnoAmount = await pool.calculateGNO(depositAmount);
 
-      poolBalance = poolBalance.add(gnoAmount);
+      poolBalance = poolBalance.add(depositAmount);
       let validatorIndex = activatedValidators
         .add(pendingValidators)
         .add(poolBalance.div(ether('32')));
 
       // check deposit amount placed in activation queue
-      let receipt = await stakeGNO({
+      let receipt = await stakeMGNO({
         account: sender1,
         amount: depositAmount,
         pool,
@@ -564,8 +563,8 @@ contract('Pool (stake)', (accounts) => {
       await pool.setPendingValidatorsLimit('1', { from: admin }); // 0.01 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
-      depositAmount = ether('32');
-      await stakeMGNO({
+      depositAmount = ether('1000');
+      await stakeGNO({
         account: sender1,
         amount: depositAmount,
         pool,
