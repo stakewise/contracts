@@ -2,8 +2,8 @@
 
 ## Pool
 
-- Contract: [0x9E6631d118C28b3d61c68F14FF30a99f7e91963a](https://blockscout.com/xdai/mainnet/address/0x9E6631d118C28b3d61c68F14FF30a99f7e91963a)
-- Transaction: [0x2026f92da716be1157047a3871fd8181ed9c4a2f93e633ca03523ab50910723f](https://blockscout.com/xdai/mainnet/tx/0x2026f92da716be1157047a3871fd8181ed9c4a2f93e633ca03523ab50910723f)
+- Contract: [0x2f99472b727e15EECf9B9eFF9F7481B85d3b4444](https://blockscout.com/xdai/mainnet/address/0x2f99472b727e15EECf9B9eFF9F7481B85d3b4444)
+- Transaction: [0x336baf83a82a2bb26b0900803251c9c0d247bb5c64b4a7ac424a78a98a0804cb](https://blockscout.com/xdai/mainnet/tx/0x336baf83a82a2bb26b0900803251c9c0d247bb5c64b4a7ac424a78a98a0804cb)
 
 ## Pool Escrow
 
@@ -12,18 +12,18 @@
 
 ## Pool Validators
 
-- Contract: [0xc8D8B1D8C37925CDf106C955aC330739eF4E9362](https://blockscout.com/xdai/mainnet/address/0xc8D8B1D8C37925CDf106C955aC330739eF4E9362)
-- Transaction: [0x9a7ae857ba3373424ba8ee9c0516fc5d8bc20eec3ddff14d6a6da2257f743d76](https://blockscout.com/xdai/mainnet/tx/0x9a7ae857ba3373424ba8ee9c0516fc5d8bc20eec3ddff14d6a6da2257f743d76)
+- Contract: [0xcF2C1A38F59400E8eA2AFD74C3AC4adF97526e18](https://blockscout.com/xdai/mainnet/address/0xcF2C1A38F59400E8eA2AFD74C3AC4adF97526e18)
+- Transaction: [0xaad4d3103a1a2f1e3e83c413db5849c4eb8256210dd143234d332fb85ece103c](https://blockscout.com/xdai/mainnet/tx/0xaad4d3103a1a2f1e3e83c413db5849c4eb8256210dd143234d332fb85ece103c)
 
 ## StakedToken
 
-- Contract: [0x9AEBd2322D3D5fB69324a3cFE380DD11Bc3694D2](https://blockscout.com/xdai/mainnet/address/0x9AEBd2322D3D5fB69324a3cFE380DD11Bc3694D2)
-- Transaction: [0x12a2035fa5f58adac7d00494ca1bb1f773077afd794f35ca4ae2e33536bbe973](https://blockscout.com/xdai/mainnet/tx/0x12a2035fa5f58adac7d00494ca1bb1f773077afd794f35ca4ae2e33536bbe973)
+- Contract: [0xA4eF9Da5BA71Cc0D2e5E877a910A37eC43420445](https://blockscout.com/xdai/mainnet/address/0xA4eF9Da5BA71Cc0D2e5E877a910A37eC43420445)
+- Transaction: [0xc4f20d1df7405da12affcc3cacc7687b867329806574149bfc4082491ec607ff](https://blockscout.com/xdai/mainnet/tx/0xc4f20d1df7405da12affcc3cacc7687b867329806574149bfc4082491ec607ff)
 
 ## RewardToken
 
-- Contract: [0x6FFa613eD41585B1c1e517A78d140cFBD68be639](https://blockscout.com/xdai/mainnet/address/0x6FFa613eD41585B1c1e517A78d140cFBD68be639)
-- Transaction: [0x2c2dc6e813620990ff46fdc6a620c2dfd46229929c65fffea5e58e3d07f0f7de](https://blockscout.com/xdai/mainnet/tx/0x2c2dc6e813620990ff46fdc6a620c2dfd46229929c65fffea5e58e3d07f0f7de)
+- Contract: [0x6aC78efae880282396a335CA2F79863A1e6831D4](https://blockscout.com/xdai/mainnet/address/0x6aC78efae880282396a335CA2F79863A1e6831D4)
+- Transaction: [0x26538aadb540883a2ccaad15aa57b5b45ac18bde63cff4dcb0505c123e10d9b3](https://blockscout.com/xdai/mainnet/tx/0x26538aadb540883a2ccaad15aa57b5b45ac18bde63cff4dcb0505c123e10d9b3)
 
 ## StakeWiseToken
 
@@ -32,13 +32,13 @@
 
 ## Oracles
 
-- Contract: [0xd0f5ddaed2D8BaE1F451D2A11FFAe1806f2Ee1a5](https://blockscout.com/xdai/mainnet/address/0xd0f5ddaed2D8BaE1F451D2A11FFAe1806f2Ee1a5)
-- Transaction: [0x1296e0c2b5190d4fb1ca52dde424f998d8064842a31648872bacade07b9b65e9](https://blockscout.com/xdai/mainnet/tx/0x1296e0c2b5190d4fb1ca52dde424f998d8064842a31648872bacade07b9b65e9)
+- Contract: [0xa6D123620Ea004cc5158b0ec260E934bd45C78c1](https://blockscout.com/xdai/mainnet/address/0xa6D123620Ea004cc5158b0ec260E934bd45C78c1)
+- Transaction: [0x75819316f089f1c6fe43a4227a2ff7e7718afcb85a8ee9c14c9853c272904cf7](https://blockscout.com/xdai/mainnet/tx/0x75819316f089f1c6fe43a4227a2ff7e7718afcb85a8ee9c14c9853c272904cf7)
 
 ## Merkle Distributor
 
-- Contract: [0x8c8F5BF28081984527dd94c627F591E28db7e7A0](https://blockscout.com/xdai/mainnet/address/0x8c8F5BF28081984527dd94c627F591E28db7e7A0)
-- Transaction: [0x0d575d458855ba364539647b93ef5e799c085ddd7e23a026070fcb0a9a09c386](https://blockscout.com/xdai/mainnet/tx/0x0d575d458855ba364539647b93ef5e799c085ddd7e23a026070fcb0a9a09c386)
+- Contract: [0x7dc30953CE236665d032329F6a922d67F0a33a2B](https://blockscout.com/xdai/mainnet/address/0x7dc30953CE236665d032329F6a922d67F0a33a2B)
+- Transaction: [0x67b190989c6ee9169f8d3d95d5abb35a3c3f376a2cdafd2d7141231822926b02](https://blockscout.com/xdai/mainnet/tx/0x67b190989c6ee9169f8d3d95d5abb35a3c3f376a2cdafd2d7141231822926b02)
 
 ## Roles
 
