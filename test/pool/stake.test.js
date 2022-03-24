@@ -362,6 +362,7 @@ contract('Pool (stake)', (accounts) => {
         recipient: sender2,
         pool,
       });
+      console.log((await stakedToken.balanceOf(sender1)).toString());
       await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
         from: constants.ZERO_ADDRESS,
         to: sender2,
