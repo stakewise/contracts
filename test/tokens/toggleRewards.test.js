@@ -202,6 +202,10 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     });
 
     it('toggling rewards does not affect current rewards balance', async () => {
+      await rewardToken.setProtocolFeeRecipient(admin, {
+        from: admin,
+      });
+
       // mint sGNO for disabled account
       let deposit = ether('32');
       await stakeGNO({ account, amount: deposit, pool });
