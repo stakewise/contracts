@@ -355,25 +355,23 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
-      console.log((await stakedToken.balanceOf(sender1)).toString());
       let receipt = await stakeGNO({
         account: sender1,
         amount: amount,
         recipient: sender2,
         pool,
       });
-      console.log((await stakedToken.balanceOf(sender1)).toString());
-      // await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
-      //   from: constants.ZERO_ADDRESS,
-      //   to: sender2,
-      //   value: amount,
-      // });
-      // await checkStakedToken({
-      //   stakedToken,
-      //   totalSupply,
-      //   account: sender2,
-      //   balance: amount,
-      // });
+      await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
+        from: constants.ZERO_ADDRESS,
+        to: sender2,
+        value: amount,
+      });
+      await checkStakedToken({
+        stakedToken,
+        totalSupply: amount,
+        account: sender2,
+        balance: amount,
+      });
       await checkStakedToken({
         stakedToken,
         totalSupply: amount,
