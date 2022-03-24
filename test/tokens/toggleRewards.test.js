@@ -12,7 +12,7 @@ const {
   resetFork,
   setupOracleAccounts,
   setTotalRewards,
-  stakeMGNO,
+  stakeGNO,
 } = require('../utils');
 const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
@@ -82,8 +82,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     it('admin can toggle rewards', async () => {
       let deposit = ether('5');
 
-      // mint smGNO for disabled account
-      await stakeMGNO({ account: account, amount: deposit, pool });
+      // mint sGNO for disabled account
+      await stakeGNO({ account: account, amount: deposit, pool });
 
       let receipt = await stakedToken.toggleRewards(account, true, {
         from: admin,
@@ -124,8 +124,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       });
       let deposit = ether('5');
 
-      // mint smGNO for disabled account
-      await stakeMGNO({ account, amount: deposit, pool });
+      // mint sGNO for disabled account
+      await stakeGNO({ account, amount: deposit, pool });
 
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
         deposit
@@ -142,8 +142,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
         await rewardToken.balanceOf(constants.ZERO_ADDRESS)
       ).to.be.bignumber.equal(distributorReward);
 
-      // mint smGNO for normal account
-      await stakeMGNO({ account: anyone, amount: ether('5'), pool });
+      // mint sGNO for normal account
+      await stakeGNO({ account: anyone, amount: ether('5'), pool });
 
       expect(await stakedToken.balanceOf(anyone)).to.be.bignumber.equal(
         deposit
@@ -202,9 +202,9 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     });
 
     it('toggling rewards does not affect current rewards balance', async () => {
-      // mint smGNO for disabled account
-      let deposit = ether('5');
-      await stakeMGNO({ account, amount: deposit, pool });
+      // mint sGNO for disabled account
+      let deposit = ether('32');
+      await stakeGNO({ account, amount: deposit, pool });
 
       // manual checkpoints update
       await rewardToken.updateRewardCheckpoint(account);

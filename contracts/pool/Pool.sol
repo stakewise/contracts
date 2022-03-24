@@ -101,8 +101,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         stakedToken = IStakedToken(_stakedToken);
         validators = IPoolValidators(_validators);
         oracles = _oracles;
+
         minActivatingDeposit = _minActivatingDeposit;
+        emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
+
         pendingValidatorsLimit = _pendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
 
         // approve transfers to the validator registration contract
         IERC20Upgradeable(MGNO_TOKEN).safeApprove(_validatorRegistration, type(uint256).max);
@@ -138,12 +142,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IPool-calculateMGNO}.
+     * @dev See {IPool-calculateGNO}.
      */
-    function calculateMGNO(uint256 amountIn) public view override returns (uint256) {
+    function calculateGNO(uint256 mgnoIn) public view override returns (uint256) {
         // fetch MGNO <-> GNO conversion rate
         uint256 rate = IMGNOWrapper(MGNO_WRAPPER).tokenRate(GNO_TOKEN);
-        return amountIn.mul(rate).div(WAD);
+        return mgnoIn.mul(WAD).div(rate);
     }
 
     /**
@@ -157,15 +161,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     )
         external override
     {
-        // convert GNO amount to mGNO
-        uint256 convertedAmount = calculateMGNO(amount);
-        require(convertedAmount > 0, "Pool: invalid amount");
-
         // mint staked tokens
         if (recipient != address(0)) {
-            _stake(recipient, convertedAmount);
+            _stake(recipient, amount);
         } else {
-            _stake(msg.sender, convertedAmount);
+            _stake(msg.sender, amount);
         }
 
         // withdraw GNO tokens from the user
@@ -178,9 +178,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         // emit events for tracking referrers or partners
         if (referredBy != address(0)) {
             if (hasRevenueShare) {
-                emit StakedWithPartner(referredBy, convertedAmount);
+                emit StakedWithPartner(referredBy, amount);
             } else {
-                emit StakedWithReferrer(referredBy, convertedAmount);
+                emit StakedWithReferrer(referredBy, amount);
             }
         }
     }
@@ -201,15 +201,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     )
         external override
     {
-        // convert GNO amount to mGNO
-        uint256 convertedAmount = calculateMGNO(amount);
-        require(convertedAmount > 0, "Pool: invalid amount");
-
         // mint staked tokens
         if (recipient != address(0)) {
-            _stake(recipient, convertedAmount);
+            _stake(recipient, amount);
         } else {
-            _stake(msg.sender, convertedAmount);
+            _stake(msg.sender, amount);
         }
 
         // approve transfers
@@ -234,9 +230,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         // emit events for tracking referrers or partners
         if (referredBy != address(0)) {
             if (hasRevenueShare) {
-                emit StakedWithPartner(referredBy, convertedAmount);
+                emit StakedWithPartner(referredBy, amount);
             } else {
-                emit StakedWithReferrer(referredBy, convertedAmount);
+                emit StakedWithReferrer(referredBy, amount);
             }
         }
     }
@@ -252,11 +248,14 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     )
         external override
     {
+        // convert mGNO amount to GNO
+        uint256 convertedAmount = calculateGNO(amount);
+
         // mint staked tokens
         if (recipient != address(0)) {
-            _stake(recipient, amount);
+            _stake(recipient, convertedAmount);
         } else {
-            _stake(msg.sender, amount);
+            _stake(msg.sender, convertedAmount);
         }
 
         // transfer mGNO tokens from the user
@@ -265,9 +264,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         // emit events for tracking referrers or partners
         if (referredBy != address(0)) {
             if (hasRevenueShare) {
-                emit StakedWithPartner(referredBy, amount);
+                emit StakedWithPartner(referredBy, convertedAmount);
             } else {
-                emit StakedWithReferrer(referredBy, amount);
+                emit StakedWithReferrer(referredBy, convertedAmount);
             }
         }
     }

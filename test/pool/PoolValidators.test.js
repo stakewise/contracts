@@ -15,7 +15,7 @@ const {
   impersonateAccount,
   resetFork,
   checkValidatorRegistered,
-  stakeMGNO,
+  stakeGNO,
 } = require('../utils');
 const {
   depositData,
@@ -64,7 +64,7 @@ contract('Pool Validators', (accounts) => {
     // collect validator deposit
     let poolBalance = await mgnoToken.balanceOf(pool.address);
     let depositAmount = validatorDeposit.sub(poolBalance.mod(validatorDeposit));
-    await stakeMGNO({ account: anyone, amount: depositAmount, pool });
+    await stakeGNO({ account: anyone, amount: depositAmount, pool });
 
     oracles = await Oracles.at(upgradedContracts.oracles);
     oracleAccounts = await setupOracleAccounts({

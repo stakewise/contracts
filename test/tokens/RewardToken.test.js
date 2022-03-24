@@ -17,7 +17,7 @@ const {
   checkRewardToken,
   setTotalRewards,
   setupOracleAccounts,
-  stakeMGNO,
+  stakeGNO,
 } = require('../utils');
 
 const StakedToken = artifacts.require('StakedToken');
@@ -48,7 +48,7 @@ contract('RewardToken', ([sender, merkleDistributor, ...accounts]) => {
     totalSupply = await rewardToken.totalSupply();
     await rewardToken.setProtocolFee(protocolFee, { from: admin });
 
-    await stakeMGNO({ account: sender, amount: ether('1'), pool });
+    await stakeGNO({ account: sender, amount: ether('1'), pool });
   });
 
   afterEach(async () => resetFork());
@@ -238,8 +238,8 @@ contract('RewardToken', ([sender, merkleDistributor, ...accounts]) => {
       await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
         from: admin,
       });
-      await stakeMGNO({ account: sender1, amount: stakedAmount1, pool });
-      await stakeMGNO({ account: sender2, amount: stakedAmount2, pool });
+      await stakeGNO({ account: sender1, amount: stakedAmount1, pool });
+      await stakeGNO({ account: sender2, amount: stakedAmount2, pool });
 
       totalSupply = (await rewardToken.totalSupply()).add(ether('10'));
       await setTotalRewards({

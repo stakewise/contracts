@@ -176,10 +176,10 @@ interface IPool {
     function setPendingValidatorsLimit(uint256 newPendingValidatorsLimit) external;
 
     /**
-    * @dev Function for calculating mGNO amount for the GNO input.
-    * @param amountIn - GNO tokens amount.
+    * @dev Function for calculating GNO amount for the mGNO input.
+    * @param mgnoIn - mGNO tokens amount.
     */
-    function calculateMGNO(uint256 amountIn) external view returns (uint256);
+    function calculateGNO(uint256 mgnoIn) external view returns (uint256);
 
     /**
     * @dev Function for checking whether validator index can be activated.

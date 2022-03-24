@@ -67,7 +67,6 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
         require(admin != address(0), "RewardToken: invalid admin address");
         require(_stakedToken != address(0), "RewardToken: invalid StakedToken address");
         require(_oracles != address(0), "RewardToken: invalid Oracles address");
-        require(_protocolFeeRecipient != address(0), "RewardToken: invalid protocol fee recipient address");
         require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
         require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
 
@@ -77,9 +76,13 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
 
         stakedToken = IStakedToken(_stakedToken);
         oracles = _oracles;
-        protocolFeeRecipient = _protocolFeeRecipient;
-        protocolFee = _protocolFee;
         merkleDistributor = _merkleDistributor;
+
+        protocolFeeRecipient = _protocolFeeRecipient;
+        emit ProtocolFeeRecipientUpdated(_protocolFeeRecipient);
+
+        protocolFee = _protocolFee;
+        emit ProtocolFeeUpdated(_protocolFee);
     }
 
     /**
