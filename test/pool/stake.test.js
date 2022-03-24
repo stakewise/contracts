@@ -355,6 +355,7 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
+      console.log((await stakedToken.balanceOf(sender1)).toString());
       let receipt = await stakeGNO({
         account: sender1,
         amount: amount,
