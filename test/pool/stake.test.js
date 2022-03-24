@@ -368,18 +368,18 @@ contract('Pool (stake)', (accounts) => {
       //   to: sender2,
       //   value: amount,
       // });
-      await checkStakedToken({
-        stakedToken,
-        totalSupply,
-        account: sender2,
-        balance: amount,
-      });
-      await checkStakedToken({
-        stakedToken,
-        totalSupply,
-        account: sender1,
-        balance: new BN(0),
-      });
+      // await checkStakedToken({
+      //   stakedToken,
+      //   totalSupply,
+      //   account: sender2,
+      //   balance: amount,
+      // });
+      // await checkStakedToken({
+      //   stakedToken,
+      //   totalSupply,
+      //   account: sender1,
+      //   balance: new BN(0),
+      // });
     });
 
     it('can stake with partner', async () => {
