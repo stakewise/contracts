@@ -16,10 +16,7 @@ const {
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
-const {
-  depositDataMerkleRoot,
-  withdrawalCredentials,
-} = require('./depositDataMerkleRoot');
+const { depositDataMerkleRoot } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
@@ -37,7 +34,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
+    let upgradedContracts = await upgradeContracts();
     let validators = await PoolValidators.at(upgradedContracts.poolValidators);
     await validators.addOperator(
       operator,

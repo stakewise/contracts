@@ -27,7 +27,6 @@ const {
 const {
   depositData,
   depositDataMerkleRoot,
-  withdrawalCredentials,
 } = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
@@ -58,7 +57,7 @@ contract('Pool (stake)', (accounts) => {
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
-    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
+    let upgradedContracts = await upgradeContracts();
 
     mgnoToken = await IGCToken.at(contracts.MGNOToken);
     pool = await Pool.at(upgradedContracts.pool);
