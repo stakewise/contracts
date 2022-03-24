@@ -131,7 +131,7 @@ contract('Pool (stake)', (accounts) => {
       });
       let gnoAmount1 = await pool.calculateGNO(depositAmount1);
       totalSupply = totalSupply.add(gnoAmount1);
-      poolBalance = poolBalance.add(gnoAmount1);
+      poolBalance = poolBalance.add(depositAmount1);
 
       await stakeMGNO({
         account: sender1,
@@ -151,7 +151,7 @@ contract('Pool (stake)', (accounts) => {
       });
       let gnoAmount2 = await pool.calculateGNO(depositAmount2);
       totalSupply = totalSupply.add(gnoAmount2);
-      poolBalance = poolBalance.add(gnoAmount2);
+      poolBalance = poolBalance.add(depositAmount2);
 
       await stakeMGNO({
         account: sender2,
@@ -206,8 +206,7 @@ contract('Pool (stake)', (accounts) => {
       expect(await stakedToken.totalSupply()).to.bignumber.equal(totalSupply);
     });
 
-    // TODO: re-enable once on forked network and there are activated validators
-    it.skip('activates deposit of user immediately with not exceeded pending validators limit', async () => {
+    it('activates deposit of user immediately with not exceeded pending validators limit', async () => {
       await pool.setPendingValidatorsLimit('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
@@ -556,7 +555,8 @@ contract('Pool (stake)', (accounts) => {
     });
   });
 
-  describe('activating', () => {
+  // TODO: re-enable once activations enabled
+  describe.skip('activating', () => {
     let validatorIndex, depositAmount;
 
     beforeEach(async () => {
@@ -666,7 +666,8 @@ contract('Pool (stake)', (accounts) => {
     });
   });
 
-  describe('activating multiple', () => {
+  // TODO: re-enable once activations enabled
+  describe.skip('activating multiple', () => {
     let validatorIndex1, validatorIndex2, depositAmount;
 
     beforeEach(async () => {
