@@ -42,8 +42,8 @@
 
 ## Roles
 
-- Contract: [0x61975c09207c5DFe794b0A652C8CAf8458159AAe](https://blockscout.com/xdai/mainnet/address/0x61975c09207c5DFe794b0A652C8CAf8458159AAe)
-- Transaction: [0x6e135d52c673c12bba353b38b15783a08ec48d5ab86bc24851dd6b17f4207d8f](https://blockscout.com/xdai/mainnet/tx/0x6e135d52c673c12bba353b38b15783a08ec48d5ab86bc24851dd6b17f4207d8f)
+- Contract: [0x9b23e05AEfb37D5ea9b525016d19eb82b65F255c](https://blockscout.com/xdai/mainnet/address/0x9b23e05AEfb37D5ea9b525016d19eb82b65F255c)
+- Transaction: [0x52214f909397e183cb0483ae9783fd6a2acb0866873bc7a05d9ba6680852673a](https://blockscout.com/xdai/mainnet/tx/0x52214f909397e183cb0483ae9783fd6a2acb0866873bc7a05d9ba6680852673a)
 
 ## Contract Checker
 
@@ -52,5 +52,5 @@
 
 ## Proxy Admin
 
-- Contract: [0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1](https://blockscout.com/xdai/mainnet/address/0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1)
-- Transaction: [0xbef982794d6c507026333a6fac5599842f3a880403ded933771e9b84d9fa6fba](https://blockscout.com/xdai/mainnet/tx/0xbef982794d6c507026333a6fac5599842f3a880403ded933771e9b84d9fa6fba)
+- Contract: [0x7feae196f74D524aBFb55465c56581f07a9084A3](https://blockscout.com/xdai/mainnet/address/0x7feae196f74D524aBFb55465c56581f07a9084A3)
+- Transaction: [0xd67249c7457b9c46236406be5344203a14fc490e29441ec08e1740d9881944c2](https://blockscout.com/xdai/mainnet/tx/0xd67249c7457b9c46236406be5344203a14fc490e29441ec08e1740d9881944c2)
