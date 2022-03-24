@@ -363,23 +363,23 @@ contract('Pool (stake)', (accounts) => {
         pool,
       });
       console.log((await stakedToken.balanceOf(sender1)).toString());
-      await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
-        from: constants.ZERO_ADDRESS,
-        to: sender2,
-        value: amount,
-      });
+      // await expectEvent.inTransaction(receipt.tx, StakedToken, 'Transfer', {
+      //   from: constants.ZERO_ADDRESS,
+      //   to: sender2,
+      //   value: amount,
+      // });
       await checkStakedToken({
         stakedToken,
         totalSupply,
         account: sender2,
         balance: amount,
       });
-      // await checkStakedToken({
-      //   stakedToken,
-      //   totalSupply,
-      //   account: sender1,
-      //   balance: new BN(0),
-      // });
+      await checkStakedToken({
+        stakedToken,
+        totalSupply,
+        account: sender1,
+        balance: new BN(0),
+      });
     });
 
     it('can stake with partner', async () => {
