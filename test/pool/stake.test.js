@@ -171,7 +171,8 @@ contract('Pool (stake)', (accounts) => {
       );
     });
 
-    it('places deposit of user to the activation queue with exceeded pending validators limit', async () => {
+    // TODO: re-enable once activations enabled
+    it.skip('places deposit of user to the activation queue with exceeded pending validators limit', async () => {
       await pool.setPendingValidatorsLimit('1', { from: admin }); // 0.01 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
@@ -206,7 +207,8 @@ contract('Pool (stake)', (accounts) => {
       expect(await stakedToken.totalSupply()).to.bignumber.equal(totalSupply);
     });
 
-    it('activates deposit of user immediately with not exceeded pending validators limit', async () => {
+    // TODO: re-enable once activations enabled
+    it.skip('activates deposit of user immediately with not exceeded pending validators limit', async () => {
       await pool.setPendingValidatorsLimit('1000', { from: admin }); // 10 %
       await pool.setMinActivatingDeposit(ether('0.01'), { from: admin });
 
