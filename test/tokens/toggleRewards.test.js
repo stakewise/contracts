@@ -249,7 +249,9 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       let newDistributorReward = await rewardToken.balanceOf(
         constants.ZERO_ADDRESS
       );
-      expect(newDistributorReward).to.be.bignumber.equal(distributorReward);
+      expect(newDistributorReward).to.be.bignumber.greaterThan(
+        distributorReward
+      );
 
       // disable rewards
       await stakedToken.toggleRewards(account, true, {
@@ -338,7 +340,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
         periodReward
       );
 
-      // check distributor balance updated, reward didnt' change
+      // check distributor balance updated, reward didn't change
       expect(await stakedToken.distributorPrincipal()).to.bignumber.equal(
         distributorPrincipal
       );

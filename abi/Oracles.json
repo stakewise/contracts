@@ -85,22 +85,10 @@
         "type": "address"
       },
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "oracle",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "operator",
-        "type": "address"
-      },
-      {
         "indexed": false,
-        "internalType": "bytes",
-        "name": "publicKey",
-        "type": "bytes"
+        "internalType": "address[]",
+        "name": "oracles",
+        "type": "address[]"
       },
       {
         "indexed": false,
@@ -109,7 +97,7 @@
         "type": "uint256"
       }
     ],
-    "name": "RegisterValidatorVoteSubmitted",
+    "name": "RegisterValidatorsVoteSubmitted",
     "type": "event"
   },
   {
@@ -598,14 +586,14 @@
             "type": "bytes"
           }
         ],
-        "internalType": "struct IPoolValidators.DepositData",
+        "internalType": "struct IPoolValidators.DepositData[]",
         "name": "depositData",
-        "type": "tuple"
+        "type": "tuple[]"
       },
       {
-        "internalType": "bytes32[]",
-        "name": "merkleProof",
-        "type": "bytes32[]"
+        "internalType": "bytes32[][]",
+        "name": "merkleProofs",
+        "type": "bytes32[][]"
       },
       {
         "internalType": "bytes32",
@@ -618,7 +606,7 @@
         "type": "bytes[]"
       }
     ],
-    "name": "registerValidator",
+    "name": "registerValidators",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

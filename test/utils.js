@@ -10,7 +10,6 @@ const {
   constants,
   send,
 } = require('@openzeppelin/test-helpers');
-const { depositData } = require('./pool/depositDataMerkleRoot');
 const { contracts } = require('../deployments/settings');
 
 const IDepositContract = artifacts.require('IDepositContract');
@@ -198,21 +197,21 @@ async function setMerkleRoot({
   });
 }
 
-async function registerValidator({
-  operator,
-  merkleProof = depositData[0].merkleProof,
-  signature = depositData[0].signature,
-  publicKey = depositData[0].publicKey,
-  withdrawalCredentials = depositData[0].withdrawalCredentials,
-  depositDataRoot = depositData[0].depositDataRoot,
+async function registerValidators({
+  depositData,
+  merkleProofs,
   oracles,
   oracleAccounts,
   validatorsDepositRoot,
 }) {
   let nonce = await oracles.currentValidatorsNonce();
   let encoded = defaultAbiCoder.encode(
-    ['uint256', 'bytes', 'address', 'bytes32'],
-    [nonce.toString(), publicKey, operator, validatorsDepositRoot]
+    [
+      'uint256',
+      'tuple(address operator,bytes32 withdrawalCredentials,bytes32 depositDataRoot,bytes publicKey,bytes signature)[]',
+      'bytes32',
+    ],
+    [nonce.toString(), depositData, validatorsDepositRoot]
   );
   let candidateId = hexlify(keccak256(encoded));
 
@@ -225,9 +224,9 @@ async function registerValidator({
   }
 
   // register validator
-  return oracles.registerValidator(
-    { operator, withdrawalCredentials, depositDataRoot, publicKey, signature },
-    merkleProof,
+  return oracles.registerValidators(
+    depositData,
+    merkleProofs,
     validatorsDepositRoot,
     signatures,
     {
@@ -469,5 +468,5 @@ module.exports = {
   setTotalRewards,
   setMerkleRoot,
   setupOracleAccounts,
-  registerValidator,
+  registerValidators,
 };

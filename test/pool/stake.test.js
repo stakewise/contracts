@@ -354,6 +354,7 @@ contract('Pool (stake)', (accounts) => {
 
     it('can stake to different recipient address', async () => {
       let amount = ether('1');
+      let totalSupply = await stakedToken.totalSupply();
       let receipt = await stakeGNO({
         account: sender1,
         amount: amount,
@@ -367,13 +368,13 @@ contract('Pool (stake)', (accounts) => {
       });
       await checkStakedToken({
         stakedToken,
-        totalSupply: amount,
+        totalSupply: totalSupply.add(amount),
         account: sender2,
         balance: amount,
       });
       await checkStakedToken({
         stakedToken,
-        totalSupply: amount,
+        totalSupply: totalSupply.add(amount),
         account: sender1,
         balance: new BN(0),
       });
