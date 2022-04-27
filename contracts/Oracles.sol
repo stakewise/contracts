@@ -53,32 +53,6 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _rewardToken,
-        address _pool,
-        address _poolValidators,
-        address _merkleDistributor
-    )
-        external override initializer
-    {
-        require(admin != address(0), "Pool: invalid admin address");
-        require(_rewardToken != address(0), "Pool: invalid RewardToken address");
-        require(_pool != address(0), "Pool: invalid Pool address");
-        require(_poolValidators != address(0), "Pool: invalid PoolValidators address");
-        require(_merkleDistributor != address(0), "Pool: invalid MerkleDistributor address");
-
-        __OwnablePausableUpgradeable_init(admin);
-
-        rewardToken = IRewardToken(_rewardToken);
-        pool = IPool(_pool);
-        poolValidators = IPoolValidators(_poolValidators);
-        merkleDistributor = IMerkleDistributor(_merkleDistributor);
-    }
-
-    /**
      * @dev See {IOracles-currentRewardsNonce}.
      */
     function currentRewardsNonce() external override view returns (uint256) {

@@ -66,22 +66,6 @@ interface IOracles {
     event OracleRemoved(address indexed oracle);
 
     /**
-    * @dev Constructor for initializing the Oracles contract.
-    * @param admin - address of the contract admin.
-    * @param _rewardToken - address of the RewardToken contract.
-    * @param _pool - address of the Pool contract.
-    * @param _poolValidators - address of the PoolValidators contract.
-    * @param _merkleDistributor - address of the MerkleDistributor contract.
-    */
-    function initialize(
-        address admin,
-        address _rewardToken,
-        address _pool,
-        address _poolValidators,
-        address _merkleDistributor
-    ) external;
-
-    /**
     * @dev Function for checking whether an account has an oracle role.
     * @param account - account to check.
     */
