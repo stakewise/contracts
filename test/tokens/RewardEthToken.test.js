@@ -195,7 +195,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
-          protocolReward: new BN(0),
+          protocolReward: ether('1'),
         }
       );
     });
