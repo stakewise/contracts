@@ -181,7 +181,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     it('oracles can update rewards', async () => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
-      console.log(await rewardEthToken.protocolFeeRecipient());
       let receipt = await setTotalRewards({
         rewardEthToken,
         oracles,
