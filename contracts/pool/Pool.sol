@@ -88,8 +88,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         validators = IPoolValidators(_validators);
         oracles = _oracles;
         whiteListManager = IWhiteListManager(_whiteListManager);
+
         minActivatingDeposit = _minActivatingDeposit;
+        emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
+
         pendingValidatorsLimit = _pendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
     }
 
     /**
@@ -179,7 +183,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     function _stake(address recipient, uint256 value) internal whenNotPaused {
-        require(whiteListManager.whitelistedAccounts(recipient), "Pool: invalid recipient address");
+        // whether recipient is whitelisted or not is checked in the StakeEthToken.mint call
         if (recipient != msg.sender) {
             require(whiteListManager.whitelistedAccounts(msg.sender), "Pool: invalid sender address");
         }

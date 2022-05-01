@@ -142,6 +142,6 @@ module.exports = {
     apiKey: 'api key goes here',
   },
   mocha: {
-    timeout: 20000,
+    timeout: 40000,
   },
 };

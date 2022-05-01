@@ -160,7 +160,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "RewardEthToken: invalid sender");
+        require(whiteListManager.whitelistedAccounts(sender), "RewardEthToken: invalid sender");
         require(whiteListManager.whitelistedAccounts(recipient), "RewardEthToken: invalid receiver");
         require(block.number > lastUpdateBlockNumber, "RewardEthToken: cannot transfer during rewards update");
 

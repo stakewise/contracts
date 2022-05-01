@@ -107,9 +107,9 @@ contract('Pool (stake)', (accounts) => {
       await expectRevert(
         pool.stakeOnBehalf(constants.ZERO_ADDRESS, {
           from: sender1,
-          value: ether('0'),
+          value: ether('1'),
         }),
-        'Pool: invalid recipient'
+        'StakedEthToken: invalid account'
       );
     });
 
@@ -133,7 +133,7 @@ contract('Pool (stake)', (accounts) => {
           from: sender1,
           value: ether('1'),
         }),
-        'Pool: invalid recipient address'
+        'StakedEthToken: invalid account'
       );
     });
 
