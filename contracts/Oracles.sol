@@ -103,6 +103,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-addOracle}.
      */
     function addOracle(address account) external override {
+        require(account != address(0), "Oracles: invalid oracle address");
         grantRole(ORACLE_ROLE, account);
         emit OracleAdded(account);
     }
