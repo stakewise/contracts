@@ -5,12 +5,13 @@ const {
   balance,
   send,
   constants,
+  BN,
 } = require('@openzeppelin/test-helpers');
 const { keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
 const {
-  registerValidator,
+  registerValidators,
   setupOracleAccounts,
   stopImpersonatingAccount,
   impersonateAccount,
@@ -278,14 +279,15 @@ contract('Pool Validators', (accounts) => {
     });
   });
 
-  describe('register validator', () => {
-    let {
-      publicKey,
-      signature,
+  describe('register validators', () => {
+    let validatorDepositData = {
+      operator,
       withdrawalCredentials,
-      merkleProof,
-      depositDataRoot,
-    } = depositData[0];
+      depositDataRoot: depositData[0].depositDataRoot,
+      publicKey: depositData[0].publicKey,
+      signature: depositData[0].signature,
+    };
+    let merkleProof = depositData[0].merkleProof;
 
     beforeEach(async () => {
       await validators.addOperator(
@@ -300,34 +302,20 @@ contract('Pool Validators', (accounts) => {
 
     it('fails to register validator by not oracles', async () => {
       await expectRevert(
-        validators.registerValidator(
-          {
-            operator,
-            withdrawalCredentials,
-            depositDataRoot,
-            publicKey,
-            signature,
-          },
-          merkleProof,
-          {
-            from: anyone,
-          }
-        ),
+        validators.registerValidator(validatorDepositData, merkleProof, {
+          from: anyone,
+        }),
         'PoolValidators: access denied'
       );
     });
 
     it('fails to register validator for not committed operator', async () => {
       await expectRevert(
-        registerValidator({
-          operator,
-          merkleProof,
-          signature,
-          publicKey,
-          depositDataRoot,
+        registerValidators({
+          depositData: [validatorDepositData],
+          merkleProofs: [merkleProof],
           oracles,
           oracleAccounts,
-          withdrawalCredentials,
           validatorsDepositRoot,
         }),
         'PoolValidators: invalid operator'
@@ -338,29 +326,14 @@ contract('Pool Validators', (accounts) => {
       await validators.commitOperator({
         from: operator,
       });
-      await registerValidator({
-        operator,
-        merkleProof,
-        signature,
-        publicKey,
-        withdrawalCredentials,
-        depositDataRoot,
-        oracles,
-        oracleAccounts,
-        validatorsDepositRoot,
-      });
 
       await expectRevert(
-        registerValidator({
-          operator,
-          merkleProof,
-          signature,
-          publicKey,
-          withdrawalCredentials,
-          depositDataRoot,
+        registerValidators({
+          depositData: [validatorDepositData, validatorDepositData],
+          merkleProofs: [merkleProof, merkleProof],
           oracles,
           oracleAccounts,
-          validatorsDepositRoot: await depositContract.get_deposit_root(),
+          validatorsDepositRoot,
         }),
         'PoolValidators: validator already registered'
       );
@@ -370,14 +343,11 @@ contract('Pool Validators', (accounts) => {
       await validators.commitOperator({
         from: operator,
       });
+
       await expectRevert(
-        registerValidator({
-          operator: anyone,
-          merkleProof,
-          signature,
-          publicKey,
-          withdrawalCredentials,
-          depositDataRoot,
+        registerValidators({
+          depositData: [{ ...validatorDepositData, operator: anyone }],
+          merkleProofs: [merkleProof],
           oracles,
           oracleAccounts,
           validatorsDepositRoot,
@@ -391,15 +361,16 @@ contract('Pool Validators', (accounts) => {
         from: operator,
       });
       await expectRevert(
-        registerValidator({
-          operator,
-          merkleProof,
-          signature,
-          publicKey,
-          depositDataRoot: constants.ZERO_BYTES32,
+        registerValidators({
+          depositData: [
+            {
+              ...validatorDepositData,
+              depositDataRoot: constants.ZERO_BYTES32,
+            },
+          ],
+          merkleProofs: [merkleProof],
           oracles,
           oracleAccounts,
-          withdrawalCredentials,
           validatorsDepositRoot,
         }),
         'PoolValidators: invalid merkle proof'
@@ -411,46 +382,40 @@ contract('Pool Validators', (accounts) => {
         from: operator,
       });
       await expectRevert(
-        registerValidator({
-          operator,
-          merkleProof,
-          signature,
-          publicKey,
-          depositDataRoot,
+        registerValidators({
+          depositData: [validatorDepositData],
+          merkleProofs: [merkleProof],
           oracles,
           oracleAccounts,
-          withdrawalCredentials,
           validatorsDepositRoot: keccak256('0x6be4000000000000'),
         }),
         'Oracles: invalid validators deposit root'
       );
     });
 
-    it('oracles can register validator', async () => {
+    it('oracles can register one validator', async () => {
       await validators.commitOperator({
         from: operator,
       });
 
       let poolBalance = await balance.current(pool.address);
-      let receipt = await registerValidator({
-        operator,
-        merkleProof,
-        signature,
-        publicKey,
-        depositDataRoot,
+      let receipt = await registerValidators({
+        depositData: [validatorDepositData],
+        merkleProofs: [merkleProof],
         oracles,
         oracleAccounts,
-        withdrawalCredentials,
         validatorsDepositRoot,
       });
 
       await expectEvent.inTransaction(receipt.tx, Pool, 'ValidatorRegistered', {
         operator,
-        publicKey,
+        publicKey: validatorDepositData.publicKey,
       });
       expect(
         await validators.isValidatorRegistered(
-          keccak256(defaultAbiCoder.encode(['bytes'], [publicKey]))
+          keccak256(
+            defaultAbiCoder.encode(['bytes'], [validatorDepositData.publicKey])
+          )
         )
       ).to.equal(true);
       let _operator = await validators.getOperator(operator);
@@ -460,11 +425,77 @@ contract('Pool Validators', (accounts) => {
       );
       await checkValidatorRegistered({
         transaction: receipt.tx,
-        pubKey: publicKey,
+        pubKey: validatorDepositData.publicKey,
         withdrawalCredentials,
-        signature,
+        signature: validatorDepositData.signature,
         validatorDepositAmount,
       });
+    });
+
+    it('oracles can register multiple validators', async () => {
+      await validators.commitOperator({
+        from: operator,
+      });
+      await pool.stake({
+        from: anyone,
+        value: ether('32').mul(new BN(depositData.length)),
+      });
+
+      let poolBalance = await balance.current(pool.address);
+      let validatorsDepositData = [];
+      let merkleProofs = [];
+      for (let i = 0; i < depositData.length; i++) {
+        validatorsDepositData.push({
+          operator,
+          withdrawalCredentials,
+          depositDataRoot: depositData[i].depositDataRoot,
+          publicKey: depositData[i].publicKey,
+          signature: depositData[i].signature,
+        });
+        merkleProofs.push(depositData[i].merkleProof);
+      }
+      let receipt = await registerValidators({
+        depositData: validatorsDepositData,
+        merkleProofs,
+        oracles,
+        oracleAccounts,
+        validatorsDepositRoot,
+      });
+
+      for (let i = 0; i < depositData.length; i++) {
+        await expectEvent.inTransaction(
+          receipt.tx,
+          Pool,
+          'ValidatorRegistered',
+          {
+            operator,
+            publicKey: validatorsDepositData[i].publicKey,
+          }
+        );
+        expect(
+          await validators.isValidatorRegistered(
+            keccak256(
+              defaultAbiCoder.encode(
+                ['bytes'],
+                [validatorsDepositData[i].publicKey]
+              )
+            )
+          )
+        ).to.equal(true);
+        await checkValidatorRegistered({
+          transaction: receipt.tx,
+          pubKey: validatorsDepositData[i].publicKey,
+          withdrawalCredentials,
+          signature: validatorsDepositData[i].signature,
+          validatorDepositAmount,
+        });
+      }
+
+      let _operator = await validators.getOperator(operator);
+      expect(_operator[1]).to.equal(true);
+      expect(await balance.current(pool.address)).to.bignumber.equal(
+        poolBalance.sub(validatorDepositAmount.mul(new BN(depositData.length)))
+      );
     });
   });
 });

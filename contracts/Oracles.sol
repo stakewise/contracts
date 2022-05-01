@@ -218,11 +218,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-registerValidator}.
-     */
-    function registerValidator(
-        IPoolValidators.DepositData calldata depositData,
-        bytes32[] calldata merkleProof,
+    * @dev See {IOracles-registerValidators}.
+    */
+    function registerValidators(
+        IPoolValidators.DepositData[] calldata depositData,
+        bytes32[][] calldata merkleProofs,
         bytes32 validatorsDepositRoot,
         bytes[] calldata signatures
     )
@@ -237,10 +237,10 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator, validatorsDepositRoot))
+            keccak256(abi.encode(nonce, depositData, validatorsDepositRoot))
         );
 
-        // check signatures and calculate number of submitted oracle votes
+        // check signatures are correct
         address[] memory signedOracles = new address[](signatures.length);
         for (uint256 i = 0; i < signatures.length; i++) {
             bytes memory signature = signatures[i];
@@ -251,19 +251,20 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit RegisterValidatorVoteSubmitted(
-                msg.sender,
-                signer,
-                depositData.operator,
-                depositData.publicKey,
-                nonce
-            );
         }
 
-        // increment nonce for future signatures
-        validatorsNonce.increment();
+        uint256 depositDataLength = depositData.length;
+        require(merkleProofs.length == depositDataLength, "Oracles: invalid merkle proofs length");
 
-        // register validator
-        poolValidators.registerValidator(depositData, merkleProof);
+        // submit deposit data
+        for (uint256 i = 0; i < depositDataLength; i++) {
+            // register validator
+            poolValidators.registerValidator(depositData[i], merkleProofs[i]);
+        }
+
+        emit RegisterValidatorsVoteSubmitted(msg.sender, signedOracles, nonce);
+
+        // increment nonce for future registrations
+        validatorsNonce.increment();
     }
 }
