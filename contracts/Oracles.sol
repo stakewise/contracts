@@ -77,6 +77,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-addOracle}.
      */
     function addOracle(address account) external override {
+        require(account != address(0), "Oracles: invalid oracle address");
         grantRole(ORACLE_ROLE, account);
         emit OracleAdded(account);
     }
@@ -102,7 +103,8 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     * @param signaturesCount - number of signatures.
     */
     function isEnoughSignatures(uint256 signaturesCount) internal view returns (bool) {
-        return signaturesCount.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2);
+        uint256 totalOracles = getRoleMemberCount(ORACLE_ROLE);
+        return totalOracles >= signaturesCount && signaturesCount.mul(3) > totalOracles.mul(2);
     }
 
     /**
