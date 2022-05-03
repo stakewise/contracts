@@ -217,12 +217,12 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
         oracles.submitRewards(
           newTotalRewards,
           newActivatedValidators,
-          signatures,
+          Array(oracleAccounts.length).fill(signature),
           {
             from: oracleAccounts[0],
           }
@@ -367,11 +367,16 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
-        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
-          from: oracleAccounts[0],
-        }),
+        oracles.submitMerkleRoot(
+          merkleRoot,
+          merkleProofs,
+          Array(oracleAccounts.length).fill(signature),
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Oracles: repeated signature'
       );
     });
@@ -587,13 +592,13 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
         oracles.registerValidators(
           validatorsDepositData,
           merkleProofs,
           validatorsDepositRoot,
-          signatures,
+          Array(oracleAccounts.length).fill(signature),
           {
             from: oracleAccounts[0],
           }
