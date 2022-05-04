@@ -136,6 +136,6 @@ workflows:
       - report-gas:
           requires:
             - test
-#      - coverage:
-#          requires:
-#            - compile
+      - coverage:
+          requires:
+            - compile
