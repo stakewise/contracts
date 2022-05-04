@@ -119,11 +119,32 @@ jobs:
           command: |
             cp coverage.json /tmp/coverage/cov_$CIRCLE_NODE_INDEX.json
             chmod -R 777 /tmp/coverage/cov_$CIRCLE_NODE_INDEX.json
+      - persist_to_workspace:
+          root: /tmp/coverage
+          paths:
+            - cov_0.json
+            - cov_1.json
+            - cov_2.json
+            - cov_3.json
+            - cov_4.json
+            - cov_5.json
+            - cov_6.json
+            - cov_7.json
+            - cov_8.json
+            - cov_9.json
+            - cov_10.json
+            - cov_11.json
+            - cov_12.json
+
+  report-coverage:
+    executor: default
+    steps:
+      - attach_workspace:
+          at: /tmp/coverage
       - run:
           name: Combine coverage reports
           command: |
             cp -R /tmp/coverage/* .
-            cp -R /tmp/forked_coverage/* .
             npx istanbul-combine-updated -r lcov \
               cov_0.json \
               cov_1.json \
@@ -163,3 +184,6 @@ workflows:
       - coverage:
           requires:
             - compile
+      - report-coverage:
+          requires:
+            - coverage
