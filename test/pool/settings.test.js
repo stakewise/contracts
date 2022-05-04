@@ -11,12 +11,15 @@ const {
   resetFork,
   setActivatedValidators,
   setupOracleAccounts,
-  registerValidator,
+  registerValidators,
   stakeGNO,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
-const { depositDataMerkleRoot } = require('./depositDataMerkleRoot');
+const {
+  depositData,
+  depositDataMerkleRoot,
+} = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
@@ -154,8 +157,17 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
 
     it('oracles contract can set activated validators', async () => {
       await stakeGNO({ account: anyone, amount: ether('32'), pool });
-      await registerValidator({
-        operator,
+      await registerValidators({
+        depositData: [
+          {
+            operator,
+            withdrawalCredentials: depositData[0].withdrawalCredentials,
+            depositDataRoot: depositData[0].depositDataRoot,
+            publicKey: depositData[0].publicKey,
+            signature: depositData[0].signature,
+          },
+        ],
+        merkleProofs: [depositData[0].merkleProof],
         oracles,
         oracleAccounts,
         validatorsDepositRoot,
