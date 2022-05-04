@@ -35,6 +35,11 @@
 - Contract: [0xa6D123620Ea004cc5158b0ec260E934bd45C78c1](https://blockscout.com/xdai/mainnet/address/0xa6D123620Ea004cc5158b0ec260E934bd45C78c1)
 - Transaction: [0x75819316f089f1c6fe43a4227a2ff7e7718afcb85a8ee9c14c9853c272904cf7](https://blockscout.com/xdai/mainnet/tx/0x75819316f089f1c6fe43a4227a2ff7e7718afcb85a8ee9c14c9853c272904cf7)
 
+    ### Oracles V2
+
+    - Implementation: [0x972B98dce8Ad32D1cbB0514A2115217066b0ee41](https://blockscout.com/xdai/mainnet/address/0x972B98dce8Ad32D1cbB0514A2115217066b0ee41)
+    - Transaction: [0xbc7f8c4f8864871ed3e5e56594efd828c2e15d550e5e5e049b03a3c38fbffcd3](https://blockscout.com/xdai/mainnet/tx/0xbc7f8c4f8864871ed3e5e56594efd828c2e15d550e5e5e049b03a3c38fbffcd3)
+
 ## Merkle Distributor
 
 - Contract: [0x7dc30953CE236665d032329F6a922d67F0a33a2B](https://blockscout.com/xdai/mainnet/address/0x7dc30953CE236665d032329F6a922d67F0a33a2B)
