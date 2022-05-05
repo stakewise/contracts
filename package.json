@@ -67,7 +67,6 @@
     "hardhat-contract-sizer": "^2.1.1",
     "hardhat-gas-reporter": "^1.0.6",
     "husky": "^7.0.4",
-    "istanbul-combine-updated": "^0.3.0",
     "lint-staged": "12.1.2",
     "prettier": "^2.5.1",
     "solhint": "^3.3.6",
