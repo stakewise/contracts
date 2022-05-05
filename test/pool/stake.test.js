@@ -109,7 +109,7 @@ contract('Pool (stake)', (accounts) => {
           from: sender1,
           value: ether('1'),
         }),
-        'StakedEthToken: invalid account'
+        'Pool: invalid recipient address'
       );
     });
 
@@ -133,7 +133,7 @@ contract('Pool (stake)', (accounts) => {
           from: sender1,
           value: ether('1'),
         }),
-        'StakedEthToken: invalid account'
+        'Pool: invalid recipient address'
       );
     });
 

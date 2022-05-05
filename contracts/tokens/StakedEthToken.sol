@@ -123,7 +123,6 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      */
     function mint(address account, uint256 amount) external override {
         require(msg.sender == pool, "StakedEthToken: access denied");
-        require(whiteListManager.whitelistedAccounts(account), "StakedEthToken: invalid account");
 
         // start calculating account rewards with updated deposit amount
         bool rewardsDisabled = rewardEthToken.updateRewardCheckpoint(account);

@@ -183,7 +183,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     }
 
     function _stake(address recipient, uint256 value) internal whenNotPaused {
-        // whether recipient is whitelisted or not is checked in the StakeEthToken.mint call
+        require(whiteListManager.whitelistedAccounts(recipient), "Pool: invalid recipient address");
         if (recipient != msg.sender) {
             require(whiteListManager.whitelistedAccounts(msg.sender), "Pool: invalid sender address");
         }
