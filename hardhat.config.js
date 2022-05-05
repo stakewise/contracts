@@ -105,6 +105,9 @@ module.exports = {
         url: process.env.HARDHAT_FORK_API_URL,
         blockNumber: BLOCK_NUMBER,
       },
+      accounts: {
+        accountsBalance: '1000000000000000000000000',
+      },
     },
     local: {
       url: 'http://localhost:8545',
@@ -142,6 +145,6 @@ module.exports = {
     apiKey: 'api key goes here',
   },
   mocha: {
-    timeout: 40000,
+    timeout: 1000000,
   },
 };

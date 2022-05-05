@@ -11,11 +11,12 @@ const {
   resetFork,
   setActivatedValidators,
   setupOracleAccounts,
-  registerValidator,
+  registerValidators,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings } = require('../../deployments/settings');
 const {
+  depositData,
   depositDataMerkleRoot,
   withdrawalCredentials,
 } = require('./depositDataMerkleRoot');
@@ -169,8 +170,17 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
         from: anyone,
         value: ether('32'),
       });
-      await registerValidator({
-        operator,
+      await registerValidators({
+        depositData: [
+          {
+            operator,
+            withdrawalCredentials,
+            depositDataRoot: depositData[0].depositDataRoot,
+            publicKey: depositData[0].publicKey,
+            signature: depositData[0].signature,
+          },
+        ],
+        merkleProofs: [depositData[0].merkleProof],
         oracles,
         oracleAccounts,
         validatorsDepositRoot,
