@@ -9,7 +9,6 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IDepositContract.sol";
 import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IPool.sol";
-import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IWhiteListManager.sol";
 
 /**
