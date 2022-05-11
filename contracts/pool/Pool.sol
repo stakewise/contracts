@@ -9,7 +9,6 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IDepositContract.sol";
 import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IPool.sol";
-import "../interfaces/IPoolValidators.sol";
 import "../interfaces/IWhiteListManager.sol";
 
 /**
@@ -88,8 +87,12 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         validators = IPoolValidators(_validators);
         oracles = _oracles;
         whiteListManager = IWhiteListManager(_whiteListManager);
+
         minActivatingDeposit = _minActivatingDeposit;
+        emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
+
         pendingValidatorsLimit = _pendingValidatorsLimit;
+        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
     }
 
     /**

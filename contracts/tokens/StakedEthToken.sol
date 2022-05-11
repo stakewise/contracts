@@ -62,7 +62,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     /**
      * @dev See {IERC20-totalSupply}.
      */
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() external view override returns (uint256) {
         return totalDeposits;
     }
 
@@ -95,7 +95,7 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
      * @dev See {ERC20-_transfer}.
      */
     function _transfer(address sender, address recipient, uint256 amount) internal override whenNotPaused {
-        require(sender != address(0), "StakedEthToken: invalid sender");
+        require(whiteListManager.whitelistedAccounts(sender), "StakedEthToken: invalid sender");
         require(whiteListManager.whitelistedAccounts(recipient), "StakedEthToken: invalid receiver");
         require(block.number > rewardEthToken.lastUpdateBlockNumber(), "StakedEthToken: cannot transfer during rewards update");
 

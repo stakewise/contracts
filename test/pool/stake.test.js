@@ -13,7 +13,7 @@ const {
   impersonateAccount,
   resetFork,
   getDepositAmount,
-  registerValidator,
+  registerValidators,
   setupOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
@@ -107,9 +107,9 @@ contract('Pool (stake)', (accounts) => {
       await expectRevert(
         pool.stakeOnBehalf(constants.ZERO_ADDRESS, {
           from: sender1,
-          value: ether('0'),
+          value: ether('1'),
         }),
-        'Pool: invalid recipient'
+        'Pool: invalid recipient address'
       );
     });
 
@@ -438,18 +438,20 @@ contract('Pool (stake)', (accounts) => {
 
       for (let i = 0; i < validatorIndex.sub(activatedValidators); i++) {
         validatorsDepositRoot = await depositContract.get_deposit_root();
-        await registerValidator({
-          admin,
-          validators,
+        await registerValidators({
+          depositData: [
+            {
+              operator,
+              withdrawalCredentials,
+              depositDataRoot: depositData[i].depositDataRoot,
+              publicKey: depositData[i].publicKey,
+              signature: depositData[i].signature,
+            },
+          ],
+          merkleProofs: [depositData[i].merkleProof],
           oracles,
           oracleAccounts,
-          operator,
           validatorsDepositRoot,
-          merkleProof: depositData[i].merkleProof,
-          signature: depositData[i].signature,
-          publicKey: depositData[i].publicKey,
-          withdrawalCredentials: depositData[i].withdrawalCredentials,
-          depositDataRoot: depositData[i].depositDataRoot,
         });
       }
     });
@@ -554,20 +556,26 @@ contract('Pool (stake)', (accounts) => {
         .add(pendingValidators)
         .add(poolBalance.div(ether('32')));
 
-      for (let i = 0; i < validatorIndex2.sub(activatedValidators); i++) {
+      for (
+        let i = 0;
+        i < validatorIndex2.sub(activatedValidators).sub(pendingValidators);
+        i++
+      ) {
         validatorsDepositRoot = await depositContract.get_deposit_root();
-        await registerValidator({
-          admin,
-          validators,
+        await registerValidators({
+          depositData: [
+            {
+              operator,
+              withdrawalCredentials,
+              depositDataRoot: depositData[i].depositDataRoot,
+              publicKey: depositData[i].publicKey,
+              signature: depositData[i].signature,
+            },
+          ],
+          merkleProofs: [depositData[i].merkleProof],
           oracles,
           oracleAccounts,
-          operator,
           validatorsDepositRoot,
-          merkleProof: depositData[i].merkleProof,
-          signature: depositData[i].signature,
-          publicKey: depositData[i].publicKey,
-          withdrawalCredentials: depositData[i].withdrawalCredentials,
-          depositDataRoot: depositData[i].depositDataRoot,
         });
       }
     });

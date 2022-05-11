@@ -27,6 +27,7 @@ contract PoolEscrow is IPoolEscrow {
     * @param _owner - address of the contract owner.
     */
     constructor(address _owner) {
+        require(_owner != address(0), "PoolEscrow: invalid owner address");
         owner = _owner;
         emit OwnershipTransferApplied(address(0), _owner);
     }

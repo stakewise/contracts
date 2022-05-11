@@ -180,7 +180,7 @@ contract('StakedEthToken', (accounts) => {
         stakedEthToken,
         totalSupply,
         account: sender2,
-        balance: value,
+        balance: ether('0'),
       });
     });
 
