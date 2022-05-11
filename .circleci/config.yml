@@ -113,7 +113,7 @@ jobs:
           command: |
             circleci tests glob 'test/**/*.test.js' |
             circleci tests split |
-            xargs yarn coverage --testfiles
+            xargs -I {} yarn coverage --testfiles "{}"
       - run:
           name: Upload coverage
           command: |
