@@ -116,6 +116,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     }
 
     await stakeGNO({ account: anyone, pool, amount: ether('1') });
+    await send.ether(anyone, admin, ether('3000'));
     await mintTokens(token, admin, amount);
   });
 
