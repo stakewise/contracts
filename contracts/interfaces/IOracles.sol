@@ -10,12 +10,6 @@ pragma abicoder v2;
  */
 interface IOracles {
     /**
-    * @dev Event for tracking the Oracles contract initialization.
-    * @param rewardsNonce - rewards nonce the contract was initialized with.
-    */
-    event Initialized(uint256 rewardsNonce);
-
-    /**
     * @dev Event for tracking oracle rewards votes.
     * @param sender - address of the transaction sender.
     * @param oracle - address of the account which submitted vote.
@@ -48,18 +42,14 @@ interface IOracles {
     );
 
     /**
-    * @dev Event for tracking validator registration votes.
+    * @dev Event for tracking validators registration vote.
     * @param sender - address of the transaction sender.
-    * @param oracle - address of the signed oracle.
-    * @param operator - address of the operator the vote was sent for.
-    * @param publicKey - public key of the validator the vote was sent for.
-    * @param nonce - validator registration nonce.
+    * @param oracles - addresses of the signed oracles.
+    * @param nonce - validators registration nonce.
     */
-    event RegisterValidatorVoteSubmitted(
+    event RegisterValidatorsVoteSubmitted(
         address indexed sender,
-        address indexed oracle,
-        address indexed operator,
-        bytes publicKey,
+        address[] oracles,
         uint256 nonce
     );
 
@@ -74,24 +64,6 @@ interface IOracles {
     * @param oracle - address of removed oracle.
     */
     event OracleRemoved(address indexed oracle);
-
-    /**
-    * @dev Constructor for initializing the Oracles contract.
-    * @param admin - address of the contract admin.
-    * @param oraclesV1 - address of the Oracles V1 contract.
-    * @param _rewardEthToken - address of the RewardEthToken contract.
-    * @param _pool - address of the Pool contract.
-    * @param _poolValidators - address of the PoolValidators contract.
-    * @param _merkleDistributor - address of the MerkleDistributor contract.
-    */
-    function initialize(
-        address admin,
-        address oraclesV1,
-        address _rewardEthToken,
-        address _pool,
-        address _poolValidators,
-        address _merkleDistributor
-    ) external;
 
     /**
     * @dev Function for checking whether an account has an oracle role.
@@ -155,16 +127,16 @@ interface IOracles {
     ) external;
 
     /**
-    * @dev Function for submitting registration of the new validator.
+    * @dev Function for submitting registrations of the new validators.
     * The quorum of signatures over the same data is required to register.
-    * @param depositData - the deposit data for the registration.
-    * @param merkleProof - an array of hashes to verify whether the deposit data is part of the deposit data merkle root.
+    * @param depositData - an array of deposit data to register.
+    * @param merkleProofs - an array of hashes to verify whether the every deposit data is part of the merkle root.
     * @param validatorsDepositRoot - validators deposit root to protect from malicious operators.
     * @param signatures - oracles' signatures.
     */
-    function registerValidator(
-        IPoolValidators.DepositData calldata depositData,
-        bytes32[] calldata merkleProof,
+    function registerValidators(
+        IPoolValidators.DepositData[] calldata depositData,
+        bytes32[][] calldata merkleProofs,
         bytes32 validatorsDepositRoot,
         bytes[] calldata signatures
     ) external;

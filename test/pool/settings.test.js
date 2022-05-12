@@ -11,11 +11,14 @@ const {
   resetFork,
   setActivatedValidators,
   setupOracleAccounts,
-  registerValidator,
+  registerValidators,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings, contracts } = require('../../deployments/settings');
-const { depositDataMerkleRoot } = require('./depositDataMerkleRoot');
+const { contractSettings } = require('../../deployments/settings');
+const {
+  depositData,
+  depositDataMerkleRoot,
+} = require('./depositDataMerkleRoot');
 
 const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
@@ -25,7 +28,7 @@ const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
   const admin = contractSettings.admin;
-  let pool, oracles, oracleAccounts, rewardEthToken, validatorsDepositRoot;
+  let pool, oracles, oracleAccounts, validatorsDepositRoot, contracts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -33,8 +36,8 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
-    let validators = await PoolValidators.at(upgradedContracts.poolValidators);
+    contracts = await upgradeContracts();
+    let validators = await PoolValidators.at(contracts.poolValidators);
     await validators.addOperator(
       operator,
       depositDataMerkleRoot,
@@ -51,7 +54,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
       await pool.validatorRegistration()
     );
     validatorsDepositRoot = await depositContract.get_deposit_root();
-    oracles = await Oracles.at(upgradedContracts.oracles);
+    oracles = await Oracles.at(contracts.oracles);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     oracleAccounts = await setupOracleAccounts({
       admin,
@@ -156,8 +159,17 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
         from: anyone,
         value: ether('32'),
       });
-      await registerValidator({
-        operator,
+      await registerValidators({
+        depositData: [
+          {
+            operator,
+            withdrawalCredentials: depositData[0].withdrawalCredentials,
+            depositDataRoot: depositData[0].depositDataRoot,
+            publicKey: depositData[0].publicKey,
+            signature: depositData[0].signature,
+          },
+        ],
+        merkleProofs: [depositData[0].merkleProof],
         oracles,
         oracleAccounts,
         validatorsDepositRoot,

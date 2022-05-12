@@ -13,7 +13,6 @@ import "./interfaces/IPool.sol";
 import "./interfaces/IOracles.sol";
 import "./interfaces/IMerkleDistributor.sol";
 import "./interfaces/IPoolValidators.sol";
-import "./interfaces/IOraclesV1.sol";
 
 /**
  * @title Oracles
@@ -54,43 +53,6 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-initialize}.
-     */
-    function initialize(
-        address admin,
-        address oraclesV1,
-        address _rewardEthToken,
-        address _pool,
-        address _poolValidators,
-        address _merkleDistributor
-    )
-        external override initializer
-    {
-        require(admin != address(0), "Pool: invalid admin address");
-        require(_rewardEthToken != address(0), "Pool: invalid RewardEthToken address");
-        require(_pool != address(0), "Pool: invalid Pool address");
-        require(_poolValidators != address(0), "Pool: invalid PoolValidators address");
-        require(_merkleDistributor != address(0), "Pool: invalid MerkleDistributor address");
-
-        __OwnablePausableUpgradeable_init(admin);
-
-        // migrate data from previous Oracles contract
-        rewardsNonce._value = IOraclesV1(oraclesV1).currentNonce().add(1000);
-        uint256 oraclesCount = AccessControlUpgradeable(oraclesV1).getRoleMemberCount(ORACLE_ROLE);
-        for (uint256 i = 0; i < oraclesCount; i++) {
-            address oracle = AccessControlUpgradeable(oraclesV1).getRoleMember(ORACLE_ROLE, i);
-            _setupRole(ORACLE_ROLE, oracle);
-            emit OracleAdded(oracle);
-        }
-
-        rewardEthToken = IRewardEthToken(_rewardEthToken);
-        pool = IPool(_pool);
-        poolValidators = IPoolValidators(_poolValidators);
-        merkleDistributor = IMerkleDistributor(_merkleDistributor);
-        emit Initialized(rewardsNonce.current());
-    }
-
-    /**
      * @dev See {IOracles-currentRewardsNonce}.
      */
     function currentRewardsNonce() external override view returns (uint256) {
@@ -115,6 +77,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      * @dev See {IOracles-addOracle}.
      */
     function addOracle(address account) external override {
+        require(account != address(0), "Oracles: invalid oracle address");
         grantRole(ORACLE_ROLE, account);
         emit OracleAdded(account);
     }
@@ -140,7 +103,8 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     * @param signaturesCount - number of signatures.
     */
     function isEnoughSignatures(uint256 signaturesCount) internal view returns (bool) {
-        return signaturesCount.mul(3) > getRoleMemberCount(ORACLE_ROLE).mul(2);
+        uint256 totalOracles = getRoleMemberCount(ORACLE_ROLE);
+        return totalOracles >= signaturesCount && signaturesCount.mul(3) > totalOracles.mul(2);
     }
 
     /**
@@ -228,11 +192,11 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-registerValidator}.
-     */
-    function registerValidator(
-        IPoolValidators.DepositData calldata depositData,
-        bytes32[] calldata merkleProof,
+    * @dev See {IOracles-registerValidators}.
+    */
+    function registerValidators(
+        IPoolValidators.DepositData[] calldata depositData,
+        bytes32[][] calldata merkleProofs,
         bytes32 validatorsDepositRoot,
         bytes[] calldata signatures
     )
@@ -247,10 +211,10 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         // calculate candidate ID hash
         uint256 nonce = validatorsNonce.current();
         bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData.publicKey, depositData.operator, validatorsDepositRoot))
+            keccak256(abi.encode(nonce, depositData, validatorsDepositRoot))
         );
 
-        // check signatures and calculate number of submitted oracle votes
+        // check signatures are correct
         address[] memory signedOracles = new address[](signatures.length);
         for (uint256 i = 0; i < signatures.length; i++) {
             bytes memory signature = signatures[i];
@@ -261,19 +225,20 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
-            emit RegisterValidatorVoteSubmitted(
-                msg.sender,
-                signer,
-                depositData.operator,
-                depositData.publicKey,
-                nonce
-            );
         }
 
-        // increment nonce for future signatures
-        validatorsNonce.increment();
+        uint256 depositDataLength = depositData.length;
+        require(merkleProofs.length == depositDataLength, "Oracles: invalid merkle proofs length");
 
-        // register validator
-        poolValidators.registerValidator(depositData, merkleProof);
+        // submit deposit data
+        for (uint256 i = 0; i < depositDataLength; i++) {
+            // register validator
+            poolValidators.registerValidator(depositData[i], merkleProofs[i]);
+        }
+
+        emit RegisterValidatorsVoteSubmitted(msg.sender, signedOracles, nonce);
+
+        // increment nonce for future registrations
+        validatorsNonce.increment();
     }
 }

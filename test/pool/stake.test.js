@@ -13,7 +13,7 @@ const {
   impersonateAccount,
   resetFork,
   getDepositAmount,
-  registerValidator,
+  registerValidators,
   setupOracleAccounts,
 } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
@@ -117,8 +117,9 @@ contract('Pool (stake)', (accounts) => {
     });
 
     it('mints tokens for users with deposit less than min activating', async () => {
+      let maxAmount = ether('0.01');
+      await pool.setMinActivatingDeposit(maxAmount, { from: admin });
       // User 1 creates a deposit
-      let maxAmount = await pool.minActivatingDeposit();
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
       });
@@ -409,25 +410,31 @@ contract('Pool (stake)', (accounts) => {
         from: sender1,
         value: depositAmount,
       });
-      poolBalance = poolBalance.add(depositAmount);
+      poolBalance = await balance.current(pool.address);
       validatorIndex = activatedValidators
         .add(pendingValidators)
         .add(poolBalance.div(ether('32')));
 
-      for (let i = 0; i < validatorIndex.sub(activatedValidators); i++) {
+      for (
+        let i = 0;
+        i < validatorIndex.sub(activatedValidators).sub(pendingValidators);
+        i++
+      ) {
         validatorsDepositRoot = await depositContract.get_deposit_root();
-        await registerValidator({
-          admin,
-          validators,
+        await registerValidators({
+          depositData: [
+            {
+              operator,
+              withdrawalCredentials: depositData[i].withdrawalCredentials,
+              depositDataRoot: depositData[i].depositDataRoot,
+              publicKey: depositData[i].publicKey,
+              signature: depositData[i].signature,
+            },
+          ],
+          merkleProofs: [depositData[i].merkleProof],
           oracles,
           oracleAccounts,
-          operator,
           validatorsDepositRoot,
-          merkleProof: depositData[i].merkleProof,
-          signature: depositData[i].signature,
-          publicKey: depositData[i].publicKey,
-          withdrawalCredentials: depositData[i].withdrawalCredentials,
-          depositDataRoot: depositData[i].depositDataRoot,
         });
       }
     });
@@ -532,20 +539,26 @@ contract('Pool (stake)', (accounts) => {
         .add(pendingValidators)
         .add(poolBalance.div(ether('32')));
 
-      for (let i = 0; i < validatorIndex2.sub(activatedValidators); i++) {
+      for (
+        let i = 0;
+        i < validatorIndex2.sub(activatedValidators).sub(pendingValidators);
+        i++
+      ) {
         validatorsDepositRoot = await depositContract.get_deposit_root();
-        await registerValidator({
-          admin,
-          validators,
+        await registerValidators({
+          depositData: [
+            {
+              operator,
+              withdrawalCredentials: depositData[i].withdrawalCredentials,
+              depositDataRoot: depositData[i].depositDataRoot,
+              publicKey: depositData[i].publicKey,
+              signature: depositData[i].signature,
+            },
+          ],
+          merkleProofs: [depositData[i].merkleProof],
           oracles,
           oracleAccounts,
-          operator,
           validatorsDepositRoot,
-          merkleProof: depositData[i].merkleProof,
-          signature: depositData[i].signature,
-          publicKey: depositData[i].publicKey,
-          withdrawalCredentials: depositData[i].withdrawalCredentials,
-          depositDataRoot: depositData[i].depositDataRoot,
         });
       }
     });

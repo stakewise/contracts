@@ -14,7 +14,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
   depositDataMerkleRoot,
@@ -31,7 +31,12 @@ const iDepositContract = artifacts.require('IDepositContract');
 
 contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles, rewardEthToken, pool, merkleDistributor, poolValidators;
+  let oracles,
+    rewardEthToken,
+    pool,
+    merkleDistributor,
+    poolValidators,
+    contracts;
   let [oracle, anotherOracle] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
@@ -40,13 +45,12 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
-
-    oracles = await Oracles.at(upgradedContracts.oracles);
+    contracts = await upgradeContracts();
+    oracles = await Oracles.at(contracts.oracles);
     pool = await Pool.at(contracts.pool);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
-    poolValidators = await PoolValidators.at(upgradedContracts.poolValidators);
+    poolValidators = await PoolValidators.at(contracts.poolValidators);
   });
 
   afterEach(async () => resetFork());
@@ -214,12 +218,12 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
         oracles.submitRewards(
           newTotalRewards,
           newActivatedValidators,
-          signatures,
+          Array(oracleAccounts.length).fill(signature),
           {
             from: oracleAccounts[0],
           }
@@ -364,11 +368,16 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
-        oracles.submitMerkleRoot(merkleRoot, merkleProofs, signatures, {
-          from: oracleAccounts[0],
-        }),
+        oracles.submitMerkleRoot(
+          merkleRoot,
+          merkleProofs,
+          Array(oracleAccounts.length).fill(signature),
+          {
+            from: oracleAccounts[0],
+          }
+        ),
         'Oracles: repeated signature'
       );
     });
@@ -475,25 +484,28 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
   describe('validator voting', () => {
     const depositDataMerkleProofs =
       'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
-    let {
-      publicKey,
-      signature,
-      depositDataRoot,
-      withdrawalCredentials,
-      merkleProof,
-    } = depositData[0];
     let currentNonce,
       oracleAccounts,
       candidateId,
       signatures,
       validatorsDepositRoot;
-    let validatorData = {
-      operator,
-      withdrawalCredentials,
-      depositDataRoot,
-      publicKey,
-      signature,
-    };
+    let validatorsDepositData = [
+      {
+        operator,
+        withdrawalCredentials: depositData[0].withdrawalCredentials,
+        depositDataRoot: depositData[0].depositDataRoot,
+        publicKey: depositData[0].publicKey,
+        signature: depositData[0].signature,
+      },
+      {
+        operator,
+        withdrawalCredentials: depositData[1].withdrawalCredentials,
+        depositDataRoot: depositData[1].depositDataRoot,
+        publicKey: depositData[1].publicKey,
+        signature: depositData[1].signature,
+      },
+    ];
+    let merkleProofs = [depositData[0].merkleProof, depositData[1].merkleProof];
 
     beforeEach(async () => {
       await poolValidators.addOperator(
@@ -516,8 +528,12 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       validatorsDepositRoot = await depositContract.get_deposit_root();
 
       let encoded = defaultAbiCoder.encode(
-        ['uint256', 'bytes', 'address', 'bytes32'],
-        [currentNonce.toString(), publicKey, operator, validatorsDepositRoot]
+        [
+          'uint256',
+          'tuple(address operator,bytes32 withdrawalCredentials,bytes32 depositDataRoot,bytes publicKey,bytes signature)[]',
+          'bytes32',
+        ],
+        [currentNonce.toString(), validatorsDepositData, validatorsDepositRoot]
       );
       candidateId = keccak256(encoded);
 
@@ -532,9 +548,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       expect(await oracles.paused()).equal(true);
 
       await expectRevert(
-        oracles.registerValidator(
-          validatorData,
-          merkleProof,
+        oracles.registerValidators(
+          validatorsDepositData,
+          merkleProofs,
           validatorsDepositRoot,
           signatures,
           {
@@ -547,9 +563,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
     it('fails to submit with not enough signatures', async () => {
       await expectRevert(
-        oracles.registerValidator(
-          validatorData,
-          merkleProof,
+        oracles.registerValidators(
+          validatorsDepositData,
+          merkleProofs,
           validatorsDepositRoot,
           signatures.slice(signatures.length - 1),
           {
@@ -563,9 +579,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     it('fails to submit with invalid signature', async () => {
       signatures[0] = await web3.eth.sign(candidateId, anyone);
       await expectRevert(
-        oracles.registerValidator(
-          validatorData,
-          merkleProof,
+        oracles.registerValidators(
+          validatorsDepositData,
+          merkleProofs,
           validatorsDepositRoot,
           signatures,
           {
@@ -577,13 +593,13 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
 
     it('fails to submit with repeated signature', async () => {
-      signatures.push(signatures[0]);
+      let signature = signatures[0];
       await expectRevert(
-        oracles.registerValidator(
-          validatorData,
-          merkleProof,
+        oracles.registerValidators(
+          validatorsDepositData,
+          merkleProofs,
           validatorsDepositRoot,
-          signatures,
+          Array(oracleAccounts.length).fill(signature),
           {
             from: oracleAccounts[0],
           }
@@ -594,9 +610,9 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
     it('fails to submit without oracle role assigned', async () => {
       await expectRevert(
-        oracles.registerValidator(
-          validatorData,
-          merkleProof,
+        oracles.registerValidators(
+          validatorsDepositData,
+          merkleProofs,
           validatorsDepositRoot,
           signatures,
           {
@@ -605,6 +621,27 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         ),
         'Oracles: access denied'
       );
+    });
+
+    it('can vote for multiple validators', async () => {
+      await pool.stake({
+        from: anyone,
+        value: ether('64'),
+      });
+      let receipt = await oracles.registerValidators(
+        validatorsDepositData,
+        merkleProofs,
+        validatorsDepositRoot,
+        signatures,
+        {
+          from: oracleAccounts[0],
+        }
+      );
+      await expectEvent(receipt, 'RegisterValidatorsVoteSubmitted', {
+        sender: oracleAccounts[0],
+        oracles: oracleAccounts,
+        nonce: currentNonce,
+      });
     });
   });
 });

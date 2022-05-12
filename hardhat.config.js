@@ -10,7 +10,7 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const BLOCK_NUMBER = 13952000;
+const BLOCK_NUMBER = 14754000;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
@@ -105,6 +105,9 @@ module.exports = {
         url: process.env.HARDHAT_FORK_API_URL,
         blockNumber: BLOCK_NUMBER,
       },
+      accounts: {
+        accountsBalance: '1000000000000000000000000',
+      },
     },
     local: {
       url: 'http://localhost:8545',
@@ -145,6 +148,6 @@ module.exports = {
     apiKey: 'api key goes here',
   },
   mocha: {
-    timeout: 20000,
+    timeout: 1000000,
   },
 };
