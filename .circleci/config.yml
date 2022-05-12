@@ -111,7 +111,7 @@ jobs:
       - run:
           name: Run coverage tests
           command: |
-            circleci tests glob 'test/**/*.test.js' |
+            circleci tests glob 'test/**/*.test.js!(/test/presets/*.test.js)' |
             circleci tests split |
             xargs -I {} yarn coverage --testfiles "{}"
       - run:
