@@ -112,6 +112,9 @@ module.exports = {
         url: 'https://dai.poa.network/',
         chainId: 100,
       },
+      accounts: {
+        accountsBalance: '1000000000000000000000000',
+      },
     },
     gnosis: {
       url: 'https://dai.poa.network/',
