@@ -838,6 +838,7 @@ contract('Pool (stake)', (accounts) => {
 
   it('admin can refund', async () => {
     let amount = ether('10');
+    await send.ether(otherAccounts[0], admin, ether('3000'));
     await mintMGNOTokens(admin, amount);
     await mgnoToken.approve(pool.address, amount, { from: admin });
 
