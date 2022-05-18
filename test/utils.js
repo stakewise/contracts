@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const { BN, ether, expectEvent, send } = require('@openzeppelin/test-helpers');
+const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
 const { contractSettings, contracts } = require('../deployments/settings');
 
 const iDepositContract = artifacts.require('IDepositContract');
