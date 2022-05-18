@@ -77,8 +77,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
         require(_merkleDistributor != address(0), "RewardEthToken: invalid MerkleDistributor address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("WhiteListed Reward ETH", "prETH");
-        __ERC20Permit_init("WhiteListed Reward ETH");
+        __ERC20_init("Reward ETH Harbour", "rETH-h");
+        __ERC20Permit_init("Reward ETH Harbour");
 
         stakedEthToken = IStakedEthToken(_stakedEthToken);
         oracles = _oracles;

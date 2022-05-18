@@ -1,9 +1,11 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
+const { BN, ether, expectEvent, send } = require('@openzeppelin/test-helpers');
+const { contractSettings, contracts } = require('../deployments/settings');
 
 const iDepositContract = artifacts.require('IDepositContract');
+const StakeWiseToken = artifacts.require('IERC20Upgradeable');
 
 function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
   return ether(Math.random().toFixed(8))
@@ -261,6 +263,15 @@ async function resetFork() {
   });
 }
 
+async function mintSwiseTokens(toAddress, amount) {
+  let token = await StakeWiseToken.at(contracts.stakeWiseToken);
+  await impersonateAccount(contractSettings.swiseWhale);
+  // await send.ether(toAddress, contractSettings.swiseWhale, ether('1'));
+  return token.transfer(toAddress, amount, {
+    from: contractSettings.swiseWhale,
+  });
+}
+
 async function setupOracleAccounts({ admin, oracles, accounts }) {
   let oracleRole = await oracles.ORACLE_ROLE();
   const totalOracles = (
@@ -299,4 +310,5 @@ module.exports = {
   setMerkleRoot,
   setupOracleAccounts,
   registerValidators,
+  mintSwiseTokens,
 };

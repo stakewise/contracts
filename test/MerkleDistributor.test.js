@@ -1,4 +1,4 @@
-const { defaultAbiCoder } = require('ethers/lib/utils');
+const { defaultAbiCoder, hexlify } = require('ethers/lib/utils');
 const {
   expectRevert,
   expectEvent,
@@ -18,6 +18,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
+  mintSwiseTokens,
 } = require('./utils');
 
 const MerkleDistributor = artifacts.require('MerkleDistributor');
@@ -121,6 +122,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
       merkleProofs[account].proof = tree.getHexProof(keccak256(encoded));
     }
+
+    await mintSwiseTokens(admin, amount);
 
     await pool.stake({
       from: anyone,
@@ -493,6 +496,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         totalRewards,
       });
 
+      await mintSwiseTokens(admin, distributorTokenReward);
       await token.transfer(merkleDistributor.address, distributorTokenReward, {
         from: admin,
       });
@@ -547,6 +551,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         totalRewards,
       });
 
+      await mintSwiseTokens(admin, distributorTokenReward);
       await token.transfer(merkleDistributor.address, distributorTokenReward, {
         from: admin,
       });
@@ -587,6 +592,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         totalRewards: ether('100000'),
       });
 
+      await mintSwiseTokens(admin, distributorTokenReward);
       await token.transfer(merkleDistributor.address, distributorTokenReward, {
         from: admin,
       });
@@ -652,8 +658,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       }
     });
 
-    // TODO: re-enable once on forked network
-    describe.skip('claiming within the same block', () => {
+    describe('claiming within the same block', () => {
       let multicallMock,
         totalRewards,
         activatedValidators,
@@ -668,6 +673,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           oracles,
           oracleAccounts,
         });
+
+        await mintSwiseTokens(merkleDistributor.address, amount);
 
         // deploy mocked oracle
         multicallMock = await MulticallMock.new(
@@ -751,7 +758,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         );
       });
 
-      it('can claim before total rewards update in the same block', async () => {
+      // TODO re-enable once rewards will be minted for the first time
+      it.skip('can claim before total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
         await multicallMock.claimAndUpdateTotalRewards(
           {

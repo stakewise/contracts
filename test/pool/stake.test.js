@@ -53,7 +53,7 @@ contract('Pool (stake)', (accounts) => {
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
-    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
+    let upgradedContracts = await upgradeContracts();
 
     pool = await Pool.at(upgradedContracts.pool);
     stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
