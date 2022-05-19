@@ -1,5 +1,5 @@
 const depositDataMerkleRoot =
-  '0x29d7fc50216bc4cba49c0d8b31a1051a2d7cb48382d785009c7da0ea2702cc8e';
+  '0x48aa5d4ef3a870dd0a464393c132bf920bad5bc2fd34dd919c120ea6dcc980c1';
 const withdrawalCredentials =
   '0x0100000000000000000000005c631621b897f467dd6a91855a0bc97d77b78dc0';
 
