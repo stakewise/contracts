@@ -25,7 +25,7 @@ const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
 const WhiteListManager = artifacts.require('WhiteListManager');
-const protocolFee = new BN(1000);
+const protocolFee = new BN(800);
 
 contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   const admin = contractSettings.admin;
@@ -204,7 +204,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
-          protocolReward: new BN(0),
+          protocolReward: ether('0.8'),
         }
       );
     });

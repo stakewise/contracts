@@ -139,7 +139,8 @@ contract('Pool (stake)', (accounts) => {
 
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
-      let maxAmount = await pool.minActivatingDeposit();
+      let maxAmount = ether('0.01');
+      await pool.setMinActivatingDeposit(maxAmount, { from: admin });
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
       });
