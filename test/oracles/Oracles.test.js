@@ -19,7 +19,6 @@ const { upgradeContracts } = require('../../deployments');
 const {
   depositDataMerkleRoot,
   depositData,
-  withdrawalCredentials,
 } = require('../pool/depositDataMerkleRoot');
 
 const RewardEthToken = artifacts.require('RewardEthToken');
@@ -49,7 +48,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    contracts = await upgradeContracts(withdrawalCredentials);
+    contracts = await upgradeContracts();
 
     oracles = await Oracles.at(contracts.oracles);
     pool = await Pool.at(contracts.pool);

@@ -51,8 +51,8 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
         require(_rewardEthToken != address(0), "StakedEthToken: invalid RewardEthToken address");
 
         __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("WhiteListed Staked ETH", "psETH");
-        __ERC20Permit_init("WhiteListed Staked ETH");
+        __ERC20_init("Staked ETH Harbour", "sETH-h");
+        __ERC20Permit_init("Staked ETH Harbour");
 
         pool = _pool;
         rewardEthToken = IRewardEthToken(_rewardEthToken);

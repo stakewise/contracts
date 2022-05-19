@@ -43,7 +43,7 @@ contract('Pool (settings)', ([operator, anyone, ...otherAccounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
+    let upgradedContracts = await upgradeContracts();
     let validators = await PoolValidators.at(upgradedContracts.poolValidators);
     await validators.addOperator(
       operator,

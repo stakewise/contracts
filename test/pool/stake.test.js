@@ -53,7 +53,7 @@ contract('Pool (stake)', (accounts) => {
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender3, admin, ether('5'));
-    let upgradedContracts = await upgradeContracts(withdrawalCredentials);
+    let upgradedContracts = await upgradeContracts();
 
     pool = await Pool.at(upgradedContracts.pool);
     stakedEthToken = await StakedEthToken.at(upgradedContracts.stakedEthToken);
@@ -139,7 +139,8 @@ contract('Pool (stake)', (accounts) => {
 
     it('mints tokens for users with deposit less than min activating', async () => {
       // User 1 creates a deposit
-      let maxAmount = await pool.minActivatingDeposit();
+      let maxAmount = ether('0.01');
+      await pool.setMinActivatingDeposit(maxAmount, { from: admin });
       let depositAmount1 = getDepositAmount({
         max: maxAmount,
       });
