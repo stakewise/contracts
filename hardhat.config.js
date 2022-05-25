@@ -10,7 +10,7 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const BLOCK_NUMBER = 14754000;
+const BLOCK_NUMBER = 14841650;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
