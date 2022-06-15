@@ -83,7 +83,7 @@
 ## Dao Module
 
 - Repository: [DAO Module](https://github.com/gnosis/dao-module/tree/a04437988d26d49b6308bf49d229e275a10802ee)
-- Contract: [0x1df2Ce448b082272dAc9B6842A54f342cF4e614e](https://etherscan.io/address/0x1df2Ce448b082272dAc9B6842A54f342cF4e614e)
+- Contract: [0xB5cF5363c3e766e64B37b2fB9554bFE8D48ED1A0](https://etherscan.io/address/0xB5cF5363c3e766e64B37b2fB9554bFE8D48ED1A0)
 - Transaction: [0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201](https://etherscan.io/tx/0x70e01404548e1a91249f9009e82d938de783480fc1f708c28830e7f14102b201)
 
 ## Merkle Distributor
