@@ -38,7 +38,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     // @dev Address of the Pool contract.
     IPool private pool;
 
-    // @dev Address of the Pool contract.
+    // @dev Address of the PoolValidators contract.
     IPoolValidators private poolValidators;
 
     // @dev Address of the MerkleDistributor contract.
