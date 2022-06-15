@@ -5,7 +5,7 @@
 
 The [StakeWise](https://stakewise.io/) smart contracts for liquid non-custodial ETH2 staking.
 
-Check our [Harbor contacts](https://github.com/stakewise/contracts/tree/harbour) for custodial ETH2 staking.
+Check our [Harbour contacts](https://github.com/stakewise/contracts/tree/harbour) for custodial ETH2 staking.
 
 We also support GNO staking. Check [contacts for gnosis chain](https://github.com/stakewise/contracts/tree/gnosis-chain).
 
@@ -29,9 +29,6 @@ The total supply of sETH2 is the sum of all the StakeWise Pool's validators' eff
 #### RewardEthToken
 The RewardEthToken is an ERC-20 contract. It reflects the rewards accumulated by the stakers in the form of rETH2 tokens. The tokens are mapped 1 to 1 to ETH. 
 The total supply of rETH2 is the amount that is above the effective balance of all the validators registered for the StakeWise Pool. 
-
-#### StakedTokens
-The StakedTokens contract can be used to lock the supported ERC-20 tokens to allow stakers to continue accumulating rETH2 when they transfer sETH2 to an external ERC-20 contract. 
 
 #### Oracle
 Oracles contract stores accounts responsible for submitting or updating values based on the off-chain data.
