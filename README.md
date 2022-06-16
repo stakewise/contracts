@@ -5,9 +5,9 @@
 
 The [StakeWise](https://stakewise.io/) smart contracts for liquid non-custodial ETH2 staking.
 
-Check our [Harbour contacts](https://github.com/stakewise/contracts/tree/harbour) for custodial ETH2 staking.
+Check our [Harbour contracts](https://github.com/stakewise/contracts/tree/harbour) for custodial ETH2 staking.
 
-We also support GNO staking. Check [contacts for gnosis chain](https://github.com/stakewise/contracts/tree/gnosis-chain).
+We also support GNO staking. Check [contracts for gnosis chain](https://github.com/stakewise/contracts/tree/gnosis-chain).
 
 # Audits and bug bounty
 All audit reports are presented in the [audits folder](https://github.com/stakewise/contracts/tree/master/audits)
@@ -46,7 +46,7 @@ Oracles contract stores accounts responsible for submitting or updating values b
 - Oracles: [0x8a887282E67ff41d36C0b7537eAB035291461AcD](https://etherscan.io/address/0x8a887282E67ff41d36C0b7537eAB035291461AcD)
 - Vesting Escrow: [0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3](https://etherscan.io/address/0x1E6d872CE26C8711e7D47b8E0C47aB91d95a6dF3)
 - Vesting Escrow Factory: [0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf](https://etherscan.io/address/0xbeE3Eb97Cfd94ace6B66E606B8088C57c5f78fBf)
-- Dao Module: [0x1df2Ce448b082272dAc9B6842A54f342cF4e614e](https://etherscan.io/address/0x1df2Ce448b082272dAc9B6842A54f342cF4e614e)
+- Dao Module: [0xB5cF5363c3e766e64B37b2fB9554bFE8D48ED1A0](https://etherscan.io/address/0xB5cF5363c3e766e64B37b2fB9554bFE8D48ED1A0)
 - Merkle Distributor: [0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC](https://etherscan.io/address/0x1d873651c38D912c8A7E1eBfB013Aa96bE5AACBC)
 - Roles: [0xC486c10e3611565F5b38b50ad68277b11C889623](https://etherscan.io/address/0xC486c10e3611565F5b38b50ad68277b11C889623)
 - Early Adopters Campaign (Merkle Drop): [0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5](https://etherscan.io/address/0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5)
