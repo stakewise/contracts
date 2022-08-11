@@ -444,19 +444,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "feesEscrow",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -866,19 +853,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_feesEscrow",
-        "type": "address"
-      }
-    ],
-    "name": "setFeesEscrow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "_protocolFee",
         "type": "uint256"
@@ -1084,7 +1058,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_oracles",
+        "name": "_feesEscrow",
         "type": "address"
       }
     ],

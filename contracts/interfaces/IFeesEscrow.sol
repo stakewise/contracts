@@ -14,7 +14,7 @@ interface IFeesEscrow {
 
     /**
     * @dev Function is used to transfer accumulated rewards to Pool contract.
-    * Can only be executed by the account with admin role.
+    * Can only be executed by the RewardEthToken contract.
     */
     function transferToPool() external returns (uint256);
 }

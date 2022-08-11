@@ -327,19 +327,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_feesEscrow",
-        "type": "address"
-      }
-    ],
-    "name": "setFeesEscrow",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "_protocolFee",
         "type": "uint256"

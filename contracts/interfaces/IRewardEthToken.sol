@@ -103,12 +103,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     function rewardPerToken() external view returns (uint128);
 
     /**
-    * @dev Function for setting FeesEscrow contract's address.
-    * @param _feesEscrow - address of the FeesEscrow contract.
-    */
-    function setFeesEscrow(address _feesEscrow) external;
-
-    /**
     * @dev Function for setting whether rewards are disabled for the account.
     * Can only be called by the `StakedEthToken` contract.
     * @param account - address of the account to disable rewards for.
