@@ -39,7 +39,11 @@ async function deployContracts() {
   const rewardEthToken = await upgrades.prepareUpgrade(contracts.rewardEthToken, RewardEthToken);
   log('Deployed RewardEthToken implementation contract:', contracts.rewardEthToken);
 
-  return { feesEscrow };
+  const Pool = await ethers.getContractFactory('Pool');
+  const pool = await upgrades.prepareUpgrade(contracts.pool, Pool);
+  log('Deployed Pool implementation contract:', contracts.pool);
+
+  return { feesEscrow, rewardEthToken, pool };
 }
 
 async function upgradeContracts() {
