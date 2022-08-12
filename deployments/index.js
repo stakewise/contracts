@@ -1,5 +1,5 @@
-const { contracts, contractSettings} = require('./settings');
-const {ethers} = require("hardhat");
+const { contracts, contractSettings } = require('./settings');
+const { ethers } = require('hardhat');
 
 async function upgradePool() {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
@@ -12,7 +12,10 @@ async function upgradePool() {
 
 async function upgradeRewardEthToken(feesEscrowContractAddress) {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
-  const RewardEthToken = await ethers.getContractFactory('RewardEthToken', signer);
+  const RewardEthToken = await ethers.getContractFactory(
+    'RewardEthToken',
+    signer
+  );
   let rewardEthToken = await RewardEthToken.attach(contracts.rewardEthToken);
 
   // pause
@@ -21,7 +24,10 @@ async function upgradeRewardEthToken(feesEscrowContractAddress) {
   }
 
   // upgrade RewardEthToken to new implementation
-  const proxy = await upgrades.upgradeProxy(contracts.rewardEthToken, RewardEthToken);
+  const proxy = await upgrades.upgradeProxy(
+    contracts.rewardEthToken,
+    RewardEthToken
+  );
   await proxy.deployed();
 
   // call upgrade
@@ -32,12 +38,21 @@ async function upgradeRewardEthToken(feesEscrowContractAddress) {
 
 async function deployContracts() {
   const FeesEscrow = await ethers.getContractFactory('FeesEscrow');
-  const feesEscrow = await FeesEscrow.deploy(contracts.pool, contracts.rewardEthToken);
+  const feesEscrow = await FeesEscrow.deploy(
+    contracts.pool,
+    contracts.rewardEthToken
+  );
   log('Deployed FeesEscrow contract:', feesEscrow.address);
 
   const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
-  const rewardEthToken = await upgrades.prepareUpgrade(contracts.rewardEthToken, RewardEthToken);
-  log('Deployed RewardEthToken implementation contract:', contracts.rewardEthToken);
+  const rewardEthToken = await upgrades.prepareUpgrade(
+    contracts.rewardEthToken,
+    RewardEthToken
+  );
+  log(
+    'Deployed RewardEthToken implementation contract:',
+    contracts.rewardEthToken
+  );
 
   const Pool = await ethers.getContractFactory('Pool');
   const pool = await upgrades.prepareUpgrade(contracts.pool, Pool);
