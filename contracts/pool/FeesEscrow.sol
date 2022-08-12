@@ -14,7 +14,7 @@ contract FeesEscrow is IFeesEscrow {
         rewardEthToken = _rewardEthToken;
     }
 
-    function transferToPool() public override returns (uint256) {
+    function transferToPool() external override returns (uint256) {
         require(msg.sender == rewardEthToken, "FeesEscrow: invalid caller");
 
         uint256 balance = address(this).balance;
