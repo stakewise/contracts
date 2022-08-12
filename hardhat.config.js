@@ -4,7 +4,6 @@ const { gray, yellow } = require('chalk');
 require('@nomiclabs/hardhat-ethers');
 require('@openzeppelin/hardhat-upgrades');
 require('@nomiclabs/hardhat-truffle5');
-require('@nomiclabs/hardhat-waffle');
 require('solidity-coverage');
 require('hardhat-gas-reporter');
 require('hardhat-contract-sizer');

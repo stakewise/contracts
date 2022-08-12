@@ -1,7 +1,7 @@
 const { contracts, contractSettings } = require('../../deployments/settings');
 const { impersonateAccount, resetFork } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { send, ether, BN } = require('@openzeppelin/test-helpers');
+const { send, ether, expectRevert, BN } = require('@openzeppelin/test-helpers');
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
@@ -88,7 +88,8 @@ contract('FeesEscrow', (accounts) => {
       ethers.utils.parseEther('1').toString()
     );
 
-    await expect(feesEscrow.transferToPool()).to.be.revertedWith(
+    await expectRevert(
+      feesEscrow.transferToPool(),
       'FeesEscrow: invalid caller'
     );
   });
