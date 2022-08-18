@@ -109,8 +109,9 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://dai.poa.network/',
+        url: 'https://rpc.gnosischain.com/',
         chainId: 100,
+        blockNumber: 23795300,
       },
       accounts: {
         accountsBalance: '1000000000000000000000000',

@@ -9,6 +9,7 @@ import "../interfaces/IStakedToken.sol";
 import "../interfaces/IRewardToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
+import "../interfaces/IFeesEscrow.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -51,6 +52,9 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
+    // @dev Address of the FeesEscrow contract.
+    address private feesEscrow;
+
     /**
      * @dev See {IRewardToken-initialize}.
      */
@@ -83,6 +87,12 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
 
         protocolFee = _protocolFee;
         emit ProtocolFeeUpdated(_protocolFee);
+    }
+
+    function upgrade(address _feesEscrow) external override onlyAdmin whenPaused {
+        require(feesEscrow == address(0), "Pool: FeesEscrow address already set");
+
+        feesEscrow = _feesEscrow;
     }
 
     /**
@@ -236,7 +246,8 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardToken: access denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards);
+        uint256 feesAmount = IFeesEscrow(feesEscrow).transferToPool();
+        uint256 periodRewards = newTotalRewards.sub(totalRewards).add(feesAmount);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);
