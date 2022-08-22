@@ -4,7 +4,8 @@
 pragma solidity 0.7.5;
 pragma abicoder v2;
 
-interface IBalancerStruct {
+// This is Balancer Vault's interface. We use it mainly to exchange WXDAI to GNO token in FeesEscrow contract.
+interface IBalancerVault {
     enum SwapKind { GIVEN_IN, GIVEN_OUT }
 
     /**
@@ -49,10 +50,7 @@ interface IBalancerStruct {
         address payable recipient;
         bool toInternalBalance;
     }
-}
 
-// This is Balancer Vault's interface. We use it mainly to exchange WXDAI to GNO token in FeesEscrow contract.
-interface IBalancerVault is IBalancerStruct {
     /**
      * @dev Performs a swap with a single Pool.
      *

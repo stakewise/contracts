@@ -25,7 +25,7 @@ contract('FeesEscrow', (accounts) => {
     const RewardEthToken = await ethers.getContractFactory('RewardToken');
     rewardToken = await RewardEthToken.attach(upgradedContracts.rewardToken);
     pool = await Pool.at(upgradedContracts.pool);
-    gnoToken = await ERC20Mock.attach(contracts.GNOToken);
+    gnoToken = await ERC20Mock.attach(contracts.MGNOToken);
     feesEscrow = await FeesEscrow.at(upgradedContracts.feesEscrow);
   });
 
@@ -39,10 +39,9 @@ contract('FeesEscrow', (accounts) => {
 
     // Ensure zero balances before miner's reward distribution to FeesEscrow contract
     const poolBalanceBefore = await gnoToken.balanceOf(pool.address);
-    expect(poolBalanceBefore.toString()).to.equal('0');
 
     // Fund "Validator" address
-    const validatorReward = ethers.utils.parseEther('1000');
+    const validatorReward = ethers.utils.parseEther('10');
     await ethers.provider.send('hardhat_setBalance', [
       validator.address,
       '0x1000000000000000000000',

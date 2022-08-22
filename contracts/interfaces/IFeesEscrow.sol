@@ -9,15 +9,14 @@ interface IFeesEscrow {
     /**
     * @dev Event for tracking fees withdrawals to Pool contract.
     * @param amountDAI - an amount of rewards before swap to GNO via Balancer Vault.
-    * @param amountGNO - an amount of rewards after swap.
+    * @param amountMGNO - an amount of rewards after swap.
     */
-    event FeesTransferred(uint256 amountDAI, uint256 amountGNO);
+    event FeesTransferred(uint256 amountDAI, uint256 amountMGNO);
 
     /**
     * @dev Function is used to transfer accumulated rewards to Pool contract.
-    * Can only be executed by the RewardEthToken contract. Also rewards accumulating
-    * in xDAI native tokens and this method swaps them to GNO token. Next GNO tokens
-    * are transferred to Pool.
+    * Can only be executed by the RewardEthToken contract. Also, rewards are accumulated
+    * in xDAI native tokens, converted to mGNO and transferred to Pool.
     */
     function transferToPool() external returns (uint256);
 }

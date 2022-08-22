@@ -35,14 +35,16 @@ async function deployContracts() {
     SymmetricPoolId,
     contracts.GNOVault,
     contracts.WXDAIToken,
-    contracts.GNOToken
+    contracts.MGNOWrapper,
+    contracts.GNOToken,
+    contracts.MGNOToken
   );
   log('Deployed FeesEscrow contract:', feesEscrow.address);
 
-  const RewardEthToken = await ethers.getContractFactory('RewardToken');
+  const RewardToken = await ethers.getContractFactory('RewardToken');
   const rewardToken = await upgrades.prepareUpgrade(
     contracts.rewardToken,
-    RewardEthToken
+    RewardToken
   );
   log('Deployed rewardToken implementation contract:', contracts.rewardToken);
 

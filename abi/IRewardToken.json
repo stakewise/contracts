@@ -549,7 +549,7 @@
   {
     "inputs": [
       {
-        "internalType": "address",
+        "internalType": "contract IFeesEscrow",
         "name": "_feesEscrow",
         "type": "address"
       }

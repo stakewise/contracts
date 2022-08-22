@@ -111,7 +111,7 @@ module.exports = {
       forking: {
         url: 'https://rpc.gnosischain.com/',
         chainId: 100,
-        blockNumber: 23795300,
+        blockNumber: 23829149,
       },
       accounts: {
         accountsBalance: '1000000000000000000000000',
