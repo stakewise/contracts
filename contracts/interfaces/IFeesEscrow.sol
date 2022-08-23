@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 pragma solidity 0.7.5;
 
@@ -15,7 +15,7 @@ interface IFeesEscrow {
 
     /**
     * @dev Function is used to transfer accumulated rewards to Pool contract.
-    * Can only be executed by the RewardEthToken contract. Also, rewards are accumulated
+    * Can only be executed by the RewardToken contract. Also, rewards are accumulated
     * in xDAI native tokens, converted to mGNO and transferred to Pool.
     */
     function transferToPool() external returns (uint256);

@@ -73,7 +73,7 @@ interface IRewardToken is IERC20Upgradeable {
     ) external;
 
     /**
-    * @dev Function for upgrading the RewardEthToken contract. The `initialize` function must be defined
+    * @dev Function for upgrading the RewardToken contract. The `initialize` function must be defined
     * if deploying contract for the first time that will initialize the state variables above.
     * @param _feesEscrow - address of the FeesEscrow contract.
     */

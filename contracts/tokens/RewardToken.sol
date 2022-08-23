@@ -90,7 +90,7 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     }
 
     function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
-        require(address(feesEscrow) == address(0), "Pool: FeesEscrow address already set");
+        require(address(feesEscrow) == address(0), "RewardToken: FeesEscrow address already set");
 
         feesEscrow = _feesEscrow;
     }
@@ -247,7 +247,7 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
         require(msg.sender == oracles, "RewardToken: access denied");
 
         uint256 feesAmount = feesEscrow.transferToPool();
-        uint256 periodRewards = newTotalRewards.sub(totalRewards).add(feesAmount);
+        uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);

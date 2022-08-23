@@ -43,14 +43,6 @@ contract FeesEscrow is IFeesEscrow {
     // @dev mGNO token contract address.
     address private immutable mGnoToken;
 
-    /*
-     * @dev This struct used only in IBalancerVault.swap method so we decided to
-     * move it to contract state and make immutable. But immutable and constant
-     * modifiers are not supported for structs for now, only for primitive types
-     * and strings - that's why there is no immutable modifier.
-    */
-    IBalancerVault.FundManagement private funds;
-
     constructor(
         address _pool,
         address _rewardToken,
@@ -69,7 +61,6 @@ contract FeesEscrow is IFeesEscrow {
         mGnoWrapper = _mGnoWrapper;
         gnoToken = _gnoToken;
         mGnoToken = _mGnoToken;
-        funds = IBalancerVault.FundManagement(address(this), false, address(this), false);
     }
 
     /**
@@ -89,6 +80,12 @@ contract FeesEscrow is IFeesEscrow {
         wrapper.deposit{value: balance}();
 
         // Prepare data to exchange WXDAI to GNO tokens via Balancer Vault
+        IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
+            address(this),
+            false,
+            address(this),
+            false
+        );
         IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap(
             symmetricPoolId,
             IBalancerVault.SwapKind.GIVEN_IN,

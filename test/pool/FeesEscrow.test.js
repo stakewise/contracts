@@ -22,8 +22,8 @@ contract('FeesEscrow', (accounts) => {
     let upgradedContracts = await upgradeContracts();
 
     const ERC20Mock = await ethers.getContractFactory('ERC20Mock');
-    const RewardEthToken = await ethers.getContractFactory('RewardToken');
-    rewardToken = await RewardEthToken.attach(upgradedContracts.rewardToken);
+    const RewardToken = await ethers.getContractFactory('RewardToken');
+    rewardToken = await RewardToken.attach(upgradedContracts.rewardToken);
     pool = await Pool.at(upgradedContracts.pool);
     gnoToken = await ERC20Mock.attach(contracts.MGNOToken);
     feesEscrow = await FeesEscrow.at(upgradedContracts.feesEscrow);

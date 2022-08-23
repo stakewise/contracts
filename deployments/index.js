@@ -4,21 +4,18 @@ const { ethers } = require('hardhat');
 const SymmetricPoolId =
   '0x650f5d96e83d3437bf5382558cb31f0ac5536684000200000000000000000001';
 
-async function upgradeRewardEthToken(feesEscrowContractAddress) {
+async function upgradeRewardToken(feesEscrowContractAddress) {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
-  const RewardEthToken = await ethers.getContractFactory('RewardToken', signer);
-  let rewardToken = await RewardEthToken.attach(contracts.rewardToken);
+  const RewardToken = await ethers.getContractFactory('RewardToken', signer);
+  let rewardToken = await RewardToken.attach(contracts.rewardToken);
 
   // pause
   if (!(await rewardToken.paused())) {
     await rewardToken.pause();
   }
 
-  // upgrade RewardEthToken to new implementation
-  const proxy = await upgrades.upgradeProxy(
-    contracts.rewardToken,
-    RewardEthToken
-  );
+  // upgrade RewardToken to new implementation
+  const proxy = await upgrades.upgradeProxy(contracts.rewardToken, RewardToken);
   await proxy.deployed();
 
   // call upgrade
@@ -54,7 +51,7 @@ async function deployContracts() {
 async function upgradeContracts() {
   const { feesEscrow } = await deployContracts();
 
-  await upgradeRewardEthToken(feesEscrow.address);
+  await upgradeRewardToken(feesEscrow.address);
 
   return {
     ...contracts,
