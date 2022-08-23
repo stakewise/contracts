@@ -43,7 +43,7 @@ async function deployContracts() {
     contracts.rewardToken,
     RewardToken
   );
-  log('Deployed rewardToken implementation contract:', contracts.rewardToken);
+  log('Deployed RewardToken implementation contract:', contracts.rewardToken);
 
   return { feesEscrow, rewardToken };
 }

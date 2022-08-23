@@ -11,7 +11,7 @@ const FeesEscrow = artifacts.require('FeesEscrow');
 let feesEscrow;
 let pool;
 let rewardToken;
-let gnoToken;
+let mgnoToken;
 
 contract('FeesEscrow', (accounts) => {
   let [sender] = accounts;
@@ -25,7 +25,7 @@ contract('FeesEscrow', (accounts) => {
     const RewardToken = await ethers.getContractFactory('RewardToken');
     rewardToken = await RewardToken.attach(upgradedContracts.rewardToken);
     pool = await Pool.at(upgradedContracts.pool);
-    gnoToken = await ERC20Mock.attach(contracts.MGNOToken);
+    mgnoToken = await ERC20Mock.attach(contracts.MGNOToken);
     feesEscrow = await FeesEscrow.at(upgradedContracts.feesEscrow);
   });
 
@@ -38,7 +38,7 @@ contract('FeesEscrow', (accounts) => {
     const oraclesSigner = await ethers.getSigner(contracts.oracles);
 
     // Ensure zero balances before miner's reward distribution to FeesEscrow contract
-    const poolBalanceBefore = await gnoToken.balanceOf(pool.address);
+    const poolBalanceBefore = await mgnoToken.balanceOf(pool.address);
 
     // Fund "Validator" address
     const validatorReward = ethers.utils.parseEther('10');
@@ -69,14 +69,14 @@ contract('FeesEscrow', (accounts) => {
       .updateTotalRewards(newTotalRewards);
 
     // Ensure Pool GNO balance increased
-    const poolBalanceAfter = await gnoToken.balanceOf(pool.address);
+    const poolBalanceAfter = await mgnoToken.balanceOf(pool.address);
     expect(poolBalanceAfter.gt(poolBalanceBefore)).to.be.true;
 
     // FeeEscrow balances should be zero after updateTotalRewards
     const feesEscrowNativeBalanceAfter = await ethers.provider.getBalance(
       feesEscrow.address
     );
-    const feesEscrowBalanceAfter = await gnoToken.balanceOf(feesEscrow.address);
+    const feesEscrowBalanceAfter = await mgnoToken.balanceOf(feesEscrow.address);
 
     expect(feesEscrowNativeBalanceAfter.toString()).to.equal('0');
     expect(feesEscrowBalanceAfter.toString()).to.equal('0');
