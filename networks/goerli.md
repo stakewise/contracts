@@ -15,10 +15,20 @@
 - Implementation: [0x6931a7A2B196386005a3E1F9752542227d4f4d64](https://goerli.etherscan.io/address/0x6931a7A2B196386005a3E1F9752542227d4f4d64)
 - Transaction: [0x228165334c43538905f2352b399181f2ae789672a80377a2af256d7142591553](https://goerli.etherscan.io/tx/0x228165334c43538905f2352b399181f2ae789672a80377a2af256d7142591553)
 
+### Upgrade to v2.1.0
+
+- Implementation: [0xf1fdC633C5a68300207a81566b90EFc7285F8148](https://goerli.etherscan.io/address/0xf1fdC633C5a68300207a81566b90EFc7285F8148)
+- Transaction: [0x803dbedfec40f97cae34bc06c54da16b356b1163e7dcb98b4d626ea279c431b3](https://goerli.etherscan.io/tx/0x803dbedfec40f97cae34bc06c54da16b356b1163e7dcb98b4d626ea279c431b3)
+
 ## Pool Escrow
 
 - Contract: [0x040F15C6b5Bfc5F324eCaB5864C38D4e1EEF4218](https://goerli.etherscan.io/address/0x040f15c6b5bfc5f324ecab5864c38d4e1eef4218)
 - Transaction: [0x7d0aa2f273c715ee913ffc45a1f830faac52fb84bf384b6fa3ac58308f375602](https://goerli.etherscan.io/tx/0x7d0aa2f273c715ee913ffc45a1f830faac52fb84bf384b6fa3ac58308f375602)
+
+## Fees Escrow
+
+- Contract: [0x56C25a5C1c82EC2E228b0931FE7A3d15D8A98b57](https://goerli.etherscan.io/address/0x56C25a5C1c82EC2E228b0931FE7A3d15D8A98b57)
+- Trasnaction: [0x9eb4497a263031778aff05935ec1078fa5415a40455041e3b9a4fd5fc7bf5acb](https://goerli.etherscan.io/tx/0x9eb4497a263031778aff05935ec1078fa5415a40455041e3b9a4fd5fc7bf5acb) 
 
 ## Pool Validators
 
@@ -39,6 +49,11 @@
 
 - Implementation: [0x45E444930236De8548CAe187C2CD0BbDE73f5e13](https://goerli.etherscan.io/address/0x45E444930236De8548CAe187C2CD0BbDE73f5e13)
 - Transaction: [0xd380bc2b7825760baab9b63dbf79f21e58d1a2854189b725f3d8dd20c8a2073c](https://goerli.etherscan.io/tx/0xd380bc2b7825760baab9b63dbf79f21e58d1a2854189b725f3d8dd20c8a2073c)
+
+### Upgrade to v2.1.0
+
+- Implementation: [0xBD7D29Ecfb5be6D31Bac4C6f55d491976Ff9dc1C](https://goerli.etherscan.io/address/0xBD7D29Ecfb5be6D31Bac4C6f55d491976Ff9dc1C)
+- Transaction: [0x98549e9cc56bbf9abf61bbcca6cf8c8bc053f2ad9c17c91e24f06dedb5891e0a](https://goerli.etherscan.io/tx/0x98549e9cc56bbf9abf61bbcca6cf8c8bc053f2ad9c17c91e24f06dedb5891e0a)
 
 ## StakeWiseToken
 

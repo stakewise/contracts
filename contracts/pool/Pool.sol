@@ -106,6 +106,9 @@ contract Pool is IPool, OwnablePausableUpgradeable {
         _stake(msg.sender, msg.value);
     }
 
+    /**
+     * @dev See {IPool-stakeOnBehalf}.
+     */
     function stakeOnBehalf(address recipient) external payable override {
         _stake(recipient, msg.value);
     }
