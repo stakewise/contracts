@@ -13,8 +13,8 @@ import "../interfaces/IGNOToken.sol";
 /**
  * @title FeesEscrow
  *
- * @dev FeesEscrow contract is used to receive tips from validators and move them to the Pool contract
- * when calling transferToPool method.
+ * @dev FeesEscrow contract is used to receive tips from validators and transfer
+ * them to the Pool contract via calling transferToPool method by RewardToken contract.
  */
 contract FeesEscrow is IFeesEscrow {
     using SafeERC20 for IERC20;
@@ -118,7 +118,7 @@ contract FeesEscrow is IFeesEscrow {
 
     /**
      * @dev Allows FeesEscrow contract to receive MEV rewards and priority fees
-     * from Validators addresses. Later these rewards will be converted to GNO
+     * from Validators addresses. Later these rewards will be converted to mGNO
      * and transferred to Pool contract by FeesEscrow.transferToPool method which
      * is called once a day by RewardToken contract.
      */
