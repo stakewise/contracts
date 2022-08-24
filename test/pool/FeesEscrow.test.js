@@ -76,7 +76,9 @@ contract('FeesEscrow', (accounts) => {
     const feesEscrowNativeBalanceAfter = await ethers.provider.getBalance(
       feesEscrow.address
     );
-    const feesEscrowBalanceAfter = await mgnoToken.balanceOf(feesEscrow.address);
+    const feesEscrowBalanceAfter = await mgnoToken.balanceOf(
+      feesEscrow.address
+    );
 
     expect(feesEscrowNativeBalanceAfter.toString()).to.equal('0');
     expect(feesEscrowBalanceAfter.toString()).to.equal('0');
