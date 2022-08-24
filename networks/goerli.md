@@ -15,6 +15,11 @@
 - Contract: [0x7C27896338e3130036E53BCC0f013cB20e21991c](https://goerli.etherscan.io/address/0x7C27896338e3130036E53BCC0f013cB20e21991c)
 - Transaction: [0x5513e2a2785814ec88ee0879dacb4f036ceb837d80c05e305091d03c06b72a7a](https://goerli.etherscan.io/tx/0x5513e2a2785814ec88ee0879dacb4f036ceb837d80c05e305091d03c06b72a7a)
 
+### Upgrade to v2.0.0
+
+- Implementation: [0xA5f6ca3b7753B5F057d6A9d8Bb3d7B8d68187338](https://goerli.etherscan.io/address/0xA5f6ca3b7753B5F057d6A9d8Bb3d7B8d68187338)
+- Transaction: [0x9c4b4fa61fc74e41407394b5e15fb54ad17d6e6e9b2fae5984c72bafb4c2d35e](https://goerli.etherscan.io/tx/0x9c4b4fa61fc74e41407394b5e15fb54ad17d6e6e9b2fae5984c72bafb4c2d35e)
+
 ## WhiteList Manager
 
 - Contract: [0x176Bf5626C6e9Cd82a13CD69997fA58c633fcF7B](https://goerli.etherscan.io/address/0x176Bf5626C6e9Cd82a13CD69997fA58c633fcF7B)
@@ -29,6 +34,11 @@
 
 - Contract: [0xbA9aD2A3Ef7A372900644aBe9D82eCD3Fa8CF8dD](https://goerli.etherscan.io/address/0xbA9aD2A3Ef7A372900644aBe9D82eCD3Fa8CF8dD)
 - Transaction: [0x19856616e1567dab34662875d7b9c0d8531136d918c9f47ec07a04d507df5e41](https://goerli.etherscan.io/tx/0x19856616e1567dab34662875d7b9c0d8531136d918c9f47ec07a04d507df5e41)
+
+### Upgrade to v2.0.0
+
+- Contract: [0x3Da2a9d579fDf28742dc35Ca384978BcC142eB20](https://goerli.etherscan.io/address/0x3Da2a9d579fDf28742dc35Ca384978BcC142eB20)
+- Transaction: [0x4dbbbb497d26b71c2d1107ed4e9d12fcab9d34399ec95d088b592afc06c24fba](https://goerli.etherscan.io/tx/0x4dbbbb497d26b71c2d1107ed4e9d12fcab9d34399ec95d088b592afc06c24fba)
 
 ## Oracles
 

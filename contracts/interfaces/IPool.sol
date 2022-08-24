@@ -171,6 +171,11 @@ interface IPool {
     function validatorRegistration() external view returns (IDepositContract);
 
     /**
+    * @dev Function for receiving native tokens without minting sETH.
+    */
+    function receiveFees() external payable;
+
+    /**
     * @dev Function for staking ether to the pool to the different tokens' recipient.
     * @param recipient - address of the tokens recipient.
     */

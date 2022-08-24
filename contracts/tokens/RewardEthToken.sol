@@ -7,9 +7,9 @@ import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
-import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
 import "../interfaces/IWhiteListManager.sol";
+import "../interfaces/IFeesEscrow.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -55,38 +55,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Address of the WhiteListManager contract.
     IWhiteListManager private whiteListManager;
 
-    /**
-     * @dev See {IRewardEthToken-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _stakedEthToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor,
-        address _whiteListManager
-    )
-        external override initializer
-    {
-        require(admin != address(0), "RewardEthToken: invalid admin address");
-        require(_stakedEthToken != address(0), "RewardEthToken: invalid StakedEthToken address");
-        require(_oracles != address(0), "RewardEthToken: invalid Oracles address");
-        require(_protocolFeeRecipient != address(0), "RewardEthToken: invalid protocol fee recipient address");
-        require(_protocolFee < 1e4, "RewardEthToken: invalid protocol fee");
-        require(_merkleDistributor != address(0), "RewardEthToken: invalid MerkleDistributor address");
-
-        __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("Reward ETH Harbour", "rETH-h");
-        __ERC20Permit_init("Reward ETH Harbour");
-
-        stakedEthToken = IStakedEthToken(_stakedEthToken);
-        oracles = _oracles;
-        protocolFeeRecipient = _protocolFeeRecipient;
-        protocolFee = _protocolFee;
-        merkleDistributor = _merkleDistributor;
-        whiteListManager = IWhiteListManager(_whiteListManager);
-    }
+    // @dev Address of the FeesEscrow contract.
+    address private feesEscrow;
 
     /**
      * @dev See {IRewardEthToken-setRewardsDisabled}.
@@ -178,6 +148,15 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
+     * @dev See {IRewardEthToken-upgrade}.
+     */
+    function upgrade(address _feesEscrow) external override onlyAdmin whenPaused {
+        require(feesEscrow == address(0), "Pool: FeesEscrow address already set");
+
+        feesEscrow = _feesEscrow;
+    }
+
+    /**
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override returns (bool accRewardsDisabled) {
@@ -239,7 +218,9 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards);
+        uint256 feesAmount = IFeesEscrow(feesEscrow).transferToPool();
+        uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
+
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);
