@@ -49,7 +49,7 @@ contract('RewardEthToken (upgrading)', ([anyone]) => {
       rewardEthToken.upgrade(oracles, {
         from: admin,
       }),
-      'Pool: FeesEscrow address already set'
+      'RewardEthToken: FeesEscrow address already set'
     );
   });
 });
