@@ -18,6 +18,13 @@ interface IPool {
     event ValidatorRegistered(bytes publicKey, address operator);
 
     /**
+    * @dev Event for tracking refunds.
+    * @param sender - address of the refund sender.
+    * @param amount - refunded amount.
+    */
+    event Refunded(address indexed sender, uint256 amount);
+
+    /**
     * @dev Event for tracking scheduled deposit activation.
     * @param sender - address of the deposit sender.
     * @param validatorIndex - index of the activated validator.
@@ -250,6 +257,13 @@ interface IPool {
     * @param validatorIndexes - list of activated validator indexes.
     */
     function activateMultiple(address account, uint256[] calldata validatorIndexes) external;
+
+    /**
+    * @dev Function for refunding to the pool.
+    * Can only be executed by the account with admin role.
+    * @param amount - the amount of mGNO tokens to refund.
+    */
+    function refund(uint256 amount) external;
 
     /**
     * @dev Function for registering new pool validator registration.

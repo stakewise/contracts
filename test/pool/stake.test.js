@@ -823,4 +823,30 @@ contract('Pool (stake)', (accounts) => {
       'Pool: access denied'
     );
   });
+
+  it('not admin cannot refund', async () => {
+    let amount = ether('10');
+    await mintMGNOTokens(sender1, amount);
+    await expectRevert(
+      pool.refund(amount, {
+        from: sender1,
+      }),
+      'OwnablePausable: access denied'
+    );
+  });
+
+  it('admin can refund', async () => {
+    let amount = ether('10');
+    await send.ether(otherAccounts[0], admin, ether('3000'));
+    await mintMGNOTokens(admin, amount);
+    await mgnoToken.approve(pool.address, amount, { from: admin });
+
+    let receipt = await pool.refund(amount, {
+      from: admin,
+    });
+    await expectEvent(receipt, 'Refunded', {
+      sender: admin,
+      amount,
+    });
+  });
 });
