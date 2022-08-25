@@ -56,7 +56,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     IWhiteListManager private whiteListManager;
 
     // @dev Address of the FeesEscrow contract.
-    address private feesEscrow;
+    IFeesEscrow private feesEscrow;
 
     /**
      * @dev See {IRewardEthToken-setRewardsDisabled}.
@@ -150,8 +150,8 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     /**
      * @dev See {IRewardEthToken-upgrade}.
      */
-    function upgrade(address _feesEscrow) external override onlyAdmin whenPaused {
-        require(feesEscrow == address(0), "RewardEthToken: FeesEscrow address already set");
+    function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
+        require(address(feesEscrow) == address(0), "RewardEthToken: FeesEscrow address already set");
 
         feesEscrow = _feesEscrow;
     }
@@ -218,7 +218,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
-        uint256 feesAmount = IFeesEscrow(feesEscrow).transferToPool();
+        uint256 feesAmount = feesEscrow.transferToPool();
         uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
 
         if (periodRewards == 0) {

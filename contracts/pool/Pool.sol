@@ -280,16 +280,4 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             depositData.depositDataRoot
         );
     }
-
-    /**
-     * @dev See {IPool-refund}.
-     */
-    function refund() external override payable {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) && whiteListManager.whitelistedAccounts(msg.sender),
-            "Pool: access denied"
-        );
-        require(msg.value > 0, "Pool: invalid refund amount");
-        emit Refunded(msg.sender, msg.value);
-    }
 }
