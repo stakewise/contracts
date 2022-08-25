@@ -17,8 +17,8 @@
 
 ### Upgrade to v2.1.0
 
-- Implementation: [0xf1fdC633C5a68300207a81566b90EFc7285F8148](https://goerli.etherscan.io/address/0xf1fdC633C5a68300207a81566b90EFc7285F8148)
-- Transaction: [0x803dbedfec40f97cae34bc06c54da16b356b1163e7dcb98b4d626ea279c431b3](https://goerli.etherscan.io/tx/0x803dbedfec40f97cae34bc06c54da16b356b1163e7dcb98b4d626ea279c431b3)
+- Implementation: [0x63343E28878aA031044Fa81C10BF493119536746](https://goerli.etherscan.io/address/0x63343E28878aA031044Fa81C10BF493119536746)
+- Transaction: [0x43e26b4a71fc1140f896327f5f3b0324602823dbe126e70b9401d1f3293acea2](https://goerli.etherscan.io/tx/0x43e26b4a71fc1140f896327f5f3b0324602823dbe126e70b9401d1f3293acea2)
 
 ## Pool Escrow
 
@@ -27,8 +27,8 @@
 
 ## Fees Escrow
 
-- Contract: [0x56C25a5C1c82EC2E228b0931FE7A3d15D8A98b57](https://goerli.etherscan.io/address/0x56C25a5C1c82EC2E228b0931FE7A3d15D8A98b57)
-- Trasnaction: [0x9eb4497a263031778aff05935ec1078fa5415a40455041e3b9a4fd5fc7bf5acb](https://goerli.etherscan.io/tx/0x9eb4497a263031778aff05935ec1078fa5415a40455041e3b9a4fd5fc7bf5acb) 
+- Contract: [0x6A9d30e05C6832E868390F155388c7d97A6faEAC](https://goerli.etherscan.io/address/0x6A9d30e05C6832E868390F155388c7d97A6faEAC)
+- Transaction: [0x17055c2446dab4875bfadb9f742f95babf9bb807c0eceef98b12a78b7467e7ce](https://goerli.etherscan.io/tx/0x17055c2446dab4875bfadb9f742f95babf9bb807c0eceef98b12a78b7467e7ce) 
 
 ## Pool Validators
 
@@ -52,8 +52,8 @@
 
 ### Upgrade to v2.1.0
 
-- Implementation: [0xBD7D29Ecfb5be6D31Bac4C6f55d491976Ff9dc1C](https://goerli.etherscan.io/address/0xBD7D29Ecfb5be6D31Bac4C6f55d491976Ff9dc1C)
-- Transaction: [0x98549e9cc56bbf9abf61bbcca6cf8c8bc053f2ad9c17c91e24f06dedb5891e0a](https://goerli.etherscan.io/tx/0x98549e9cc56bbf9abf61bbcca6cf8c8bc053f2ad9c17c91e24f06dedb5891e0a)
+- Implementation: [0x895175E34FAB2602979A8374CFC757c7F409eb88](https://goerli.etherscan.io/address/0x895175E34FAB2602979A8374CFC757c7F409eb88)
+- Transaction: [0x932172d7272a20a0369b6210d97c856bdc5633fb80cf94a00f673a0a5f526072](https://goerli.etherscan.io/tx/0x932172d7272a20a0369b6210d97c856bdc5633fb80cf94a00f673a0a5f526072)
 
 ## StakeWiseToken
 
