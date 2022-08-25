@@ -1,5 +1,12 @@
+const { white, green } = require('chalk');
+const { ethers, upgrades, config } = require('hardhat');
 const { contracts, contractSettings } = require('./settings');
-const { ethers } = require('hardhat');
+
+function log(message) {
+  if (config != null && config.suppressLogs !== true) {
+    console.log(message);
+  }
+}
 
 const SymmetricPoolId =
   '0x650f5d96e83d3437bf5382558cb31f0ac5536684000200000000000000000001';
@@ -36,26 +43,29 @@ async function deployContracts() {
     contracts.GNOToken,
     contracts.MGNOToken
   );
-  log('Deployed FeesEscrow contract:', feesEscrow.address);
+  log(white(`Deployed FeesEscrow contract: ${green(feesEscrow.address)}`));
 
   const RewardToken = await ethers.getContractFactory('RewardToken');
   const rewardToken = await upgrades.prepareUpgrade(
     contracts.rewardToken,
     RewardToken
   );
-  log('Deployed RewardToken implementation contract:', contracts.rewardToken);
+  log(
+    white(`Deployed RewardToken implementation contract: ${green(rewardToken)}`)
+  );
 
-  return { feesEscrow, rewardToken };
+  return { feesEscrow: feesEscrow.address, rewardToken };
 }
 
 async function upgradeContracts() {
   const { feesEscrow } = await deployContracts();
 
-  await upgradeRewardToken(feesEscrow.address);
+  await upgradeRewardToken(feesEscrow);
+  log(white('Upgraded RewardToken contract'));
 
   return {
     ...contracts,
-    feesEscrow: feesEscrow.address,
+    feesEscrow,
   };
 }
 
