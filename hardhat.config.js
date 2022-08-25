@@ -109,7 +109,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://rpc.gnosischain.com/',
+        url: 'https://gnosis.public-rpc.com/',
         chainId: 100,
         blockNumber: 23880400,
       },
