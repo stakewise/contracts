@@ -3,7 +3,7 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "../interfaces/IFeesEscrow.sol";
+import "./IFeesEscrow.sol";
 
 /**
  * @dev Interface of the RewardEthToken contract.

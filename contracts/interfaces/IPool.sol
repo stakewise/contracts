@@ -71,30 +71,6 @@ interface IPool {
     event StakedWithReferrer(address indexed referrer, uint256 amount);
 
     /**
-    * @dev Function for initializing the Pool contract.
-    * @param admin - address of the contract admin.
-    * @param _withdrawalCredentials - withdrawal credentials for the pool validators.
-    * @param _validatorRegistration - address of the ValidatorRegistration contract.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _validators - address of the Validators contract.
-    * @param _oracles - address of the Oracles contract.
-    * @param _whiteListManager - address of the WhiteListManager contract.
-    * @param _minActivatingDeposit - minimal deposit amount considered for the activation.
-    * @param _pendingValidatorsLimit - pending validators limit. When it's exceeded, the deposits will be set for the activation.
-    */
-    function initialize(
-        address admin,
-        bytes32 _withdrawalCredentials,
-        address _validatorRegistration,
-        address _stakedEthToken,
-        address _validators,
-        address _oracles,
-        address _whiteListManager,
-        uint256 _minActivatingDeposit,
-        uint256 _pendingValidatorsLimit
-    ) external;
-
-    /**
     * @dev Function for getting the total validator deposit.
     */
     // solhint-disable-next-line func-name-mixedcase

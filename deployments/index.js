@@ -1,5 +1,12 @@
+const { white, green } = require('chalk');
+const { ethers, upgrades, config } = require('hardhat');
 const { contracts, contractSettings } = require('./settings');
-const { ethers } = require('hardhat');
+
+function log(message) {
+  if (config != null && config.suppressLogs !== true) {
+    console.log(message);
+  }
+}
 
 async function upgradePool() {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
@@ -42,7 +49,7 @@ async function deployContracts() {
     contracts.pool,
     contracts.rewardEthToken
   );
-  log('Deployed FeesEscrow contract:', feesEscrow.address);
+  log(white(`Deployed FeesEscrow contract: ${green(feesEscrow.address)}`));
 
   const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
   const rewardEthToken = await upgrades.prepareUpgrade(
@@ -50,26 +57,31 @@ async function deployContracts() {
     RewardEthToken
   );
   log(
-    'Deployed RewardEthToken implementation contract:',
-    contracts.rewardEthToken
+    white(
+      `Deployed RewardEthToken implementation contract: ${green(
+        rewardEthToken
+      )}`
+    )
   );
 
   const Pool = await ethers.getContractFactory('Pool');
   const pool = await upgrades.prepareUpgrade(contracts.pool, Pool);
-  log('Deployed Pool implementation contract:', contracts.pool);
+  log(white(`Deployed Pool implementation contract: ${green(pool)}`));
 
-  return { feesEscrow, rewardEthToken, pool };
+  return { feesEscrow: feesEscrow.address, rewardEthToken, pool };
 }
 
 async function upgradeContracts() {
   const { feesEscrow } = await deployContracts();
 
   await upgradePool();
-  await upgradeRewardEthToken(feesEscrow.address);
+  log(white('Upgraded Pool contract'));
+  await upgradeRewardEthToken(feesEscrow);
+  log(white('Upgraded RewardEthToken contract'));
 
   return {
     ...contracts,
-    feesEscrow: feesEscrow.address,
+    feesEscrow,
   };
 }
 
