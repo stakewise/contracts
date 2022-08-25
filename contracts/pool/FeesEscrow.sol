@@ -13,12 +13,12 @@ import "../interfaces/IFeesEscrow.sol";
  */
 contract FeesEscrow is IFeesEscrow {
     // @dev Pool contract's address.
-    address private immutable pool;
+    IPool private immutable pool;
 
     // @dev RewardEthToken contract's address.
     address private immutable rewardEthToken;
 
-    constructor(address _pool, address _rewardEthToken) {
+    constructor(IPool _pool, address _rewardEthToken) {
         pool = _pool;
         rewardEthToken = _rewardEthToken;
     }
@@ -35,7 +35,7 @@ contract FeesEscrow is IFeesEscrow {
             return balance;
         }
 
-        IPool(pool).receiveFees{value: balance}();
+        pool.receiveFees{value: balance}();
 
         emit FeesTransferred(balance);
 

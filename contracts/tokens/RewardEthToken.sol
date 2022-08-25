@@ -218,8 +218,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
-        uint256 feesAmount = feesEscrow.transferToPool();
-        uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
+        uint256 periodRewards = newTotalRewards.add(feesEscrow.transferToPool()).sub(totalRewards);
 
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
