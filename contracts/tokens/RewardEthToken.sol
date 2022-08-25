@@ -53,13 +53,13 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     mapping(address => bool) public override rewardsDisabled;
 
     // @dev Address of the FeesEscrow contract.
-    address private feesEscrow;
+    IFeesEscrow private feesEscrow;
 
     /**
      * @dev See {IRewardEthToken-upgrade}.
      */
-    function upgrade(address _feesEscrow) external override onlyAdmin whenPaused {
-        require(feesEscrow == address(0), "Pool: FeesEscrow address already set");
+    function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
+        require(address(feesEscrow) == address(0), "RewardEthToken: FeesEscrow address already set");
 
         feesEscrow = _feesEscrow;
     }
@@ -215,9 +215,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
-        uint256 feesAmount = IFeesEscrow(feesEscrow).transferToPool();
-        uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
-
+        uint256 periodRewards = newTotalRewards.add(feesEscrow.transferToPool()).sub(totalRewards);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);

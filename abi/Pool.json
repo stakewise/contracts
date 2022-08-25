@@ -130,25 +130,6 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "Refunded",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "bytes32",
         "name": "role",
         "type": "bytes32"
@@ -655,13 +636,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "refund",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "components": [
@@ -887,24 +861,6 @@
   {
     "inputs": [],
     "name": "unpause",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_poolValidators",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      }
-    ],
-    "name": "upgrade",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
