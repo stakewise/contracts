@@ -22,6 +22,7 @@ const {
   stakeGNO,
   stakeMGNO,
   stakeGNOWithPermit,
+  mintMGNOTokens,
 } = require('../utils');
 const {
   depositData,
