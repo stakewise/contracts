@@ -55,40 +55,6 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     // @dev Address of the FeesEscrow contract.
     IFeesEscrow private feesEscrow;
 
-    /**
-     * @dev See {IRewardToken-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _stakedToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor
-    )
-        external override initializer
-    {
-        require(admin != address(0), "RewardToken: invalid admin address");
-        require(_stakedToken != address(0), "RewardToken: invalid StakedToken address");
-        require(_oracles != address(0), "RewardToken: invalid Oracles address");
-        require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
-        require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
-
-        __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("StakeWise Reward GNO", "rGNO");
-        __ERC20Permit_init("StakeWise Reward GNO");
-
-        stakedToken = IStakedToken(_stakedToken);
-        oracles = _oracles;
-        merkleDistributor = _merkleDistributor;
-
-        protocolFeeRecipient = _protocolFeeRecipient;
-        emit ProtocolFeeRecipientUpdated(_protocolFeeRecipient);
-
-        protocolFee = _protocolFee;
-        emit ProtocolFeeUpdated(_protocolFee);
-    }
-
     function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
         require(address(feesEscrow) == address(0), "RewardToken: FeesEscrow address already set");
 
@@ -246,8 +212,7 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardToken: access denied");
 
-        uint256 feesAmount = feesEscrow.transferToPool();
-        uint256 periodRewards = newTotalRewards.add(feesAmount).sub(totalRewards);
+        uint256 periodRewards = newTotalRewards.add(feesEscrow.transferToPool()).sub(totalRewards);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);

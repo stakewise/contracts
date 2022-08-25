@@ -55,24 +55,6 @@ interface IRewardToken is IERC20Upgradeable {
     );
 
     /**
-    * @dev Function for initializing the RewardToken contract.
-    * @param admin - address of the contract admin.
-    * @param _stakedToken - address of the StakedToken contract.
-    * @param _oracles - address of the Oracles contract.
-    * @param _protocolFeeRecipient - address of the protocol fee recipient.
-    * @param _protocolFee - protocol fee.
-    * @param _merkleDistributor - address of the MerkleDistributor contract.
-    */
-    function initialize(
-        address admin,
-        address _stakedToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor
-    ) external;
-
-    /**
     * @dev Function for upgrading the RewardToken contract. The `initialize` function must be defined
     * if deploying contract for the first time that will initialize the state variables above.
     * @param _feesEscrow - address of the FeesEscrow contract.

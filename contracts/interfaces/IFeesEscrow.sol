@@ -9,9 +9,9 @@ interface IFeesEscrow {
     /**
     * @dev Event for tracking fees withdrawals to Pool contract.
     * @param amountDAI - an amount of rewards before swap to GNO via Balancer Vault.
-    * @param amountMGNO - an amount of rewards after swap.
+    * @param amountGNO - an amount of rewards after swap.
     */
-    event FeesTransferred(uint256 amountDAI, uint256 amountMGNO);
+    event FeesTransferred(uint256 amountDAI, uint256 amountGNO);
 
     /**
     * @dev Function is used to transfer accumulated rewards to Pool contract.

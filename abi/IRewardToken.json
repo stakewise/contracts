@@ -241,44 +241,6 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakedToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_protocolFeeRecipient",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_protocolFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_merkleDistributor",
-        "type": "address"
-      }
-    ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "lastUpdateBlockNumber",
     "outputs": [

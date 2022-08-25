@@ -364,12 +364,4 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             VALIDATOR_TOTAL_DEPOSIT
         );
     }
-
-    /**
-     * @dev See {IPool-refund}.
-     */
-    function refund(uint256 amount) external override onlyAdmin {
-        IERC20Upgradeable(MGNO_TOKEN).safeTransferFrom(msg.sender, address(this), amount);
-        emit Refunded(msg.sender, amount);
-    }
 }

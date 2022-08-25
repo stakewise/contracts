@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: AGPL-3.0-only
 
 pragma solidity 0.7.5;
 pragma abicoder v2;
@@ -14,7 +14,7 @@ import "../interfaces/IGNOToken.sol";
  * @title FeesEscrow
  *
  * @dev FeesEscrow contract is used to receive tips from validators and transfer
- * them to the Pool contract via calling transferToPool method by RewardToken contract.
+ * them to the Pool contract via calling transferToPool method from the RewardToken contract.
  */
 contract FeesEscrow is IFeesEscrow {
     using SafeERC20 for IERC20;
@@ -41,7 +41,7 @@ contract FeesEscrow is IFeesEscrow {
     address private immutable gnoToken;
 
     // @dev mGNO token contract address.
-    address private immutable mGnoToken;
+    IERC20 private immutable mGnoToken;
 
     constructor(
         address _pool,
@@ -51,7 +51,7 @@ contract FeesEscrow is IFeesEscrow {
         IWrapper _wrapper,
         address _mGnoWrapper,
         address _gnoToken,
-        address _mGnoToken
+        IERC20 _mGnoToken
     ) {
         pool = _pool;
         rewardToken = _rewardToken;
@@ -80,12 +80,6 @@ contract FeesEscrow is IFeesEscrow {
         wrapper.deposit{value: balance}();
 
         // Prepare data to exchange WXDAI to GNO tokens via Balancer Vault
-        IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
-            address(this),
-            false,
-            address(this),
-            false
-        );
         IBalancerVault.SingleSwap memory singleSwap = IBalancerVault.SingleSwap(
             symmetricPoolId,
             IBalancerVault.SwapKind.GIVEN_IN,
@@ -99,6 +93,12 @@ contract FeesEscrow is IFeesEscrow {
         IERC20(address(wrapper)).safeApprove(address(symmetricVault), balance);
 
         // Now we are ready to exchange WXDAI token to GNO
+        IBalancerVault.FundManagement memory funds = IBalancerVault.FundManagement(
+            address(this),
+            false,
+            address(this),
+            false
+        );
         uint amountGnoOut = symmetricVault.swap(singleSwap, funds, 0, type(uint).max);
 
         // Convert GNO tokens to mGNO
@@ -106,10 +106,10 @@ contract FeesEscrow is IFeesEscrow {
         bool success = IGNOToken(gnoToken).transferAndCall(mGnoWrapper, amountGnoOut, "");
         require(success, "FeesEscrow: failed to convert tokens");
 
-        uint mGnoBalance = IERC20(mGnoToken).balanceOf(address(this));
+        uint mGnoBalance = mGnoToken.balanceOf(address(this));
 
-        // Transferring obtained ьGNO amount to Pool contract
-        IERC20(mGnoToken).safeTransfer(pool, mGnoBalance);
+        // Transferring obtained mGNO amount to Pool contract
+        mGnoToken.safeTransfer(pool, mGnoBalance);
 
         emit FeesTransferred(balance, amountGnoOut);
 
@@ -117,10 +117,9 @@ contract FeesEscrow is IFeesEscrow {
     }
 
     /**
-     * @dev Allows FeesEscrow contract to receive MEV rewards and priority fees
-     * from Validators addresses. Later these rewards will be converted to mGNO
-     * and transferred to Pool contract by FeesEscrow.transferToPool method which
-     * is called once a day by RewardToken contract.
+     * @dev Allows FeesEscrow contract to receive MEV rewards and priority fees.
+     * Later these rewards will be converted to mGNO and transferred to Pool contract by
+     * `FeesEscrow.transferToPool` method which is called once a day by the `RewardToken` contract.
      */
     receive() external payable {}
 }
