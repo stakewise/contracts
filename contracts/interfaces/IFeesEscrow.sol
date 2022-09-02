@@ -8,10 +8,9 @@ pragma solidity 0.7.5;
 interface IFeesEscrow {
     /**
     * @dev Event for tracking fees withdrawals to Pool contract.
-    * @param amountDAI - an amount of rewards before swap to GNO via Balancer Vault.
-    * @param amountGNO - an amount of rewards after swap.
+    * @param amount - the number of fees.
     */
-    event FeesTransferred(uint256 amountDAI, uint256 amountGNO);
+    event FeesTransferred(uint256 amount);
 
     /**
     * @dev Function is used to transfer accumulated rewards to Pool contract.

@@ -111,7 +111,7 @@ contract FeesEscrow is IFeesEscrow {
         // Transferring obtained mGNO amount to Pool contract
         mGnoToken.safeTransfer(pool, mGnoBalance);
 
-        emit FeesTransferred(balance, amountGnoOut);
+        emit FeesTransferred(amountGnoOut);
 
         return amountGnoOut;
     }
