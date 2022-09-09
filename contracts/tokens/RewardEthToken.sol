@@ -9,6 +9,7 @@ import "../interfaces/IStakedEthToken.sol";
 import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
+import "../interfaces/IFeesEscrow.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -51,15 +52,16 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
+    // @dev Address of the FeesEscrow contract.
+    IFeesEscrow private feesEscrow;
+
     /**
      * @dev See {IRewardEthToken-upgrade}.
      */
-    function upgrade(address _oracles) external override onlyAdmin whenPaused {
-        require(
-            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
-            "Pool: invalid Oracles address"
-        );
-        oracles = _oracles;
+    function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
+        require(address(feesEscrow) == address(0), "RewardEthToken: FeesEscrow address already set");
+
+        feesEscrow = _feesEscrow;
     }
 
     /**
@@ -213,7 +215,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardEthToken: access denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards);
+        uint256 periodRewards = newTotalRewards.add(feesEscrow.transferToPool()).sub(totalRewards);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
             emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);

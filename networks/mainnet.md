@@ -15,10 +15,20 @@
 - Implementation: [0xe68E649862F7036094f1E4eD5d69a738aCDE666f](https://etherscan.io/address/0xe68E649862F7036094f1E4eD5d69a738aCDE666f)
 - Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
 
+### Upgrade to v2.1.0
+
+- Implementation: [0x61975c09207c5DFe794b0A652C8CAf8458159AAe](https://etherscan.io/address/0x61975c09207c5DFe794b0A652C8CAf8458159AAe)
+- Transaction: [0xaeb4ce0d9736091c9a0638d12a2fad1af1923591614808a3a793a4a0567360f5](https://etherscan.io/tx/0xaeb4ce0d9736091c9a0638d12a2fad1af1923591614808a3a793a4a0567360f5)
+
 ## Pool Escrow
 
 - Contract: [0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079](https://etherscan.io/address/0x2296e122c1a20Fca3CAc3371357BdAd3be0dF079)
 - Transaction: [0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155](https://etherscan.io/tx/0xaf485028fa48fe546a72d0a26c8ea8adc6ae0c460faa3b5fab7513834c0e1155)
+
+## Fees Escrow
+
+- Contract: [0x6b333B20fBae3c5c0969dd02176e30802e2fbBdB](https://etherscan.io/address/0x6b333B20fBae3c5c0969dd02176e30802e2fbBdB)
+- Transaction: [0x21582762e64e6a709021de3034d2e077d2d8878be1542fe70d5ce8e08e39cc9e](https://etherscan.io/tx/0x21582762e64e6a709021de3034d2e077d2d8878be1542fe70d5ce8e08e39cc9e)
 
 ## Pool Validators
 
@@ -49,6 +59,11 @@
 
 - Implementation: [0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09](https://etherscan.io/address/0x7cA75ccf264b2d9F91D4ABA7639fC7FcC73a7e09)
 - Transaction: [0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec](https://etherscan.io/tx/0xeaa63d71aee68329346897f1a2f0d29a761c190406db4fb457f3edd9110afaec)
+
+### Upgrade to v2.1.0
+
+- Implementation: [0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1](https://etherscan.io/address/0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1)
+- Transaction: [0xad99daaecf7b11a38555ffcce86f6aee0c14934e276e6c27990458ae268cbbb8](https://etherscan.io/tx/0xad99daaecf7b11a38555ffcce86f6aee0c14934e276e6c27990458ae268cbbb8)
 
 ## StakeWiseToken
 

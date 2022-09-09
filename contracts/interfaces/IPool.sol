@@ -18,13 +18,6 @@ interface IPool {
     event ValidatorRegistered(bytes publicKey, address operator);
 
     /**
-    * @dev Event for tracking refunds.
-    * @param sender - address of the refund sender.
-    * @param amount - refunded amount.
-    */
-    event Refunded(address indexed sender, uint256 amount);
-
-    /**
     * @dev Event for tracking scheduled deposit activation.
     * @param sender - address of the deposit sender.
     * @param validatorIndex - index of the activated validator.
@@ -76,14 +69,6 @@ interface IPool {
     * @param amount - the amount added.
     */
     event StakedWithReferrer(address indexed referrer, uint256 amount);
-
-    /**
-    * @dev Function for upgrading the Pools contract. The `initialize` function must be defined if deploying contract
-    * for the first time that will initialize the state variables above.
-    * @param _poolValidators - address of the PoolValidators contract.
-    * @param _oracles - address of the Oracles contract.
-    */
-    function upgrade(address _poolValidators, address _oracles) external;
 
     /**
     * @dev Function for getting the total validator deposit.
@@ -155,6 +140,11 @@ interface IPool {
     function validatorRegistration() external view returns (IDepositContract);
 
     /**
+    * @dev Function for receiving native tokens without minting sETH.
+    */
+    function receiveFees() external payable;
+
+    /**
     * @dev Function for staking ether to the pool to the different tokens' recipient.
     * @param recipient - address of the tokens recipient.
     */
@@ -212,10 +202,4 @@ interface IPool {
     * @param depositData - the deposit data to submit for the validator.
     */
     function registerValidator(IPoolValidators.DepositData calldata depositData) external;
-
-    /**
-    * @dev Function for refunding to the pool.
-    * Can only be executed by the account with admin role.
-    */
-    function refund() external payable;
 }

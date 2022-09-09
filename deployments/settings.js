@@ -14,6 +14,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     merkleDrop: '0xFc3513E92799F0169e5f14F354d0097E4b790498',
     merkleDistributor: '0x6Ef0172b79131C66c7012Db3545D637B116feb12',
     roles: '0x3ae8a774CFBBE305520A4a3Be3A480701B66aFba',
+    feesEscrow: '0x6A9d30e05C6832E868390F155388c7d97A6faEAC',
     contractChecker: '0x85ee326f839Bc430655A3fad447837072ef52C2F',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
   };
@@ -35,6 +36,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     merkleDrop: '0x2AAB6822a1a9f982fd7b0Fe35A5A5b6148eCf4d5',
     merkleDistributor: '0xA3F21010e8b9a3930996C8849Df38f9Ca3647c20',
     roles: '0xC486c10e3611565F5b38b50ad68277b11C889623',
+    feesEscrow: '0x6b333B20fBae3c5c0969dd02176e30802e2fbBdB',
     contractChecker: '0xFC1fC7257AEA7C7c08A498594DCA97CE5A72fdCB',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
   };

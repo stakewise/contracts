@@ -672,13 +672,4 @@ contract('Pool (stake)', (accounts) => {
       'Pool: access denied'
     );
   });
-
-  it('only PoolValidators contract can refund', async () => {
-    await expectRevert(
-      pool.refund({
-        from: sender1,
-      }),
-      'Pool: access denied'
-    );
-  });
 });

@@ -1057,8 +1057,8 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_oracles",
+        "internalType": "contract IFeesEscrow",
+        "name": "_feesEscrow",
         "type": "address"
       }
     ],

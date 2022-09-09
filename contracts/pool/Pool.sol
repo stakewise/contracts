@@ -53,24 +53,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     uint256 public override pendingValidatorsLimit;
 
     /**
-     * @dev See {IPool-upgrade}.
-     */
-    function upgrade(address _poolValidators, address _oracles) external override onlyAdmin whenPaused {
-        require(
-            _poolValidators != address(0) && address(validators) == 0xaAc73D4A26Ae6906aa115118b7840b1F19fcd3A5,
-            "Pool: invalid PoolValidators address"
-        );
-        require(
-            _oracles != address(0) && address(oracles) == 0x2f1C5E86B13a74f5A6E7B4b35DD77fe29Aa47514,
-            "Pool: invalid Oracles address"
-        );
-
-        // set contract addresses
-        validators = IPoolValidators(_poolValidators);
-        oracles = _oracles;
-    }
-
-    /**
      * @dev See {IPool-setMinActivatingDeposit}.
      */
     function setMinActivatingDeposit(uint256 newMinActivatingDeposit) external override onlyAdmin {
@@ -112,6 +94,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function stakeOnBehalf(address recipient) external payable override {
         _stake(recipient, msg.value);
     }
+
+    /**
+     * @dev See {IPool-receiveFees}.
+     */
+    function receiveFees() external payable override {}
 
     /**
     * @dev Function for staking ETH using transfer.
@@ -246,14 +233,5 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             depositData.signature,
             depositData.depositDataRoot
         );
-    }
-
-    /**
-     * @dev See {IPool-refund}.
-     */
-    function refund() external override payable {
-        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || msg.sender == address(validators), "Pool: access denied");
-        require(msg.value > 0, "Pool: invalid refund amount");
-        emit Refunded(msg.sender, msg.value);
     }
 }
