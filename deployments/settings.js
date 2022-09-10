@@ -35,6 +35,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     rewardEthToken: '0xCBE26dbC91B05C160050167107154780F36CeAAB',
     merkleDistributor: '0x07E8291591eaC73Dd93b079e3E68e171094bA9e1',
     roles: '0xFe5947f029308F854db0cDA57e68C43f6C21a207',
+    feesEscrow: '0xB5230EBE5b1a9299A5C44f459ED2E8EB7496F581',
     contractChecker: '0x02c75acFd94E124C2696F785e4fcaf8248471FE4',
     whiteListManager: '0x57a9cbED053f37EB67d6f5932b1F2f9Afbe347F3',
   };

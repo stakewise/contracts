@@ -1,4 +1,4 @@
-const { white, green } = require('chalk');
+const { white } = require('chalk');
 const { ethers, upgrades, config } = require('hardhat');
 const { contracts, contractSettings } = require('./settings');
 
@@ -17,7 +17,7 @@ async function upgradePool() {
   await proxy.deployed();
 }
 
-async function upgradeRewardEthToken(feesEscrowContractAddress) {
+async function upgradeRewardEthToken() {
   const signer = await ethers.provider.getSigner(contractSettings.admin);
   const RewardEthToken = await ethers.getContractFactory(
     'RewardEthToken',
@@ -38,51 +38,22 @@ async function upgradeRewardEthToken(feesEscrowContractAddress) {
   await proxy.deployed();
 
   // call upgrade
-  await rewardEthToken.upgrade(feesEscrowContractAddress);
+  await rewardEthToken.upgrade(contracts.feesEscrow);
 
   return rewardEthToken.unpause();
 }
 
 async function deployContracts() {
-  const FeesEscrow = await ethers.getContractFactory('FeesEscrow');
-  const feesEscrow = await FeesEscrow.deploy(
-    contracts.pool,
-    contracts.rewardEthToken
-  );
-  log(white(`Deployed FeesEscrow contract: ${green(feesEscrow.address)}`));
-
-  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
-  const rewardEthToken = await upgrades.prepareUpgrade(
-    contracts.rewardEthToken,
-    RewardEthToken
-  );
-  log(
-    white(
-      `Deployed RewardEthToken implementation contract: ${green(
-        rewardEthToken
-      )}`
-    )
-  );
-
-  const Pool = await ethers.getContractFactory('Pool');
-  const pool = await upgrades.prepareUpgrade(contracts.pool, Pool);
-  log(white(`Deployed Pool implementation contract: ${green(pool)}`));
-
-  return { feesEscrow: feesEscrow.address, rewardEthToken, pool };
+  return contracts;
 }
 
 async function upgradeContracts() {
-  const { feesEscrow } = await deployContracts();
-
   await upgradePool();
   log(white('Upgraded Pool contract'));
-  await upgradeRewardEthToken(feesEscrow);
+  await upgradeRewardEthToken();
   log(white('Upgraded RewardEthToken contract'));
 
-  return {
-    ...contracts,
-    feesEscrow,
-  };
+  return contracts;
 }
 
 module.exports = {
