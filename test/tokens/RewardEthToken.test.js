@@ -7,6 +7,7 @@ const {
   ether,
   constants,
   send,
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { ethers } = require('hardhat');
 const { upgradeContracts } = require('../../deployments');
@@ -131,9 +132,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     let feesEscrowBalance;
 
     beforeEach(async () => {
-      feesEscrowBalance = await ethers.provider.getBalance(
-        contracts.feesEscrow
-      );
+      feesEscrowBalance = await balance.current(contracts.feesEscrow);
     });
 
     it('anyone cannot update rewards', async () => {
