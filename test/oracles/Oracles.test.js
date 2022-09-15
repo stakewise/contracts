@@ -15,7 +15,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
-const { contractSettings, contracts } = require('../../deployments/settings');
+const { contractSettings } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
   depositDataMerkleRoot,
