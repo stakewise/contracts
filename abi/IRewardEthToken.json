@@ -507,18 +507,5 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "contract IFeesEscrow",
-        "name": "_feesEscrow",
-        "type": "address"
-      }
-    ],
-    "name": "upgrade",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
   }
 ]

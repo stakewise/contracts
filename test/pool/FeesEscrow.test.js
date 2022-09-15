@@ -1,7 +1,13 @@
 const { contracts, contractSettings } = require('../../deployments/settings');
 const { impersonateAccount, resetFork } = require('../utils');
 const { upgradeContracts } = require('../../deployments');
-const { send, ether, expectRevert, BN } = require('@openzeppelin/test-helpers');
+const {
+  send,
+  ether,
+  expectRevert,
+  BN,
+  balance,
+} = require('@openzeppelin/test-helpers');
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
 
@@ -39,18 +45,12 @@ contract('FeesEscrow', (accounts) => {
   it('transferToPool from RewardEthToken', async () => {
     await impersonateAccount(contracts.oracles);
     const oraclesSigner = await ethers.getSigner(contracts.oracles);
-    const feesAmount = ethers.utils.parseEther('1');
+    const feesEscrowBalance = await balance.current(contracts.feesEscrow);
+    const feesAmount = ether('1');
 
     // Ensure zero balances before miner's reward distribution to FeesEscrow contract
-    const poolBalanceBefore = await ethers.provider.getBalance(pool.address);
+    const poolBalanceBefore = await balance.current(pool.address);
     expect(poolBalanceBefore.toString()).to.be.bignumber.equal(new BN('0'));
-
-    const feesEscrowBalanceBefore = await ethers.provider.getBalance(
-      feesEscrow.address
-    );
-    expect(feesEscrowBalanceBefore.toString()).to.be.bignumber.equal(
-      new BN('0')
-    );
 
     // Send fees from "validator" to FeesEscrow contract
     await send.ether(sender, feesEscrow.address, feesAmount.toString());
@@ -61,18 +61,18 @@ contract('FeesEscrow', (accounts) => {
       '0x100000000000000000',
     ]);
 
-    const newTotalRewards = ethers.utils.parseEther('100000');
+    const newTotalRewards = ether('100000');
     await rewardEthToken
       .connect(oraclesSigner)
-      .updateTotalRewards(newTotalRewards);
+      .updateTotalRewards(newTotalRewards.toString());
 
     // Ensure all fees transferred from FeesEscrow contract to Pool contract
-    const poolBalanceAfter = await ethers.provider.getBalance(pool.address);
+    const poolBalanceAfter = await balance.current(pool.address);
     expect(poolBalanceAfter.toString()).to.be.bignumber.equal(
-      feesAmount.toString()
+      poolBalanceBefore.add(feesEscrowBalance).add(feesAmount).toString()
     );
 
-    const feesEscrowBalanceAfterTransfer = await ethers.provider.getBalance(
+    const feesEscrowBalanceAfterTransfer = await balance.current(
       feesEscrow.address
     );
     expect(feesEscrowBalanceAfterTransfer.toString()).to.be.bignumber.equal(
@@ -82,12 +82,7 @@ contract('FeesEscrow', (accounts) => {
 
   it('transferToPool from invalid caller', async () => {
     // Send fees from "validator" to FeesEscrow contract
-    await send.ether(
-      sender,
-      feesEscrow.address,
-      ethers.utils.parseEther('1').toString()
-    );
-
+    await send.ether(sender, feesEscrow.address, ether('1').toString());
     await expectRevert(
       feesEscrow.transferToPool(),
       'FeesEscrow: invalid caller'

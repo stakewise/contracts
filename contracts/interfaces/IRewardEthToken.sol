@@ -3,7 +3,6 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "./IFeesEscrow.sol";
 
 /**
  * @dev Interface of the RewardEthToken contract.
@@ -115,13 +114,6 @@ interface IRewardEthToken is IERC20Upgradeable {
     * @param account - address of the account.
     */
     function rewardsDisabled(address account) external view returns (bool);
-
-    /**
-    * @dev Function for upgrading the RewardEthToken contract. The `initialize` function must be defined
-    * if deploying contract for the first time that will initialize the state variables above.
-    * @param _feesEscrow - address of the FeesEscrow contract.
-    */
-    function upgrade(IFeesEscrow _feesEscrow) external;
 
     /**
     * @dev Function for updating account's reward checkpoint.

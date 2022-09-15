@@ -44,10 +44,16 @@ async function upgradeRewardEthToken() {
 }
 
 async function deployContracts() {
-  return contracts;
+  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
+  const rewardEthToken = await upgrades.prepareUpgrade(
+    contracts.rewardEthToken,
+    RewardEthToken
+  );
+  return { rewardEthToken };
 }
 
 async function upgradeContracts() {
+  await deployContracts();
   await upgradePool();
   log(white('Upgraded Pool contract'));
   await upgradeRewardEthToken();
