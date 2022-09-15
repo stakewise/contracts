@@ -9,7 +9,6 @@ const {
   send,
   balance,
 } = require('@openzeppelin/test-helpers');
-const { ethers } = require('hardhat');
 const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const {
