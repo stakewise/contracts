@@ -140,6 +140,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     let feesEscrowBalance;
 
     beforeEach(async () => {
+      await send.ether(admin, contracts.feesEscrow, ether('1'));
       feesEscrowBalance = await balance.current(contracts.feesEscrow);
     });
 
@@ -249,6 +250,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         value: stakedAmount2,
       });
 
+      await send.ether(admin, contracts.feesEscrow, ether('1'));
       let feesEscrowBalance = await balance.current(contracts.feesEscrow);
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
