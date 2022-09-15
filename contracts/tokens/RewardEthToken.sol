@@ -148,6 +148,15 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
+     * @dev See {IRewardEthToken-upgrade}.
+     */
+    function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
+        require(address(feesEscrow) == address(0), "RewardEthToken: FeesEscrow address already set");
+
+        feesEscrow = _feesEscrow;
+    }
+
+    /**
      * @dev See {IRewardEthToken-updateRewardCheckpoint}.
      */
     function updateRewardCheckpoint(address account) external override returns (bool accRewardsDisabled) {
