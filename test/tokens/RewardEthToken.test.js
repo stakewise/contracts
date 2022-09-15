@@ -202,14 +202,14 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         totalRewards: newTotalRewards,
         oracleAccounts,
       });
+      periodReward = periodReward.add(feesEscrowBalance);
+      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
         'RewardsUpdated',
         {
-          periodRewards: newTotalRewards
-            .add(feesEscrowBalance)
-            .sub(prevTotalRewards),
+          periodRewards: periodReward,
           totalRewards: newTotalRewards,
           protocolReward: periodReward
             .mul(await rewardEthToken.protocolFee())

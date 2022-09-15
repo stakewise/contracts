@@ -1,7 +1,13 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const { BN, ether, expectEvent } = require('@openzeppelin/test-helpers');
+const {
+  BN,
+  ether,
+  expectEvent,
+  balance,
+} = require('@openzeppelin/test-helpers');
+const { contracts } = require('../deployments/settings');
 
 const iDepositContract = artifacts.require('IDepositContract');
 
@@ -148,6 +154,7 @@ async function setTotalRewards({
     let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
     signatures.push(signature);
   }
+  let feesEscrowBalance = await balance.current(contracts.feesEscrow);
 
   // update total rewards
   let receipt = await oracles.submitRewards(
@@ -158,7 +165,9 @@ async function setTotalRewards({
       from: oracleAccounts[0],
     }
   );
-  expect(await rewardEthToken.totalSupply()).to.bignumber.equal(totalRewards);
+  expect(await rewardEthToken.totalSupply()).to.bignumber.equal(
+    totalRewards.add(feesEscrowBalance)
+  );
 
   return receipt;
 }
