@@ -7,7 +7,7 @@ const {
   expectEvent,
   balance,
 } = require('@openzeppelin/test-helpers');
-const { contracts } = require('../deployments/settings');
+const { contracts, contractSettings } = require('../deployments/settings');
 
 const iDepositContract = artifacts.require('IDepositContract');
 const StakeWiseToken = artifacts.require('IERC20Upgradeable');
