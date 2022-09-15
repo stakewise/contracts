@@ -39,6 +39,9 @@ contract('FeesEscrow', (accounts) => {
   it('transferToPool from RewardEthToken', async () => {
     await impersonateAccount(contracts.oracles);
     const oraclesSigner = await ethers.getSigner(contracts.oracles);
+    const feesEscrowBalance = await ethers.provider.getBalance(
+      contracts.feesEscrow
+    );
     const feesAmount = ethers.utils.parseEther('1');
 
     // Ensure zero balances before miner's reward distribution to FeesEscrow contract
@@ -69,7 +72,7 @@ contract('FeesEscrow', (accounts) => {
     // Ensure all fees transferred from FeesEscrow contract to Pool contract
     const poolBalanceAfter = await ethers.provider.getBalance(pool.address);
     expect(poolBalanceAfter.toString()).to.be.bignumber.equal(
-      feesAmount.toString()
+      feesEscrowBalance.add(feesAmount).toString()
     );
 
     const feesEscrowBalanceAfterTransfer = await ethers.provider.getBalance(

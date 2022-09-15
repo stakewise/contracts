@@ -8,8 +8,9 @@ const {
   constants,
   send,
 } = require('@openzeppelin/test-helpers');
+const { ethers } = require('hardhat');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
@@ -127,39 +128,11 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   });
 
   describe('updateTotalRewards', () => {
-    it('anyone cannot update rewards', async () => {
-      await expectRevert(
-        rewardEthToken.updateTotalRewards(ether('10'), {
-          from: sender,
-        }),
-        'RewardEthToken: access denied'
-      );
-      await checkRewardEthToken({
-        rewardEthToken,
-        totalSupply,
-        account: sender,
-        balance: new BN(0),
-      });
-    });
+    let feesEscrowBalance;
 
-    it('oracles can update rewards', async () => {
-      let prevTotalRewards = await rewardEthToken.totalRewards();
-      let newTotalRewards = prevTotalRewards.add(ether('10'));
-      let receipt = await setTotalRewards({
-        rewardEthToken,
-        oracles,
-        pool,
-        totalRewards: newTotalRewards,
-        oracleAccounts,
-      });
-      await expectEvent.inTransaction(
-        receipt.tx,
-        RewardEthToken,
-        'RewardsUpdated',
-        {
-          periodRewards: newTotalRewards.sub(prevTotalRewards),
-          totalRewards: newTotalRewards,
-        }
+    beforeEach(async () => {
+      feesEscrowBalance = await ethers.provider.getBalance(
+        contracts.feesEscrow
       );
     });
 
@@ -193,11 +166,27 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         RewardEthToken,
         'RewardsUpdated',
         {
-          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          periodRewards: newTotalRewards
+            .add(feesEscrowBalance)
+            .sub(prevTotalRewards),
           totalRewards: newTotalRewards,
-          protocolReward: ether('1'),
         }
       );
+    });
+
+    it('anyone cannot update rewards', async () => {
+      await expectRevert(
+        rewardEthToken.updateTotalRewards(ether('10'), {
+          from: sender,
+        }),
+        'RewardEthToken: access denied'
+      );
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply,
+        account: sender,
+        balance: new BN(0),
+      });
     });
 
     it('assigns protocol fee to distributor', async () => {
@@ -220,7 +209,9 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         RewardEthToken,
         'RewardsUpdated',
         {
-          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          periodRewards: newTotalRewards
+            .add(feesEscrowBalance)
+            .sub(prevTotalRewards),
           totalRewards: newTotalRewards,
           protocolReward: periodReward
             .mul(await rewardEthToken.protocolFee())
