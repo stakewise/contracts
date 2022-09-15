@@ -6,6 +6,7 @@ const {
   ether,
   BN,
   send,
+  balance,
 } = require('@openzeppelin/test-helpers');
 const {
   impersonateAccount,
@@ -14,7 +15,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
 } = require('../utils');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 const {
   depositDataMerkleRoot,
@@ -144,9 +145,11 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       newActivatedValidators,
       oracleAccounts,
       candidateId,
+      feesEscrowBalance,
       signatures;
 
     beforeEach(async () => {
+      feesEscrowBalance = await balance.current(contracts.feesEscrow);
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       prevTotalRewards = await rewardEthToken.totalRewards();
       newTotalRewards = prevTotalRewards.add(ether('10'));
@@ -268,12 +271,7 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
       // check values updates
       expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
-        newTotalRewards
-      );
-
-      // update submitted
-      expect(await rewardEthToken.totalRewards()).to.bignumber.equal(
-        newTotalRewards
+        newTotalRewards.add(feesEscrowBalance)
       );
       expect(await pool.activatedValidators()).to.bignumber.equal(
         newActivatedValidators

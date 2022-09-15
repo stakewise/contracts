@@ -159,14 +159,13 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         totalRewards: newTotalRewards,
         oracleAccounts,
       });
+      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
         'RewardsUpdated',
         {
-          periodRewards: newTotalRewards
-            .add(feesEscrowBalance)
-            .sub(prevTotalRewards),
+          periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
         }
       );
@@ -238,6 +237,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         value: stakedAmount2,
       });
 
+      let feesEscrowBalance = await balance.current(contracts.feesEscrow);
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards: totalSupply,
@@ -246,6 +246,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         oracles,
         oracleAccounts,
       });
+      totalSupply = totalSupply.add(feesEscrowBalance);
 
       rewardAmount1 = await rewardEthToken.balanceOf(sender1);
       rewardAmount2 = await rewardEthToken.balanceOf(sender2);
