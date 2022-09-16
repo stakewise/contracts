@@ -9,6 +9,7 @@ import "../interfaces/IStakedToken.sol";
 import "../interfaces/IRewardToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IOracles.sol";
+import "../interfaces/IFeesEscrow.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -51,38 +52,13 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
-    /**
-     * @dev See {IRewardToken-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _stakedToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor
-    )
-        external override initializer
-    {
-        require(admin != address(0), "RewardToken: invalid admin address");
-        require(_stakedToken != address(0), "RewardToken: invalid StakedToken address");
-        require(_oracles != address(0), "RewardToken: invalid Oracles address");
-        require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
-        require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
+    // @dev Address of the FeesEscrow contract.
+    IFeesEscrow private feesEscrow;
 
-        __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("StakeWise Reward GNO", "rGNO");
-        __ERC20Permit_init("StakeWise Reward GNO");
+    function upgrade(IFeesEscrow _feesEscrow) external override onlyAdmin whenPaused {
+        require(address(feesEscrow) == address(0), "RewardToken: FeesEscrow address already set");
 
-        stakedToken = IStakedToken(_stakedToken);
-        oracles = _oracles;
-        merkleDistributor = _merkleDistributor;
-
-        protocolFeeRecipient = _protocolFeeRecipient;
-        emit ProtocolFeeRecipientUpdated(_protocolFeeRecipient);
-
-        protocolFee = _protocolFee;
-        emit ProtocolFeeUpdated(_protocolFee);
+        feesEscrow = _feesEscrow;
     }
 
     /**
@@ -236,6 +212,7 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     function updateTotalRewards(uint256 newTotalRewards) external override {
         require(msg.sender == oracles, "RewardToken: access denied");
 
+        newTotalRewards = newTotalRewards.add(feesEscrow.transferToPool());
         uint256 periodRewards = newTotalRewards.sub(totalRewards);
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;

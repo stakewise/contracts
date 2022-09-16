@@ -109,8 +109,9 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://dai.poa.network/',
+        url: 'https://gnosis.public-rpc.com/',
         chainId: 100,
+        blockNumber: 23880400,
       },
       accounts: {
         accountsBalance: '1000000000000000000000000',
@@ -146,6 +147,7 @@ module.exports = {
       'MerkleDistributor',
       'ContractChecker',
       'Roles',
+      'FeesEscrow',
     ],
     clear: true,
     flat: true,

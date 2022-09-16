@@ -19,10 +19,10 @@ const { upgradeContracts } = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   checkStakedToken,
-  mintMGNOTokens,
   stakeGNO,
   stakeMGNO,
   stakeGNOWithPermit,
+  mintMGNOTokens,
 } = require('../utils');
 const {
   depositData,

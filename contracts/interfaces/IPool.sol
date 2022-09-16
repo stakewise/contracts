@@ -259,15 +259,15 @@ interface IPool {
     function activateMultiple(address account, uint256[] calldata validatorIndexes) external;
 
     /**
-    * @dev Function for registering new pool validator registration.
-    * @param depositData - the deposit data to submit for the validator.
-    */
-    function registerValidator(IPoolValidators.DepositData calldata depositData) external;
-
-    /**
     * @dev Function for refunding to the pool.
     * Can only be executed by the account with admin role.
     * @param amount - the amount of mGNO tokens to refund.
     */
     function refund(uint256 amount) external;
+
+    /**
+    * @dev Function for registering new pool validator registration.
+    * @param depositData - the deposit data to submit for the validator.
+    */
+    function registerValidator(IPoolValidators.DepositData calldata depositData) external;
 }
