@@ -45,6 +45,11 @@
 - Implementation: [0x9E6631d118C28b3d61c68F14FF30a99f7e91963a](https://etherscan.io/address/0x9E6631d118C28b3d61c68F14FF30a99f7e91963a)
 - Transaction: [0xc98d6ef0cb814086d04bad9c6d4596ad2f2d7d4ac05fd409d5bf28e166c2bf77](https://goerli.etherscan.io/tx/0xc98d6ef0cb814086d04bad9c6d4596ad2f2d7d4ac05fd409d5bf28e166c2bf77)
 
+### Upgrade to v1.1.1
+
+- Implementation: [0x6FFa613eD41585B1c1e517A78d140cFBD68be639](https://etherscan.io/address/0x6FFa613eD41585B1c1e517A78d140cFBD68be639)
+- Transaction: [0xf3310d46fa205260d5a1d900a7ae6b5c93a1bee08a85a9df11279b226699a550](https://goerli.etherscan.io/tx/0xf3310d46fa205260d5a1d900a7ae6b5c93a1bee08a85a9df11279b226699a550)
+
 ## Oracles
 
 - Contract: [0x16c0020fC507C675eA8A3A817416adA3D95c661b](https://etherscan.io/address/0x16c0020fC507C675eA8A3A817416adA3D95c661b)

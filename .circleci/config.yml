@@ -103,7 +103,7 @@ jobs:
   coverage:
     executor: default
     resource_class: large
-    parallelism: 14
+    parallelism: 13
     steps:
       - checkout
       - attach_workspace:
