@@ -18,7 +18,7 @@
 ### Upgrade to v2.1.0
 
 - Implementation: [0x61975c09207c5DFe794b0A652C8CAf8458159AAe](https://etherscan.io/address/0x61975c09207c5DFe794b0A652C8CAf8458159AAe)
-- Transaction: [0xaeb4ce0d9736091c9a0638d12a2fad1af1923591614808a3a793a4a0567360f5](https://etherscan.io/tx/0xaeb4ce0d9736091c9a0638d12a2fad1af1923591614808a3a793a4a0567360f5)
+- Transaction: [0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb](https://etherscan.io/tx/0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb)
 
 ## Pool Escrow
 
@@ -63,7 +63,12 @@
 ### Upgrade to v2.1.0
 
 - Implementation: [0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1](https://etherscan.io/address/0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1)
-- Transaction: [0xad99daaecf7b11a38555ffcce86f6aee0c14934e276e6c27990458ae268cbbb8](https://etherscan.io/tx/0xad99daaecf7b11a38555ffcce86f6aee0c14934e276e6c27990458ae268cbbb8)
+- Transaction: [0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb](https://etherscan.io/tx/0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb)
+
+### Upgrade to v2.1.1
+
+- Implementation: [0x04f439c341221Da7AE086b6F585e4Cd7a7E54622](https://etherscan.io/address/0x04f439c341221Da7AE086b6F585e4Cd7a7E54622)
+- Transaction: [0xfd5e59bb0472ffc5695cb9fcbe4031a416e1517467861de78657698e5e9ed329](https://etherscan.io/tx/0xfd5e59bb0472ffc5695cb9fcbe4031a416e1517467861de78657698e5e9ed329)
 
 ## StakeWiseToken
 

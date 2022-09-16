@@ -7,9 +7,10 @@ const {
   ether,
   constants,
   send,
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { upgradeContracts } = require('../../deployments');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   stopImpersonatingAccount,
   impersonateAccount,
@@ -127,40 +128,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   });
 
   describe('updateTotalRewards', () => {
-    it('anyone cannot update rewards', async () => {
-      await expectRevert(
-        rewardEthToken.updateTotalRewards(ether('10'), {
-          from: sender,
-        }),
-        'RewardEthToken: access denied'
-      );
-      await checkRewardEthToken({
-        rewardEthToken,
-        totalSupply,
-        account: sender,
-        balance: new BN(0),
-      });
-    });
+    let feesEscrowBalance;
 
-    it('oracles can update rewards', async () => {
-      let prevTotalRewards = await rewardEthToken.totalRewards();
-      let newTotalRewards = prevTotalRewards.add(ether('10'));
-      let receipt = await setTotalRewards({
-        rewardEthToken,
-        oracles,
-        pool,
-        totalRewards: newTotalRewards,
-        oracleAccounts,
-      });
-      await expectEvent.inTransaction(
-        receipt.tx,
-        RewardEthToken,
-        'RewardsUpdated',
-        {
-          periodRewards: newTotalRewards.sub(prevTotalRewards),
-          totalRewards: newTotalRewards,
-        }
-      );
+    beforeEach(async () => {
+      feesEscrowBalance = await balance.current(contracts.feesEscrow);
     });
 
     it('anyone cannot update rewards', async () => {
@@ -188,6 +159,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         totalRewards: newTotalRewards,
         oracleAccounts,
       });
+      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
@@ -195,9 +167,23 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         {
           periodRewards: newTotalRewards.sub(prevTotalRewards),
           totalRewards: newTotalRewards,
-          protocolReward: ether('1'),
         }
       );
+    });
+
+    it('anyone cannot update rewards', async () => {
+      await expectRevert(
+        rewardEthToken.updateTotalRewards(ether('10'), {
+          from: sender,
+        }),
+        'RewardEthToken: access denied'
+      );
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply,
+        account: sender,
+        balance: new BN(0),
+      });
     });
 
     it('assigns protocol fee to distributor', async () => {
@@ -215,12 +201,14 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         totalRewards: newTotalRewards,
         oracleAccounts,
       });
+      periodReward = periodReward.add(feesEscrowBalance);
+      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
         'RewardsUpdated',
         {
-          periodRewards: newTotalRewards.sub(prevTotalRewards),
+          periodRewards: periodReward,
           totalRewards: newTotalRewards,
           protocolReward: periodReward
             .mul(await rewardEthToken.protocolFee())
@@ -249,6 +237,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         value: stakedAmount2,
       });
 
+      let feesEscrowBalance = await balance.current(contracts.feesEscrow);
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards: totalSupply,
@@ -257,6 +246,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         oracles,
         oracleAccounts,
       });
+      totalSupply = totalSupply.add(feesEscrowBalance);
 
       rewardAmount1 = await rewardEthToken.balanceOf(sender1);
       rewardAmount2 = await rewardEthToken.balanceOf(sender2);
