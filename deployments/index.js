@@ -23,12 +23,7 @@ async function upgradeRewardEthToken() {
 }
 
 async function deployContracts() {
-  const RewardEthToken = await ethers.getContractFactory('RewardEthToken');
-  const rewardEthToken = await upgrades.prepareUpgrade(
-    contracts.rewardEthToken,
-    RewardEthToken
-  );
-  return { rewardEthToken };
+  return contracts;
 }
 
 async function upgradeContracts() {

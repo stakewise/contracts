@@ -65,6 +65,11 @@
 - Implementation: [0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1](https://etherscan.io/address/0x35CB741E55330B4A0E1Ae011417E6715e4bcA0B1)
 - Transaction: [0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb](https://etherscan.io/tx/0x0bfabc6866c599c84459f37d08f49d032aac2293c269be6bbb9b93d2e01ad0fb)
 
+### Upgrade to v2.1.1
+
+- Implementation: [0x04f439c341221Da7AE086b6F585e4Cd7a7E54622](https://etherscan.io/address/0x04f439c341221Da7AE086b6F585e4Cd7a7E54622)
+- Transaction: [0xfd5e59bb0472ffc5695cb9fcbe4031a416e1517467861de78657698e5e9ed329](https://etherscan.io/tx/0xfd5e59bb0472ffc5695cb9fcbe4031a416e1517467861de78657698e5e9ed329)
+
 ## StakeWiseToken
 
 - Contract: [0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2](https://etherscan.io/address/0x48C3399719B582dD63eB5AADf12A40B4C3f52FA2)
