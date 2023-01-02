@@ -35,4 +35,4 @@ build
 # artifacts
 cache
 artifacts
-.husky
+.husky.git/
