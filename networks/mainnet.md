@@ -7,7 +7,7 @@
 
 ## Pool Escrow
 
-- Contract: [0x6DfC9682E3C3263758ad96E2b2ba9822167f81Ee](https://etherscan.io/address/0x5c631621b897f467dd6a91855a0bc97d77b78dc0)
+- Contract: [0x5c631621B897F467dD6A91855A0bC97d77B78dc0](https://etherscan.io/address/0x5c631621b897f467dd6a91855a0bc97d77b78dc0)
 - Transaction: [0x4d46bbe103c88c6abfae3646077aee2400bd29cee35504be59a48aeeb6772959](https://etherscan.io/tx/0x4d46bbe103c88c6abfae3646077aee2400bd29cee35504be59a48aeeb6772959)
 
 ## Pool Validators
