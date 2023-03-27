@@ -18,13 +18,6 @@ interface IPool {
     event ValidatorRegistered(bytes publicKey, address operator);
 
     /**
-    * @dev Event for tracking refunds.
-    * @param sender - address of the refund sender.
-    * @param amount - refunded amount.
-    */
-    event Refunded(address indexed sender, uint256 amount);
-
-    /**
     * @dev Event for tracking scheduled deposit activation.
     * @param sender - address of the deposit sender.
     * @param validatorIndex - index of the activated validator.
@@ -76,30 +69,6 @@ interface IPool {
     * @param amount - the amount added.
     */
     event StakedWithReferrer(address indexed referrer, uint256 amount);
-
-    /**
-    * @dev Function for initializing the Pool contract.
-    * @param admin - address of the contract admin.
-    * @param _withdrawalCredentials - withdrawal credentials for the pool validators.
-    * @param _validatorRegistration - address of the ValidatorRegistration contract.
-    * @param _stakedEthToken - address of the StakedEthToken contract.
-    * @param _validators - address of the Validators contract.
-    * @param _oracles - address of the Oracles contract.
-    * @param _whiteListManager - address of the WhiteListManager contract.
-    * @param _minActivatingDeposit - minimal deposit amount considered for the activation.
-    * @param _pendingValidatorsLimit - pending validators limit. When it's exceeded, the deposits will be set for the activation.
-    */
-    function initialize(
-        address admin,
-        bytes32 _withdrawalCredentials,
-        address _validatorRegistration,
-        address _stakedEthToken,
-        address _validators,
-        address _oracles,
-        address _whiteListManager,
-        uint256 _minActivatingDeposit,
-        uint256 _pendingValidatorsLimit
-    ) external;
 
     /**
     * @dev Function for getting the total validator deposit.
@@ -171,6 +140,11 @@ interface IPool {
     function validatorRegistration() external view returns (IDepositContract);
 
     /**
+    * @dev Function for receiving native tokens without minting sETH.
+    */
+    function receiveFees() external payable;
+
+    /**
     * @dev Function for staking ether to the pool to the different tokens' recipient.
     * @param recipient - address of the tokens recipient.
     */
@@ -228,10 +202,4 @@ interface IPool {
     * @param depositData - the deposit data to submit for the validator.
     */
     function registerValidator(IPoolValidators.DepositData calldata depositData) external;
-
-    /**
-    * @dev Function for refunding to the pool.
-    * Can only be executed by the account with admin role.
-    */
-    function refund() external payable;
 }

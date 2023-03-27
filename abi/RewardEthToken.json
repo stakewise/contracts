@@ -575,49 +575,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "admin",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_stakedEthToken",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_oracles",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_protocolFeeRecipient",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_protocolFee",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_merkleDistributor",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_whiteListManager",
-        "type": "address"
-      }
-    ],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
         "name": "_account",
         "type": "address"
       }
@@ -1093,6 +1050,19 @@
       }
     ],
     "name": "updateTotalRewards",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IFeesEscrow",
+        "name": "_feesEscrow",
+        "type": "address"
+      }
+    ],
+    "name": "upgrade",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

@@ -690,25 +690,4 @@ contract('Pool (stake)', (accounts) => {
       'Pool: access denied'
     );
   });
-
-  it('not admin cannot refund', async () => {
-    await expectRevert(
-      pool.refund({
-        from: sender1,
-      }),
-      'Pool: access denied'
-    );
-  });
-
-  it('admin can refund', async () => {
-    await whiteListManager.updateWhiteList(admin, true, { from: admin });
-    let receipt = await pool.refund({
-      from: admin,
-      value: ether('1'),
-    });
-    await expectEvent(receipt, 'Refunded', {
-      sender: admin,
-      amount: ether('1'),
-    });
-  });
 });

@@ -56,46 +56,6 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     uint256 public override pendingValidatorsLimit;
 
     /**
-     * @dev See {IPool-initialize}.
-     */
-    function initialize(
-        address admin,
-        bytes32 _withdrawalCredentials,
-        address _validatorRegistration,
-        address _stakedEthToken,
-        address _validators,
-        address _oracles,
-        address _whiteListManager,
-        uint256 _minActivatingDeposit,
-        uint256 _pendingValidatorsLimit
-    )
-        external override initializer
-    {
-        require(admin != address(0), "Pool: invalid admin address");
-        require(_withdrawalCredentials != "", "Pool: invalid withdrawal credentials");
-        require(_validatorRegistration != address(0), "Pool: invalid ValidatorRegistration address");
-        require(_stakedEthToken != address(0), "Pool: invalid StakedEthToken address");
-        require(_validators != address(0), "Pool: invalid Validators address");
-        require(_oracles != address(0), "Pool: invalid Oracles address");
-        require(_pendingValidatorsLimit < 1e4, "Pool: invalid limit");
-
-        __OwnablePausableUpgradeable_init(admin);
-
-        withdrawalCredentials = _withdrawalCredentials;
-        validatorRegistration = IDepositContract(_validatorRegistration);
-        stakedEthToken = IStakedEthToken(_stakedEthToken);
-        validators = IPoolValidators(_validators);
-        oracles = _oracles;
-        whiteListManager = IWhiteListManager(_whiteListManager);
-
-        minActivatingDeposit = _minActivatingDeposit;
-        emit MinActivatingDepositUpdated(_minActivatingDeposit, msg.sender);
-
-        pendingValidatorsLimit = _pendingValidatorsLimit;
-        emit PendingValidatorsLimitUpdated(_pendingValidatorsLimit, msg.sender);
-    }
-
-    /**
      * @dev See {IPool-setMinActivatingDeposit}.
      */
     function setMinActivatingDeposit(uint256 newMinActivatingDeposit) external override onlyAdmin {
@@ -137,6 +97,11 @@ contract Pool is IPool, OwnablePausableUpgradeable {
     function stakeOnBehalf(address recipient) external payable override {
         _stake(recipient, msg.value);
     }
+
+    /**
+     * @dev See {IPool-receiveFees}.
+     */
+    function receiveFees() external payable override {}
 
     /**
     * @dev Function for staking ETH using transfer.
@@ -274,17 +239,5 @@ contract Pool is IPool, OwnablePausableUpgradeable {
             depositData.signature,
             depositData.depositDataRoot
         );
-    }
-
-    /**
-     * @dev See {IPool-refund}.
-     */
-    function refund() external override payable {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) && whiteListManager.whitelistedAccounts(msg.sender),
-            "Pool: access denied"
-        );
-        require(msg.value > 0, "Pool: invalid refund amount");
-        emit Refunded(msg.sender, msg.value);
     }
 }
