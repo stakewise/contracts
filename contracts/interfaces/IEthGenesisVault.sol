@@ -10,7 +10,7 @@ pragma solidity 0.7.5;
  */
 interface IEthGenesisVault {
   /**
-   * @notice Function for migrating from StakeWise v2. Can be called only by sETH2 contract.
+   * @notice Function for migrating from StakeWise v2. Can be called only by RewardEthToken contract.
    * @param receiver The address of the receiver
    * @param assets The amount of assets migrated
    * @return shares The amount of shares minted
