@@ -17,6 +17,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     feesEscrow: '0x6A9d30e05C6832E868390F155388c7d97A6faEAC',
     contractChecker: '0x85ee326f839Bc430655A3fad447837072ef52C2F',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
+    vault: '0x0000000000000000000000000000000000000000',
   };
 
   contractSettings = {
@@ -39,6 +40,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     feesEscrow: '0x6b333B20fBae3c5c0969dd02176e30802e2fbBdB',
     contractChecker: '0xFC1fC7257AEA7C7c08A498594DCA97CE5A72fdCB',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
+    vault: '0x0000000000000000000000000000000000000000',
   };
 
   contractSettings = {

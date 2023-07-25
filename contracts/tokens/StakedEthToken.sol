@@ -91,21 +91,23 @@ contract StakedEthToken is IStakedEthToken, OwnablePausableUpgradeable, ERC20Per
     }
 
     /**
-     * @dev See {IStakedEthToken-mint}.
+     * @dev See {IStakedEthToken-burn}.
      */
-    function mint(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakedEthToken: access denied");
+    function burn(address account, uint256 amount) external override {
+        IRewardEthToken _rewardEthToken = rewardEthToken; // gas savings
+        require(msg.sender == address(_rewardEthToken), "StakedEthToken: access denied");
+        require(account != address(0), "StakedEthToken: invalid account");
 
         // start calculating account rewards with updated deposit amount
-        bool rewardsDisabled = rewardEthToken.updateRewardCheckpoint(account);
+        bool rewardsDisabled = _rewardEthToken.updateRewardCheckpoint(account);
         if (rewardsDisabled) {
             // update merkle distributor principal if account has disabled rewards
-            distributorPrincipal = distributorPrincipal.add(amount);
+            distributorPrincipal = distributorPrincipal.sub(amount);
         }
 
-        totalDeposits = totalDeposits.add(amount);
-        deposits[account] = deposits[account].add(amount);
+        totalDeposits = totalDeposits.sub(amount);
+        deposits[account] = deposits[account].sub(amount);
 
-        emit Transfer(address(0), account, amount);
+        emit Transfer(account, address(0), amount);
     }
 }

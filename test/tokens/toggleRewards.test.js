@@ -12,25 +12,18 @@ const {
   resetFork,
   setupOracleAccounts,
   setTotalRewards,
+  addStakedEthToken,
 } = require('../utils');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 
 const RewardEthToken = artifacts.require('RewardEthToken');
-const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 const StakedEthToken = artifacts.require('StakedEthToken');
 
 contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles,
-    rewardEthToken,
-    stakedEthToken,
-    distributorReward,
-    pool,
-    oracleAccounts,
-    distributorPrincipal;
-  let [account, anyone] = accounts;
+  let rewardEthToken, stakedEthToken, distributorReward, distributorPrincipal;
+  let [account, anyone, vault] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -38,12 +31,9 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
-    oracles = await Oracles.at(upgradedContracts.oracles);
-    pool = await Pool.at(contracts.pool);
+    await upgradeContracts(vault);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     distributorPrincipal = await stakedEthToken.distributorPrincipal();
     distributorReward = await rewardEthToken.balanceOf(constants.ZERO_ADDRESS);
   });
@@ -82,10 +72,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.stake({
-        from: account,
-        value: deposit,
-      });
+      await addStakedEthToken(stakedEthToken, account, deposit);
 
       let receipt = await stakedEthToken.toggleRewards(account, true, {
         from: admin,
@@ -127,10 +114,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sETH2 for disabled account
-      await pool.stake({
-        from: account,
-        value: deposit,
-      });
+      await addStakedEthToken(stakedEthToken, account, deposit);
       expect(await stakedEthToken.balanceOf(account)).to.be.bignumber.equal(
         deposit
       );
@@ -147,10 +131,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       ).to.be.bignumber.equal(distributorReward);
 
       // mint sETH2 for normal account
-      await pool.stake({
-        from: anyone,
-        value: ether('5'),
-      });
+      await addStakedEthToken(stakedEthToken, anyone, deposit);
       expect(await stakedEthToken.balanceOf(anyone)).to.be.bignumber.equal(
         deposit
       );
@@ -162,10 +143,8 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
         rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // arrived reward
@@ -210,10 +189,7 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
     it('toggling rewards does not affect current rewards balance', async () => {
       // mint sETH2 for disabled account
       let deposit = ether('5');
-      await pool.stake({
-        from: account,
-        value: deposit,
-      });
+      await addStakedEthToken(stakedEthToken, account, deposit);
 
       // manual checkpoints update
       await rewardEthToken.updateRewardCheckpoint(account);
@@ -226,10 +202,8 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
         rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // manual checkpoints update
@@ -291,10 +265,8 @@ contract('StakedEthToken (toggle rewards)', ([_, ...accounts]) => {
       totalRewards = totalRewards.add(ether('10'));
       await setTotalRewards({
         rewardEthToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // manual checkpoints update

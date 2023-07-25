@@ -43,8 +43,8 @@ contract('FeesEscrow', (accounts) => {
   afterEach(async () => resetFork());
 
   it('transferToPool from RewardEthToken', async () => {
-    await impersonateAccount(contracts.oracles);
-    const oraclesSigner = await ethers.getSigner(contracts.oracles);
+    await impersonateAccount(contracts.vault);
+    const vaultSigner = await ethers.getSigner(contracts.vault);
     const feesEscrowBalance = await balance.current(contracts.feesEscrow);
     const feesAmount = ether('1');
 
@@ -57,14 +57,14 @@ contract('FeesEscrow', (accounts) => {
 
     // set oracles balance to call rewardEthToken.updateTotalRewards()
     await ethers.provider.send('hardhat_setBalance', [
-      oraclesSigner.address,
+      vaultSigner.address,
       '0x100000000000000000',
     ]);
 
-    const newTotalRewards = ether('100000');
+    const rewardsDelta = ether('10');
     await rewardEthToken
-      .connect(oraclesSigner)
-      .updateTotalRewards(newTotalRewards.toString());
+      .connect(vaultSigner)
+      .updateTotalRewards(rewardsDelta.toString());
 
     // Ensure all fees transferred from FeesEscrow contract to Pool contract
     const poolBalanceAfter = await balance.current(pool.address);

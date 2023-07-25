@@ -80,68 +80,6 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "address[]",
-        "name": "oracles",
-        "type": "address[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "nonce",
-        "type": "uint256"
-      }
-    ],
-    "name": "RegisterValidatorsVoteSubmitted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "oracle",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "nonce",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "totalRewards",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "activatedValidators",
-        "type": "uint256"
-      }
-    ],
-    "name": "RewardsVoteSubmitted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
         "internalType": "bytes32",
         "name": "role",
         "type": "bytes32"
@@ -306,19 +244,6 @@
   {
     "inputs": [],
     "name": "currentRewardsNonce",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "currentValidatorsNonce",
     "outputs": [
       {
         "internalType": "uint256",
@@ -526,61 +451,6 @@
   {
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "operator",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "withdrawalCredentials",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "depositDataRoot",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes",
-            "name": "publicKey",
-            "type": "bytes"
-          },
-          {
-            "internalType": "bytes",
-            "name": "signature",
-            "type": "bytes"
-          }
-        ],
-        "internalType": "struct IPoolValidators.DepositData[]",
-        "name": "depositData",
-        "type": "tuple[]"
-      },
-      {
-        "internalType": "bytes32[][]",
-        "name": "merkleProofs",
-        "type": "bytes32[][]"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "validatorsDepositRoot",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "signatures",
-        "type": "bytes[]"
-      }
-    ],
-    "name": "registerValidators",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
         "name": "_account",
         "type": "address"
@@ -672,29 +542,6 @@
       }
     ],
     "name": "submitMerkleRoot",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "totalRewards",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "activatedValidators",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes[]",
-        "name": "signatures",
-        "type": "bytes[]"
-      }
-    ],
-    "name": "submitRewards",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

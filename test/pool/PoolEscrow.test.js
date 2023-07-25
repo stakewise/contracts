@@ -21,6 +21,7 @@ const PoolEscrow = artifacts.require('PoolEscrow');
 contract('PoolEscrow', ([anyone, newOwner, payee]) => {
   const owner = contractSettings.admin;
   let poolEscrow;
+  let poolEscrowBalance;
 
   after(async () => stopImpersonatingAccount(owner));
 
@@ -30,6 +31,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
 
     let contracts = await upgradeContracts();
     poolEscrow = await PoolEscrow.at(contracts.poolEscrow);
+    poolEscrowBalance = await balance.current(poolEscrow.address);
   });
 
   afterEach(async () => resetFork());
@@ -41,7 +43,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
   it('can receive ETH transfers', async () => {
     await send.ether(anyone, poolEscrow.address, ether('5'));
     expect(await balance.current(poolEscrow.address)).to.bignumber.equal(
-      ether('5')
+      poolEscrowBalance.add(ether('5'))
     );
   });
 
@@ -146,7 +148,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
         amount,
       });
       expect(await balance.current(poolEscrow.address)).to.bignumber.equal(
-        new BN(0)
+        poolEscrowBalance
       );
       expect(await balance.current(payee)).to.bignumber.equal(
         payeeBalance.add(amount)
@@ -178,7 +180,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     it('fails to withdraw ether when not enough balance', async () => {
       let amount = ether('5');
       await expectRevert(
-        poolEscrow.withdraw(payee, amount, {
+        poolEscrow.withdraw(payee, poolEscrowBalance.add(amount), {
           from: owner,
         }),
         'Address: insufficient balance'

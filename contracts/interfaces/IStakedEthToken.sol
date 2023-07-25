@@ -26,10 +26,10 @@ interface IStakedEthToken is IERC20Upgradeable {
     function toggleRewards(address account, bool isDisabled) external;
 
     /**
-    * @dev Function for creating `amount` tokens and assigning them to `account`.
-    * Can only be called by Pool contract.
-    * @param account - address of the account to assign tokens to.
-    * @param amount - amount of tokens to assign.
+    * @dev Function for burning `amount` tokens from `account`.
+    * Can only be called by RewardEthToken contract.
+    * @param account - address of the account to burn tokens from.
+    * @param amount - amount of tokens to burn.
     */
-    function mint(address account, uint256 amount) external;
+    function burn(address account, uint256 amount) external;
 }
