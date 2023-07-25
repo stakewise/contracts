@@ -24,7 +24,6 @@ const {
   checkStakedEthToken,
 } = require('../utils');
 const { ethers } = require('hardhat');
-const { web3 } = require('@openzeppelin/test-helpers/src/setup');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');

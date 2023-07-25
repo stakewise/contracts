@@ -63,6 +63,7 @@ contract Pool is IPool, OwnablePausableUpgradeable {
      */
     function transferToPoolEscrow() external override {
         uint256 balance = address(this).balance;
+        // solhint-disable-next-line avoid-low-level-calls
         (bool success,) = payable(poolEscrow).call{value: balance}("");
         require(success, "Pool: transfer failed");
     }

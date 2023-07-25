@@ -4,7 +4,6 @@ const {
   expectEvent,
   ether,
   send,
-  BN,
   constants,
   balance,
 } = require('@openzeppelin/test-helpers');
