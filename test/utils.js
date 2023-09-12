@@ -1,8 +1,7 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const { BN, balance } = require('@openzeppelin/test-helpers');
-const { contracts } = require('../deployments/settings');
+const { BN } = require('@openzeppelin/test-helpers');
 
 async function checkStakedEthToken({
   stakedEthToken,
@@ -93,14 +92,10 @@ async function setTotalRewards({ rewardEthToken, totalRewards, vault }) {
   const totalPenalty = await rewardEthToken.totalPenalty();
   let delta = totalRewards.sub(totalSupply);
 
-  // calculate candidate ID
-  let feesEscrowBalance = await balance.current(contracts.feesEscrow);
-
   // update total rewards
   let receipt = await rewardEthToken.updateTotalRewards(delta, {
     from: vault,
   });
-  delta = delta.add(feesEscrowBalance);
   if (delta.isNeg()) {
     delta = new BN(0);
   }

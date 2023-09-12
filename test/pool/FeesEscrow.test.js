@@ -6,7 +6,7 @@ const {
   ether,
   expectRevert,
   BN,
-  balance,
+  balance
 } = require('@openzeppelin/test-helpers');
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
@@ -16,6 +16,7 @@ const FeesEscrow = artifacts.require('FeesEscrow');
 
 let feesEscrow;
 let pool;
+let poolEscrow;
 let rewardEthToken;
 
 contract('FeesEscrow', (accounts) => {
@@ -32,33 +33,33 @@ contract('FeesEscrow', (accounts) => {
     );
     feesEscrow = await FeesEscrow.at(upgradedContracts.feesEscrow);
     pool = await Pool.at(upgradedContracts.pool);
+    poolEscrow = upgradedContracts.poolEscrow;
 
     // Zero balance for Pool contract before each test
     await network.provider.send('hardhat_setBalance', [
       upgradedContracts.pool,
-      '0x0',
+      '0x0'
     ]);
   });
 
   afterEach(async () => resetFork());
 
-  it('transferToPool from RewardEthToken', async () => {
+  it('transfer fees to pool escrow', async () => {
     await impersonateAccount(contracts.vault);
     const vaultSigner = await ethers.getSigner(contracts.vault);
-    const feesEscrowBalance = await balance.current(contracts.feesEscrow);
     const feesAmount = ether('1');
 
-    // Ensure zero balances before miner's reward distribution to FeesEscrow contract
     const poolBalanceBefore = await balance.current(pool.address);
-    expect(poolBalanceBefore.toString()).to.be.bignumber.equal(new BN('0'));
+    const poolEscrowBalanceBefore = await balance.current(poolEscrow);
 
     // Send fees from "validator" to FeesEscrow contract
     await send.ether(sender, feesEscrow.address, feesAmount.toString());
+    const feesEscrowBalanceBefore = await balance.current(feesEscrow.address);
 
     // set oracles balance to call rewardEthToken.updateTotalRewards()
     await ethers.provider.send('hardhat_setBalance', [
       vaultSigner.address,
-      '0x100000000000000000',
+      '0x100000000000000000'
     ]);
 
     const rewardsDelta = ether('10');
@@ -66,17 +67,18 @@ contract('FeesEscrow', (accounts) => {
       .connect(vaultSigner)
       .updateTotalRewards(rewardsDelta.toString());
 
-    // Ensure all fees transferred from FeesEscrow contract to Pool contract
-    const poolBalanceAfter = await balance.current(pool.address);
-    expect(poolBalanceAfter.toString()).to.be.bignumber.equal(
-      poolBalanceBefore.add(feesEscrowBalance).add(feesAmount).toString()
-    );
-
-    const feesEscrowBalanceAfterTransfer = await balance.current(
-      feesEscrow.address
-    );
-    expect(feesEscrowBalanceAfterTransfer.toString()).to.be.bignumber.equal(
+    // Ensure all fees transferred to Pool escrow
+    expect(await balance.current(pool.address)).to.be.bignumber.equal(
       new BN('0')
+    );
+    expect(await balance.current(feesEscrow.address)).to.be.bignumber.equal(
+      new BN('0')
+    );
+    const poolEscrowBalanceAfter = await balance.current(poolEscrow);
+    expect(poolEscrowBalanceAfter).to.be.bignumber.equal(
+      poolEscrowBalanceBefore
+        .add(feesEscrowBalanceBefore)
+        .add(poolBalanceBefore)
     );
   });
 

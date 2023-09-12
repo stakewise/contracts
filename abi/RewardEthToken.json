@@ -5,6 +5,11 @@
         "internalType": "address",
         "name": "_vault",
         "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_pool",
+        "type": "address"
       }
     ],
     "stateMutability": "nonpayable",

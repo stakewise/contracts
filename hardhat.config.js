@@ -140,6 +140,7 @@ module.exports = {
       'MerkleDistributor',
       'ContractChecker',
       'Roles',
+      'FeesEscrow',
     ],
     clear: true,
     flat: true,

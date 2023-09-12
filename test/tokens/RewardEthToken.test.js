@@ -126,12 +126,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
   });
 
   describe('updateTotalRewards', () => {
-    let feesEscrowBalance;
-
-    beforeEach(async () => {
-      feesEscrowBalance = await balance.current(contracts.feesEscrow);
-    });
-
     it('anyone cannot update rewards', async () => {
       await expectRevert(
         rewardEthToken.updateTotalRewards(ether('10'), {
@@ -155,7 +149,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
         vault,
         totalRewards: newTotalRewards,
       });
-      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
@@ -180,8 +173,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
         vault,
         totalRewards: newTotalRewards,
       });
-      periodReward = periodReward.add(feesEscrowBalance);
-      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
@@ -197,7 +188,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
     });
 
     it('accumulates penalty', async () => {
-      let penalty = feesEscrowBalance.add(ether('10'));
+      let penalty = ether('10');
       let totalRewards = await rewardEthToken.totalRewards();
       let totalPenalty = await rewardEthToken.totalPenalty();
 
@@ -270,11 +261,10 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
     });
 
     it('penalty cannot exceed total assets', async () => {
-      let penalty = feesEscrowBalance.add(new BN(1));
       let totalAssets = await rewardEthToken.totalAssets();
 
       await expectRevert(
-        rewardEthToken.updateTotalRewards(totalAssets.add(penalty).neg(), {
+        rewardEthToken.updateTotalRewards(totalAssets.add(new BN(1)).neg(), {
           from: vault,
         }),
         'RewardEthToken: invalid penalty amount'
@@ -292,14 +282,12 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
       await addStakedEthToken(stakedEthToken, sender1, stakedAmount1);
       await addStakedEthToken(stakedEthToken, sender2, stakedAmount2);
 
-      let feesEscrowBalance = await balance.current(contracts.feesEscrow);
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards: totalSupply,
         rewardEthToken,
         vault,
       });
-      totalSupply = totalSupply.add(feesEscrowBalance);
 
       rewardAmount1 = await rewardEthToken.balanceOf(sender1);
       rewardAmount2 = await rewardEthToken.balanceOf(sender2);
@@ -539,9 +527,7 @@ contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
     });
 
     it('deducts penalty from user assets', async () => {
-      const feesEscrowBalance = await balance.current(contracts.feesEscrow);
-      let penalty = feesEscrowBalance.add(ether('10')).neg();
-
+      let penalty = ether('-10');
       await vaultMock.updateTotalRewards(penalty, {
         from: vault,
       });

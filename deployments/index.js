@@ -35,25 +35,16 @@ async function upgradeRewardEthToken(signer, vault) {
     'RewardEthToken',
     signer
   );
-  let rewardEthToken = await RewardEthToken.attach(contracts.rewardEthToken);
-
-  // pause
-  if (!(await rewardEthToken.paused())) {
-    await rewardEthToken.pause();
-  }
-
   // upgrade RewardEthToken to new implementation
   const proxy = await upgrades.upgradeProxy(
     contracts.rewardEthToken,
     RewardEthToken,
     {
       unsafeAllow: ['state-variable-immutable', 'constructor'],
-      constructorArgs: [vault],
+      constructorArgs: [vault, contracts.pool],
     }
   );
   await proxy.deployed();
-
-  await rewardEthToken.unpause();
 }
 
 async function upgradeStakedEthToken(signer) {
@@ -61,21 +52,12 @@ async function upgradeStakedEthToken(signer) {
     'StakedEthToken',
     signer
   );
-  let stakedEthToken = await StakedEthToken.attach(contracts.stakedEthToken);
-
-  // pause
-  if (!(await stakedEthToken.paused())) {
-    await stakedEthToken.pause();
-  }
-
   // upgrade RewardEthToken to new implementation
   const proxy = await upgrades.upgradeProxy(
     contracts.stakedEthToken,
     StakedEthToken
   );
   await proxy.deployed();
-
-  await stakedEthToken.unpause();
 }
 
 async function deployContracts() {

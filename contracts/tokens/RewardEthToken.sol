@@ -3,7 +3,6 @@
 pragma solidity 0.7.5;
 
 import "@openzeppelin/contracts-upgradeable/math/SafeMathUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/math/SignedSafeMathUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/SafeCastUpgradeable.sol";
 import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedEthToken.sol";
@@ -11,6 +10,7 @@ import "../interfaces/IRewardEthToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
 import "../interfaces/IFeesEscrow.sol";
 import "../interfaces/IEthGenesisVault.sol";
+import "../interfaces/IPool.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -21,11 +21,13 @@ import "./ERC20PermitUpgradeable.sol";
  */
 contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
-    using SignedSafeMathUpgradeable for int256;
     using SafeCastUpgradeable for uint256;
 
     // @dev Address of the Vault contract.
     address public immutable override vault;
+
+    // @dev Address of the Pool contract.
+    IPool private immutable pool;
 
     // @dev Address of the StakedEthToken contract.
     IStakedEthToken private stakedEthToken;
@@ -68,9 +70,11 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
    * @dev Since the immutable variable value is stored in the bytecode,
    *      its value would be shared among all proxies pointing to a given contract instead of each proxy’s storage.
    * @param _vault Address of the StakeWise V3 vault.
+   * @param _pool Address of the StakeWise V2 pool.
    */
-    constructor(address _vault) {
+    constructor(address _vault, address _pool) {
         vault = _vault;
+        pool = IPool(_pool);
     }
 
     /**
@@ -231,7 +235,6 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
     function updateTotalRewards(int256 rewardsDelta) external override {
         require(msg.sender == address(vault), "RewardEthToken: access denied");
 
-        rewardsDelta = rewardsDelta.add(feesEscrow.transferToPool().toInt256());
         uint256 periodRewards;
         if (rewardsDelta > 0) {
             periodRewards = uint256(rewardsDelta);
@@ -288,6 +291,12 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
                 reward: newDistributorBalance.toUint128(),
                 rewardPerToken: newRewardPerToken128
             });
+        }
+
+        // transfer accumulated fees
+        if (address(feesEscrow).balance > 0) {
+            feesEscrow.transferToPool();
+            pool.transferToPoolEscrow();
         }
 
         lastUpdateBlockNumber = block.number;
