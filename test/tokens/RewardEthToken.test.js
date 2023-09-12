@@ -6,7 +6,6 @@ const {
   ether,
   constants,
   send,
-  balance,
 } = require('@openzeppelin/test-helpers');
 const {
   upgradeContracts,

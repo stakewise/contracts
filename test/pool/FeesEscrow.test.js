@@ -6,7 +6,7 @@ const {
   ether,
   expectRevert,
   BN,
-  balance
+  balance,
 } = require('@openzeppelin/test-helpers');
 const { ethers } = require('hardhat');
 const { expect } = require('chai');
@@ -38,7 +38,7 @@ contract('FeesEscrow', (accounts) => {
     // Zero balance for Pool contract before each test
     await network.provider.send('hardhat_setBalance', [
       upgradedContracts.pool,
-      '0x0'
+      '0x0',
     ]);
   });
 
@@ -59,7 +59,7 @@ contract('FeesEscrow', (accounts) => {
     // set oracles balance to call rewardEthToken.updateTotalRewards()
     await ethers.provider.send('hardhat_setBalance', [
       vaultSigner.address,
-      '0x100000000000000000'
+      '0x100000000000000000',
     ]);
 
     const rewardsDelta = ether('10');
