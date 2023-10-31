@@ -248,7 +248,7 @@ contract RewardEthToken is IRewardEthToken, OwnablePausableUpgradeable, ERC20Per
             }
         } else if (rewardsDelta < 0) {
             uint256 _totalPenalty = totalPenalty; // gas savings
-            _totalPenalty = _totalPenalty.add(uint256(- rewardsDelta));
+            _totalPenalty = _totalPenalty.add(uint256(-rewardsDelta));
             require(_totalPenalty <= totalAssets(), "RewardEthToken: invalid penalty amount");
             totalPenalty = _totalPenalty;
         }
