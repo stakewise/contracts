@@ -24,7 +24,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     using SafeMathUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
 
-    bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
+    bytes32 public immutable ORACLE_ROLE = keccak256("ORACLE_ROLE");
 
     // @dev Rewards nonce is used to protect from submitting the same rewards vote several times.
     CountersUpgradeable.Counter private rewardsNonce;
@@ -48,8 +48,15 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     * @dev Modifier for checking whether the caller is an oracle.
     */
     modifier onlyOracle() {
-        require(hasRole(ORACLE_ROLE, msg.sender), "Oracles: access denied");
+        _checkOracle
         _;
+    }
+
+    /**
+    * @dev Internal function used by the modifier 'onlyOracle'
+    */
+    function _checkOracle() internal view {
+        require(hasRole(ORACLE_ROLE, msg.sender), "Oracles: access denied");
     }
 
     /**
@@ -127,12 +134,12 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         // check signatures and calculate number of submitted oracle votes
         address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
+        for (uint256 i; i < signatures.length; ++i) {
             bytes memory signature = signatures[i];
             address signer = ECDSAUpgradeable.recover(candidateId, signature);
             require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
 
-            for (uint256 j = 0; j < i; j++) {
+            for (uint256 j; j < i; ++j) {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
@@ -172,12 +179,12 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         // check signatures and calculate number of submitted oracle votes
         address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
+        for (uint256 i; i < signatures.length; ++i) {
             bytes memory signature = signatures[i];
             address signer = ECDSAUpgradeable.recover(candidateId, signature);
             require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
 
-            for (uint256 j = 0; j < i; j++) {
+            for (uint256 j; j < i; ++j) {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
@@ -216,12 +223,12 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         // check signatures are correct
         address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
+        for (uint256 i; i < signatures.length; ++i) {
             bytes memory signature = signatures[i];
             address signer = ECDSAUpgradeable.recover(candidateId, signature);
             require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
 
-            for (uint256 j = 0; j < i; j++) {
+            for (uint256 j; j < i; ++j) {
                 require(signedOracles[j] != signer, "Oracles: repeated signature");
             }
             signedOracles[i] = signer;
@@ -231,7 +238,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
         require(merkleProofs.length == depositDataLength, "Oracles: invalid merkle proofs length");
 
         // submit deposit data
-        for (uint256 i = 0; i < depositDataLength; i++) {
+        for (uint256 i; i < depositDataLength; ++i) {
             // register validator
             poolValidators.registerValidator(depositData[i], merkleProofs[i]);
         }
