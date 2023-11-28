@@ -1,4 +1,3 @@
-const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { expect } = require('chai');
 const {
   expectRevert,
@@ -13,64 +12,37 @@ const {
   stopImpersonatingAccount,
   resetFork,
   checkStakedEthToken,
-  setupOracleAccounts,
   setTotalRewards,
+  addStakedEthToken,
 } = require('../utils');
-const { upgradeContracts } = require('../../deployments');
+const {
+  upgradeContracts,
+  upgradeRewardEthToken,
+} = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
+const { ethers } = require('hardhat');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
-const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
 
 contract('StakedEthToken', (accounts) => {
   const admin = contractSettings.admin;
-  const [merkleDistributor, sender1, sender2, ...otherAccounts] = accounts;
-  let stakedEthToken,
-    rewardEthToken,
-    pool,
-    totalSupply,
-    oracles,
-    oracleAccounts,
-    activatedValidators,
-    totalRewards,
-    signatures;
+  const [merkleDistributor, sender1, sender2, vault] = accounts;
+  let stakedEthToken, rewardEthToken, oracles, totalSupply, totalRewards;
 
   beforeEach(async () => {
     await impersonateAccount(admin);
     await send.ether(sender1, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    await upgradeContracts(vault);
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
-    pool = await Pool.at(contracts.pool);
-    oracles = await Oracles.at(upgradedContracts.oracles);
-    oracleAccounts = await setupOracleAccounts({
-      oracles,
-      admin,
-      accounts: otherAccounts,
-    });
+    oracles = await Oracles.at(contracts.oracles);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
 
-    totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-    let currentNonce = await oracles.currentRewardsNonce();
-    activatedValidators = await pool.activatedValidators();
-    let encoded = defaultAbiCoder.encode(
-      ['uint256', 'uint256', 'uint256'],
-      [
-        currentNonce.toString(),
-        activatedValidators.toString(),
-        totalRewards.toString(),
-      ]
-    );
-    signatures = [];
-    let candidateId = hexlify(keccak256(encoded));
-    for (const oracleAccount of oracleAccounts) {
-      signatures.push(await web3.eth.sign(candidateId, oracleAccount));
-    }
-
+    totalRewards = await rewardEthToken.totalRewards();
     totalSupply = await stakedEthToken.totalSupply();
   });
 
@@ -78,55 +50,12 @@ contract('StakedEthToken', (accounts) => {
 
   afterEach(async () => resetFork());
 
-  describe('mint', () => {
-    it('anyone cannot mint sETH2 tokens', async () => {
-      await expectRevert(
-        stakedEthToken.mint(sender1, ether('10'), {
-          from: sender1,
-        }),
-        'StakedEthToken: access denied'
-      );
-      await checkStakedEthToken({
-        stakedEthToken,
-        totalSupply,
-        account: sender1,
-        balance: new BN(0),
-      });
-    });
-
-    it('updates distributor principal when deposited by account with disabled rewards', async () => {
-      // disable rewards
-      let prevPrincipal = await stakedEthToken.distributorPrincipal();
-      await stakedEthToken.toggleRewards(sender1, true, { from: admin });
-      let amount = ether('10');
-      let receipt = await pool.stake({
-        from: sender1,
-        value: amount,
-      });
-      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
-        from: constants.ZERO_ADDRESS,
-        to: sender1,
-        value: amount,
-      });
-      expect(await stakedEthToken.distributorPrincipal()).to.bignumber.equal(
-        prevPrincipal.add(amount)
-      );
-    });
-  });
-
   describe('transfer', () => {
     let value = ether('10');
     let distributorPrincipal;
 
     beforeEach(async () => {
-      await pool.setMinActivatingDeposit(value.add(ether('1')), {
-        from: admin,
-      });
-      await pool.stake({
-        from: sender1,
-        value,
-      });
-      totalSupply = totalSupply.add(value);
+      await addStakedEthToken(stakedEthToken, sender1, value);
       distributorPrincipal = await stakedEthToken.distributorPrincipal();
     });
 
@@ -248,9 +177,7 @@ contract('StakedEthToken', (accounts) => {
       await setTotalRewards({
         totalRewards,
         rewardEthToken,
-        pool,
-        oracles,
-        oracleAccounts,
+        vault,
       });
 
       let rewardAmount = await rewardEthToken.balanceOf(sender1);
@@ -382,9 +309,9 @@ contract('StakedEthToken', (accounts) => {
         contracts.rewardEthToken,
         merkleDistributor
       );
-      await oracles.addOracle(multicallMock.address, {
-        from: admin,
-      });
+
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, multicallMock.address);
 
       await stakedEthToken.approve(multicallMock.address, value, {
         from: sender1,
@@ -393,9 +320,7 @@ contract('StakedEthToken', (accounts) => {
       await expectRevert(
         multicallMock.updateTotalRewardsAndTransferStakedEth(
           totalRewards,
-          activatedValidators,
           sender2,
-          signatures,
           {
             from: sender1,
           }
@@ -412,9 +337,9 @@ contract('StakedEthToken', (accounts) => {
         contracts.rewardEthToken,
         merkleDistributor
       );
-      await oracles.addOracle(multicallMock.address, {
-        from: admin,
-      });
+
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, multicallMock.address);
 
       await stakedEthToken.approve(multicallMock.address, value, {
         from: sender1,
@@ -422,9 +347,7 @@ contract('StakedEthToken', (accounts) => {
 
       let receipt = await multicallMock.transferStakedEthAndUpdateTotalRewards(
         totalRewards,
-        activatedValidators,
         sender2,
-        signatures,
         {
           from: sender1,
         }
@@ -434,6 +357,22 @@ contract('StakedEthToken', (accounts) => {
         from: sender1,
         to: sender2,
         value,
+      });
+    });
+
+    it('cannot burn from not rewardEthToken', async () => {
+      await expectRevert(
+        stakedEthToken.burn(sender1, value, {
+          from: sender1,
+        }),
+        'StakedEthToken: access denied'
+      );
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply,
+        account: sender1,
+        balance: value,
       });
     });
   });

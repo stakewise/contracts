@@ -1,4 +1,3 @@
-const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
 const { expect } = require('chai');
 const {
   expectRevert,
@@ -7,9 +6,11 @@ const {
   ether,
   constants,
   send,
-  balance,
 } = require('@openzeppelin/test-helpers');
-const { upgradeContracts } = require('../../deployments');
+const {
+  upgradeContracts,
+  upgradeRewardEthToken,
+} = require('../../deployments');
 const { contractSettings, contracts } = require('../../deployments/settings');
 const {
   stopImpersonatingAccount,
@@ -17,24 +18,22 @@ const {
   resetFork,
   checkRewardEthToken,
   setTotalRewards,
-  setupOracleAccounts,
+  addStakedEthToken,
+  addRewardEthToken,
+  checkStakedEthToken,
 } = require('../utils');
+const { ethers } = require('hardhat');
 
 const StakedEthToken = artifacts.require('StakedEthToken');
 const RewardEthToken = artifacts.require('RewardEthToken');
-const Pool = artifacts.require('Pool');
 const Oracles = artifacts.require('Oracles');
 const MulticallMock = artifacts.require('MulticallMock');
+const VaultMock = artifacts.require('VaultMock');
 const protocolFee = new BN(1000);
 
-contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
+contract('RewardEthToken', ([sender, merkleDistributor, vault, ...others]) => {
   const admin = contractSettings.admin;
-  let stakedEthToken,
-    rewardEthToken,
-    totalSupply,
-    pool,
-    oracles,
-    oracleAccounts;
+  let stakedEthToken, rewardEthToken, totalSupply, oracles;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -42,14 +41,12 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(sender, admin, ether('5'));
 
-    let contracts = await upgradeContracts();
+    let contracts = await upgradeContracts(vault);
 
     stakedEthToken = await StakedEthToken.at(contracts.stakedEthToken);
     rewardEthToken = await RewardEthToken.at(contracts.rewardEthToken);
 
-    pool = await Pool.at(contracts.pool);
     oracles = await Oracles.at(contracts.oracles);
-    oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     totalSupply = await rewardEthToken.totalSupply();
     await rewardEthToken.setProtocolFee(protocolFee, { from: admin });
   });
@@ -128,12 +125,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
   });
 
   describe('updateTotalRewards', () => {
-    let feesEscrowBalance;
-
-    beforeEach(async () => {
-      feesEscrowBalance = await balance.current(contracts.feesEscrow);
-    });
-
     it('anyone cannot update rewards', async () => {
       await expectRevert(
         rewardEthToken.updateTotalRewards(ether('10'), {
@@ -149,17 +140,14 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       });
     });
 
-    it('oracles can update rewards', async () => {
+    it('vault can update rewards', async () => {
       let prevTotalRewards = await rewardEthToken.totalRewards();
       let newTotalRewards = prevTotalRewards.add(ether('10'));
       let receipt = await setTotalRewards({
         rewardEthToken,
-        oracles,
-        pool,
+        vault,
         totalRewards: newTotalRewards,
-        oracleAccounts,
       });
-      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
@@ -169,21 +157,6 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
           totalRewards: newTotalRewards,
         }
       );
-    });
-
-    it('anyone cannot update rewards', async () => {
-      await expectRevert(
-        rewardEthToken.updateTotalRewards(ether('10'), {
-          from: sender,
-        }),
-        'RewardEthToken: access denied'
-      );
-      await checkRewardEthToken({
-        rewardEthToken,
-        totalSupply,
-        account: sender,
-        balance: new BN(0),
-      });
     });
 
     it('assigns protocol fee to distributor', async () => {
@@ -196,13 +169,9 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
       let newTotalRewards = prevTotalRewards.add(periodReward);
       let receipt = await setTotalRewards({
         rewardEthToken,
-        oracles,
-        pool,
+        vault,
         totalRewards: newTotalRewards,
-        oracleAccounts,
       });
-      periodReward = periodReward.add(feesEscrowBalance);
-      newTotalRewards = newTotalRewards.add(feesEscrowBalance);
       await expectEvent.inTransaction(
         receipt.tx,
         RewardEthToken,
@@ -216,37 +185,108 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         }
       );
     });
+
+    it('accumulates penalty', async () => {
+      let penalty = ether('10');
+      let totalRewards = await rewardEthToken.totalRewards();
+      let totalPenalty = await rewardEthToken.totalPenalty();
+
+      let receipt = await setTotalRewards({
+        rewardEthToken,
+        vault,
+        totalRewards: totalRewards.sub(penalty),
+      });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: '0',
+          totalRewards: totalRewards,
+          protocolReward: '0',
+        }
+      );
+      totalPenalty = totalPenalty.add(ether('10'));
+      expect(await rewardEthToken.totalPenalty()).to.bignumber.equal(
+        totalPenalty
+      );
+
+      // reduces penalty partially
+      let periodReward = ether('5');
+      totalPenalty = totalPenalty.sub(periodReward);
+      receipt = await setTotalRewards({
+        rewardEthToken,
+        vault,
+        totalRewards: totalRewards.add(periodReward),
+      });
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: '0',
+          totalRewards: totalRewards,
+          protocolReward: '0',
+        }
+      );
+      expect(await rewardEthToken.totalPenalty()).to.bignumber.equal(
+        totalPenalty
+      );
+
+      // reduces penalty completely
+      periodReward = ether('1');
+      receipt = await setTotalRewards({
+        rewardEthToken,
+        vault,
+        totalRewards: totalRewards.add(periodReward).add(totalPenalty),
+      });
+      totalPenalty = new BN(0);
+      totalRewards = totalRewards.add(periodReward);
+      await expectEvent.inTransaction(
+        receipt.tx,
+        RewardEthToken,
+        'RewardsUpdated',
+        {
+          periodRewards: periodReward,
+          totalRewards: totalRewards,
+          protocolReward: periodReward
+            .mul(await rewardEthToken.protocolFee())
+            .div(new BN(10000)),
+        }
+      );
+      expect(await rewardEthToken.totalPenalty()).to.bignumber.equal(
+        totalPenalty
+      );
+    });
+
+    it('penalty cannot exceed total assets', async () => {
+      let totalAssets = await rewardEthToken.totalAssets();
+
+      await expectRevert(
+        rewardEthToken.updateTotalRewards(totalAssets.add(new BN(1)).neg(), {
+          from: vault,
+        }),
+        'RewardEthToken: invalid penalty amount'
+      );
+    });
   });
 
   describe('transfer', () => {
     const stakedAmount1 = ether('4');
     const stakedAmount2 = ether('5');
-    const [sender1, sender2] = accounts;
+    const [sender1, sender2] = others;
     let rewardAmount1, rewardAmount2;
 
     beforeEach(async () => {
-      await pool.setMinActivatingDeposit(stakedAmount2.add(ether('1')), {
-        from: admin,
-      });
-      await pool.stake({
-        from: sender1,
-        value: stakedAmount1,
-      });
-      await pool.stake({
-        from: sender2,
-        value: stakedAmount2,
-      });
+      await addStakedEthToken(stakedEthToken, sender1, stakedAmount1);
+      await addStakedEthToken(stakedEthToken, sender2, stakedAmount2);
 
-      let feesEscrowBalance = await balance.current(contracts.feesEscrow);
       totalSupply = (await rewardEthToken.totalSupply()).add(ether('10'));
       await setTotalRewards({
         totalRewards: totalSupply,
         rewardEthToken,
-        pool,
-        oracles,
-        oracleAccounts,
+        vault,
       });
-      totalSupply = totalSupply.add(feesEscrowBalance);
 
       rewardAmount1 = await rewardEthToken.balanceOf(sender1);
       rewardAmount2 = await rewardEthToken.balanceOf(sender2);
@@ -379,37 +419,19 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         rewardEthToken.address,
         merkleDistributor
       );
-      await oracles.addOracle(multicallMock.address, {
-        from: admin,
-      });
+
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, multicallMock.address);
 
       await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
-      let currentNonce = await oracles.currentRewardsNonce();
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-      let activatedValidators = await pool.activatedValidators();
-      let signatures = [];
-      let encoded = defaultAbiCoder.encode(
-        ['uint256', 'uint256', 'uint256'],
-        [
-          currentNonce.toString(),
-          activatedValidators.toString(),
-          totalRewards.toString(),
-        ]
-      );
-      let candidateId = hexlify(keccak256(encoded));
-      for (const oracleAccount of oracleAccounts) {
-        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
-      }
-
+      const rewardsDelta = ether('10');
       await expectRevert(
         multicallMock.updateTotalRewardsAndTransferRewards(
-          totalRewards,
-          activatedValidators,
+          rewardsDelta,
           sender2,
-          signatures,
           {
             from: sender1,
           }
@@ -426,36 +448,18 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         rewardEthToken.address,
         merkleDistributor
       );
-      await oracles.addOracle(multicallMock.address, {
-        from: admin,
-      });
+
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, multicallMock.address);
 
       await rewardEthToken.approve(multicallMock.address, rewardAmount1, {
         from: sender1,
       });
 
-      let currentNonce = await oracles.currentRewardsNonce();
-      let totalRewards = (await rewardEthToken.totalRewards()).add(ether('10'));
-      let activatedValidators = await pool.activatedValidators();
-      let signatures = [];
-      let encoded = defaultAbiCoder.encode(
-        ['uint256', 'uint256', 'uint256'],
-        [
-          currentNonce.toString(),
-          activatedValidators.toString(),
-          totalRewards.toString(),
-        ]
-      );
-      let candidateId = hexlify(keccak256(encoded));
-      for (const oracleAccount of oracleAccounts) {
-        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
-      }
-
+      const rewardsDelta = ether('10');
       let receipt = await multicallMock.transferRewardsAndUpdateTotalRewards(
-        totalRewards,
-        activatedValidators,
+        rewardsDelta,
         sender2,
-        signatures,
         {
           from: sender1,
         }
@@ -466,6 +470,188 @@ contract('RewardEthToken', ([sender, merkleDistributor, ...accounts]) => {
         to: sender2,
         value: rewardAmount1,
       });
+    });
+  });
+
+  describe('migrate', () => {
+    const stakedAmount = ether('1');
+    const rewardAmount = ether('1');
+    let vaultMock;
+
+    beforeEach(async () => {
+      vaultMock = await VaultMock.new(rewardEthToken.address);
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, vaultMock.address);
+      await addStakedEthToken(stakedEthToken, sender, stakedAmount);
+      await addRewardEthToken(rewardEthToken, sender, rewardAmount);
+    });
+
+    it('cannot migrate to zero address receiver', async () => {
+      await expectRevert(
+        rewardEthToken.migrate(
+          constants.ZERO_ADDRESS,
+          stakedAmount,
+          rewardAmount,
+          {
+            from: sender,
+          }
+        ),
+        'RewardEthToken: invalid receiver'
+      );
+    });
+
+    it('cannot migrate after total rewards update in the same block', async () => {
+      const multicallMock = await MulticallMock.new(
+        oracles.address,
+        contracts.stakedEthToken,
+        contracts.rewardEthToken,
+        merkleDistributor
+      );
+      await rewardEthToken.transfer(multicallMock.address, ether('1'), {
+        from: sender,
+      });
+      await stakedEthToken.transfer(multicallMock.address, ether('1'), {
+        from: sender,
+      });
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardEthToken(signer, multicallMock.address);
+
+      const rewardsDelta = ether('10');
+      await expectRevert(
+        multicallMock.updateTotalRewardsAndMigrate(rewardsDelta, {
+          from: sender,
+        }),
+        'RewardEthToken: cannot migrate during rewards update'
+      );
+    });
+
+    it('deducts penalty from user assets', async () => {
+      let penalty = ether('-10');
+      await vaultMock.updateTotalRewards(penalty, {
+        from: vault,
+      });
+      let totalPenalty = await rewardEthToken.totalPenalty();
+      const totalRewards = await rewardEthToken.totalSupply();
+      const totalStaked = await stakedEthToken.totalSupply();
+
+      await rewardEthToken.migrate(sender, stakedAmount, rewardAmount, {
+        from: sender,
+      });
+
+      expect(await rewardEthToken.totalPenalty()).to.be.bignumber.lessThan(
+        totalPenalty
+      );
+      expect(await vaultMock.migratedAssets()).to.be.bignumber.lessThan(
+        stakedAmount.add(rewardAmount)
+      );
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply: totalStaked.sub(stakedAmount),
+        account: sender,
+        balance: new BN(0),
+      });
+
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply: totalRewards.sub(rewardAmount),
+        account: sender,
+        balance: new BN(0),
+      });
+    });
+
+    it('cannot migrate zero assets', async () => {
+      await expectRevert(
+        rewardEthToken.migrate(sender, new BN(0), new BN(0), {
+          from: sender,
+        }),
+        'RewardEthToken: zero assets'
+      );
+    });
+
+    it('cannot migrate rETH2 larger than balance', async () => {
+      await expectRevert(
+        rewardEthToken.migrate(
+          sender,
+          stakedAmount.add(new BN(1)),
+          rewardAmount,
+          {
+            from: sender,
+          }
+        ),
+        'SafeMath: subtraction overflow'
+      );
+    });
+
+    it('cannot migrate sETH2 larger than balance', async () => {
+      await expectRevert(
+        rewardEthToken.migrate(
+          sender,
+          stakedAmount,
+          rewardAmount.add(new BN(1)),
+          {
+            from: sender,
+          }
+        ),
+        'SafeMath: subtraction overflow'
+      );
+    });
+
+    it('can migrate sETH2 and rETH2', async () => {
+      let totalRewards = await rewardEthToken.totalSupply();
+      let totalStaked = await stakedEthToken.totalSupply();
+      let receipt = await rewardEthToken.migrate(
+        sender,
+        stakedAmount,
+        rewardAmount,
+        {
+          from: sender,
+        }
+      );
+      const assets = stakedAmount.add(rewardAmount);
+      totalRewards = totalRewards.sub(rewardAmount);
+      totalStaked = totalStaked.sub(stakedAmount);
+
+      await expectEvent.inTransaction(receipt.tx, VaultMock, 'Migrated', {
+        receiver: sender,
+        assets,
+      });
+
+      await expectEvent.inTransaction(receipt.tx, RewardEthToken, 'Transfer', {
+        from: sender,
+        to: constants.ZERO_ADDRESS,
+        value: rewardAmount,
+      });
+
+      await expectEvent.inTransaction(receipt.tx, StakedEthToken, 'Transfer', {
+        from: sender,
+        to: constants.ZERO_ADDRESS,
+        value: stakedAmount,
+      });
+
+      await checkStakedEthToken({
+        stakedEthToken,
+        totalSupply: totalStaked,
+        account: sender,
+        balance: new BN(0),
+      });
+
+      await checkRewardEthToken({
+        rewardEthToken,
+        totalSupply: totalRewards,
+        account: sender,
+        balance: new BN(0),
+      });
+
+      expect(await rewardEthToken.totalSupply()).to.be.bignumber.equal(
+        totalRewards
+      );
+      expect(await stakedEthToken.totalSupply()).to.be.bignumber.equal(
+        totalStaked
+      );
+      expect(await vaultMock.migratedAssets()).to.be.bignumber.equal(
+        stakedAmount.add(rewardAmount)
+      );
     });
   });
 });

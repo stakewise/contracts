@@ -1,48 +1,7 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const {
-  BN,
-  ether,
-  expectEvent,
-  balance,
-} = require('@openzeppelin/test-helpers');
-const { contracts } = require('../deployments/settings');
-
-const iDepositContract = artifacts.require('IDepositContract');
-
-function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
-  return ether(Math.random().toFixed(8))
-    .mul(max.sub(min))
-    .div(ether('1'))
-    .add(min);
-}
-
-async function checkValidatorRegistered({
-  transaction,
-  pubKey,
-  signature,
-  withdrawalCredentials,
-  validatorDepositAmount = ether('32'),
-}) {
-  // Check VRC record created
-  await expectEvent.inTransaction(
-    transaction,
-    iDepositContract,
-    'DepositEvent',
-    {
-      pubkey: pubKey,
-      withdrawal_credentials: withdrawalCredentials,
-      amount: web3.utils.bytesToHex(
-        new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
-          'le',
-          8
-        )
-      ),
-      signature: signature,
-    }
-  );
-}
+const { BN } = require('@openzeppelin/test-helpers');
 
 async function checkStakedEthToken({
   stakedEthToken,
@@ -128,47 +87,26 @@ async function setActivatedValidators({
   return receipt;
 }
 
-async function setTotalRewards({
-  rewardEthToken,
-  oracles,
-  oracleAccounts,
-  pool,
-  totalRewards,
-}) {
-  if ((await rewardEthToken.totalSupply()).eq(totalRewards)) {
-    return;
-  }
-  // calculate candidate ID
-  let activatedValidators = await pool.activatedValidators();
-  let nonce = await oracles.currentRewardsNonce();
-  let encoded = defaultAbiCoder.encode(
-    ['uint256', 'uint256', 'uint256'],
-    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
-  );
-  let candidateId = hexlify(keccak256(encoded));
-
-  // prepare signatures
-  let signatures = [];
-  for (let i = 0; i < oracleAccounts.length; i++) {
-    await impersonateAccount(oracleAccounts[i]);
-    let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
-    signatures.push(signature);
-  }
-  let feesEscrowBalance = await balance.current(contracts.feesEscrow);
+async function setTotalRewards({ rewardEthToken, totalRewards, vault }) {
+  const totalSupply = await rewardEthToken.totalSupply();
+  const totalPenalty = await rewardEthToken.totalPenalty();
+  let delta = totalRewards.sub(totalSupply);
 
   // update total rewards
-  let receipt = await oracles.submitRewards(
-    totalRewards,
-    activatedValidators,
-    signatures,
-    {
-      from: oracleAccounts[0],
-    }
-  );
+  let receipt = await rewardEthToken.updateTotalRewards(delta, {
+    from: vault,
+  });
+  if (delta.isNeg()) {
+    delta = new BN(0);
+  }
+  if (totalPenalty.gt(delta)) {
+    delta = new BN(0);
+  } else {
+    delta = delta.sub(totalPenalty);
+  }
   expect(await rewardEthToken.totalSupply()).to.bignumber.equal(
-    totalRewards.add(feesEscrowBalance)
+    totalSupply.add(delta)
   );
-
   return receipt;
 }
 
@@ -256,6 +194,26 @@ async function stopImpersonatingAccount(account) {
   });
 }
 
+async function addStakedEthToken(stakedEthToken, account, value) {
+  // random sETH2 holder
+  let holder = '0x7bb9AEFFF145afddFD4f7A455b456bCCCe88448f';
+  await impersonateAccount(holder);
+  await stakedEthToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
+}
+
+async function addRewardEthToken(rewardEthToken, account, value) {
+  // random rETH2 holder
+  let holder = '0x7BdDb2C97AF91f97E73F07dEB976fdFC2d2Ee93c';
+  await impersonateAccount(holder);
+  await rewardEthToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
+}
+
 async function resetFork() {
   await hre.network.provider.request({
     method: 'hardhat_reset',
@@ -296,8 +254,6 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
 }
 
 module.exports = {
-  checkValidatorRegistered,
-  getDepositAmount,
   checkStakedEthToken,
   checkRewardEthToken,
   impersonateAccount,
@@ -308,4 +264,6 @@ module.exports = {
   setMerkleRoot,
   setupOracleAccounts,
   registerValidators,
+  addStakedEthToken,
+  addRewardEthToken,
 };

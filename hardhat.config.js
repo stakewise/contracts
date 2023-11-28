@@ -10,7 +10,7 @@ require('hardhat-contract-sizer');
 require('hardhat-abi-exporter');
 require('@nomiclabs/hardhat-etherscan');
 
-const BLOCK_NUMBER = 15545080;
+const BLOCK_NUMBER = 17769320;
 const OPTIMIZER_RUNS = 5000000;
 const log = (...text) => console.log(gray(...['└─> [DEBUG]'].concat(text)));
 
@@ -140,6 +140,7 @@ module.exports = {
       'MerkleDistributor',
       'ContractChecker',
       'Roles',
+      'FeesEscrow',
     ],
     clear: true,
     flat: true,

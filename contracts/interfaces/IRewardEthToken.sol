@@ -65,6 +65,21 @@ interface IRewardEthToken is IERC20Upgradeable {
     function protocolFeeRecipient() external view returns (address);
 
     /**
+    * @dev Function for getting the address of the vault.
+    */
+    function vault() external view returns (address);
+
+    /**
+    * @dev Function for getting the total assets.
+    */
+    function totalAssets() external view returns (uint256);
+
+    /**
+    * @dev Function for getting the total penalty.
+    */
+    function totalPenalty() external view returns (uint256);
+
+    /**
     * @dev Function for changing the protocol fee recipient's address.
     * @param recipient - new protocol fee recipient's address.
     */
@@ -131,10 +146,18 @@ interface IRewardEthToken is IERC20Upgradeable {
 
     /**
     * @dev Function for updating validators total rewards.
-    * Can only be called by Oracles contract.
-    * @param newTotalRewards - new total rewards.
+    * Can only be called by Vault contract.
+    * @param rewardsDelta - the total rewards earned or penalties received.
     */
-    function updateTotalRewards(uint256 newTotalRewards) external;
+    function updateTotalRewards(int256 rewardsDelta) external;
+
+    /**
+    * @dev Function for migrating to the StakeWise V3 Vault.
+    * @param receiver - address of the account the tokens will be assigned to.
+    * @param principal - amount of sETH2 tokens to migrate.
+    * @param reward - amount of rETH2 tokens to migrate.
+    */
+    function migrate(address receiver, uint256 principal, uint256 reward) external;
 
     /**
     * @dev Function for claiming rETH2 from the merkle distribution.

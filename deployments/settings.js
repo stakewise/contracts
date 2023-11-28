@@ -17,10 +17,11 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     feesEscrow: '0x6A9d30e05C6832E868390F155388c7d97A6faEAC',
     contractChecker: '0x85ee326f839Bc430655A3fad447837072ef52C2F',
     proxyAdmin: '0xbba3f4dDD4F705aD2028ee2da64fF3166bDe8cA8',
+    vault: '0x8B5c0d4c067Cf480766140B251B464de7F03B515',
   };
 
   contractSettings = {
-    admin: '0x1867c96601bc5fE24F685d112314B8F3Fe228D5A',
+    admin: '0xff2b6d2d5c205b99e2e6f607b6afa3127b9957b6',
     vestingEscrow: '0x4CDAe3f1Eaa84b88fFc97627Ef1c77F762794287',
   };
 } else {
@@ -39,6 +40,7 @@ if (hre.hardhatArguments && hre.hardhatArguments.network === 'goerli') {
     feesEscrow: '0x6b333B20fBae3c5c0969dd02176e30802e2fbBdB',
     contractChecker: '0xFC1fC7257AEA7C7c08A498594DCA97CE5A72fdCB',
     proxyAdmin: '0x3EB0175dcD67d3AB139aA03165e24AA2188A4C22',
+    vault: '0xAC0F906E433d58FA868F936E8A43230473652885',
   };
 
   contractSettings = {
