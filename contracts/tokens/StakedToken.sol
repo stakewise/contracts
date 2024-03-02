@@ -20,38 +20,16 @@ contract StakedToken is IStakedToken, OwnablePausableUpgradeable, ERC20PermitUpg
     uint256 public override totalDeposits;
 
     // @dev Maps account address to its deposit amount.
-    mapping(address => uint256) private deposits;
+    mapping(address => uint256) internal deposits;
 
     // @dev Address of the Pool contract.
     address private pool;
 
     // @dev Address of the RewardToken contract.
-    IRewardToken private rewardToken;
+    IRewardToken internal rewardToken;
 
     // @dev The principal amount of the distributor.
     uint256 public override distributorPrincipal;
-
-    /**
-    * @dev See {IStakedToken-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _pool,
-        address _rewardToken
-    )
-        external override initializer
-    {
-        require(admin != address(0), "StakedToken: invalid admin address");
-        require(_pool != address(0), "StakedToken: invalid Pool address");
-        require(_rewardToken != address(0), "StakedToken: invalid RewardToken address");
-
-        __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("StakeWise Staked GNO", "sGNO");
-        __ERC20Permit_init("StakeWise Staked GNO");
-
-        pool = _pool;
-        rewardToken = IRewardToken(_rewardToken);
-    }
 
     /**
      * @dev See {IERC20-totalSupply}.
@@ -113,21 +91,23 @@ contract StakedToken is IStakedToken, OwnablePausableUpgradeable, ERC20PermitUpg
     }
 
     /**
-     * @dev See {IStakedToken-mint}.
+     * @dev See {IStakedToken-burn}.
      */
-    function mint(address account, uint256 amount) external override {
-        require(msg.sender == pool, "StakedToken: access denied");
+    function burn(address account, uint256 amount) external override {
+        IRewardToken _rewardToken = rewardToken; // gas savings
+        require(msg.sender == address(_rewardToken), "StakedToken: access denied");
+        require(account != address(0), "StakedToken: invalid account");
 
         // start calculating account rewards with updated deposit amount
         bool rewardsDisabled = rewardToken.updateRewardCheckpoint(account);
         if (rewardsDisabled) {
             // update merkle distributor principal if account has disabled rewards
-            distributorPrincipal = distributorPrincipal.add(amount);
+            distributorPrincipal = distributorPrincipal.sub(amount);
         }
 
-        totalDeposits = totalDeposits.add(amount);
-        deposits[account] = deposits[account].add(amount);
+        totalDeposits = totalDeposits.sub(amount);
+        deposits[account] = deposits[account].sub(amount);
 
-        emit Transfer(address(0), account, amount);
+        emit Transfer(account, address(0), amount);
     }
 }

@@ -11,4 +11,13 @@ interface IMGNOWrapper {
     * @param token - address of the token.
     */
     function tokenRate(address token) external view returns (uint256);
+
+    /**
+    * @dev Swaps some of the wrapped tokens to the whitelisted token.
+    * Wrapped tokens will be burned.
+    * @param _token Address of the whitelisted token contract.
+    * @param _amount Amount of tokens to swap.
+    * @return Amount of returned tokens.
+    */
+    function unwrap(address _token, uint256 _amount) external returns (uint256);
 }

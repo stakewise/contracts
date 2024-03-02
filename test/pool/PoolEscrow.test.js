@@ -14,14 +14,14 @@ const {
   stopImpersonatingAccount,
   impersonateAccount,
   resetFork,
-  mintTokens,
+  mintGNOTokens,
   mintMGNOTokens,
 } = require('../utils');
 
 const PoolEscrow = artifacts.require('PoolEscrow');
 const IGCToken = artifacts.require('IGCToken');
 
-contract('PoolEscrow', ([anyone, newOwner, payee]) => {
+contract('PoolEscrow', ([anyone, newOwner, payee, vault]) => {
   const owner = contractSettings.admin;
   let poolEscrow, mgnoToken, gnoToken;
 
@@ -31,7 +31,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     await impersonateAccount(owner);
     await send.ether(anyone, owner, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    let upgradedContracts = await upgradeContracts(vault);
     poolEscrow = await PoolEscrow.at(upgradedContracts.poolEscrow);
     mgnoToken = await IGCToken.at(contracts.MGNOToken);
     gnoToken = await IGCToken.at(contracts.GNOToken);
@@ -51,21 +51,13 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
     );
   });
 
-  it('can receive mGNO transfers', async () => {
-    let amount = ether('5');
-    await mintMGNOTokens(anyone, amount);
-    await mgnoToken.transfer(poolEscrow.address, amount, { from: anyone });
-    expect(await mgnoToken.balanceOf(poolEscrow.address)).to.bignumber.equal(
-      amount
-    );
-  });
-
   it('can receive GNO transfers', async () => {
+    const balanceBefore = await gnoToken.balanceOf(poolEscrow.address);
     let amount = ether('5');
-    await mintTokens(gnoToken, anyone, amount);
+    await mintGNOTokens(gnoToken, anyone, amount);
     await gnoToken.transfer(poolEscrow.address, amount, { from: anyone });
     expect(await gnoToken.balanceOf(poolEscrow.address)).to.bignumber.equal(
-      amount
+      balanceBefore.add(amount)
     );
   });
 
@@ -213,7 +205,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
   describe('withdraw tokens', () => {
     it('owner can withdraw tokens from the escrow', async () => {
       let amount = ether('5');
-      await mintMGNOTokens(anyone, amount);
+      await mintMGNOTokens(mgnoToken, anyone, amount);
       await mgnoToken.transfer(poolEscrow.address, amount);
 
       let payeeBalance = await mgnoToken.balanceOf(payee);
@@ -240,7 +232,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
 
     it('fails to withdraw tokens without admin role', async () => {
       let amount = ether('5');
-      await mintMGNOTokens(anyone, amount);
+      await mintMGNOTokens(mgnoToken, anyone, amount);
       await mgnoToken.transfer(poolEscrow.address, amount);
 
       await expectRevert(
@@ -253,7 +245,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
 
     it('fails to withdraw tokens with invalid payee address', async () => {
       let amount = ether('5');
-      await mintMGNOTokens(anyone, amount);
+      await mintMGNOTokens(mgnoToken, anyone, amount);
       await mgnoToken.transfer(poolEscrow.address, amount);
 
       await expectRevert(
@@ -271,7 +263,7 @@ contract('PoolEscrow', ([anyone, newOwner, payee]) => {
 
     it('fails to withdraw with invalid token address', async () => {
       let amount = ether('5');
-      await mintMGNOTokens(anyone, amount);
+      await mintMGNOTokens(mgnoToken, anyone, amount);
       await mgnoToken.transfer(poolEscrow.address, amount);
 
       await expectRevert(

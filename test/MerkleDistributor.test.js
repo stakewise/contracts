@@ -9,7 +9,7 @@ const {
 } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
-const { upgradeContracts } = require('../deployments');
+const { upgradeContracts, upgradeRewardToken } = require('../deployments');
 const { contractSettings, contracts } = require('../deployments/settings');
 const {
   stopImpersonatingAccount,
@@ -18,7 +18,7 @@ const {
   setupOracleAccounts,
   setTotalRewards,
   setMerkleRoot,
-  stakeGNO,
+  addStakedToken,
   mintTokens,
 } = require('./utils');
 
@@ -28,7 +28,6 @@ const RewardToken = artifacts.require('RewardToken');
 const StakedToken = artifacts.require('StakedToken');
 const MulticallMock = artifacts.require('MulticallMock');
 const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 
 const account1 = '0x7981973BF488Ea610AF41dDB9DFeF1f8095ECF56';
 const account2 = '0xB3a69b7cdd7510D51c4CCc2c0fC105021A92Fc5D';
@@ -37,7 +36,7 @@ const account3 = '0xd1b91Ac5eb55f30D742751f4Ae4437F738eB8F6b';
 const distributorGNOReward = ether('25.1777');
 const distributorTokenReward = ether('14.86062535');
 
-contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
+contract('Merkle Distributor', ([beneficiary, anyone, vault, ...accounts]) => {
   const admin = contractSettings.admin;
   let merkleDistributor,
     amount,
@@ -48,7 +47,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     oracles,
     oracleAccounts,
     prevDistributorBalance,
-    pool,
     merkleRoot,
     merkleProofs;
 
@@ -58,13 +56,10 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    let upgradedContracts = await upgradeContracts(vault);
     amount = ether('10');
     durationInBlocks = new BN(1000);
     token = await IGCToken.at(contracts.stakeWiseToken);
-    merkleDistributor = await MerkleDistributor.at(
-      upgradedContracts.merkleDistributor
-    );
 
     rewardToken = await RewardToken.at(upgradedContracts.rewardToken);
     stakedToken = await StakedToken.at(upgradedContracts.stakedToken);
@@ -75,9 +70,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     oracleAccounts = await setupOracleAccounts({
       admin,
       oracles,
-      accounts: otherAccounts,
+      accounts,
     });
-    pool = await Pool.at(upgradedContracts.pool);
     prevDistributorBalance = await token.balanceOf(merkleDistributor.address);
     merkleProofs = {
       [account1]: {
@@ -115,7 +109,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       merkleProofs[account].proof = tree.getHexProof(keccak256(encoded));
     }
 
-    await stakeGNO({ account: anyone, pool, amount: ether('1') });
+    await addStakedToken(stakedToken, anyone, ether('1'));
     await send.ether(anyone, admin, ether('3000'));
     await mintTokens(token, admin, amount);
   });
@@ -396,13 +390,11 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
 
       await mintTokens(token, admin, amount);
-      await stakeGNO({ account: anyone, pool, amount: ether('1') });
+      await addStakedToken(stakedToken, anyone, ether('1'));
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
     });
 
@@ -453,10 +445,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     });
 
     it('cannot claim twice', async () => {
-      await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
-        from: admin,
-      });
-      await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+      await addStakedToken(stakedToken, anyone, ether('100'));
       await stakedToken.toggleRewards(anyone, true, {
         from: admin,
       });
@@ -473,10 +462,8 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       await token.transfer(merkleDistributor.address, distributorTokenReward, {
@@ -504,18 +491,13 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
     });
 
     it('can claim reward tokens', async () => {
-      await pool.setMinActivatingDeposit(constants.MAX_UINT256, {
-        from: admin,
-      });
-      await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+      await addStakedToken(stakedToken, anyone, ether('1000'));
       await stakedToken.toggleRewards(anyone, true, {
         from: admin,
       });
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
+        vault,
         totalRewards: ether('100000'),
       });
 
@@ -534,7 +516,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       );
       expect(distributorGNORewards).to.bignumber.greaterThan(new BN(0));
 
-      let totalTransferredEthReward = new BN(0);
+      let totalTransferredGnoReward = new BN(0);
       for (const [account, { index, proof, tokens, amounts }] of Object.entries(
         merkleProofs
       )) {
@@ -565,13 +547,13 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         expect(await rewardToken.balanceOf(account)).to.be.bignumber.equal(
           balance1.add(new BN(amounts[0]))
         );
-        totalTransferredEthReward = totalTransferredEthReward.add(
+        totalTransferredGnoReward = totalTransferredGnoReward.add(
           new BN(amounts[0])
         );
         expect(
           await rewardToken.balanceOf(constants.ZERO_ADDRESS)
         ).to.bignumber.equal(
-          distributorGNORewards.sub(totalTransferredEthReward)
+          distributorGNORewards.sub(totalTransferredGnoReward)
         );
         expect(await token.balanceOf(account)).to.be.bignumber.equal(
           balance2.add(new BN(amounts[1]))
@@ -579,13 +561,9 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
       }
     });
 
-    // TODO: re-enable once on forked network
-    describe.skip('claiming within the same block', () => {
-      let multicallMock,
-        totalRewards,
-        activatedValidators,
-        rewardsSignatures,
-        merkleRootSignatures;
+    describe('claiming within the same block', () => {
+      const rewardsDelta = ether('10');
+      let multicallMock, totalRewards, merkleRootSignatures;
 
       beforeEach(async () => {
         await setMerkleRoot({
@@ -607,7 +585,7 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
           from: admin,
         });
 
-        await stakeGNO({ account: anyone, pool, amount: ether('1000') });
+        await addStakedToken(stakedToken, anyone, ether('1000'));
         await stakedToken.toggleRewards(anyone, true, {
           from: admin,
         });
@@ -619,32 +597,15 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         totalRewards = totalRewards.add(
           totalRewards.add(protocolFee.div(new BN(10000)))
         );
-        activatedValidators = await pool.activatedValidators();
-
-        // create rewards signature
-        let currentNonce = await oracles.currentRewardsNonce();
-        let encoded = defaultAbiCoder.encode(
-          ['uint256', 'uint256', 'uint256'],
-          [
-            currentNonce.toString(),
-            activatedValidators.toString(),
-            totalRewards.toString(),
-          ]
-        );
-        let candidateId = hexlify(keccak256(encoded));
-        rewardsSignatures = [];
-        for (const oracleAccount of oracleAccounts) {
-          rewardsSignatures.push(
-            await web3.eth.sign(candidateId, oracleAccount)
-          );
-        }
 
         // create merkle root signature
-        encoded = defaultAbiCoder.encode(
+        let currentNonce = await oracles.currentRewardsNonce();
+        let encoded = defaultAbiCoder.encode(
           ['uint256', 'string', 'bytes32'],
-          [currentNonce.add(new BN(1)).toString(), merkleProofs, merkleRoot]
+          [currentNonce.toString(), merkleProofs, merkleRoot]
         );
-        candidateId = hexlify(keccak256(encoded));
+
+        let candidateId = hexlify(keccak256(encoded));
         merkleRootSignatures = [];
         for (const oracleAccount of oracleAccounts) {
           merkleRootSignatures.push(
@@ -655,13 +616,11 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
 
       it('cannot claim after total rewards update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
+        const signer = await ethers.provider.getSigner(contractSettings.admin);
+        await upgradeRewardToken(signer, multicallMock.address);
         await expectRevert(
           multicallMock.updateTotalRewardsAndClaim(
-            {
-              totalRewards: totalRewards.toString(),
-              activatedValidators: activatedValidators.toString(),
-              signatures: rewardsSignatures,
-            },
+            rewardsDelta,
             index,
             account1,
             tokens,
@@ -675,35 +634,13 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
         );
       });
 
-      it('can claim before total rewards update in the same block', async () => {
-        const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await multicallMock.claimAndUpdateTotalRewards(
-          {
-            totalRewards: totalRewards.toString(),
-            activatedValidators: activatedValidators.toString(),
-            signatures: rewardsSignatures,
-          },
-          index,
-          account1,
-          tokens,
-          amounts,
-          proof,
-          {
-            from: anyone,
-          }
-        );
-      });
-
       it('cannot claim before merkle root update in the same block', async () => {
         const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await oracles.submitRewards(
-          totalRewards,
-          activatedValidators,
-          rewardsSignatures,
-          {
-            from: oracleAccounts[0],
-          }
-        );
+        const signer = await ethers.provider.getSigner(contractSettings.admin);
+        await upgradeRewardToken(signer, vault);
+        await rewardToken.updateTotalRewards(rewardsDelta, {
+          from: vault,
+        });
         await expectRevert(
           multicallMock.claimAndUpdateMerkleRoot(
             { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
@@ -717,29 +654,6 @@ contract('Merkle Distributor', ([beneficiary, anyone, ...otherAccounts]) => {
             }
           ),
           'MerkleDistributor: merkle root updating'
-        );
-      });
-
-      it('can claim after merkle root update in the same block', async () => {
-        await oracles.submitRewards(
-          totalRewards,
-          activatedValidators,
-          rewardsSignatures,
-          {
-            from: oracleAccounts[0],
-          }
-        );
-        const { index, amounts, tokens, proof } = merkleProofs[account1];
-        await multicallMock.updateMerkleRootAndClaim(
-          { merkleRoot, merkleProofs, signatures: merkleRootSignatures },
-          index,
-          account1,
-          tokens,
-          amounts,
-          proof,
-          {
-            from: anyone,
-          }
         );
       });
     });

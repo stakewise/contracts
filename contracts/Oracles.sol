@@ -38,7 +38,7 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     // @dev Address of the Pool contract.
     IPool private pool;
 
-    // @dev Address of the Pool contract.
+    // @dev Address of the PoolValidators contract.
     IPoolValidators private poolValidators;
 
     // @dev Address of the MerkleDistributor contract.
@@ -57,13 +57,6 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
      */
     function currentRewardsNonce() external override view returns (uint256) {
         return rewardsNonce.current();
-    }
-
-    /**
-     * @dev See {IOracles-currentValidatorsNonce}.
-     */
-    function currentValidatorsNonce() external override view returns (uint256) {
-        return validatorsNonce.current();
     }
 
     /**
@@ -108,50 +101,6 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
     }
 
     /**
-     * @dev See {IOracles-submitRewards}.
-     */
-    function submitRewards(
-        uint256 totalRewards,
-        uint256 activatedValidators,
-        bytes[] calldata signatures
-    )
-        external override onlyOracle whenNotPaused
-    {
-        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
-
-        // calculate candidate ID hash
-        uint256 nonce = rewardsNonce.current();
-        bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, activatedValidators, totalRewards))
-        );
-
-        // check signatures and calculate number of submitted oracle votes
-        address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
-            bytes memory signature = signatures[i];
-            address signer = ECDSAUpgradeable.recover(candidateId, signature);
-            require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
-
-            for (uint256 j = 0; j < i; j++) {
-                require(signedOracles[j] != signer, "Oracles: repeated signature");
-            }
-            signedOracles[i] = signer;
-            emit RewardsVoteSubmitted(msg.sender, signer, nonce, totalRewards, activatedValidators);
-        }
-
-        // increment nonce for future signatures
-        rewardsNonce.increment();
-
-        // update total rewards
-        rewardToken.updateTotalRewards(totalRewards);
-
-        // update activated validators
-        if (activatedValidators != pool.activatedValidators()) {
-            pool.setActivatedValidators(activatedValidators);
-        }
-    }
-
-    /**
      * @dev See {IOracles-submitMerkleRoot}.
      */
     function submitMerkleRoot(
@@ -189,56 +138,5 @@ contract Oracles is IOracles, OwnablePausableUpgradeable {
 
         // update merkle root
         merkleDistributor.setMerkleRoot(merkleRoot, merkleProofs);
-    }
-
-    /**
-    * @dev See {IOracles-registerValidators}.
-    */
-    function registerValidators(
-        IPoolValidators.DepositData[] calldata depositData,
-        bytes32[][] calldata merkleProofs,
-        bytes32 validatorsDepositRoot,
-        bytes[] calldata signatures
-    )
-        external override onlyOracle whenNotPaused
-    {
-        require(
-            pool.validatorRegistration().get_deposit_root() == validatorsDepositRoot,
-            "Oracles: invalid validators deposit root"
-        );
-        require(isEnoughSignatures(signatures.length), "Oracles: invalid number of signatures");
-
-        // calculate candidate ID hash
-        uint256 nonce = validatorsNonce.current();
-        bytes32 candidateId = ECDSAUpgradeable.toEthSignedMessageHash(
-            keccak256(abi.encode(nonce, depositData, validatorsDepositRoot))
-        );
-
-        // check signatures are correct
-        address[] memory signedOracles = new address[](signatures.length);
-        for (uint256 i = 0; i < signatures.length; i++) {
-            bytes memory signature = signatures[i];
-            address signer = ECDSAUpgradeable.recover(candidateId, signature);
-            require(hasRole(ORACLE_ROLE, signer), "Oracles: invalid signer");
-
-            for (uint256 j = 0; j < i; j++) {
-                require(signedOracles[j] != signer, "Oracles: repeated signature");
-            }
-            signedOracles[i] = signer;
-        }
-
-        uint256 depositDataLength = depositData.length;
-        require(merkleProofs.length == depositDataLength, "Oracles: invalid merkle proofs length");
-
-        // submit deposit data
-        for (uint256 i = 0; i < depositDataLength; i++) {
-            // register validator
-            poolValidators.registerValidator(depositData[i], merkleProofs[i]);
-        }
-
-        emit RegisterValidatorsVoteSubmitted(msg.sender, signedOracles, nonce);
-
-        // increment nonce for future registrations
-        validatorsNonce.increment();
     }
 }
