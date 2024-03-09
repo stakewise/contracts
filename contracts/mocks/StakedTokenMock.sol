@@ -45,7 +45,7 @@ contract StakedTokenMock is StakedToken {
         rewardToken = IRewardToken(_rewardToken);
     }
 
-    function mint(uint256 amount) external {
+    function mint(uint256 amount) external onlyAdmin {
         IERC20Upgradeable(gnoToken).safeTransferFrom(msg.sender, poolEscrow, amount);
 
         // start calculating account rewards with updated deposit amount
