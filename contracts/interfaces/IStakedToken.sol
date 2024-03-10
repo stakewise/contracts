@@ -9,18 +9,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
  */
 interface IStakedToken is IERC20Upgradeable {
     /**
-* @dev Function for initializing the StakedToken contract.
-    * @param admin - address of the contract admin.
-    * @param _pool - address of the Pool contract.
-    * @param _rewardToken - address of the RewardToken contract.
-    */
-    function initialize(
-        address admin,
-        address _pool,
-        address _rewardToken
-    ) external;
-
-    /**
     * @dev Function for retrieving the total deposits amount.
     */
     function totalDeposits() external view returns (uint256);
@@ -38,10 +26,10 @@ interface IStakedToken is IERC20Upgradeable {
     function toggleRewards(address account, bool isDisabled) external;
 
     /**
-    * @dev Function for creating `amount` tokens and assigning them to `account`.
-    * Can only be called by Pool contract.
-    * @param account - address of the account to assign tokens to.
-    * @param amount - amount of tokens to assign.
+    * @dev Function for burning `amount` tokens from `account`.
+    * Can only be called by RewardToken contract.
+    * @param account - address of the account to burn tokens from.
+    * @param amount - amount of tokens to burn.
     */
-    function mint(address account, uint256 amount) external;
+    function burn(address account, uint256 amount) external;
 }

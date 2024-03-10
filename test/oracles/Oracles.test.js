@@ -4,7 +4,6 @@ const {
   expectEvent,
   expectRevert,
   ether,
-  BN,
   send,
 } = require('@openzeppelin/test-helpers');
 const {
@@ -13,27 +12,20 @@ const {
   resetFork,
   setupOracleAccounts,
   setTotalRewards,
-  stakeGNO,
 } = require('../utils');
 const { contractSettings } = require('../../deployments/settings');
-const { upgradeContracts } = require('../../deployments');
-const {
-  depositDataMerkleRoot,
-  depositData,
-} = require('../pool/depositDataMerkleRoot');
+const { upgradeContracts, upgradeRewardToken } = require('../../deployments');
+const { ethers } = require('hardhat');
 
 const RewardToken = artifacts.require('RewardToken');
 const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 const MulticallMock = artifacts.require('MulticallMock');
 const MerkleDistributor = artifacts.require('MerkleDistributor');
-const PoolValidators = artifacts.require('PoolValidators');
-const iDepositContract = artifacts.require('IDepositContract');
 
-contract('Oracles', ([_, anyone, operator, ...accounts]) => {
+contract('Oracles', ([_, anyone, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles, rewardToken, pool, merkleDistributor, poolValidators, contracts;
-  let [oracle, anotherOracle] = accounts;
+  let oracles, rewardToken, merkleDistributor, contracts;
+  let [oracle, anotherOracle, vault] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -41,15 +33,10 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    contracts = await upgradeContracts();
-
+    contracts = await upgradeContracts(vault);
     oracles = await Oracles.at(contracts.oracles);
-    pool = await Pool.at(contracts.pool);
     rewardToken = await RewardToken.at(contracts.rewardToken);
     merkleDistributor = await MerkleDistributor.at(contracts.merkleDistributor);
-    poolValidators = await PoolValidators.at(contracts.poolValidators);
-
-    await stakeGNO({ account: anyone, amount: ether('1'), pool });
   });
 
   afterEach(async () => resetFork());
@@ -136,151 +123,6 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
     });
   });
 
-  describe('rewards voting', () => {
-    let prevTotalRewards,
-      newTotalRewards,
-      currentNonce,
-      newActivatedValidators,
-      oracleAccounts,
-      candidateId,
-      signatures;
-
-    beforeEach(async () => {
-      oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
-      prevTotalRewards = await rewardToken.totalRewards();
-      newTotalRewards = prevTotalRewards.add(ether('10'));
-      currentNonce = await oracles.currentRewardsNonce();
-      newActivatedValidators = (await pool.activatedValidators()).add(
-        await pool.pendingValidators()
-      );
-
-      let encoded = defaultAbiCoder.encode(
-        ['uint256', 'uint256', 'uint256'],
-        [
-          currentNonce.toString(),
-          newActivatedValidators.toString(),
-          newTotalRewards.toString(),
-        ]
-      );
-      candidateId = keccak256(encoded);
-
-      signatures = [];
-      for (const oracleAccount of oracleAccounts) {
-        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
-      }
-    });
-
-    it('fails to submit when contract is paused', async () => {
-      await oracles.pause({ from: admin });
-      expect(await oracles.paused()).equal(true);
-
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Pausable: paused'
-      );
-    });
-
-    it('fails to submit with not enough signatures', async () => {
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          signatures.slice(signatures.length - 1),
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid number of signatures'
-      );
-    });
-
-    it('fails to submit with invalid signature', async () => {
-      signatures[0] = await web3.eth.sign(candidateId, anyone);
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid signer'
-      );
-    });
-
-    it('fails to submit with repeated signature', async () => {
-      let signature = signatures[0];
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          Array(oracleAccounts.length).fill(signature),
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: repeated signature'
-      );
-    });
-
-    it('fails to submit without oracle role assigned', async () => {
-      await expectRevert(
-        oracles.submitRewards(
-          newTotalRewards,
-          newActivatedValidators,
-          signatures,
-          {
-            from: anyone,
-          }
-        ),
-        'Oracles: access denied'
-      );
-    });
-
-    it('submits data with enough signatures', async () => {
-      let receipt = await oracles.submitRewards(
-        newTotalRewards,
-        newActivatedValidators,
-        signatures,
-        {
-          from: oracleAccounts[0],
-        }
-      );
-
-      // check signatures
-      for (const oracleAccount of oracleAccounts) {
-        expectEvent(receipt, 'RewardsVoteSubmitted', {
-          oracle: oracleAccount,
-          totalRewards: newTotalRewards,
-          activatedValidators: newActivatedValidators,
-          nonce: currentNonce,
-        });
-      }
-
-      // check values updates
-      expect(await rewardToken.totalRewards()).to.bignumber.equal(
-        newTotalRewards
-      );
-
-      // update submitted
-      expect(await rewardToken.totalRewards()).to.bignumber.equal(
-        newTotalRewards
-      );
-      expect(await pool.activatedValidators()).to.bignumber.equal(
-        newActivatedValidators
-      );
-      expect(await pool.pendingValidators()).to.bignumber.equal(new BN(0));
-    });
-  });
-
   describe('merkle root voting', () => {
     const merkleRoot =
       '0xa3e724fce28a564a7908e40994bd8f48ed4470ffcab4c135fe661bcf5b15afe6';
@@ -292,10 +134,8 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
       await setTotalRewards({
+        vault,
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
       });
 
@@ -416,38 +256,22 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
 
     it('fails to vote for total rewards and merkle root in same block', async () => {
       // deploy mocked oracle
-      let mockedOracle = await MulticallMock.new(
+      let multicallMock = await MulticallMock.new(
         oracles.address,
         contracts.stakedToken,
         contracts.rewardToken,
         merkleDistributor.address
       );
-      await oracles.addOracle(mockedOracle.address, {
+      await oracles.addOracle(multicallMock.address, {
         from: admin,
       });
-
-      let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
-      let activatedValidators = await pool.activatedValidators();
-
-      // create rewards signatures
-      let currentNonce = await oracles.currentRewardsNonce();
-      let encoded = defaultAbiCoder.encode(
-        ['uint256', 'uint256', 'uint256'],
-        [
-          currentNonce.toString(),
-          activatedValidators.toString(),
-          totalRewards.toString(),
-        ]
-      );
-      candidateId = keccak256(encoded);
-      let rewardSignatures = [];
-      for (const oracleAccount of oracleAccounts) {
-        rewardSignatures.push(await web3.eth.sign(candidateId, oracleAccount));
-      }
+      const signer = await ethers.provider.getSigner(contractSettings.admin);
+      await upgradeRewardToken(signer, multicallMock.address);
+      const rewardsDelta = ether('10');
 
       // create merkle root signatures
       currentNonce = await oracles.currentRewardsNonce();
-      encoded = defaultAbiCoder.encode(
+      let encoded = defaultAbiCoder.encode(
         ['uint256', 'string', 'bytes32'],
         [currentNonce.toString(), merkleProofs, merkleRoot]
       );
@@ -460,12 +284,8 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
       }
 
       await expectRevert(
-        mockedOracle.updateTotalRewardsAndMerkleRoot(
-          {
-            totalRewards: totalRewards.toString(),
-            activatedValidators: activatedValidators.toString(),
-            signatures: rewardSignatures,
-          },
+        multicallMock.updateTotalRewardsAndMerkleRoot(
+          rewardsDelta,
           {
             merkleRoot,
             merkleProofs,
@@ -477,167 +297,6 @@ contract('Oracles', ([_, anyone, operator, ...accounts]) => {
         ),
         'Oracles: too early'
       );
-    });
-  });
-
-  describe('validator voting', () => {
-    const depositDataMerkleProofs =
-      'ipfs://QmehR8yCaKdHqHSxZMSJA5q2SWc8jTVCSKuVgbtqDEdXCH';
-    let currentNonce,
-      oracleAccounts,
-      candidateId,
-      signatures,
-      validatorsDepositRoot;
-    let validatorsDepositData = [
-      {
-        operator,
-        withdrawalCredentials: depositData[0].withdrawalCredentials,
-        depositDataRoot: depositData[0].depositDataRoot,
-        publicKey: depositData[0].publicKey,
-        signature: depositData[0].signature,
-      },
-      {
-        operator,
-        withdrawalCredentials: depositData[1].withdrawalCredentials,
-        depositDataRoot: depositData[1].depositDataRoot,
-        publicKey: depositData[1].publicKey,
-        signature: depositData[1].signature,
-      },
-    ];
-    let merkleProofs = [depositData[0].merkleProof, depositData[1].merkleProof];
-
-    beforeEach(async () => {
-      await poolValidators.addOperator(
-        operator,
-        depositDataMerkleRoot,
-        depositDataMerkleProofs,
-        {
-          from: admin,
-        }
-      );
-      await poolValidators.commitOperator({
-        from: operator,
-      });
-      oracleAccounts = await setupOracleAccounts({ oracles, accounts, admin });
-      currentNonce = await oracles.currentValidatorsNonce();
-
-      let depositContract = await iDepositContract.at(
-        await pool.validatorRegistration()
-      );
-      validatorsDepositRoot = await depositContract.get_deposit_root();
-
-      let encoded = defaultAbiCoder.encode(
-        [
-          'uint256',
-          'tuple(address operator,bytes32 withdrawalCredentials,bytes32 depositDataRoot,bytes publicKey,bytes signature)[]',
-          'bytes32',
-        ],
-        [currentNonce.toString(), validatorsDepositData, validatorsDepositRoot]
-      );
-      candidateId = keccak256(encoded);
-
-      signatures = [];
-      for (const oracleAccount of oracleAccounts) {
-        signatures.push(await web3.eth.sign(candidateId, oracleAccount));
-      }
-    });
-
-    it('fails to submit when contract is paused', async () => {
-      await oracles.pause({ from: admin });
-      expect(await oracles.paused()).equal(true);
-
-      await expectRevert(
-        oracles.registerValidators(
-          validatorsDepositData,
-          merkleProofs,
-          validatorsDepositRoot,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Pausable: paused'
-      );
-    });
-
-    it('fails to submit with not enough signatures', async () => {
-      await expectRevert(
-        oracles.registerValidators(
-          validatorsDepositData,
-          merkleProofs,
-          validatorsDepositRoot,
-          signatures.slice(signatures.length - 1),
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid number of signatures'
-      );
-    });
-
-    it('fails to submit with invalid signature', async () => {
-      signatures[0] = await web3.eth.sign(candidateId, anyone);
-      await expectRevert(
-        oracles.registerValidators(
-          validatorsDepositData,
-          merkleProofs,
-          validatorsDepositRoot,
-          signatures,
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: invalid signer'
-      );
-    });
-
-    it('fails to submit with repeated signature', async () => {
-      let signature = signatures[0];
-      await expectRevert(
-        oracles.registerValidators(
-          validatorsDepositData,
-          merkleProofs,
-          validatorsDepositRoot,
-          Array(oracleAccounts.length).fill(signature),
-          {
-            from: oracleAccounts[0],
-          }
-        ),
-        'Oracles: repeated signature'
-      );
-    });
-
-    it('fails to submit without oracle role assigned', async () => {
-      await expectRevert(
-        oracles.registerValidators(
-          validatorsDepositData,
-          merkleProofs,
-          validatorsDepositRoot,
-          signatures,
-          {
-            from: anyone,
-          }
-        ),
-        'Oracles: access denied'
-      );
-    });
-
-    it('can vote for multiple validators', async () => {
-      await stakeGNO({ account: anyone, pool, amount: ether('2') });
-      let receipt = await oracles.registerValidators(
-        validatorsDepositData,
-        merkleProofs,
-        validatorsDepositRoot,
-        signatures,
-        {
-          from: oracleAccounts[0],
-        }
-      );
-      await expectEvent(receipt, 'RegisterValidatorsVoteSubmitted', {
-        sender: oracleAccounts[0],
-        oracles: oracleAccounts,
-        nonce: currentNonce,
-      });
     });
   });
 });

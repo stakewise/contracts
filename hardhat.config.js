@@ -109,7 +109,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: 'https://dai.poa.network/',
+        url: 'https://rpc.gnosischain.com',
         chainId: 100,
       },
       accounts: {
@@ -117,7 +117,7 @@ module.exports = {
       },
     },
     gnosis: {
-      url: 'https://dai.poa.network/',
+      url: 'https://rpc.gnosischain.com',
     },
     local: {
       url: 'http://localhost:8545',
@@ -140,7 +140,6 @@ module.exports = {
       'IERC20Upgradeable',
       'Pool',
       'PoolEscrow',
-      'PoolValidators',
       'RewardToken',
       'StakedToken',
       'MerkleDistributor',

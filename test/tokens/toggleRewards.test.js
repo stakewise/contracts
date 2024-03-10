@@ -10,28 +10,19 @@ const {
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
-  setupOracleAccounts,
   setTotalRewards,
-  stakeGNO,
+  addStakedToken,
 } = require('../utils');
-const { contractSettings } = require('../../deployments/settings');
+const { contractSettings, contracts } = require('../../deployments/settings');
 const { upgradeContracts } = require('../../deployments');
 
 const RewardToken = artifacts.require('RewardToken');
-const Oracles = artifacts.require('Oracles');
-const Pool = artifacts.require('Pool');
 const StakedToken = artifacts.require('StakedToken');
 
 contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
   let admin = contractSettings.admin;
-  let oracles,
-    rewardToken,
-    stakedToken,
-    distributorReward,
-    pool,
-    oracleAccounts,
-    distributorPrincipal;
-  let [account, anyone] = accounts;
+  let rewardToken, stakedToken, distributorReward, distributorPrincipal;
+  let [account, anyone, vault] = accounts;
 
   after(async () => stopImpersonatingAccount(admin));
 
@@ -39,12 +30,9 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let contracts = await upgradeContracts();
-    oracles = await Oracles.at(contracts.oracles);
-    pool = await Pool.at(contracts.pool);
+    await upgradeContracts(vault);
     rewardToken = await RewardToken.at(contracts.rewardToken);
     stakedToken = await StakedToken.at(contracts.stakedToken);
-    oracleAccounts = await setupOracleAccounts({ oracles, admin, accounts });
     distributorPrincipal = await stakedToken.distributorPrincipal();
     distributorReward = await rewardToken.balanceOf(constants.ZERO_ADDRESS);
   });
@@ -83,7 +71,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sGNO for disabled account
-      await stakeGNO({ account: account, amount: deposit, pool });
+      await addStakedToken(stakedToken, account, deposit);
 
       let receipt = await stakedToken.toggleRewards(account, true, {
         from: admin,
@@ -125,8 +113,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       let deposit = ether('5');
 
       // mint sGNO for disabled account
-      await stakeGNO({ account, amount: deposit, pool });
-
+      await addStakedToken(stakedToken, account, deposit);
       expect(await stakedToken.balanceOf(account)).to.be.bignumber.equal(
         deposit
       );
@@ -143,8 +130,7 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       ).to.be.bignumber.equal(distributorReward);
 
       // mint sGNO for normal account
-      await stakeGNO({ account: anyone, amount: ether('5'), pool });
-
+      await addStakedToken(stakedToken, anyone, deposit);
       expect(await stakedToken.balanceOf(anyone)).to.be.bignumber.equal(
         deposit
       );
@@ -156,10 +142,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // arrived reward
@@ -202,13 +186,9 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
     });
 
     it('toggling rewards does not affect current rewards balance', async () => {
-      await rewardToken.setProtocolFeeRecipient(admin, {
-        from: admin,
-      });
-
       // mint sGNO for disabled account
-      let deposit = ether('32');
-      await stakeGNO({ account, amount: deposit, pool });
+      let deposit = ether('5');
+      await addStakedToken(stakedToken, account, deposit);
 
       // manual checkpoints update
       await rewardToken.updateRewardCheckpoint(account);
@@ -221,10 +201,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       let totalRewards = (await rewardToken.totalRewards()).add(ether('10'));
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // manual checkpoints update
@@ -286,10 +264,8 @@ contract('StakedToken (toggle rewards)', ([_, ...accounts]) => {
       totalRewards = totalRewards.add(ether('10'));
       await setTotalRewards({
         rewardToken,
-        oracles,
-        oracleAccounts,
-        pool,
         totalRewards,
+        vault,
       });
 
       // manual checkpoints update

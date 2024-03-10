@@ -54,24 +54,6 @@ interface IRewardToken is IERC20Upgradeable {
     );
 
     /**
-    * @dev Function for initializing the RewardToken contract.
-    * @param admin - address of the contract admin.
-    * @param _stakedToken - address of the StakedToken contract.
-    * @param _oracles - address of the Oracles contract.
-    * @param _protocolFeeRecipient - address of the protocol fee recipient.
-    * @param _protocolFee - protocol fee.
-    * @param _merkleDistributor - address of the MerkleDistributor contract.
-    */
-    function initialize(
-        address admin,
-        address _stakedToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor
-    ) external;
-
-    /**
     * @dev Function for getting the address of the merkle distributor.
     */
     function merkleDistributor() external view returns (address);
@@ -80,6 +62,21 @@ interface IRewardToken is IERC20Upgradeable {
     * @dev Function for getting the address of the protocol fee recipient.
     */
     function protocolFeeRecipient() external view returns (address);
+
+    /**
+    * @dev Function for getting the address of the vault.
+    */
+    function vault() external view returns (address);
+
+    /**
+    * @dev Function for getting the total assets.
+    */
+    function totalAssets() external view returns (uint256);
+
+    /**
+    * @dev Function for getting the total penalty.
+    */
+    function totalPenalty() external view returns (uint256);
 
     /**
     * @dev Function for changing the protocol fee recipient's address.
@@ -148,10 +145,18 @@ interface IRewardToken is IERC20Upgradeable {
 
     /**
     * @dev Function for updating validators total rewards.
-    * Can only be called by Oracles contract.
-    * @param newTotalRewards - new total rewards.
+    * Can only be called by Vault contract.
+    * @param rewardsDelta - the total rewards earned or penalties received.
     */
-    function updateTotalRewards(uint256 newTotalRewards) external;
+    function updateTotalRewards(int256 rewardsDelta) external;
+
+    /**
+    * @dev Function for migrating to the StakeWise V3 Vault.
+    * @param receiver - address of the account the tokens will be assigned to.
+    * @param principal - amount of staked tokens to migrate.
+    * @param reward - amount of reward tokens to migrate.
+    */
+    function migrate(address receiver, uint256 principal, uint256 reward) external;
 
     /**
     * @dev Function for claiming reward tokens from the merkle distribution.
