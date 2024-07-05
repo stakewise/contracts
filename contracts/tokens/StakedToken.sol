@@ -99,7 +99,7 @@ contract StakedToken is IStakedToken, OwnablePausableUpgradeable, ERC20PermitUpg
         require(account != address(0), "StakedToken: invalid account");
 
         // start calculating account rewards with updated deposit amount
-        bool rewardsDisabled = rewardToken.updateRewardCheckpoint(account);
+        bool rewardsDisabled = _rewardToken.updateRewardCheckpoint(account);
         if (rewardsDisabled) {
             // update merkle distributor principal if account has disabled rewards
             distributorPrincipal = distributorPrincipal.sub(amount);

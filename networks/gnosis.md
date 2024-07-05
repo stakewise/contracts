@@ -5,6 +5,11 @@
 - Contract: [0x2f99472b727e15EECf9B9eFF9F7481B85d3b4444](https://blockscout.com/xdai/mainnet/address/0x2f99472b727e15EECf9B9eFF9F7481B85d3b4444)
 - Transaction: [0x336baf83a82a2bb26b0900803251c9c0d247bb5c64b4a7ac424a78a98a0804cb](https://blockscout.com/xdai/mainnet/tx/0x336baf83a82a2bb26b0900803251c9c0d247bb5c64b4a7ac424a78a98a0804cb)
 
+    ### Pool V2
+
+    - Implementation: [0xba0B5ba961B108BFf8D761A256e9763a4FccFF23](https://blockscout.com/xdai/mainnet/address/0xba0B5ba961B108BFf8D761A256e9763a4FccFF23)
+    - Transaction: [0x68415328fb29b22b835c3f0f1e15004e0627e169d9aeac7ecad9c1dd85bcf3eb](https://gnosis.blockscout.com/tx/0x68415328fb29b22b835c3f0f1e15004e0627e169d9aeac7ecad9c1dd85bcf3eb)
+
 ## Pool Escrow
 
 - Contract: [0xfc9B67b6034F6B306EA9Bd8Ec1baf3eFA2490394](https://blockscout.com/xdai/mainnet/address/0xfc9B67b6034F6B306EA9Bd8Ec1baf3eFA2490394/contracts)
@@ -20,10 +25,20 @@
 - Contract: [0xA4eF9Da5BA71Cc0D2e5E877a910A37eC43420445](https://blockscout.com/xdai/mainnet/address/0xA4eF9Da5BA71Cc0D2e5E877a910A37eC43420445)
 - Transaction: [0xc4f20d1df7405da12affcc3cacc7687b867329806574149bfc4082491ec607ff](https://blockscout.com/xdai/mainnet/tx/0xc4f20d1df7405da12affcc3cacc7687b867329806574149bfc4082491ec607ff)
 
+    ### StakedToken V2
+
+    - Implementation: [0x987852D5D6c221Ec03939421de4568C072eaE800](https://blockscout.com/xdai/mainnet/address/0x987852D5D6c221Ec03939421de4568C072eaE800)
+    - Transaction: [0xc89493679ec1a32c99ab3f7d79d6f58a8b6388e46b2b6dcc721951167824d78b](https://gnosis.blockscout.com/tx/0xc89493679ec1a32c99ab3f7d79d6f58a8b6388e46b2b6dcc721951167824d78b)
+
 ## RewardToken
 
 - Contract: [0x6aC78efae880282396a335CA2F79863A1e6831D4](https://blockscout.com/xdai/mainnet/address/0x6aC78efae880282396a335CA2F79863A1e6831D4)
 - Transaction: [0x26538aadb540883a2ccaad15aa57b5b45ac18bde63cff4dcb0505c123e10d9b3](https://blockscout.com/xdai/mainnet/tx/0x26538aadb540883a2ccaad15aa57b5b45ac18bde63cff4dcb0505c123e10d9b3)
+
+    ### RewardToken V2
+
+    - Implementation: [0x7986e443DBBA8AD3FcC1f3d012e1e0a095601DAC](https://blockscout.com/xdai/mainnet/address/0x7986e443DBBA8AD3FcC1f3d012e1e0a095601DAC)
+    - Transaction: [0xb0bed225aecab7c89bd4f10f58eaaccefac9b3a4b19fd44810557e0c410339a7](https://gnosis.blockscout.com/tx/0xb0bed225aecab7c89bd4f10f58eaaccefac9b3a4b19fd44810557e0c410339a7)
 
 ## StakeWiseToken
 
@@ -39,6 +54,11 @@
 
     - Implementation: [0x972B98dce8Ad32D1cbB0514A2115217066b0ee41](https://blockscout.com/xdai/mainnet/address/0x972B98dce8Ad32D1cbB0514A2115217066b0ee41)
     - Transaction: [0xbc7f8c4f8864871ed3e5e56594efd828c2e15d550e5e5e049b03a3c38fbffcd3](https://blockscout.com/xdai/mainnet/tx/0xbc7f8c4f8864871ed3e5e56594efd828c2e15d550e5e5e049b03a3c38fbffcd3)
+
+    ### Oracles V3
+
+    - Implementation: [0xE8822246F8864DA92015813A39ae776087Fb1Cd5](https://blockscout.com/xdai/mainnet/address/0xE8822246F8864DA92015813A39ae776087Fb1Cd5)
+    - Transaction: [0x26aebc3773eca8ed98ca40b37e6341edc035ccda4c34c4d1b49bd38b6e61b682](https://gnosis.blockscout.com/tx/0x26aebc3773eca8ed98ca40b37e6341edc035ccda4c34c4d1b49bd38b6e61b682)
 
 ## Merkle Distributor
 
