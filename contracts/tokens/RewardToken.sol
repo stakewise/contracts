@@ -8,7 +8,7 @@ import "../presets/OwnablePausableUpgradeable.sol";
 import "../interfaces/IStakedToken.sol";
 import "../interfaces/IRewardToken.sol";
 import "../interfaces/IMerkleDistributor.sol";
-import "../interfaces/IOracles.sol";
+import "../interfaces/IGnoGenesisVault.sol";
 import "./ERC20PermitUpgradeable.sol";
 
 /**
@@ -20,6 +20,9 @@ import "./ERC20PermitUpgradeable.sol";
 contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpgradeable {
     using SafeMathUpgradeable for uint256;
     using SafeCastUpgradeable for uint256;
+
+    // @dev Address of the Vault contract.
+    address public immutable override vault;
 
     // @dev Address of the StakedToken contract.
     IStakedToken private stakedToken;
@@ -51,38 +54,17 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     // @dev Maps account address to whether rewards are distributed through the merkle distributor.
     mapping(address => bool) public override rewardsDisabled;
 
-    /**
-     * @dev See {IRewardToken-initialize}.
-     */
-    function initialize(
-        address admin,
-        address _stakedToken,
-        address _oracles,
-        address _protocolFeeRecipient,
-        uint256 _protocolFee,
-        address _merkleDistributor
-    )
-        external override initializer
-    {
-        require(admin != address(0), "RewardToken: invalid admin address");
-        require(_stakedToken != address(0), "RewardToken: invalid StakedToken address");
-        require(_oracles != address(0), "RewardToken: invalid Oracles address");
-        require(_protocolFee < 1e4, "RewardToken: invalid protocol fee");
-        require(_merkleDistributor != address(0), "RewardToken: invalid MerkleDistributor address");
+    // @dev Total amount of penalties received.
+    uint256 public override totalPenalty;
 
-        __OwnablePausableUpgradeable_init(admin);
-        __ERC20_init("StakeWise Reward GNO", "rGNO");
-        __ERC20Permit_init("StakeWise Reward GNO");
-
-        stakedToken = IStakedToken(_stakedToken);
-        oracles = _oracles;
-        merkleDistributor = _merkleDistributor;
-
-        protocolFeeRecipient = _protocolFeeRecipient;
-        emit ProtocolFeeRecipientUpdated(_protocolFeeRecipient);
-
-        protocolFee = _protocolFee;
-        emit ProtocolFeeUpdated(_protocolFee);
+   /**
+   * @dev Constructor
+   * @dev Since the immutable variable value is stored in the bytecode,
+   *      its value would be shared among all proxies pointing to a given contract instead of each proxy’s storage.
+   * @param _vault Address of the StakeWise V3 vault.
+   */
+    constructor(address _vault) {
+        vault = _vault;
     }
 
     /**
@@ -125,6 +107,13 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
      */
     function totalSupply() external view override returns (uint256) {
         return totalRewards;
+    }
+
+    /**
+     * @dev See {IRewardToken-totalAssets}.
+     */
+    function totalAssets() public view override returns (uint256) {
+        return uint256(totalRewards).add(stakedToken.totalSupply());
     }
 
     /**
@@ -233,17 +222,35 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
     /**
      * @dev See {IRewardToken-updateTotalRewards}.
      */
-    function updateTotalRewards(uint256 newTotalRewards) external override {
-        require(msg.sender == oracles, "RewardToken: access denied");
+    function updateTotalRewards(int256 rewardsDelta) external override {
+        require(msg.sender == address(vault), "RewardToken: access denied");
 
-        uint256 periodRewards = newTotalRewards.sub(totalRewards);
+        uint256 periodRewards;
+        if (rewardsDelta > 0) {
+            periodRewards = uint256(rewardsDelta);
+            uint256 _totalPenalty = totalPenalty; // gas savings
+            if (periodRewards <= _totalPenalty) {
+                totalPenalty = _totalPenalty.sub(periodRewards);
+                periodRewards = 0;
+            } else if (_totalPenalty > 0) {
+                periodRewards = periodRewards.sub(_totalPenalty);
+                totalPenalty = 0;
+            }
+        } else if (rewardsDelta < 0) {
+            uint256 _totalPenalty = totalPenalty; // gas savings
+            _totalPenalty = _totalPenalty.add(uint256(-rewardsDelta));
+            require(_totalPenalty <= totalAssets(), "RewardToken: invalid penalty amount");
+            totalPenalty = _totalPenalty;
+        }
+
         if (periodRewards == 0) {
             lastUpdateBlockNumber = block.number;
-            emit RewardsUpdated(0, newTotalRewards, rewardPerToken, 0, 0);
+            emit RewardsUpdated(0, totalRewards, rewardPerToken, 0, 0);
             return;
         }
 
         // calculate protocol reward and new reward per token amount
+        uint256 newTotalRewards = uint256(totalRewards).add(periodRewards);
         uint256 protocolReward = periodRewards.mul(protocolFee).div(1e4);
         uint256 prevRewardPerToken = rewardPerToken;
         uint256 newRewardPerToken = prevRewardPerToken.add(periodRewards.sub(protocolReward).mul(1e18).div(stakedToken.totalDeposits()));
@@ -284,6 +291,43 @@ contract RewardToken is IRewardToken, OwnablePausableUpgradeable, ERC20PermitUpg
             newDistributorBalance.sub(prevDistributorBalance),
             _protocolFeeRecipient == address(0) ? protocolReward: 0
         );
+    }
+
+    function _burn(uint256 amount) private {
+        uint128 _rewardPerToken = rewardPerToken; // gas savings
+        checkpoints[msg.sender] = Checkpoint({
+            reward: _balanceOf(msg.sender, _rewardPerToken).sub(amount).toUint128(),
+            rewardPerToken: _rewardPerToken
+        });
+        totalRewards = uint256(totalRewards).sub(amount).toUint128();
+        emit Transfer(msg.sender, address(0), amount);
+    }
+
+    /**
+    * @dev See {IRewardToken-migrate}.
+     */
+    function migrate(address receiver, uint256 principal, uint256 reward) external override {
+        require(receiver != address(0), "RewardToken: invalid receiver");
+        require(block.number > lastUpdateBlockNumber, "RewardToken: cannot migrate during rewards update");
+
+        // calculate amount of assets to migrate
+        uint256 assets = principal.add(reward);
+
+        uint256 _totalPenalty = totalPenalty; // gas savings
+        if (_totalPenalty > 0) {
+            uint256 _totalAssets = totalAssets(); // gas savings
+            // apply penalty to assets
+            uint256 assetsAfterPenalty = assets.mul(_totalAssets.sub(_totalPenalty)).div(_totalAssets);
+            totalPenalty = _totalPenalty.add(assetsAfterPenalty).sub(assets);
+            assets = assetsAfterPenalty;
+        }
+        require(assets > 0, "RewardToken: zero assets");
+
+        // burn rewards and principal
+        if (reward > 0) _burn(reward);
+        if (principal > 0) stakedToken.burn(msg.sender, principal);
+
+        IGnoGenesisVault(vault).migrate(receiver, assets);
     }
 
     /**

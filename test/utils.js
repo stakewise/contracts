@@ -1,51 +1,19 @@
 const { expect } = require('chai');
 const hre = require('hardhat');
-const { fromRpcSig } = require('ethereumjs-util');
-const ethSigUtil = require('eth-sig-util');
 const { hexlify, keccak256, defaultAbiCoder } = require('ethers/lib/utils');
-const {
-  BN,
-  ether,
-  expectEvent,
-  constants,
-  send,
-} = require('@openzeppelin/test-helpers');
-const { contracts } = require('../deployments/settings');
+const { BN, send, ether } = require('@openzeppelin/test-helpers');
 
-const IDepositContract = artifacts.require('IDepositContract');
-const IGCToken = artifacts.require('IGCToken');
-
-function getDepositAmount({ min = new BN('1'), max = ether('1000') } = {}) {
-  return ether(Math.random().toFixed(8))
-    .mul(max.sub(min))
-    .div(ether('1'))
-    .add(min);
-}
-
-async function checkValidatorRegistered({
-  transaction,
-  pubKey,
-  signature,
-  withdrawalCredentials,
-  validatorDepositAmount = ether('32'),
-}) {
-  // Check VRC record created
-  await expectEvent.inTransaction(
-    transaction,
-    IDepositContract,
-    'DepositEvent',
-    {
-      pubkey: pubKey,
-      withdrawal_credentials: withdrawalCredentials,
-      amount: web3.utils.bytesToHex(
-        new BN(web3.utils.fromWei(validatorDepositAmount, 'gwei')).toArray(
-          'le',
-          8
-        )
-      ),
-      signature: signature,
-    }
-  );
+async function mintTokens(token, to, amount) {
+  let owner = await token.owner();
+  await impersonateAccount(owner);
+  await hre.network.provider.request({
+    method: 'hardhat_setCode',
+    params: [owner, '0x'],
+  });
+  await send.ether(to, owner, ether('1'));
+  await token.mint(to, amount, {
+    from: owner,
+  });
 }
 
 async function checkStakedToken({
@@ -124,44 +92,26 @@ async function setActivatedValidators({
   return receipt;
 }
 
-async function setTotalRewards({
-  rewardToken,
-  oracles,
-  oracleAccounts,
-  pool,
-  totalRewards,
-}) {
-  if ((await rewardToken.totalSupply()).eq(totalRewards)) {
-    return;
-  }
-  // calculate candidate ID
-  let activatedValidators = await pool.activatedValidators();
-  let nonce = await oracles.currentRewardsNonce();
-  let encoded = defaultAbiCoder.encode(
-    ['uint256', 'uint256', 'uint256'],
-    [nonce.toString(), activatedValidators.toString(), totalRewards.toString()]
-  );
-  let candidateId = hexlify(keccak256(encoded));
-
-  // prepare signatures
-  let signatures = [];
-  for (let i = 0; i < oracleAccounts.length; i++) {
-    await impersonateAccount(oracleAccounts[i]);
-    let signature = await web3.eth.sign(candidateId, oracleAccounts[i]);
-    signatures.push(signature);
-  }
+async function setTotalRewards({ rewardToken, totalRewards, vault }) {
+  const totalSupply = await rewardToken.totalSupply();
+  const totalPenalty = await rewardToken.totalPenalty();
+  let delta = totalRewards.sub(totalSupply);
 
   // update total rewards
-  let receipt = await oracles.submitRewards(
-    totalRewards,
-    activatedValidators,
-    signatures,
-    {
-      from: oracleAccounts[0],
-    }
+  let receipt = await rewardToken.updateTotalRewards(delta, {
+    from: vault,
+  });
+  if (delta.isNeg()) {
+    delta = new BN(0);
+  }
+  if (totalPenalty.gt(delta)) {
+    delta = new BN(0);
+  } else {
+    delta = delta.sub(totalPenalty);
+  }
+  expect(await rewardToken.totalSupply()).to.bignumber.equal(
+    totalSupply.add(delta)
   );
-  expect(await rewardToken.totalSupply()).to.bignumber.equal(totalRewards);
-
   return receipt;
 }
 
@@ -236,16 +186,6 @@ async function registerValidators({
 }
 
 async function impersonateAccount(account) {
-  // remove code if it's a contract
-  await hre.network.provider.send('hardhat_setCode', [account, '0x']);
-
-  // set balance to 1000 xDAI
-  await hre.network.provider.send('hardhat_setBalance', [
-    account,
-    '0x3635c9adc5dea00000',
-  ]);
-
-  // impersonate account
   return hre.network.provider.request({
     method: 'hardhat_impersonateAccount',
     params: [account],
@@ -257,6 +197,50 @@ async function stopImpersonatingAccount(account) {
     method: 'hardhat_stopImpersonatingAccount',
     params: [account],
   });
+}
+
+async function mintMGNOTokens(mgnoToken, account, value) {
+  // random mGNO holder
+  let holder = '0x6b504204a85e0231b1a1b1926b9264939f29c65e';
+  await send.ether(account, holder, ether('5'));
+  await impersonateAccount(holder);
+  await mgnoToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
+}
+
+async function mintGNOTokens(gnoToken, account, value) {
+  // random GNO holder
+  let holder = '0x458cd345b4c05e8df39d0a07220feb4ec19f5e6f';
+  await send.ether(account, holder, ether('5'));
+  await impersonateAccount(holder);
+  await gnoToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
+}
+
+async function addStakedToken(stakedToken, account, value) {
+  // random sGNO holder
+  let holder = '0x411fA33f660EDded5dddc57cd50ac33eB4684C6B';
+  await send.ether(account, holder, ether('5'));
+  await impersonateAccount(holder);
+  await stakedToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
+}
+
+async function addRewardToken(rewardToken, account, value) {
+  // random rGNO holder
+  let holder = '0xb0e83C2D71A991017e0116d58c5765Abc57384af';
+  await send.ether(account, holder, ether('5'));
+  await impersonateAccount(holder);
+  await rewardToken.transfer(account, value, {
+    from: holder,
+  });
+  await stopImpersonatingAccount(holder);
 }
 
 async function resetFork() {
@@ -287,7 +271,7 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
 
   // add oracles
   let oracleAccounts = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < totalOracles; i++) {
     let newOracle = accounts[i];
     await oracles.addOracle(newOracle, {
       from: admin,
@@ -298,169 +282,12 @@ async function setupOracleAccounts({ admin, oracles, accounts }) {
   return oracleAccounts;
 }
 
-async function mintTokens(token, to, amount) {
-  let owner = await token.owner();
-  await impersonateAccount(owner);
-  await send.ether(to, owner, ether('1'));
-  await token.mint(to, amount, {
-    from: owner,
-  });
-}
-
-async function mintMGNOTokens(to, amount) {
-  let gnoToken = await IGCToken.at(contracts.GNOToken);
-  await mintTokens(gnoToken, to, amount);
-
-  return gnoToken.transferAndCall(contracts.MGNOWrapper, amount, '0x', {
-    from: to,
-  });
-}
-
-async function stakeGNO({
-  account,
-  amount,
-  pool,
-  recipient = constants.ZERO_ADDRESS,
-  referrer = constants.ZERO_ADDRESS,
-  hasRevenueShare = false,
-  noAllowance = false,
-}) {
-  let gnoToken = await IGCToken.at(contracts.GNOToken);
-  await mintTokens(gnoToken, account, amount);
-
-  if (!noAllowance) {
-    await gnoToken.approve(pool.address, amount, { from: account });
-  }
-  return pool.stakeGNO(amount, recipient, referrer, hasRevenueShare, {
-    from: account,
-  });
-}
-
-const buildPermitData = ({
-  verifyingContract,
-  holder,
-  spender,
-  name,
-  expiry = constants.MAX_UINT256,
-  allowed = true,
-  version = '1',
-  chainId = '100',
-  nonce = 0,
-}) => ({
-  primaryType: 'Permit',
-  types: {
-    EIP712Domain: [
-      { name: 'name', type: 'string' },
-      { name: 'version', type: 'string' },
-      { name: 'chainId', type: 'uint256' },
-      { name: 'verifyingContract', type: 'address' },
-    ],
-    Permit: [
-      { name: 'holder', type: 'address' },
-      { name: 'spender', type: 'address' },
-      { name: 'nonce', type: 'uint256' },
-      { name: 'expiry', type: 'uint256' },
-      { name: 'allowed', type: 'bool' },
-    ],
-  },
-  domain: { name, version, chainId, verifyingContract },
-  message: { holder, spender, nonce, expiry, allowed },
-});
-
-async function stakeGNOWithPermit({
-  account,
-  amount,
-  pool,
-  minter,
-  recipient = constants.ZERO_ADDRESS,
-  referrer = constants.ZERO_ADDRESS,
-  hasRevenueShare = false,
-  invalidHolder = false,
-}) {
-  let gnoToken = await IGCToken.at(contracts.GNOToken);
-
-  // generate signature
-  let nonce = await gnoToken.nonces(account.address);
-  let expiry = constants.MAX_UINT256;
-  const data = buildPermitData({
-    nonce,
-    verifyingContract: gnoToken.address,
-    holder: invalidHolder ? constants.ZERO_ADDRESS : account.address,
-    spender: pool.address,
-    name: await gnoToken.name(),
-    expiry,
-  });
-  const signature = ethSigUtil.signTypedMessage(
-    Buffer.from(account.privateKey.substring(2), 'hex'),
-    { data }
-  );
-  let { v, r, s } = fromRpcSig(signature);
-
-  // mint tokens
-  let owner = await gnoToken.owner();
-  await impersonateAccount(owner);
-  await send.ether(minter, owner, ether('1'));
-  await gnoToken.mint(account.address, amount, {
-    from: owner,
-  });
-
-  let encodedData = pool.contract.methods
-    .stakeGNOWithPermit(
-      amount,
-      recipient,
-      referrer,
-      hasRevenueShare,
-      nonce,
-      expiry,
-      v,
-      r,
-      s
-    )
-    .encodeABI();
-
-  const tx = {
-    from: account.address,
-    to: pool.address,
-    data: encodedData,
-    gas: 1000000,
-  };
-
-  let signedTx = await web3.eth.accounts.signTransaction(
-    tx,
-    account.privateKey
-  );
-  return web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-}
-
-async function stakeMGNO({
-  account,
-  amount,
-  pool,
-  recipient = constants.ZERO_ADDRESS,
-  referrer = constants.ZERO_ADDRESS,
-  hasRevenueShare = false,
-  noAllowance = false,
-}) {
-  await mintMGNOTokens(account, amount);
-  let mgnoToken = await IGCToken.at(contracts.MGNOToken);
-  if (!noAllowance) {
-    await mgnoToken.approve(pool.address, amount, { from: account });
-  }
-  return pool.stakeMGNO(amount, recipient, referrer, hasRevenueShare, {
-    from: account,
-  });
-}
-
 module.exports = {
-  checkValidatorRegistered,
-  getDepositAmount,
   checkStakedToken,
   checkRewardToken,
   mintMGNOTokens,
   mintTokens,
-  stakeGNO,
-  stakeGNOWithPermit,
-  stakeMGNO,
+  mintGNOTokens,
   impersonateAccount,
   stopImpersonatingAccount,
   resetFork,
@@ -469,4 +296,6 @@ module.exports = {
   setMerkleRoot,
   setupOracleAccounts,
   registerValidators,
+  addStakedToken,
+  addRewardToken,
 };

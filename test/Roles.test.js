@@ -16,7 +16,7 @@ const {
 
 const Roles = artifacts.require('Roles');
 
-contract('Roles', ([anyone, operator, partner]) => {
+contract('Roles', ([anyone, operator, partner, vault]) => {
   const admin = contractSettings.admin;
   let revenueShare = new BN(3000);
   let roles;
@@ -27,7 +27,7 @@ contract('Roles', ([anyone, operator, partner]) => {
     await impersonateAccount(admin);
     await send.ether(anyone, admin, ether('5'));
 
-    let upgradedContracts = await upgradeContracts();
+    let upgradedContracts = await upgradeContracts(vault);
     roles = await Roles.at(upgradedContracts.roles);
   });
 

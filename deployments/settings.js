@@ -22,6 +22,7 @@ let contracts = {
   merkleDistributor: '0x7dc30953CE236665d032329F6a922d67F0a33a2B',
   roles: '0x9b23e05AEfb37D5ea9b525016d19eb82b65F255c',
   contractChecker: '0x814f9c8C0269f11996138c77cc16A3A7f0A36b0C',
+  vault: '0x4b4406Ed8659D03423490D8b62a1639206dA0A7a',
 };
 
 module.exports = {

@@ -7,14 +7,9 @@ pragma abicoder v2;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "../interfaces/IOracles.sol";
 import "../interfaces/IMerkleDistributor.sol";
+import "../interfaces/IRewardToken.sol";
 
 contract MulticallMock {
-    struct OracleRewards {
-        uint256 totalRewards;
-        uint256 activatedValidators;
-        bytes[] signatures;
-    }
-
     struct MerkleRoot {
         bytes32 merkleRoot;
         string merkleProofs;
@@ -23,42 +18,47 @@ contract MulticallMock {
 
     IOracles private oracles;
     IERC20Upgradeable private stakedToken;
-    IERC20Upgradeable private rewardToken;
+    IRewardToken private rewardToken;
     IMerkleDistributor private merkleDistributor;
 
     constructor(address _oracles, address _stakedToken, address _rewardToken, address _merkleDistributor) {
         oracles = IOracles(_oracles);
         stakedToken = IERC20Upgradeable(_stakedToken);
-        rewardToken = IERC20Upgradeable(_rewardToken);
+        rewardToken = IRewardToken(_rewardToken);
         merkleDistributor = IMerkleDistributor(_merkleDistributor);
     }
 
     function transferRewardsAndUpdateTotalRewards(
-        uint256 totalRewards,
-        uint256 activatedValidators,
-        address payee,
-        bytes[] calldata signatures
+        int256 rewardsDelta,
+        address payee
     )
         external
     {
         rewardToken.transferFrom(msg.sender, payee, rewardToken.balanceOf(msg.sender));
-        oracles.submitRewards(totalRewards, activatedValidators, signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
     }
 
     function updateTotalRewardsAndTransferRewards(
-        uint256 totalRewards,
-        uint256 activatedValidators,
-        address payee,
-        bytes[] calldata signatures
+        int256 rewardsDelta,
+        address payee
     )
         external
     {
-        oracles.submitRewards(totalRewards, activatedValidators, signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
         rewardToken.transferFrom(msg.sender, payee, rewardToken.balanceOf(msg.sender));
     }
 
+    function updateTotalRewardsAndMigrate(int256 rewardsDelta) external {
+        rewardToken.updateTotalRewards(rewardsDelta);
+        rewardToken.migrate(
+            msg.sender,
+            stakedToken.balanceOf(address(this)),
+            rewardToken.balanceOf(address(this))
+        );
+    }
+
     function updateTotalRewardsAndClaim(
-        OracleRewards memory oracleRewards,
+        int256 rewardsDelta,
         uint256 index,
         address account,
         address[] calldata tokens,
@@ -67,12 +67,12 @@ contract MulticallMock {
     )
         external
     {
-        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
     }
 
     function claimAndUpdateTotalRewards(
-        OracleRewards memory oracleRewards,
+        int256 rewardsDelta,
         uint256 index,
         address account,
         address[] calldata tokens,
@@ -82,7 +82,7 @@ contract MulticallMock {
         external
     {
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
-        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
     }
 
     function claimAndUpdateMerkleRoot(
@@ -113,37 +113,33 @@ contract MulticallMock {
         merkleDistributor.claim(index, account, tokens, amounts, merkleProof);
     }
 
-    function updateTotalRewardsAndTransferStakedTokens(
-        uint256 totalRewards,
-        uint256 activatedValidators,
-        address payee,
-        bytes[] calldata signatures
+    function updateTotalRewardsAndTransferStakedEth(
+        int256 rewardsDelta,
+        address payee
     )
         external
     {
-        oracles.submitRewards(totalRewards, activatedValidators, signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
         stakedToken.transferFrom(msg.sender, payee, stakedToken.balanceOf(msg.sender));
     }
 
-    function transferStakedTokensAndUpdateTotalRewards(
-        uint256 totalRewards,
-        uint256 activatedValidators,
-        address payee,
-        bytes[] calldata signatures
+    function transferStakedEthAndUpdateTotalRewards(
+        int256 rewardsDelta,
+        address payee
     )
         external
     {
         stakedToken.transferFrom(msg.sender, payee, stakedToken.balanceOf(msg.sender));
-        oracles.submitRewards(totalRewards, activatedValidators, signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
     }
 
     function updateTotalRewardsAndMerkleRoot(
-        OracleRewards memory oracleRewards,
+        int256 rewardsDelta,
         MerkleRoot memory merkleRoot
     )
         external
     {
-        oracles.submitRewards(oracleRewards.totalRewards, oracleRewards.activatedValidators, oracleRewards.signatures);
+        rewardToken.updateTotalRewards(rewardsDelta);
         oracles.submitMerkleRoot(merkleRoot.merkleRoot, merkleRoot.merkleProofs, merkleRoot.signatures);
     }
 }
